@@ -2,7 +2,9 @@
 
 ## Status und Auftrag
 
-D0 ist die Spezifikationsübergabe, D1 ergänzt verpflichtende E2EE und Agenten-/GitHub-/Editorhilfen. Beide sind abgeschlossen. Es existiert noch keine Anwendung. P1 bis P11 sind geplant und benötigen einen späteren Implementierungsauftrag. Schemata und JSON-Beispiele sind Verträge für zukünftigen Code, keine bereits vorhandenen APIs.
+D0 ist die Spezifikationsübergabe, D1 ergänzt verpflichtende E2EE und Agenten-/GitHub-/Editorhilfen. Beide sind abgeschlossen. D2 ergänzt Einstieg, Referenzhaushalt und P1-Teilaufgaben einschließlich Hook-Konzept. Es existiert noch keine Anwendung. P1 bis P11 sind geplant und benötigen einen späteren Implementierungsauftrag. Schemata und JSON-Beispiele sind Verträge für zukünftigen Code, keine bereits vorhandenen APIs.
+
+Für den ersten Überblick: [Einstieg](getting-started.md). Für einen später freigegebenen Implementierungsstart: [P1-Teilaufgaben](p1-foundation.md). Der [Referenzhaushalt](reference-household.md) verbindet Fachbeispiele mit dem Buchungs-/Syncablauf; er ist kein importierbarer Snapshot.
 
 ## Lesereihenfolge
 
@@ -24,7 +26,7 @@ D0 ist die Spezifikationsübergabe, D1 ergänzt verpflichtende E2EE und Agenten-
 
 Das Konzept wurde mit dem Nutzer abgestimmt. Offene Implementierungsdetails werden in diesem Paket durch explizite Defaults festgelegt. Versionen konkreter Bibliotheken werden erst in P1 aus stabilen kompatiblen Releases gewählt und in Lockfiles festgeschrieben.
 
-Produktanforderungen stehen in `product.md`, Fachinvarianten in `domain.md`, Typen in `data-model.md`, Transport in `api.md` und `synchronization.md`. `decisions.md` begründet diese Festlegungen. Bei einem echten Widerspruch sind betroffene Dokumente vor Codeänderungen gemeinsam zu korrigieren; nicht stillschweigend den bequemeren Text auswählen.
+Produktanforderungen stehen in `product.md`, Fachinvarianten in `domain.md`, Typen in `data-model.md`, Transport in `api.md` und `synchronization.md`. `decisions.md` begründet diese Festlegungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
 
 ## Bewusst spätere Funktionen
 

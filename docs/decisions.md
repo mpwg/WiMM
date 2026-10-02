@@ -32,6 +32,20 @@ Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Eintr
 | ADR-026 | Bereichsschlüssel, signierte Rollen/Geräte und eigenständige Recovery | Technischer Default für ADR-025 | libsodium, Fingerprintprüfung, Schlüsselfreigabe, Rotation und separate Tresorentsperrung; Serverpasswortreset entschlüsselt nichts |
 | ADR-027 | Authentifizierte Clients sind vertrauenswürdig; keine Codesignatur als Sicherheitsbasis | Zusätzliche Nutzerentscheidung | Web/PWA/Desktop gleich zugelassen; keine Attestierung/Build-Allowlist; Nachrichten-/Schlüsselsignaturen schützen Datenintegrität, keine Appherkunft |
 | ADR-028 | Repositorylokale Agenten-Skills und gemeinsame Vorlagen, GitHub/VS Code | Nutzerauftrag plus technischer Default | Vier Skills in .agents/skills; zentrale Docs statt Regelkopien; keine globale Plugininstallation, kein Push/CI/Appstart |
+| ADR-029 | Kompakter Einstieg, P1-Teilaufgaben und portable Prüfungen; Hooks erst P1 | Nutzerauftrag D2 und bestätigter Ergänzungsplan | Zentrale Fachquellen erhalten, Beispiele synthetisch; optionaler pre-commit prüft vorgemerkte Inhalte ohne Dateiumschreiben; gemeinsame Prüfungen in CI; keine automatische Commit-/Push-/Taskabschlussfunktion |
+
+## ADR-029 — Einstieg und portable Prüfungen
+
+- Datum: 2. Oktober 2026.
+- Status: angenommen.
+- Herkunft: Nutzerauftrag D2 und bestätigter Ergänzungsplan.
+- Problem: Die umfangreiche Spezifikation braucht einen kurzen Einstieg und begrenzte erste Arbeitsschritte; die Dokumentationsphase besitzt noch keine gemeinsame Prüf-Toolchain.
+- Entscheidung: Einstieg, Lesematrix, P1-Teilaufgaben und synthetische Beispiele ergänzen; optionale lokale Hooks erst in P1 mit denselben Validatoren wie CI umsetzen. Zwischencommits benötigen bestehende ausdrückliche Autorisierung.
+- Alternativen: Ein Dokumentations-Hook bereits in D2 wurde angeboten; der Nutzer wählte Konzept jetzt und Umsetzung in P1. Agentenspezifische Automatik wird erst bei konkretem Bedarf geprüft.
+- Folgen: Zentrale Fachquellen bleiben maßgeblich; keine Installation, Gitkonfigurationsänderung oder zusätzliche Implementierungsfreigabe in D2.
+- Betroffene Verträge/Pakete: [Einstieg](getting-started.md), [Agentenleitfaden](agent-guide.md), [P1-Teilaufgaben](p1-foundation.md), [Entwicklung](development.md); D2 und P1.6.
+- Migration und Kompatibilität: Keine Daten-/Protokollmigration, weil ausschließlich Dokumentation und Arbeitsregeln ergänzt werden.
+- Prüfung: D2-Link-/Struktur-/Konsistenzprüfung; später Hookkontrollfälle einschließlich teilweise vorgemerkter Inhalte und CI-Abnahme in P1.6.
 
 ## Nicht mehr offen
 
@@ -46,4 +60,4 @@ Keine Grundsatzentscheidung zu Fork, Lizenz, Mehrbenutzerstruktur, Rollen, Platt
 
 ## Änderungsformat
 
-Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidung, Alternativen, Folgen und betroffene Aufgaben. Nutzerwünsche haben Vorrang vor technischen Defaults. Schema-/Syncänderungen nennen außerdem Migrations- und Kompatibilitätspfad. Bei Änderung bestehender Fachregeln Referenzrechnungen und Tests gleichzeitig aktualisieren.
+Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidung, Alternativen, Folgen und betroffene Aufgaben. Nutzerwünsche haben Vorrang vor technischen Defaults. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen. Schema-/Syncänderungen nennen außerdem Migrations- und Kompatibilitätspfad. Bei Änderung bestehender Fachregeln Referenzrechnungen und Tests gleichzeitig aktualisieren.

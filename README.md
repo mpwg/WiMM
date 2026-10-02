@@ -2,7 +2,7 @@
 
 WhereIsMyMoney ist ein geplanter Open-Source-Finanzmanager für Familien. Gemeinsame Haushaltsfinanzen, persönliche Finanzbereiche, Budgetplanung und ein nachvollziehbarer Ausgleich zwischen Erwachsenen stehen im Mittelpunkt.
 
-**Projektstatus: Dokumentationsphase. Es gibt noch keine lauffähige Anwendung.** Anwendungscode, Paketkonfiguration, Deploymentinfrastruktur und Installationspakete wurden noch nicht angelegt. D0 und D1 enthalten Spezifikation sowie Agenten-/Editor-/GitHubhilfen; P1 bis P11 benötigen einen späteren ausdrücklichen Implementierungsauftrag.
+**Projektstatus: Dokumentationsphase. Es gibt noch keine lauffähige Anwendung.** Anwendungscode, Paketkonfiguration, Deploymentinfrastruktur und Installationspakete wurden noch nicht angelegt. D0 und D1 enthalten Spezifikation sowie Agenten-/Editor-/GitHubhilfen; D2 ergänzt Einstieg, Beispiele und P1-Teilaufgaben; P1 bis P11 benötigen einen späteren ausdrücklichen Implementierungsauftrag.
 
 ## Geplantes Produkt
 
@@ -19,6 +19,8 @@ WhereIsMyMoney ist ein geplanter Open-Source-Finanzmanager für Familien. Gemein
 Die erste Version richtet sich an Erwachsene im deutschsprachigen Raum, verwendet EUR und benötigt keine externen Finanzdienste. Bankanbindung, Kinderrollen, weitere Währungen und mobile Store-Apps folgen später.
 
 ## Einstieg für einen implementierenden Agenten
+
+Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [P1-Teilaufgaben](docs/p1-foundation.md) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md).
 
 1. [Arbeitsregeln](AGENTS.md) lesen.
 2. Im [Dokumentationsindex](docs/README.md) die Lesereihenfolge beachten.
@@ -39,4 +41,4 @@ WhereIsMyMoney einschließlich seiner eigenen Dokumentation und des späteren ei
 
 ## Verbindlichkeit
 
-Dieses Dokumentationspaket ist die Umsetzungsspezifikation vom 2. Oktober 2026. Bei widersprüchlichen technischen Einzelheiten gelten die [Entscheidungen](docs/decisions.md) und die spezifischen Fach- und Schnittstellendokumente. Produktänderungen müssen dort vor Umsetzung nachvollziehbar dokumentiert werden.
+Dieses Dokumentationspaket ist die Umsetzungsspezifikation vom 2. Oktober 2026. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen. Die [Entscheidungen](docs/decisions.md) begründen Festlegungen, die spezifischen Fach- und Schnittstellendokumente beschreiben ihre Verträge. Produktänderungen müssen dort vor Umsetzung nachvollziehbar dokumentiert werden.

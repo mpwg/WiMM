@@ -12,7 +12,7 @@ Lies [AGENTS.md](../../../AGENTS.md), [Agentenleitfaden](../../../docs/agent-gui
 2. Wähle das erste freigegebene offene Paket mit erfüllten Voraussetzungen. Lies nur die für den Auftrag nötigen Fachreferenzen.
 3. Nutze die [Aufgabenvorlage](../../../docs/templates/task.md) für neue Teilaufgaben; bestehende Paketfelder beibehalten. Architekturänderungen mit [ADR-Vorlage](../../../docs/templates/decision.md) und betroffenen Verträgen gleichzeitig festhalten.
 4. Skaliere Prüfungen nach Risiko; dokumentiere ausgeführte und nicht verfügbare Prüfungen getrennt. Keine fingierten Test-/Auditbelege oder bloß aus einer Checkliste behauptete Freigaben.
-5. Erstelle nach abgeschlossenen Abschnitten die vom Nutzer gewünschten Zwischencommits mit zusammengehörigen Dateien. Niemals fremde Änderungen einbeziehen oder eigenständig pushen/mergen.
+5. Erstelle nach abgeschlossenen Abschnitten nur bei bestehender ausdrücklicher Autorisierung Zwischencommits mit zusammengehörigen Dateien. Niemals fremde Änderungen einbeziehen oder eigenständig pushen/mergen.
 6. Halte Paketstatus aktuell und übergib den nächsten konkreten Schritt mit [Übergabevorlage](../../../docs/templates/handoff.md). Für PRs die vorhandene GitHub-Vorlage verwenden.
 
 Versionskontrolle ist die Quelle; GitHub-Issues verlinken auf Paket/ADR, ersetzen aber nicht die Fachspezifikation. Ein Issue oder dieses Skill verleiht keine zusätzlichen Veröffentlichungsrechte.

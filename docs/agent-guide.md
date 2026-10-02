@@ -4,7 +4,23 @@
 
 [AGENTS.md](../AGENTS.md) enthält globale Regeln. [Dokumentationsindex](README.md) führt zur Fachspezifikation; [Aufgaben](tasks.md) enthalten Paketstatus; [Entscheidungen](decisions.md) begründen Defaults. Diese Quellen werden gemeinsam gepflegt. Issues und Skills sind Arbeitsmittel, keine abweichenden Fachspezifikationen.
 
-Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlagen. P1–P11 bleiben offen; keine App-Implementierung starten. Die Anweisung zu Zwischencommits gilt weiter. Eine ausdrücklich spätere Implementierungsfreigabe genügt, ohne noch einmal allein wegen des alten Dokumentationsstatus nachzufragen.
+Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlagen. P1–P11 bleiben offen; keine App-Implementierung starten. Zwischencommits nach abgeschlossenen Abschnitten nur bei bestehender ausdrücklicher Autorisierung; dieser Dokumentationsauftrag autorisiert keine Commits, Pushes oder Veröffentlichungen. Eine ausdrücklich spätere Implementierungsfreigabe genügt, ohne noch einmal allein wegen des alten Dokumentationsstatus nachzufragen.
+
+Für neue Mitwirkende: [kompakter Einstieg](getting-started.md), [P1-Teilaufgaben](p1-foundation.md) und [Referenzhaushalt mit durchgängigem Ablauf](reference-household.md). Die [Klärungsmatrix](getting-started.md#entscheidung-oder-rückfrage) unterscheidet verbindliche Festlegungen, technische Ermittlungen und Nutzerentscheidungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
+
+## Lesematrix nach Aufgabe
+
+Die Pflichtlektüre aus AGENTS.md bleibt erhalten. Danach gezielt diese Abschnitte lesen; bei übergreifenden Aufgaben mehrere Zeilen kombinieren.
+
+| Aufgabe | Zusätzlich benötigte Abschnitte | Skill / Abnahme |
+| --- | --- | --- |
+| Projektgrundlage P1 | Architektur: Komponenten und Zielstruktur, Bibliotheken und Toolchain; Datenmodell: Gemeinsame Typen, E2EE-Speicherebenen, Schemaentwicklung; P1-Teilaufgaben; Entwicklung: Hooks und automatisierte Prüfungen ab P1 | wimm-workflow; P1-Abnahme, bei Crypto zusätzlich wimm-e2ee |
+| Fachkern | Fachmodell: betroffene Berechnung; Datenmodell: Finanzdaten, Aggregate, Indizes und Löschung; API: Fachbefehle; Tests: Referenzdatensätze | wimm-finance; passende F-Fälle und Invarianten |
+| Speicher/Offline | Architektur: Speicherports, Lokaler und verbundener Betrieb; Datenmodell: Speicher- und Synchronisierungsdaten, Schemaentwicklung; Verschlüsselung: Schlüsselhierarchie, Geräteaufnahme und Entsperren; Tests: Speicher- und Syncmatrix | wimm-workflow, wimm-e2ee; Adapterkonformität, S01–S03/S14 |
+| Oberfläche | Produkt: Navigation, Abläufe und Zustände; UI-Dokument; Architektur: Plattformintegration; Tests: Oberflächenmatrix und Leistung | wimm-ui; P4-/paketbezogene UI-Abnahme |
+| Import | Formate: Importablauf, CSV, CAMT.053 und OFX/QFX, Dubletten; Fachmodell: Buchungen, Umbuchungen und Berichte, Dauerzahlungen, Ziele, Löschung; API: Fachbefehle; Tests: Zugriff und Parser | wimm-finance; F14, Parser-/Dublettenfälle |
+| Crypto/Recovery | Verschlüsselung vollständig; Sicherheit: Vertrauensmodell, Sitzungen und Gerätekopplung; Formate bei Export/Recovery; Tests: Verpflichtende Crypto-Abnahme | wimm-e2ee; passende C-Fälle, kein fingierter Auditbeleg |
+| Synchronisierung/Server | Synchronisierung vollständig; Verschlüsselung: Verschlüsselter Transportvertrag, Entfernen, Rollenwechsel und Rotation; API: Endpunkte, Push-Antwort, Fehler; Produkt: Rollenmatrix; Tests: Speicher- und Syncmatrix, Zugriff und Parser | wimm-e2ee; passende S-/C-Fälle und Zugriffsmatrix |
 
 ## Installierte Projektskills
 
@@ -35,7 +51,7 @@ Externe Skills sind derzeit nicht erforderlich: Das Projekt hat kein aktives CI,
 
 Projekt wird auf GitHub gehostet, Entwicklung in VS Code. Remoteadresse/Owner nicht erfinden; vor jedem Push echte `git remote`-Konfiguration prüfen. Aktuell ist noch kein Remote eingerichtet. Templates liegen bereits lokal und funktionieren nach Veröffentlichung; sie veröffentlichen selbst keine Issues/PRs.
 
-Neue Arbeitsbranches heißen `codex/<paket>-<thema>`, z. B. `codex/p3-speicheradapter`. Bestehende Branches nicht ungefragt wechseln; vorhandenen Arbeitsstand erhalten. Zwischenschritte als zusammenhängende Commits, keine mechanisch leeren Commits und keine fremden Dateien.
+Neue Arbeitsbranches heißen `codex/<paket>-<thema>`, z. B. `codex/p3-speicheradapter`. Bestehende Branches nicht ungefragt wechseln; vorhandenen Arbeitsstand erhalten. Bei bestehender ausdrücklicher Autorisierung Zwischenschritte als zusammenhängende Commits, keine mechanisch leeren Commits und keine fremden Dateien.
 
 Neue Commitnachrichten folgen Conventional Commits mit deutschem Inhalt: `docs(agents): Ergänze projektspezifische Leitfäden`, `feat(budget): Ergänze monatliche Umschlagzuweisung`, `fix(sync): Erhalte Entwürfe bei Schlüsselrotation`, `test(finance): Prüfe Restcent bei Erstattungen`. Vorhandene ältere Commitnachrichten werden nicht umgeschrieben. Scopes möglichst aus domain/crypto/storage/sync/import/ui/server/docs/agents/ci wählen.
 

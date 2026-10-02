@@ -42,6 +42,8 @@ Teilnehmer-IDs A vor B vor C lexikografisch festlegen. Technischer Haushalt H. B
 | F15 Methodenwechsel | Plan bis Oktober, Umschlag ab November, vorhandenes Geld 800 | Umschlagvortrag null, 800 real verfügbar; alte Planwerte erhalten |
 | F16 Reserve/Budget | Haushaltsgeld 1.000, Kategorie 200 zugewiesen, private Ausgabe 100 mit household-Erstattung | Kategorie 100, Reserve 100, Equity 900, frei weiterhin 800; Erstattung 100 ändert frei/Kategorie nicht erneut |
 
+Für spätere gemeinsame Fixtures, Screenshots und Ablaufprüfungen steht der [synthetische Referenzhaushalt](reference-household.md) bereit. Seine R01–R03 sind unabhängige Beispiele; die F01–F16 behalten ihre hier definierten Ausgangszustände. Der Referenzhaushalt enthält keine Crypto-Testvektoren.
+
 Weitere Pflichtfälle: sichere Ganzzahlgrenzen und Zwischenwertüberlauf; ungültiges Datum; Reconciliation-Differenz; Änderung abgeglichener Buchung; Archivierung mit Referenzen; Mehrfachzuweisung desselben Buchungssplits; Refund über Original; Settlement/Offset über verbleibende Vorleistung; Regelreihenfolge und Stop; idempotente Schedulebestätigung; voller Privat-/Haushaltsbericht ohne Doppelzählung.
 
 ## Speicher- und Syncmatrix

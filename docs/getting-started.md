@@ -1,0 +1,41 @@
+# Einstieg für Mitwirkende und Agenten
+
+## In zehn Minuten orientieren
+
+WhereIsMyMoney ist spezifiziert, aber noch nicht implementiert. D0/D1 sind abgeschlossen; D2 ergänzt den Einstieg. Es gibt keine installierbare App, Pakettoolchain oder CI. Der aktuelle Auftrag erlaubt Dokumentation und Agenten-/Editor-/GitHubhilfen. P1–P11 benötigen einen späteren ausdrücklichen Implementierungsauftrag; diese Anleitung erteilt ihn nicht.
+
+1. [Arbeitsregeln](../AGENTS.md) und [Dokumentationsindex](README.md) lesen, danach die dort vorgeschriebenen Grundlagen: Fachmodell, Architektur, Entscheidungen und Aufgaben.
+2. Den tatsächlichen Nutzerauftrag mit dem [Paketstatus](tasks.md) abgleichen. Vorhandene Änderungen prüfen und bewahren; keinen Branch ungefragt wechseln.
+3. Über die [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) die aufgabenspezifischen Abschnitte und den passenden Projektskill wählen.
+4. Das konkrete Ergebnis, betroffene Verträge und Abnahmekriterien benennen. Bei freigegebenem Implementierungsstart ist [P1.1](p1-foundation.md#p11--versions--und-lizenzprüfung) der erste Schritt.
+5. Erst den begrenzten Arbeitsschritt bearbeiten, dann passende Prüfungen ausführen und die Nachweise im Paket festhalten. Nicht ausgeführte Prüfungen ausdrücklich nennen.
+
+Für den Zusammenhang der Komponenten anschließend das [durchgängige Buchungsbeispiel](reference-household.md#durchgängiger-ablauf-einer-buchung) lesen. Für die vollständige Lesereihenfolge bleibt der Dokumentationsindex maßgeblich.
+
+## Quellen und typische Stolperfallen
+
+| Frage | Verbindliche Quelle |
+| --- | --- |
+| Was soll das Produkt leisten? | [Produkt](product.md) |
+| Wie werden Geld, Budget und Ausgleich berechnet? | [Fachmodell](domain.md) und [Testreferenzen](testing.md) |
+| Welche Daten und Grenzen gibt es? | [Datenmodell](data-model.md), [Architektur](architecture.md) |
+| Was verlässt den Client? | [Verschlüsselung](encryption.md), [Synchronisierung](synchronization.md), [API](api.md) |
+| Was ist entschieden und freigegeben? | [Entscheidungen](decisions.md), [Aufgaben](tasks.md), tatsächlicher Nutzerauftrag |
+
+Finanzbefehle in der API-Dokumentation sind clientinterne Verträge, keine Klartext-HTTP-Endpunkte. Serverbestätigung ersetzt keine fachliche Prüfung durch Clients. Lokaler Speichererfolg und bestätigte Synchronisierung sind getrennte Zustände. Geteilte Ausgaben sind keine zusätzliche Kontobelastung; private Veröffentlichungen benötigen eine bestätigte Kopie. Geplante Befehle, Tests und Hooks sind erst verfügbar, wenn das betreffende Paket sie tatsächlich angelegt und geprüft hat.
+
+## Entscheidung oder Rückfrage?
+
+| Situation | Vorgehen |
+| --- | --- |
+| Lizenz, Plattformen, E2EE, Budgetmethoden oder Rollen bereits entschieden | Festlegungen aus den ADRs anwenden, keine erneute Grundsatzentscheidung verlangen |
+| Versionskombination, Binding oder SDK-Verfügbarkeit noch zu ermitteln | Im zuständigen Paket offizielle Quellen prüfen und Ergebnis mit Datum, Herkunft und Prüfnachweis festhalten |
+| Routineentscheidung innerhalb bestehender Verträge | Selbstständig lösen und relevante Begründung dokumentieren |
+| Widerspruch zwischen verbindlichen Quellen | Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen |
+| Änderung von Produktumfang, Fachregeln oder Vertrauensmodell | Konkrete Änderung und Folgen vorlegen, Nutzerentscheidung einholen und ADR sowie Verträge gemeinsam aktualisieren |
+| Fehlende Plattform oder Signierungsgeheimnisse | Tatsächlich mögliche Arbeit fortsetzen; nur betroffene Prüfung/Distribution als ausstehend ausweisen |
+| Commit, Push oder Veröffentlichung | Bestehende ausdrückliche Autorisierung prüfen; ein Paketabschluss allein erteilt keine Freigabe |
+
+## Abschluss und Übergabe
+
+Ein Arbeitsschritt ist abgeschlossen, wenn sein Ergebnis überprüfbar vorliegt, relevante Verträge konsistent sind und die Abnahme nachgewiesen ist. In [tasks.md](tasks.md) Ergebnis, ausgeführte Prüfungen, Plattform und Einschränkungen eintragen. Für die Übergabe die [vorhandene Vorlage](templates/handoff.md) verwenden und den nächsten konkreten freigegebenen Schritt nennen. Zwischencommits nur bei bestehender ausdrücklicher Autorisierung; niemals fremde Änderungen einschließen. Dieser Dokumentationsauftrag autorisiert keine Commits, Pushes oder Veröffentlichungen.

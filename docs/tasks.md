@@ -2,7 +2,7 @@
 
 ## Auftrag und Statusführung
 
-Aktuelle Freigabe: D0 und die Dokumentations-/Agentenergänzung D1. Beide sind abgeschlossen; P1–P11 bleiben offen und benötigen einen späteren Implementierungsauftrag. Keine App-Abhängigkeiten, App-Toolchain oder Deploymentinfrastruktur in diesem Auftrag anlegen. Temporäre Dokumentationsvalidatoren sind keine Anwendungspakete.
+Aktuelle Freigabe: D0, die Dokumentations-/Agentenergänzung D1 und die Einstiegsergänzung D2. D0/D1/D2 sind abgeschlossen; P1–P11 bleiben offen und benötigen einen späteren Implementierungsauftrag. Keine App-Abhängigkeiten, App-Toolchain oder Deploymentinfrastruktur in diesem Auftrag anlegen. Temporäre Dokumentationsvalidatoren sind keine Anwendungspakete.
 
 Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
 
@@ -27,9 +27,24 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 - Abnahme: P1–P11 bleiben offen, kein Appcode/Remote-Push; Skills validiert, Markdown/JSON/YAML/Links geprüft; keine aktuellen Klartextserverannahmen; Repositorystatus sauber nach Abschlusscommit.
 - Prüfbelege: vier Skills erfolgreich mit dem mitgelieferten Validator geprüft; 29 Markdown-Dateien ohne Markdownlintfehler, 105 relative Links auf vorhandene Ziele, drei JSON-Beispiele/drei JSON-Konfigurationen und sechs YAML-Dateien geprüft. YAML-Metadaten inkl. Aufrufnamen/automatischer Auswahl und GitHubformularfelder gültig. P1–P11 offen, kein Anwendungscode/Remote/Push. E2EE-Zwischencommits `d84846e` und `dfebdcd`; Abschlusscommit enthält Guides und einheitliches Tabellenformat. Crypto-/App-Tests sind spezifiziert, mangels Implementierung noch nicht ausgeführt.
 
+## D2 — Einstieg und Vorbereitung des Implementierungsstarts
+
+- Status: erledigt (2. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag zur Umsetzung des Ergänzungsplans; Dokumentation und Agentenhilfen, keine P1-Implementierung oder Commit-/Pushfreigabe.
+- Voraussetzungen: D0/D1 erledigt.
+- Schritte: kompakten Einstieg, Lesematrix und P1-Teilaufgaben ergänzen; synthetischen Referenzhaushalt und Buchungsablauf dokumentieren; Widerspruchs-/Commitregeln vereinheitlichen; Hook-/CI-Konzept für P1 beschreiben.
+- Ergebnis: verlinkte Startanleitung mit begrenzten Arbeitsschritten und gemeinsamen Beispielen; keine installierten Hooks oder Anwendungspakete.
+- Verträge: Agenten-/Beitragsleitfäden, P1-Struktur, bestehende Fach-/E2EE-Verträge unverändert; ADR-029.
+- Abnahme: Links/Anker und Dokumentstruktur gültig; feste IDs und Centrechnungen konsistent; F-Fälle unabhängig; P1 und Teilaufgaben offen; Freigabe-/Commit-/Widerspruchsregeln konsistent; kein Appcode oder Gitkonfigurationswechsel.
+- Prüfungen: lokale Link-/Ankerprüfung, JSON/YAML soweit Werkzeuge verfügbar, Whitespace-/Strukturprüfung, IDs/Rechnungen und Status-/Vertragsabgleich.
+- Prüfbelege: 32 Markdown-Dateien mit jeweils einem H1, gültigen Tabellen und UTF-8/LF/Abschlussnewline; 161 lokale Links einschließlich Anker auf vorhandene Ziele geprüft; 6 JSON-Blöcke/-Dateien und sechs YAML-Dateien erfolgreich geparst. 15 eindeutige UUIDs sowie R01–R03-Centrechnungen geprüft; P1–P11 und P1.1–P1.6 offen. Whitespaceprüfung und manueller Freigabe-/Commit-/Fach-/E2EE-Abgleich bestanden. Keine Paketinstallation, App-/Crypto-Tests, Hookaktivierung, Gitkonfigurationsänderung, Commits oder Veröffentlichung. Vollständiges Markdownlint nicht ausgeführt, weil kein ausführbares Werkzeug verfügbar war; Struktur-/Tabellen-/Whitespaceprüfungen separat durchgeführt.
+
+- Nächster Schritt: Nach ausdrücklicher Implementierungsfreigabe P1.1 übernehmen; davor kein Anwendungscode.
+
 ## P1 — Projektgrundlage
 
 - Status: offen. Freigabe: erst späterer ausdrücklicher Implementierungsauftrag. Voraussetzung: D0 erledigt.
+- Teilaufgaben: [P1.1–P1.6](p1-foundation.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: stabile kompatible Toolchain prüfen; Workspace einschließlich `packages/crypto`; TS strict/ESM; Fach- und öffentliche EncryptedOperation-/KeyRoster-Verträge trennen; gepflegte libsodium-Bindung und RFC-8785-Bibliothek; Crypto-Testvektoren; leere Apphüllen/Lockfiles/CI. Keine Klartext-FinanzAPI als Zwischenlösung.
 - Ergebnis: reproduzierbare Entwicklungsbasis, ohne bereits vollständige Finanzfunktionen zu behaupten. Rootbefehle `dev:web`, `dev:server`, `dev:desktop`, `typecheck`, `test`, `test:e2e`, `build` dokumentieren.
 - Verträge: Paketabhängigkeiten, gemeinsame Primitive/Versionen, PlatformServices, künftige Storage-Ports.
@@ -139,4 +154,4 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 
 ## Übergabe nach einem Paket
 
-Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen ausführen und nach Nutzerwunsch einen Zwischencommit erstellen. Der Commit enthält zusammengehörige Änderungen und keine fremden/unverwandten Dateien. Für den nächsten Agenten verbleibende Einschränkungen und erstes nächstes Paket nennen. Keine automatische Veröffentlichung durch Abschluss von P11 ohne entsprechenden Auftrag.
+Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen ausführen und nur bei bestehender ausdrücklicher Autorisierung einen Zwischencommit erstellen. Der Commit enthält zusammengehörige Änderungen und keine fremden/unverwandten Dateien. Für den nächsten Agenten verbleibende Einschränkungen und erstes nächstes Paket nennen. Keine automatische Veröffentlichung durch Abschluss von P11 ohne entsprechenden Auftrag.

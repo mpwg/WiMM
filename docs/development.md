@@ -25,3 +25,34 @@ GitHub-Remote ist derzeit nicht konfiguriert. Kein Repository erstellen, pushen 
 ## Späterer Start
 
 Nach ausdrücklicher Implementierungsfreigabe mit P1 beginnen. Stabile Bibliotheks-/SDKversionen aus offiziellen Quellen prüfen, Lockfiles anlegen und konkrete Installations-/Startbefehle hier ergänzen. Finanzen bleiben clientseitig; Backend transportiert Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
+
+Die [P1-Teilaufgaben](p1-foundation.md) legen Reihenfolge und Abnahme fest. Für den ersten Einstieg den [Kurzleitfaden](getting-started.md) nutzen; [Referenzhaushalt](reference-household.md) und [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) helfen bei konkreten Aufgaben.
+
+## Hooks und automatisierte Prüfungen ab P1
+
+Dies ist ein Konzept für P1. Es gibt noch keinen projektspezifischen Hook, keine Aktivierungsroutine und keinen ausführbaren Dokumentationsprüfbefehl. In D2 werden weder Werkzeuge installiert noch Gitkonfigurationen geändert.
+
+### Gemeinsame Prüfwerkzeuge
+
+P1.6 legt einen dokumentierten Projektbefehl für Dokumentationsprüfungen an: Markdown-/Whitespace-/UTF-8-/LF-Prüfung, JSON-/YAML-Parsing mit etablierten Parsern und relative Links einschließlich lokaler Anker. Externe URLs werden nicht bei jedem Commit über das Netz geprüft. Platzhalter in Vorlagen werden als solche berücksichtigt. Dieselben Validatoren laufen lokal, im Hook und in CI; die zu prüfende Datenquelle ist explizit (Git-Index im Hook, Checkout in CI).
+
+### Optionaler pre-commit-Hook
+
+Der Hook prüft kurze Format-/JSON-/YAML-/Linkprüfungen für vorgemerkte Änderungen einschließlich Löschungen und Umbenennungen. Bei entfernten Zielen auch unveränderte Dokumente auf eingehende Verweise prüfen. Inhalte und Linkziele stammen aus dem Git-Index; eine teilweise vorgemerkte Datei darf nicht über die abweichende Arbeitskopie geprüft werden. Dateinamen mit Leerzeichen und Unicode sicher behandeln. Der Hook schreibt keine Dateien um und übernimmt keine Änderungen automatisch.
+
+Aktivierung ist eine bewusste, checkoutlokale Entscheidung. P1.6 dokumentiert die echten Aktivierungs-/Deaktivierungsbefehle sowie den vorherigen hooksPath; eine vorhandene abweichende Konfiguration wird nicht automatisch ersetzt. Keine globalen Git-/Editoränderungen. Ohne Aktivierung bleiben die gemeinsamen Prüfungen manuell und in CI verfügbar. Lokale Hooks können umgangen werden und ersetzen weder Review noch CI. Fehlende Werkzeuge erzeugen eine verständliche Meldung mit dem dokumentierten Einrichtungsschritt, keine automatische Installation.
+
+### CI und Umfang
+
+| Zeitpunkt | Prüfung |
+| --- | --- |
+| Vor Commit, optional | Kurze Dokumentations-/Formatprüfungen auf den vorgemerkten Inhalten |
+| Lokal vor Paketabschluss | Risikogerechte Prüfungen nach testing.md, einschließlich betroffener Fach-/Crypto-/Adapterfälle |
+| CI ab P1 | Dokumentation, Paketgraph, Typprüfung, Build und vorhandene Vertragstests mit gesperrten Abhängigkeiten |
+| CI ab späteren Paketen | Tatsächlich implementierte Fach-, Adapter-, Zugriffs- und E2E-Suites passend zum betroffenen Verhalten |
+
+Umfangreiche Builds, E2E-Tests und Plattformsmokechecks werden nicht bei jedem Commit erzwungen. Vorhandene Rootbefehle und tatsächliche CI-Ergebnisse werden nach Einrichtung hier dokumentiert; eine leere Suite gilt nicht als Verhaltensnachweis. Erforderliche GitHubchecks erst festlegen, wenn sie existieren, funktionieren und Änderungen der Repositoryeinstellungen autorisiert sind.
+
+### Agentenspezifische Automatik
+
+Agenten verwenden dieselben Projektprüfungen wie menschliche Mitwirkende. Laufzeitspezifische Hooks erst bei einem konkreten Bedarf und nach Prüfung der unterstützten Umgebung ergänzen. Keine automatische Commit-, Push-, Veröffentlichungs- oder Taskabschlussfunktion; Hookerfolg entscheidet nicht über fachliche Abnahme oder Autorisierung. Auch spätere Automatik erhält die zentrale Spezifikation und ersetzt sie nicht durch pro Agent kopierte Regeln.

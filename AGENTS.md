@@ -3,7 +3,7 @@
 ## Auftrag und Sprache
 
 - Verwende deutsche Sprache und deutsche Umlaute in Dokumentation, Benutzeroberfläche und verständlichen Meldungen. Technische Bezeichner bleiben englisch.
-- Der aktuelle Auftrag umfasst Dokumentation und Agenten-/Editor-/GitHubhilfen, Pakete D0/D1. Beginne P1 oder Anwendungscode erst nach einem späteren ausdrücklichen Implementierungsauftrag. Das Zitieren des gesamten Plans innerhalb des Dokumentationsauftrags ist keine zusätzliche Freigabe für P1 bis P11.
+- Der aktuelle Auftrag umfasst Dokumentation und Agenten-/Editor-/GitHubhilfen, Pakete D0/D1 sowie die Einstiegsergänzung D2. Beginne P1 oder Anwendungscode erst nach einem späteren ausdrücklichen Implementierungsauftrag. Das Zitieren des gesamten Plans innerhalb des Dokumentationsauftrags ist keine zusätzliche Freigabe für P1 bis P11.
 - Lies vor Arbeit [Dokumentationsindex](docs/README.md), [Fachmodell](docs/domain.md), [Architektur](docs/architecture.md), [Entscheidungen](docs/decisions.md) und [Aufgaben](docs/tasks.md).
 - Aktuell zusätzlich freigegeben: Agenten-Skills/Guides und GitHub-/VS-Codevorlagen. Dies startet keine App-Implementierung. Nutze den [Agentenleitfaden](docs/agent-guide.md) und passende Skills unter `.agents/skills`; weitere Produktregeln nicht in Kopien pro Agent verteilen.
 - Bewahre vorhandene Änderungen anderer Beteiligter. Keine ungefragten Commits, Veröffentlichungen oder Zurücksetzungen.
@@ -25,8 +25,8 @@
 - Bearbeite das erste offene, freigegebene Arbeitspaket mit erfüllten Voraussetzungen. Halte Status, Ergebnis und Prüfbelege in `docs/tasks.md` aktuell.
 - Schließe ein Paket erst ab, wenn seine Abnahmekriterien erfüllt sind. Dokumentiere verbleibende Einschränkungen konkret.
 - Führe risikogerechte Prüfungen gemäß `docs/testing.md` aus. Bestehende Fach-, Adapter- und Zugriffsinvarianten sind verbindlich.
-- Dokumentiere nötige Architekturänderungen in `docs/decisions.md` und passe betroffene Verträge gleichzeitig an.
-- Verwende konsistente Task-/ADR-/Übergabevorlagen aus `docs/templates`; GitHub-PR-Vorlage und Editorformatregeln gelten ebenfalls. Nach abgeschlossenen Abschnitten Zwischencommits; keine ungefragten Pushes/Merges. Neue Commitnachrichten nach Conventional Commits mit deutschem Inhalt.
+- Dokumentiere nötige Architekturänderungen in `docs/decisions.md` und passe betroffene Verträge gleichzeitig an. Bei Widersprüchen zwischen verbindlichen Quellen benenne den Widerspruch und korrigiere betroffene Quellen gemeinsam vor abhängiger Implementierung; bei unklarer Produktabsicht rückfragen.
+- Verwende konsistente Task-/ADR-/Übergabevorlagen aus `docs/templates`; GitHub-PR-Vorlage und Editorformatregeln gelten ebenfalls. Nach abgeschlossenen Abschnitten Zwischencommits nur bei bestehender ausdrücklicher Autorisierung; keine ungefragten Pushes/Merges. Neue Commitnachrichten nach Conventional Commits mit deutschem Inhalt.
 - Übernimm Actual-Code nur nach Herkunfts- und Lizenzprüfung. Halte Herkunftscommit, lokale Änderungen und ursprüngliche Hinweise fest.
 - Projektlizenz ist AGPL-3.0-or-later. Verwende diesen SPDX-Bezeichner für eigene Pakete und Quelldateien; erhalte Fremdlizenzen. Releases und Serveroberflächen müssen den zugehörigen Quellcode anbieten. Keine Umstellung auf MIT.
 - Verwende etablierte Parser und Standards; keine eigene Kryptografie, XML- oder CSV-Parser.

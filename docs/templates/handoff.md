@@ -8,7 +8,7 @@ Diese Vorlage im Paket-/PR-Kontext ausfüllen. Die letzte Nutzerantwort bleibt k
 - Geänderte Verträge: [relevante Docs/Schemas/ADR oder keine].
 - Geprüft: [Testgruppe/Befehl, Plattform, Ergebnis und gegebenenfalls Referenzfall].
 - Nicht geprüft: [tatsächlich fehlende Prüfung und Grund, sonst keine].
-- Commits: [Commit-IDs der zusammengehörigen Zwischenstände].
+- Commits: [autorisierte Commit-IDs der zusammengehörigen Zwischenstände; sonst keine erstellt].
 - Einschränkungen: [konkrete offene Probleme, keine hypothetische Warnliste].
 - Nächster Schritt: [erstes offenes freigegebenes Paket; ohne Freigabe nur benennen].
 
