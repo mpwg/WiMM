@@ -51,7 +51,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 - Verträge: Paketabhängigkeiten, gemeinsame Primitive/Versionen, PlatformServices, künftige Storage-Ports.
 - Abnahme: frischer Checkout installierbar, Typ-/Buildprüfungen laufen; Web-/Tauri-Hülle startet; Backendhealth liefert korrekte Zustände. Versionskombination und getestete Betriebssysteme festgehalten. AGPL-Metadaten, Herkunftsregistergrundlage und Sourcehinweis angelegt.
 - Prüfungen: CI lokal reproduzieren, Paketgraph auf verbotene Imports prüfen, Buildsmokechecks; keine Secrets erforderlich.
-- Prüfbelege: P1.1: [Versions- und Lizenzbasis](technology-baseline.md) am 2. Oktober 2026 anhand offizieller Release-, Registry- und Tauri-Quellen geprüft. P1.2: Workspace, Lockfile und [OrbStack-Dev-Container](../.devcontainer/devcontainer.json) angelegt; Installation mit unverändertem Lockfile, TypeScript und Paketgraph im Container geprüft. Ein absichtlich verbotener Import wurde erkannt und entfernt. Keine App, Finanzfunktion, Server-API oder Tauri-App gestartet.
+- Prüfbelege: P1.1: [Versions- und Lizenzbasis](technology-baseline.md) am 2. Oktober 2026 anhand offizieller Release-, Registry- und Tauri-Quellen geprüft. P1.2: Workspace, Lockfile und [OrbStack-Dev-Container](../.devcontainer/devcontainer.json) angelegt; Installation mit unverändertem Lockfile, TypeScript und Paketgraph im Container geprüft. Die installierte VS-Code-Dev-Containers-Erweiterung 0.469.0 hat denselben Container einschließlich `postCreateCommand` erfolgreich gestartet. Ein absichtlich verbotener Import wurde erkannt und entfernt. Keine App, Finanzfunktion, Server-API oder Tauri-App gestartet.
 
 ## P2 — Fachkern
 

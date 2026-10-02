@@ -2,7 +2,7 @@
 
 ## Status und Auftrag
 
-D0 ist die Spezifikationsübergabe, D1 ergänzt verpflichtende E2EE und Agenten-/GitHub-/Editorhilfen. Beide sind abgeschlossen. D2 ergänzt Einstieg, Referenzhaushalt und P1-Teilaufgaben einschließlich Hook-Konzept. P1.1 ist abgeschlossen; P1 insgesamt ist in Arbeit, ohne angelegten Anwendungscode. P1.2 bis P11 bleiben offen. Schemata und JSON-Beispiele sind Verträge für zukünftigen Code, keine bereits vorhandenen APIs.
+D0 ist die Spezifikationsübergabe, D1 ergänzt verpflichtende E2EE und Agenten-/GitHub-/Editorhilfen. Beide sind abgeschlossen. D2 ergänzt Einstieg, Referenzhaushalt und P1-Teilaufgaben einschließlich Hook-Konzept. P1.1 und P1.2 sind abgeschlossen; P1 insgesamt ist in Arbeit, ohne angelegte Anwendung. P1.3 bis P11 bleiben offen. Schemata und JSON-Beispiele sind Verträge für zukünftigen Code, keine bereits vorhandenen APIs.
 
 Für den ersten Überblick: [Einstieg](getting-started.md). Für den laufenden Implementierungsstart: [P1-Teilaufgaben](p1-foundation.md) und die [Versions- und Lizenzbasis](technology-baseline.md). Der [Referenzhaushalt](reference-household.md) verbindet Fachbeispiele mit dem Buchungs-/Syncablauf; er ist kein importierbarer Snapshot.
 

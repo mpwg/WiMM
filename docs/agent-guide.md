@@ -4,7 +4,7 @@
 
 [AGENTS.md](../AGENTS.md) enthält globale Regeln. [Dokumentationsindex](README.md) führt zur Fachspezifikation; [Aufgaben](tasks.md) enthalten Paketstatus; [Entscheidungen](decisions.md) begründen Defaults. Diese Quellen werden gemeinsam gepflegt. Issues und Skills sind Arbeitsmittel, keine abweichenden Fachspezifikationen.
 
-Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlagen. Mit Nutzerauftrag vom 2. Oktober 2026 ist zusätzlich P1.1 abgeschlossen; P1.2–P11 bleiben offen. Zwischencommits nach abgeschlossenen Abschnitten benötigen eine ausdrückliche Autorisierung; der laufende Auftrag autorisiert sie. Pushes und Veröffentlichungen bleiben ausgeschlossen.
+Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlagen. Mit Nutzerauftrag vom 2. Oktober 2026 sind zusätzlich P1.1 und P1.2 abgeschlossen; P1.3–P11 bleiben offen. Zwischencommits nach abgeschlossenen Abschnitten benötigen eine ausdrückliche Autorisierung; der laufende Auftrag autorisiert sie. Pushes und Veröffentlichungen bleiben ausgeschlossen.
 
 Für neue Mitwirkende: [kompakter Einstieg](getting-started.md), [P1-Teilaufgaben](p1-foundation.md) und [Referenzhaushalt mit durchgängigem Ablauf](reference-household.md). Die [Klärungsmatrix](getting-started.md#entscheidung-oder-rückfrage) unterscheidet verbindliche Festlegungen, technische Ermittlungen und Nutzerentscheidungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
 
