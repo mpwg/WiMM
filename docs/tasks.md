@@ -44,14 +44,14 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P1 — Projektgrundlage
 
 - Status: in Arbeit. Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn mit P1.1. Voraussetzung: D0 erledigt.
-- Fortschritt: P1.1 und P1.2 sind erledigt; [P1.3](p1-foundation.md#p13--gemeinsame-verträge-und-ports) ist der nächste freigegebene Schritt.
+- Fortschritt: P1.1 bis P1.3 sind erledigt; [P1.4](p1-foundation.md#p14--crypto-binding-und-testgrundlage) ist der nächste freigegebene Schritt.
 - Teilaufgaben: [P1.1–P1.6](p1-foundation.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: stabile kompatible Toolchain prüfen; Workspace einschließlich `packages/crypto`; TS strict/ESM; Fach- und öffentliche EncryptedOperation-/KeyRoster-Verträge trennen; gepflegte libsodium-Bindung und RFC-8785-Bibliothek; Crypto-Testvektoren; leere Apphüllen/Lockfiles/CI. Keine Klartext-FinanzAPI als Zwischenlösung.
 - Ergebnis: reproduzierbare Entwicklungsbasis, ohne bereits vollständige Finanzfunktionen zu behaupten. Rootbefehle `dev:web`, `dev:server`, `dev:desktop`, `typecheck`, `test`, `test:e2e`, `build` dokumentieren.
 - Verträge: Paketabhängigkeiten, gemeinsame Primitive/Versionen, PlatformServices, künftige Storage-Ports.
 - Abnahme: frischer Checkout installierbar, Typ-/Buildprüfungen laufen; Web-/Tauri-Hülle startet; Backendhealth liefert korrekte Zustände. Versionskombination und getestete Betriebssysteme festgehalten. AGPL-Metadaten, Herkunftsregistergrundlage und Sourcehinweis angelegt.
 - Prüfungen: CI lokal reproduzieren, Paketgraph auf verbotene Imports prüfen, Buildsmokechecks; keine Secrets erforderlich.
-- Prüfbelege: P1.1: [Versions- und Lizenzbasis](technology-baseline.md) am 2. Oktober 2026 anhand offizieller Release-, Registry- und Tauri-Quellen geprüft. P1.2: Workspace, Lockfile und [OrbStack-Dev-Container](../.devcontainer/devcontainer.json) angelegt; Installation mit unverändertem Lockfile, TypeScript und Paketgraph im Container geprüft. Die installierte VS-Code-Dev-Containers-Erweiterung 0.469.0 hat denselben Container einschließlich `postCreateCommand` erfolgreich gestartet. Ein absichtlich verbotener Import wurde erkannt und entfernt. Keine App, Finanzfunktion, Server-API oder Tauri-App gestartet.
+- Prüfbelege: P1.1: [Versions- und Lizenzbasis](technology-baseline.md) am 2. Oktober 2026 anhand offizieller Release-, Registry- und Tauri-Quellen geprüft. P1.2: Workspace, Lockfile und [OrbStack-Dev-Container](../.devcontainer/devcontainer.json) angelegt; Installation mit unverändertem Lockfile, TypeScript und Paketgraph im Container geprüft. Die installierte VS-Code-Dev-Containers-Erweiterung 0.469.0 hat denselben Container einschließlich `postCreateCommand` erfolgreich gestartet. P1.3: öffentliche Zod-Vertragshüllen, Fehler- und Porttypen angelegt; vier gezielte Vertragstests sowie TypeScript und Paketgraph im Container bestanden. Ein absichtlich verbotener Import wurde erkannt und entfernt. Keine App, Finanzfunktion, Server-API oder Tauri-App gestartet.
 
 ## P2 — Fachkern
 

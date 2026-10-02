@@ -30,15 +30,15 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 
 ## P1.3 — Gemeinsame Verträge und Ports
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P1.
+- Status: erledigt (2. Oktober 2026).
+- Freigabe: Nutzerauftrag vom 2. Oktober 2026 für P1.3.
 - Voraussetzungen: P1.2 erledigt.
 - Schritte: gemeinsame Primitive, Versionen und Fehlergrundlage in contracts anlegen; öffentliche EncryptedOperation-/KeyRoster-Hüllen von Finanzschemas trennen; PlatformServices und zukünftige Storage-Ports anhand der bestehenden Spezifikation typisieren.
 - Ergebnis: validierbare Vertragsgrundlage und Ports ohne vorgetäuschte Speicher-/Syncimplementierung.
 - Verträge: [Datenmodell](data-model.md), [API](api.md), Architektur und E2EE; vollständige Fachhandler entstehen in P2.
 - Abnahme: bekannte gültige Eingaben akzeptiert, unsichere Zahlen und unbekannte Versionen abgewiesen; öffentliche Hüllen deklarieren keine Finanzklartextfelder; Apps können Ports ohne Plattformabhängigkeit im Fachkern referenzieren.
 - Prüfungen: gezielte positive/negative Schematests und Typ-/Importgrenzenprüfung; neue Vertragsschemas mit den Dokumenten abgleichen.
-- Prüfbelege: noch keine.
+- Prüfbelege: `@wimm/contracts` enthält Zod-Schemas für gemeinsame Primitive, Fehler, öffentliche `EncryptedOperation`- und signierte `KeyRoster`-Hüllen sowie typisierte `StorageAdapter`-/`PlatformServices`-Ports. Die Hüllen sind strikt und enthalten keinen Finanzpayload. Im OrbStack-Dev-Container bestanden `pnpm test:contracts` mit vier gezielten Positiv-/Negativfällen (gültige Hüllen, unsichere Zahlen, unbekannte Protokollversion, Finanzklartext, Revisions- und Rosterfolgefehler), `pnpm typecheck` und `pnpm check:package-graph`. Ein temporärer verbotener Import `@wimm/contracts` → `@wimm/domain` wurde abgewiesen und danach entfernt. Keine Crypto-Bindung, Verschlüsselung, Speicher-, Sync- oder Appimplementierung ausgeführt.
 
 ## P1.4 — Crypto-Binding und Testgrundlage
 

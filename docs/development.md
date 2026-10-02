@@ -2,7 +2,7 @@
 
 ## Stand
 
-Dieses Repository enthält P1.2-Workspace, Agentenhilfen und Editor-/GitHubvorlagen, aber noch keine installierbare App, Entwicklungsserver oder CI-Workflows. `typecheck` und `check:package-graph` sind vorhanden; `dev:web`, `dev:server`, `dev:desktop`, `test` und `build` werden erst in den passenden P1-Teilaufgaben angelegt. Nicht so tun, als ließen sie sich bereits ausführen.
+Dieses Repository enthält P1.3-Workspace, öffentliche Verträge, Agentenhilfen und Editor-/GitHubvorlagen, aber noch keine installierbare App, Entwicklungsserver oder CI-Workflows. `typecheck`, `check:package-graph` und `test:contracts` sind vorhanden; `dev:web`, `dev:server`, `dev:desktop`, `test` und `build` werden erst in den passenden P1-Teilaufgaben angelegt. Nicht so tun, als ließen sie sich bereits ausführen.
 
 ## VS-Code-Arbeitsbereich
 
@@ -26,7 +26,7 @@ Ein GitHub-Remote ist konfiguriert. Vor jedem Push muss die tatsächliche `git r
 
 ## Nächster Implementierungsschritt
 
-P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft; Details stehen in der [Versions- und Lizenzbasis](technology-baseline.md). P1.2 legt darauf aufbauend Workspace, exakte Lockfiles und konkrete Installations-/Prüfbefehle an. Im Dev Container `pnpm install --frozen-lockfile`, `pnpm typecheck` und `pnpm check:package-graph` verwenden. Finanzen bleiben clientseitig; Backend transportiert Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
+P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft; Details stehen in der [Versions- und Lizenzbasis](technology-baseline.md). P1.2 und P1.3 legen darauf aufbauend Workspace, exakte Lockfiles, öffentliche Hüllen und konkrete Installations-/Prüfbefehle an. Im Dev Container `pnpm install --frozen-lockfile`, `pnpm test:contracts`, `pnpm typecheck` und `pnpm check:package-graph` verwenden. Finanzen bleiben clientseitig; Backend transportiert Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
 
 Die [P1-Teilaufgaben](p1-foundation.md) legen Reihenfolge und Abnahme fest. Für den ersten Einstieg den [Kurzleitfaden](getting-started.md) nutzen; [Referenzhaushalt](reference-household.md) und [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) helfen bei konkreten Aufgaben.
 
