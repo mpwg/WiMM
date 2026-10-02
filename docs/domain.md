@@ -2,7 +2,7 @@
 
 ## Begriffe und Invarianten
 
-Ein Finanzbereich (`Space`) ist die Einheit für Konten, Kategorien, Budgets, Berechtigungen und Synchronisierung. Private Bereiche gehören einer Person, gemeinsame Bereiche einem Haushalt. Ein Haushalt besitzt genau einen gemeinsamen Bereich. Ein Benutzer kann Mitglied mehrerer Haushalte sein; ein lokaler Teilnehmer benötigt kein Benutzerkonto.
+Ein Finanzbereich (`Space`) ist die Einheit für Konten, Kategorien, Budgets, Berechtigungen und Synchronisierung. Private Bereiche gehören einer Person, gemeinsame Bereiche einem Haushalt. Ein Haushalt besitzt genau einen gemeinsamen Bereich. Eine externe Serveridentität kann Mitglied mehrerer Haushalte sein; lokale fachliche Teilnehmer benötigen keine Anmeldung und sind keine Benutzerkonten.
 
 Kontostände sind die Summe nicht gelöschter Buchungen einschließlich Anfangsbestand. Berichte, Budgets und Ausgleich sind reproduzierbare Projektionen; sie dürfen nicht als zusätzliche Buchungen zurückgeschrieben werden. Es gibt keine automatische Übernahme privater Daten in gemeinsame Berechnungen.
 

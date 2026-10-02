@@ -23,7 +23,7 @@ Quellen: [XChaCha20-Poly1305](https://libsodium.gitbook.io/doc/secret-key_crypto
 
 Ein lokales Profil erzeugt einen zufälligen Tresorschlüssel `V`, ein unabhängiges Ed25519-Identitätsschlüsselpaar und ein X25519-Schlüsselpaar. Der mit V verschlüsselte `UserVault` enthält private Identitätsschlüssel und Bereichsschlüsselgeschichte. Öffentliche Identitätsschlüssel sind nach Freigabe auf dem Server verfügbar. Anmeldung/OIDC allein entschlüsseln diesen Tresor nicht.
 
-V wird getrennt unter einer vom Benutzer gewählten Entsperrpassphrase und einem zufälligen 32-Byte-Rettungsschlüssel verpackt. Loginpasswort ist unabhängig; die Entsperrpassphrase wird nie an den Server gesendet. Rettungscode ist base64url des 32-Byte-Geheimnisses plus Anzeige-/Prüfsummenformat. Der Benutzer muss seine Sicherung bestätigen, bevor ein Bereich servergebunden wird. Mit dem Code und dem verschlüsselten Tresor bzw. dessen Sicherung lassen sich Schlüssel auf einem vertrauenswürdigen Client wiederherstellen.
+V wird getrennt unter einer vom Benutzer gewählten Entsperrpassphrase und einem zufälligen 32-Byte-Rettungsschlüssel verpackt. Eine externe Serveranmeldung ist unabhängig; die Entsperrpassphrase wird nie an den Server oder Identitätsanbieter gesendet. Rettungscode ist base64url des 32-Byte-Geheimnisses plus Anzeige-/Prüfsummenformat. Der Benutzer muss seine Sicherung bestätigen, bevor ein Bereich servergebunden wird. Mit dem Code und dem verschlüsselten Tresor bzw. dessen Sicherung lassen sich Schlüssel auf einem vertrauenswürdigen Client wiederherstellen.
 
 Jeder Finanzbereich besitzt einen unabhängigen zufälligen Bereichsschlüssel K pro `keyVersion`. Private K werden ausschließlich für die eigene Identität verpackt. Gemeinsame K werden separat für jedes ausdrücklich bestätigte Mitglied verpackt; Haushaltsverwalter kennen deshalb niemals private K anderer Mitglieder. Keine deterministische Ableitung aller Familienbereiche aus einem gemeinsamen Servergeheimnis.
 
@@ -33,7 +33,7 @@ Ein neues Gerät erzeugt eigene Ed25519-Geräteschlüssel. Aufnahme erfordert en
 
 Nach Aufnahme entsperrt der Client seinen Tresor lokal. Desktop speichert V nur im Betriebssystem-Schlüsselspeicher nach ausdrücklicher Gerätefreigabe, sonst flüchtig. PWA speichert nur verschlüsselte Tresore und verlangt nach Neustart Entsperrung; kein persistierter Klartext-V oder scheinbar sicherer LocalStorage-Schlüssel. Identitäts-/Bereichsschlüssel verlassen den Client nur in verschlüsselten Tresoren/Schlüsselpaketen. Sperren/Logout entfernt Schlüssel aus dem aktiven Speicher so weit die Laufzeit es erlaubt; geladene Finanzansichten werden geschlossen.
 
-Offline-Lokalbetrieb besitzt dieselbe Schlüsselhierarchie und verschlüsselte Exporte, aber keinen Pflichtlogin. Bereits lokal entschlüsselte Finanzdaten/Indizes dürfen im vertrauenswürdigen OS-/Browserprofil liegen; E2EE ist keine Zusage vollständig verschlüsselter lokaler Datenbanken. Der UI-Sperrbildschirm ersetzt daher keinen Schutz gegen direkten Dateizugriff. Dieser Unterschied wird verständlich genannt.
+Standalone- und Offline-Lokalbetrieb besitzen dieselbe Schlüsselhierarchie und verschlüsselte Exporte, aber weder Serveranmeldung noch lokale Benutzerverwaltung. Bereits lokal entschlüsselte Finanzdaten/Indizes dürfen im vertrauenswürdigen OS-/Browserprofil liegen; E2EE ist keine Zusage vollständig verschlüsselter lokaler Datenbanken. Der UI-Sperrbildschirm ersetzt daher keinen Schutz gegen direkten Dateizugriff. Dieser Unterschied wird verständlich genannt.
 
 ## Familienbeitritt und Identitätsprüfung
 
@@ -63,7 +63,7 @@ Server prüft Header, Sitzung, bekannte Zertifikate/signiertes Manifest, Größe
 
 Snapshots sind clientseitig verschlüsselt und signiert; Header bindet Bereich, Epoche, K-Version, Rosterhash, snapshotCursor und Aggregathashes. Headerrevisionen müssen mit entschlüsseltem Inhalt übereinstimmen. Serverrestore kann nur Container-/Signatur-/CAS-Prüfungen durchführen. Finanzprüfung und Neubildung von Projektionen erfolgen ausschließlich auf Client.
 
-Ein Passwort-/OIDC-Reset stellt keine Finanzschlüssel wieder her. Bei Verlust aller entsperrten Geräte, Entsperrpassphrase und Rettungscode sind private Daten nicht wiederherstellbar. Ein verbleibender Haushaltsadmin kann nur gemeinsame Bereichsschlüssel erneut freigeben. Login-Recovery und Finanz-Recovery haben getrennte UI und Tests.
+Eine Änderung, Sperrung oder Wiederherstellung der externen Anmeldung stellt keine Finanzschlüssel wieder her. Bei Verlust aller entsperrten Geräte, Entsperrpassphrase und Rettungscode sind private Daten nicht wiederherstellbar. Ein verbleibender Haushaltsadmin kann nur gemeinsame Bereichsschlüssel erneut freigeben. Login-Recovery und Finanz-Recovery haben getrennte UI und Tests.
 
 Nutzerexporte/Entwurfsexporte sind standardmäßig verpflichtend verschlüsselte Container mit separater Exportpassphrase; Format siehe [Dateiformate](formats.md). Sie enthalten Finanzdaten, aber weder Login-/Device-Tokens noch fremde private Schlüssel. Serverbackups enthalten ausschließlich vorhandene Chiffrate und öffentliche Auth-/Rollenmetadaten; ein Betreiber kann daraus allein keine Finanzen wiederherstellen.
 

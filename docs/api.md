@@ -4,7 +4,7 @@
 
 Basis `/api/v1`, UTF-8 JSON, camelCase, keine stillschweigende Typkonvertierung. IDs sind UUIDs. Finanzpayloads einschließlich Geld/Datum ausschließlich Ende-zu-Ende-verschlüsselt; ihre fachlichen Typen gelten auf Clients, nicht als Klartext-HTTP-Body. Listen: `items`, `nextCursor`, `hasMore`, Standardgröße 50/maximal 200 außer Sync-Pull. Verwaltungsänderungen verlangen erwartete Revision bzw. signierte Rosterfolgeversion. [E2EE-Vertrag](encryption.md) ist verbindlich.
 
-Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein generisches ORM-Objekt darf Sessionhashes oder private Referenzen offenlegen. Sessionpflicht gilt außer Health, öffentlichen Metadaten und den jeweils bezeichneten Einrichtungs-/Anmeldewegen. Mutationen mit Cookie-Sitzung benötigen CSRF-Token und Originprüfung.
+Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein generisches ORM-Objekt darf Sessionhashes oder private Referenzen offenlegen. Sessionpflicht gilt außer Health, öffentlichen Metadaten und den ausdrücklich bezeichneten externen Authentifizierungswegen. Mutationen mit Cookie-Sitzung benötigen CSRF-Token und Originprüfung.
 
 ## Endpunkte
 
@@ -12,21 +12,17 @@ Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein ge
 | --- | --- | --- |
 | GET `/health/live` | keine | Liveness ohne Datenbankdetails, öffentlich |
 | GET `/health/ready` | keine | 200 bereit oder 503; keine persönlichen Daten |
-| GET `/meta` | keine | App-/Protokollversion, setupRequired, OIDC verfügbar, Lizenz, Source-URL |
-| POST `/setup` | einmaliges Setupgeheimnis, displayName, email, password | Erstbenutzer und Session; nur vor Bootstrap, atomar |
-| POST `/auth/login` | email, password | Cookie, Benutzer und CSRF-Token; Rate-Limit, generischer Fehler |
+| GET `/meta` | keine | App-/Protokollversion, externe Anmeldung verfügbar, Lizenz, Source-URL |
 | POST `/auth/logout` | Session/CSRF | 204 und widerrufene Sitzung |
-| GET `/auth/me` | Session | eigener Benutzer, aktive Haushaltsmitgliedschaften, CSRF-Token |
-| POST `/auth/password/change` | altes/neues Passwort | 204, andere eigene Sessions widerrufen |
-| POST `/auth/account/delete` | frische Anmeldung, confirm=true | eigener privater Bereich/Sessions entfernen; letzte admin-Rollen vorher übergeben |
+| GET `/auth/me` | Session | eigene externe Identität, aktive Haushaltsmitgliedschaften, CSRF-Token |
 | GET `/auth/oidc/start` | erlaubtes Rückkehrziel, optional Invite-Kontext | Redirect; State/Nonce/PKCE serverseitig kurzzeitig |
-| GET `/auth/oidc/callback` | code, state | OIDC-Prüfung, Session; Kontoanlage nur über Einladung |
+| GET `/auth/oidc/callback` | code, state | OIDC-Prüfung, Server-Session und Zuordnung der providerseitigen issuer/subject-Identität; Zulassung gemäß Serverkonfiguration |
 | POST `/auth/device/start` | deviceName, publicClientNonce | deviceCode, userCode, Bestätigungs-URL, expiresIn=600, interval=5 |
 | POST `/auth/device/approve` | userCode, Session/CSRF | einmalige browserseitige Bestätigung für eingeloggte Person |
 | POST `/auth/device/poll` | deviceCode, publicClientNonce | pending/denied/expired oder einmaliges Device-Token |
 | GET/DELETE `/auth/sessions[/:id]` | eigene Session-ID | eigene Sitzungen auflisten/widerrufen |
-| POST `/crypto/identity` | eigene öffentliche Identitätsschlüssel, Besitznachweis | Erstregistrierung; Austausch nur nach alter Identitätssignatur bzw. ausdrücklich getrenntem Kontoneustart ohne Zugriff auf alte Finanzen |
-| GET/PUT `/crypto/vault` | verschlüsselter UserVault, Keywrap-/KDFmetadaten, erwartete Vaultversion | eigener Tresor ausschließlich als Chiffrat; Loginreset liefert keine Entschlüsselung |
+| POST `/crypto/identity` | eigene öffentliche Identitätsschlüssel, Besitznachweis | Erstregistrierung öffentlicher Identitätsschlüssel; Austausch nur nach alter Identitätssignatur bzw. ausdrücklich getrenntem externen Identitätswechsel ohne Zugriff auf alte Finanzen |
+| GET/PUT `/crypto/vault` | verschlüsselter UserVault, Keywrap-/KDFmetadaten, erwartete Vaultversion | eigener Tresor ausschließlich als Chiffrat; externe Anmeldung liefert keine Entschlüsselung |
 | GET/POST `/crypto/devices` | öffentliche Geräteschlüssel und Identitätszertifikat | eigene zertifizierte Geräte; Anmeldung plus gültiges Zertifikat, keine App-/Binaryattestierung |
 | POST `/crypto/devices/:id/revoke` | signierter Identitätswiderruf | eigenes Gerät widerrufen; möglicher Schlüsselabfluss zusätzlich Bereichsrotation |
 | GET `/spaces/:id/keys` | Session | signierte Rosterkette/KeyGrants ausschließlich für eigene berechtigte Identität |
@@ -37,7 +33,7 @@ Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein ge
 | POST `/spaces/from-snapshot` | Typ, verschlüsselter signierter Snapshot/Genesis/KeyGrants, Upload-ID, adoptEmptyPrivate? | neues servergebundenes Chiffrat; Name/Teilnehmer innerhalb verschlüsselter Daten |
 | GET `/spaces/:id/snapshot` | optional Epoche | verschlüsselter signierter Snapshot + gebundener snapshotCursor; berechtigte Leser mit eigenem KeyGrant |
 | POST `/spaces/:id/restore` | verschlüsselter signierter Snapshot, expectedEpoch, neue signierte Epoche, confirm=true | owner/admin; Server prüft keine Fachklartexte |
-| DELETE `/spaces/:id` | expectedRevision, confirm=true | Haushalts-admin/owner; privater Bereich nicht allein löschbar, dafür Konto-/Datenlöschablauf |
+| DELETE `/spaces/:id` | expectedRevision, confirm=true | Haushalts-admin/owner; privater Bereich nicht allein löschbar, dafür eigener Datenlöschablauf |
 | POST `/spaces/:id/sync/push` | EncryptedOperation[] | Receipts/CAS-Stände und Chiffrate; member/admin oder privater owner mit gültiger Nachrichtensignatur |
 | GET `/spaces/:id/sync/pull` | epoch, cursor, limit bis 500 | verschlüsselte Changes/nextCursor/hasMore; aktive Leser |
 | POST `/households` | verschlüsselter Initialsnapshot, signierte Genesis/Grants | Verwaltungs-ID, verschlüsselter Space und admin-Membership; keinerlei Finanzklartext |
@@ -46,11 +42,11 @@ Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein ge
 | PATCH/DELETE `/households/:id/memberships/:membershipId` | signierte Rosteränderung, expectedRevision; bei Entfernung neuer verschlüsselter Snapshot und Grants | admin; atomare Rotation bei Entfernung, letzter admin bleibt |
 | POST `/households/:id/invitations` | role, optionale E-Mail-Bindung | Link/Code einmal angezeigt; admin |
 | DELETE `/households/:id/invitations/:invitationId` | expectedRevision | admin, widerrufen |
-| POST `/invitations/accept` | Code, bei neuem Konto email/displayName/password | atomare Konto-/pending_key_grant-Mitgliedschaft; Finanzzugriff erst nach Fingerprint-/Schlüsselfreigabe |
-| POST `/households/:id/participants/:participantId/link` | Zielbenutzer aus aktiver Membership, erwartete Revision | admin bereitet Zuordnung vor; noch keine wirksame Änderung von userId |
-| POST `/households/:id/participants/:participantId/link/accept` | eigener Benutzer, erwartete Revision | eingeladener Benutzer bestätigt vorbereitete eigene Zuordnung |
+| POST `/invitations/accept` | Code und externe Sitzung | atomare Zuordnung der bereits extern authentifizierten Identität als pending_key_grant-Mitglied; Finanzzugriff erst nach Fingerprint-/Schlüsselfreigabe |
+| POST `/households/:id/participants/:participantId/link` | Zielidentität aus aktiver Membership, erwartete Revision | admin bereitet Zuordnung vor; noch keine wirksame Änderung der Identitätszuordnung |
+| POST `/households/:id/participants/:participantId/link/accept` | eigene externe Identität, erwartete Revision | eingeladener Benutzer bestätigt vorbereitete eigene Zuordnung |
 
-Ein Finanzsnapshot ersetzt keine Benutzer-/Rollenverwaltung. Das Löschen eines Kontos/Haushalts benötigt einen ausdrücklich bestätigten Verwaltungsablauf; Rollen können nicht durch importierte Finanzdateien erlangt werden. OIDC-Verknüpfung bestehender Konten erfordert eine bestehende Sitzung und frische OIDC-Authentifizierung. Ein neuer User erhält einen leeren privaten Initialbereich. `adoptEmptyPrivate=true` nutzt ausschließlich diesen nachweislich leeren eigenen Bereich und aktualisiert seine Epoche; bei bestehenden Finanzdaten ist expliziter Restore mit Backup nötig, nie automatisches Zusammenführen.
+Ein Finanzsnapshot ersetzt keine externe Identitäts- oder Rollenverwaltung. Das Löschen eines Kontos/Haushalts benötigt einen ausdrücklich bestätigten Verwaltungsablauf; Rollen können nicht durch importierte Finanzdateien erlangt werden. Eine neue externe Identität erhält nach erfolgreicher Provideranmeldung einen leeren privaten Initialbereich. Kontoanlage, Sperrung und Passwortverwaltung bleiben vollständig beim externen Identitätsanbieter; Finanz- und Rollenrechte werden nicht aus importierten Snapshots abgeleitet. `adoptEmptyPrivate=true` nutzt ausschließlich diesen nachweislich leeren eigenen Bereich und aktualisiert seine Epoche; bei bestehenden Finanzdaten ist expliziter Restore mit Backup nötig, nie automatisches Zusammenführen.
 
 ## Fachbefehle
 
@@ -65,7 +61,7 @@ Die folgende Tabelle beschreibt ausschließlich clientintern entschlüsselte Fac
 | `transfer.save`, `transfer.delete` | Transfer samt beiden Seiten, alle zugehörigen Revisionen |
 | `reconciliation.confirm`, `reconciliation.unlock` | Kontoauszug und IDs bzw. Abgleich-ID und betroffene Buchungen |
 | `budget.method.set`, `budget.month.save`, `budget.move` | Methode/Monat, volle Zeilen bzw. month/from/to/amount |
-| `participant.save`, `participant.archive` | Teilnehmer ohne Rechtefelder; Benutzerlink separat Verwaltungs-API |
+| `participant.save`, `participant.archive` | Teilnehmer ohne Rechtefelder; Zuordnung zur externen Identität separat Verwaltungs-API |
 | `allocationPolicy.save` | Gültigkeitsdatum und explizite Grundlagen |
 | `sharedExpense.save`, `sharedExpense.delete` | Ausgabe samt eingefrorenen Anteilen; private Felder verboten |
 | `expenseRefund.save`, `expenseRefund.delete` | Rückerstattung samt öffentlicher Zahlung/Zuordnung |

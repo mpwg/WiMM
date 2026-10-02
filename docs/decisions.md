@@ -14,7 +14,7 @@ Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Eintr
 | ADR-008 | Ursprünglich mitlesender Server ohne E2EE | Ersetzt durch ADR-025 auf neue Nutzeranweisung | Nur historische Entscheidung; darf nicht implementiert werden |
 | ADR-009 | Flexible Verteilung und nur freiwillige private Angaben | Nutzerentscheidung | Policygrundlagen ausdrücklich angeben; keine Einkommensableitung aus Privatbereich |
 | ADR-010 | Mehrere Familien pro Server, mehrere Haushalte pro Person | Nutzerentscheidung | Mitgliedschaft unabhängig vom Privatbereich; kein globaler Familienadminzugriff |
-| ADR-011 | admin/member/viewer; eigene Konten plus optional OIDC | Nutzerentscheidung | Keine öffentliche Registrierung, getrennte Betreiberrolle, Einladungsannahme |
+| ADR-011 | admin/member/viewer; eigene Konten plus optional OIDC | Durch ADR-030 ersetzt | Historischer Authentifizierungsdefault; nur Rollen-/Einladungsregeln bleiben gültig |
 | ADR-012 | Projektlizenz AGPL-3.0-or-later | Nachträgliche Nutzerentscheidung, ersetzt ursprünglichen MIT-Default | Eigene Dokumentation/Code AGPL; Fremdhinweise erhalten, passender Quellcode in Releases und Serveroberfläche |
 | ADR-013 | Nur D0 jetzt; Zwischencommits pro Abschnitt | Nutzerauftrag | Keine App, Pakete oder Infrastruktur; P1 verlangt späteren ausdrücklichen Auftrag |
 | ADR-014 | TypeScript/React/Vite, Tauri/Fastify, SQLite/Dexie | Technischer Default | Plattformfreier Kern; stabile kompatible Versionen erst P1 sperren |
@@ -29,10 +29,24 @@ Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Eintr
 | ADR-023 | Offlinegeräte gelten als vertrauenswürdige lokale Geräte | Technischer Default aus Lokalbetrieb | Kein Fernwiderruf schon bekannter Daten; OS-Schutz statt behaupteter Appverschlüsselung |
 | ADR-024 | Finanzlogik in TypeScript, begrenzte Rust-Speicherbrücke | Technischer Default | Keine zweite Budgetengine, kein uneingeschränktes SQL aus der UI |
 | ADR-025 | E2EE ist Pflicht ab v1, ersetzt ADR-008 | Nutzerentscheidung: sonst kein Vertrauen | Finanzserver nur Chiffrate/öffentliche Metadaten; Fachvalidierung und Berechnungen auf Clients |
-| ADR-026 | Bereichsschlüssel, signierte Rollen/Geräte und eigenständige Recovery | Technischer Default für ADR-025 | libsodium, Fingerprintprüfung, Schlüsselfreigabe, Rotation und separate Tresorentsperrung; Serverpasswortreset entschlüsselt nichts |
+| ADR-026 | Bereichsschlüssel, signierte Rollen/Geräte und eigenständige Recovery | Technischer Default für ADR-025 | libsodium, Fingerprintprüfung, Schlüsselfreigabe, Rotation und separate Tresorentsperrung; Änderungen beim externen Identitätsanbieter entschlüsseln nichts |
 | ADR-027 | Authentifizierte Clients sind vertrauenswürdig; keine Codesignatur als Sicherheitsbasis | Zusätzliche Nutzerentscheidung | Web/PWA/Desktop gleich zugelassen; keine Attestierung/Build-Allowlist; Nachrichten-/Schlüsselsignaturen schützen Datenintegrität, keine Appherkunft |
 | ADR-028 | Repositorylokale Agenten-Skills und gemeinsame Vorlagen, GitHub/VS Code | Nutzerauftrag plus technischer Default | Vier Skills in .agents/skills; zentrale Docs statt Regelkopien; keine globale Plugininstallation, kein Push/CI/Appstart |
 | ADR-029 | Kompakter Einstieg, P1-Teilaufgaben und portable Prüfungen; Hooks erst P1 | Nutzerauftrag D2 und bestätigter Ergänzungsplan | Zentrale Fachquellen erhalten, Beispiele synthetisch; optionaler pre-commit prüft vorgemerkte Inhalte ohne Dateiumschreiben; gemeinsame Prüfungen in CI; keine automatische Commit-/Push-/Taskabschlussfunktion |
+| ADR-030 | Serveridentitäten ausschließlich extern; Apps lokal eigenständig | Nutzerentscheidung vom 2. Oktober 2026; ersetzt ADR-011 Authentifizierungsdefault | Keine lokale Benutzer-/Passwortverwaltung oder Setupkonten; Serververbindung setzt OIDC oder gleichwertigen externen Identitätsdienst voraus; Standalone-Apps benötigen keine Anmeldung |
+
+## ADR-030 — Externe Serveridentität und eigenständige Apps
+
+- Datum: 2. Oktober 2026.
+- Status: angenommen.
+- Herkunft: ausdrückliche Nutzeranforderung.
+- Problem: Die bisherige Spezifikation erlaubte lokale Serverkonten und stellte OIDC als optional dar. Das widerspricht der Anforderung, Serveridentitäten extern zu beziehen und Apps unabhängig vom Server nutzbar zu halten.
+- Entscheidung: Es gibt keine lokale Benutzer-, Registrierungs- oder Passwortverwaltung. Jede Serververbindung authentifiziert über OIDC oder einen gleichwertig sicheren externen Identitätsdienst, beispielsweise Authentik. Desktop- und PWA-Apps bleiben ohne Serveranmeldung vollständig stand-alone nutzbar; lokale Profile und fachliche Teilnehmer sind keine Benutzerkonten.
+- Alternativen: Lokale Passwörter als Notfallfallback oder ein eingebautes Bootstrapkonto wurden verworfen.
+- Folgen: Betreiber konfigurieren den Identitätsanbieter vor Serveranmeldung und ordnen erste Administratorrechte über Providerclaims oder gleichwertige externe Verwaltung zu. Provideridentität und lokale Tresorentsperrung bleiben getrennt.
+- Betroffene Verträge/Pakete: Produkt, Fachmodell, Architektur, Datenmodell, API, Sicherheit, Verschlüsselung, Betrieb, UI, Tests und P8.
+- Migration und Kompatibilität: Vor Implementierung vorhandene Entwürfe zu lokalen Zugangsdaten/Bootstrap entfernen; keine produktive Datenmigration ist nötig, da Serverauthentifizierung noch nicht implementiert ist.
+- Prüfung: Konsistenzabgleich der Dokumentation im zugehörigen PR; spätere OIDC-/Provider- und Standalone-Prüfungen in P8/P4.
 
 ## ADR-029 — Einstieg und portable Prüfungen
 
@@ -55,7 +69,7 @@ Keine Grundsatzentscheidung zu Fork, Lizenz, Mehrbenutzerstruktur, Rollen, Platt
 
 - P1: stabile Versionskombinationen und Buildtoolchain anhand offizieller Dokumentation ermitteln; kein erneutes Produktentscheidungsmeeting nötig.
 - P4: native Plattformintegration anhand tatsächlich verfügbarer SDKs und dokumentierter Tauri-Funktionen prüfen; Windows/Linux/macOS-Smokechecks nachweisen.
-- P8: Argon2-Laufzeitbenchmark und OS-Schlüsselspeicherverfügbarkeit messen; definierte Sicherheitsuntergrenzen nicht unterschreiten.
+- P8: OIDC-Providerinteroperabilität und OS-Schlüsselspeicherverfügbarkeit prüfen; externe Authentifizierungsgrenzen verifizieren.
 - P11: tatsächliche Repository-/Release-Quellcode-URL, Signierungsgeheimnisse und getestete Artefaktarchitekturen eintragen. Fehlende Credentials erlauben keine fingierte Releaseabnahme.
 
 ## Änderungsformat

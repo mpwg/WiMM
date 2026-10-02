@@ -2,7 +2,7 @@
 
 ## Ziel und Erfolg
 
-Familien sollen wissen, welches Geld verfügbar ist, welche Zahlungen bevorstehen und wie gemeinsame Kosten verteilt sind. Private Finanzen bleiben persönlich. Die erste Veröffentlichung ist ein öffentliches Open-Source-Produkt für erwachsene Nutzer im DACH-Raum, ohne Pflichtkonto, externe Finanzdienste oder Telemetrie.
+Familien sollen wissen, welches Geld verfügbar ist, welche Zahlungen bevorstehen und wie gemeinsame Kosten verteilt sind. Private Finanzen bleiben persönlich. Die erste Veröffentlichung ist ein öffentliches Open-Source-Produkt für erwachsene Nutzer im DACH-Raum, ohne Pflichtkonto für eigenständige Apps, externe Finanzdienste oder Telemetrie. Serveridentitäten werden ausschließlich über einen externen Identitätsanbieter eingerichtet.
 
 Erfolg bedeutet: Eine Familie kann ihr tägliches Haushaltsbuch, Monatsplanung und Ausgleich vollständig lokal führen und dieselben Daten anschließend über ihren Server auf mehreren Geräten verwenden. Kontostände, Kosten und Ausgleichsergebnisse stimmen auf allen Plattformen überein.
 
@@ -12,9 +12,9 @@ Erfolg bedeutet: Eine Familie kann ihr tägliches Haushaltsbuch, Monatsplanung u
 | --- | --- | --- |
 | Lokal, Desktop | Alle Fachfunktionen, lokale Personen, Dateiimport, Export und automatische Sicherungen | Betriebssystemprofil schützt Dateien; lokale Personen sind keine getrennten Benutzerkonten |
 | Lokal, PWA | Alle Fachfunktionen, lokale Personen, Import und Export | Erstes Laden/Installieren benötigt Zugriff auf statisch ausgelieferte App; Browserdaten können gelöscht werden |
-| Serververbunden | Zusätzlich Konten, Einladungen, Rollen, Zusammenarbeit und Gerätesync | Finanzdaten verpflichtend Ende-zu-Ende-verschlüsselt; Anmeldung plus lokale Tresorentsperrung; temporär offline weiter nutzbar |
+| Serververbunden | Zusätzlich Konten, Einladungen, Rollen, Zusammenarbeit und Gerätesync | Externe Anmeldung über OIDC oder einen vergleichbaren Identitätsdienst plus lokale Tresorentsperrung; Finanzdaten verpflichtend Ende-zu-Ende-verschlüsselt; temporär offline weiter nutzbar |
 
-Eine PWA kann von einem statischen Host geladen werden, ohne ein Finanzbackend zu verwenden. Same-Origin-Self-Hosting ist regulärer Serverbetrieb. Authentifizierte Clients werden unabhängig von Codesignatur vertraut; E2EE benötigt zusätzlich lokal entsperrte Finanzschlüssel. Die [Verschlüsselungsspezifikation](encryption.md) trennt Clientvertrauen, Anmeldung und Nachrichtenintegrität.
+Eine PWA und Desktop-App funktionieren eigenständig und benötigen dafür weder Server noch Anmeldung oder lokale Benutzerverwaltung. Erst beim Verbinden mit einem Server melden sich Nutzer über dessen externen OIDC- oder vergleichbaren Identitätsanbieter an; der Server verwaltet keine lokalen Passwörter oder Benutzerkonten. Eine PWA kann von einem statischen Host geladen werden, ohne ein Finanzbackend zu verwenden. Same-Origin-Self-Hosting ist regulärer Serverbetrieb. Authentifizierte Clients werden unabhängig von Codesignatur vertraut; E2EE benötigt zusätzlich lokal entsperrte Finanzschlüssel. Die [Verschlüsselungsspezifikation](encryption.md) trennt Clientvertrauen, Anmeldung und Nachrichtenintegrität.
 
 ## Umfang der ersten Version
 
@@ -31,7 +31,7 @@ Konten, Buchungen und Splits; Umbuchungen innerhalb eines Finanzbereichs; Konten
 | Bereich durch Snapshot ersetzen oder Haushalt löschen | Ja | Ja | Nein | Nein |
 | Privaten Bereich eines anderen Mitglieds sehen | Nein | Nein | Nein | Nein |
 
-Jeder Benutzer kann mehrere Haushaltsmitgliedschaften haben. Der letzte Verwalter darf nicht entfernt oder herabgestuft werden. Ein Teilnehmer kann auch ohne Benutzerkonto existieren; Zuordnung zu einer angemeldeten Person erfordert deren Zustimmung. Fachliche Teilnehmer dürfen keine Anmeldeberechtigungen erhalten, nur weil sie im Haushaltsbuch angelegt wurden.
+Eine externe Identität kann mehrere Haushaltsmitgliedschaften haben. Der letzte Verwalter darf nicht entfernt oder herabgestuft werden. Fachliche Teilnehmer sind Daten im Haushaltsbuch und benötigen keine eigene Anmeldung. Eine Zuordnung zu einer angemeldeten externen Identität erfordert deren Zustimmung; fachliche Teilnehmer erhalten dadurch keine Anmeldeberechtigung.
 
 ## Navigation
 
@@ -41,8 +41,8 @@ Bereichswechsel: Privat, Haushalte und deren Syncstatus. Innerhalb eines Bereich
 
 | Ablauf | Normalfall | Leerer Zustand | Fehler und Wiederaufnahme |
 | --- | --- | --- | --- |
-| Lokaler Einstieg | Ohne Anmeldung starten, Privatbereich oder Haushalt anlegen, Konto und Anfangsbestand erfassen | Erfassungsaktion für erstes Konto; keine erfundenen Guthaben | Speicherfehler erklärt, Eingaben bleiben erhalten; keine Erfolgsmeldung vor dauerhafter Speicherung |
-| Servereinrichtung | Betreiber richtet Erstkonto ein; Benutzer meldet sich an und legt Haushalt an | Einrichtungsansicht nur vor abgeschlossenem Bootstrap | Ungültiges Setupgeheimnis/Parallelversuch ändern nichts; nach Einrichtung ist Bootstrap gesperrt |
+| Lokaler Einstieg | Ohne Konto oder Anmeldung starten, lokales Profil und Bereich anlegen, Konto und Anfangsbestand erfassen | Erfassungsaktion für erstes Konto; keine erfundenen Guthaben | Speicherfehler erklärt, Eingaben bleiben erhalten; keine Erfolgsmeldung vor dauerhafter Speicherung |
+| Servereinrichtung | Betreiber konfiguriert einen externen Identitätsanbieter; Nutzer melden sich dort an und legen Haushalt an | Serverstatus zeigt externe Anmeldung erst nach erfolgreicher Providerkonfiguration an | Fehlende/ungültige Providerkonfiguration verhindert Serveranmeldung; kein lokales Erstkonto oder Setuppasswort |
 | Buchung | Bereich/Konto wählen, Datum/Betrag/Kategorie eingeben, optional splitten, speichern | Liste bietet Buchung und Import an | Feldfehler inline; offline dauerhaft gespeichert und als ausstehend markiert |
 | Import | Datei wählen, Konto und Zuordnung bestätigen, Vorschau/Dubletten prüfen, übernehmen | Vorschau meldet null Buchungen ohne Dateneingriff | Fehler pro Zeile; keine Übernahme vor Bestätigung; Wiederimport identifiziert vorhandene Einträge |
 | Budget | Methode/Monat wählen, Planwerte oder Zuweisungen setzen, Abweichungen ansehen | Bestehende Kategorien ohne Vorgaben; gezielte Eingabeaktionen | Überbudgetierung angezeigt, erwartetes Einkommen nicht als Geld verwendet; Methodenwechsel nur am Monatsanfang |

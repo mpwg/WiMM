@@ -10,18 +10,18 @@ Finanzaggregate besitzen `id`, `spaceId`, `revision`, `createdAt`, `updatedAt`, 
 
 | Entität | Pflichtfelder neben ID/Zeitpunkten | Beziehungen und Regeln |
 | --- | --- | --- |
-| User | displayName, normalizedEmail, status | E-Mail eindeutig auf Server; privater Bereich genau einer; keine Passwörter in Finanzexporten |
-| Credential / OidcIdentity | userId, Art, Hash bzw. issuer/subject | issuer + subject eindeutig; E-Mail-Gleichheit verknüpft Identitäten nicht automatisch |
+| ExternalIdentity | issuer, subject, status, freigegebene Profilclaims? | issuer + subject eindeutig; providerverwaltet; lokale private Bereiche werden dieser Identität erst nach bestätigter Serververbindung zugeordnet |
+| ServerSession | identityId, tokenHash, Ablauf, revokedAt? | Sitzung gehört genau einer externen Identität; keine lokalen Passwort-Credentials; E-Mail-Gleichheit verknüpft Identitäten nicht automatisch |
 | Household | name, timezone, sharedSpaceId | Genau ein gemeinsamer Bereich; sharedSpaceId eindeutig |
-| Space | kind, currency, syncEpoch, ownerUserId? / householdId? | kind `private` oder `household`; genau passende Eigentumsreferenz; lokal ownerLocalProfileId statt User möglich |
-| Membership | householdId, userId, role, status | Paar eindeutig; admin/member/viewer; keine Entfernung des letzten aktiven admin |
-| Participant | spaceId, name, kind, archived, userId? | kind person/household; genau ein technischer Haushaltsteilnehmer; Benutzerzuordnung nur mit Zustimmung |
+| Space | kind, currency, syncEpoch, ownerIdentityId? / householdId? | kind `private` oder `household`; genau passende Eigentumsreferenz; lokal ownerLocalProfileId statt User möglich |
+| Membership | householdId, identityId, role, status | Paar eindeutig; admin/member/viewer; keine Entfernung des letzten aktiven admin |
+| Participant | spaceId, name, kind, archived, linkedIdentityId? | kind person/household; genau ein technischer Haushaltsteilnehmer; Zuordnung zu externer Identität nur mit Zustimmung |
 | Invitation | householdId, role, tokenHash, expiresAt, createdBy, consumedAt? | Rohcode nur beim Erstellen; sieben Tage gültig, einmal nutzbar; nicht finanziell synchronisieren |
-| Session / Device | userId, tokenHash, expiry, revokedAt? / name | Sessiondaten nie exportieren; Device-ID allein authentifiziert nicht |
+| ServerSession / Device | identityId, tokenHash, expiry, revokedAt? / name | Sessiondaten nie exportieren; Device-ID allein authentifiziert nicht |
 
 ## E2EE-Speicherebenen
 
-Die Finanztabellen unten existieren ausschließlich auf Clients bzw. in entschlüsselten Exports. Server-Household enthält ID und Verwaltungsreferenzen, keinen Klartext-Familiennamen/Zeitzoneninhalt. Login-displayName/E-Mail sind notwendige öffentliche Accountmetadaten; finanzielle Teilnehmernamen bleiben verschlüsselt.
+Die Finanztabellen unten existieren ausschließlich auf Clients bzw. in entschlüsselten Exports. Server-Household enthält ID und Verwaltungsreferenzen, keinen Klartext-Familiennamen/Zeitzoneninhalt. Externe Identitätsreferenzen und notwendige Sitzungs-/Rollenmetadaten sind öffentliche Verwaltungsdaten; Finanzteilnehmernamen bleiben verschlüsselt. Profilattribute werden nur nach expliziter Zuordnung aus freigegebenen Providerclaims übernommen.
 
 Serverobjekte: `EncryptedUserVault` (Ciphertext/Nonce und KDF-/Keywrapmetadaten), `IdentityPublicKeys`, `DeviceCertificate`, `KeyRoster` (signierte Rollen-/Identitätskette), `KeyGrant` (signierte sealed box pro Empfänger), `EncryptedOperation`, `EncryptedSnapshot`, `OpaqueAggregateHead` (Handle/Revision/Chiffrathash) und `OperationReceipt`. Kein Klartext-Finanzindex, keine Budgetprojektionen oder privaten Schlüssel. `Membership.status` ergänzt `pending_key_grant`; aktive kryptografische Rechte folgen dem geprüften Roster.
 
