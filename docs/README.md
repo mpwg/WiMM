@@ -13,6 +13,7 @@ D0 ist die reine Spezifikations- und Dokumentationsübergabe. Es existiert noch 
 | 3 | [Datenmodell](data-model.md) | Entitäten, Beziehungen, Aggregate und Indizes |
 | 4 | [Architektur](architecture.md), [Entscheidungen](decisions.md) | Komponenten, Grenzen und verbindliche Defaults |
 | 5 | [Synchronisierung](synchronization.md), [API](api.md) | Operationen, Revisionen, Identitäten und Fehler |
+| 5a | [Ende-zu-Ende-Verschlüsselung](encryption.md) | Pflichtschutz, Geräte-/Familienschlüssel, Rotation und Recovery |
 | 6 | [Dateiformate](formats.md) | Import, Dubletten und vollständiger Export |
 | 7 | [Oberfläche](ui.md), [Sicherheit](security.md) | Plattformbedienung, private Daten und Sitzungen |
 | 8 | [Betrieb](operations.md), [Tests](testing.md) | Installation, Sicherung, Migration und Abnahme |
@@ -26,4 +27,4 @@ Produktanforderungen stehen in `product.md`, Fachinvarianten in `domain.md`, Typ
 
 ## Bewusst spätere Funktionen
 
-Bankabruf, Ende-zu-Ende-Verschlüsselung, Kinderrollen, Mehrwährung, Wertpapierkurse, Beleg-OCR, Steuerfunktionen, kommerzielles Hosting und iOS-/Android-Store-Apps gehören nicht zur ersten Veröffentlichung. Englische Übersetzungen sind nicht Voraussetzung; Übersetzbarkeit wird technisch vorbereitet.
+Bankabruf, Kinderrollen, Mehrwährung, Wertpapierkurse, Beleg-OCR, Steuerfunktionen, kommerzielles Hosting und iOS-/Android-Store-Apps gehören nicht zur ersten Veröffentlichung. Ende-zu-Ende-Verschlüsselung ist dagegen verpflichtend ab v1. Englische Übersetzungen sind nicht Voraussetzung; Übersetzbarkeit wird technisch vorbereitet.

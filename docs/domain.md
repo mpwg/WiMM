@@ -15,7 +15,7 @@ Verbindliche Invarianten:
 5. Jeder Ausgleichsvorgang hat ausgeglichene Gegenposten; die Summe aller Teilnehmerguthaben einschließlich Haushalt ist null.
 6. Jeder Euro tatsächlicher Ausgabe wird je Berichtsperspektive genau einmal gezählt.
 7. Finanzreferenzen liegen im gleichen Bereich, ausgenommen ausdrücklich lokale private Veröffentlichungszuordnungen. Solche Zuordnungen werden niemals gemeinsam synchronisiert.
-8. Projektionen verwenden dieselbe Fachlogik auf PWA, Desktop und Server. Der Server berechnet Änderungen selbst.
+8. Projektionen verwenden dieselbe Fachlogik auf allen autorisierten Clients. E2EE verhindert Finanzberechnung auf dem Server; empfangende Clients prüfen entschlüsselte Änderungen selbst.
 
 ## Geld, Datum und Konten
 

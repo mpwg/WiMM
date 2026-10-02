@@ -15,7 +15,8 @@
 - Verwende dieselben Fachverträge und Adapter-Konformitätstests auf allen Plattformen.
 - Änderungen an Buchungen, Umbuchungen, Ausgabenverteilungen und ihren Projektionen müssen atomar sein.
 - Private Konto-, Buchungs-, Notiz- und Summendaten dürfen nicht in gemeinsame Datensätze, Synchronisierung, Exporte, Berichte oder Logs gelangen. Teile nur explizit bestätigte Angaben.
-- Leite die handelnde Serveridentität aus der Sitzung ab; vertraue keinen vom Client gelieferten Benutzerrechten oder berechneten Kontoständen.
+- Ende-zu-Ende-Verschlüsselung ist verpflichtend. Lies `docs/encryption.md`; verwende etablierte libsodium-Primitive, niemals eigene Kryptografie. Keine Finanzklartexte oder privaten Schlüssel im Server, Transport oder Betreiberbackup.
+- Leite die handelnde Serveridentität aus der Sitzung ab und prüfe signierte Geräte-/Rollenmanifeste. Fachvalidierung geschieht auf Clients; der Server prüft nur öffentliche Hüllen, Signaturen, Rechte und CAS-Revisionen, nie Finanzinhalte.
 - Behandle lokal ausstehende Änderungen, bestätigte Daten und Konflikte getrennt. Kein stilles Überschreiben.
 
 ## Umsetzung und Abschluss

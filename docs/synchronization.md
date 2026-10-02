@@ -2,11 +2,13 @@
 
 ## Grundprinzip
 
-Lokale Speicherung ist der erste dauerhafte Schreibpunkt. Der Server autorisiert Fachbefehle, berechnet deren Wirkung erneut und führt bestätigte Revisionen. Optimistische Entwürfe sind getrennt vom bestätigten Stand gespeichert. Sichtbarer Zustand = bestätigte Aggregate plus anwendbare lokale Entwürfe.
+Lokale Speicherung ist der erste dauerhafte Schreibpunkt. Clients berechnen und prüfen Fachbefehle, verschlüsseln Ergebnisse und signieren Nachrichten. Der Server prüft Anmeldung, öffentliche Rechte/Signaturen und opake Revisionen, niemals Finanzinhalte. Optimistische Entwürfe bleiben getrennt. Sichtbarer Zustand = clientvalidierter bestätigter Stand plus anwendbare lokale Entwürfe. [E2EE ist verpflichtend](encryption.md).
 
 Jeder Bereich besitzt eigene Epoche und Cursor. Ein Cursor ist eine dezimale Ganzzahl als JSON-String, nicht eine globale Anzahl fremder Haushaltsänderungen. Snapshot und Änderungen enthalten nur den autorisierten Bereich. Die Mitgliedschaftsliste wird separat über Verwaltungs-API aktualisiert.
 
-## Operationsformat v1
+## Entschlüsseltes Fachoperationsformat v1
+
+Das folgende Beispiel ist ausschließlich Client-intern. Es wird nicht im Klartext übertragen. Auf dem Draht liegt die EncryptedOperation aus der Verschlüsselungsspezifikation mit opaken Handles statt aggregateType/Finanzreferenzen im öffentlichen Header.
 
 ```json
 {
@@ -30,7 +32,7 @@ Jeder Bereich besitzt eigene Epoche und Cursor. Ein Cursor ist eine dezimale Gan
 }
 ```
 
-Die UI darf keine serverseitige Benutzer-ID, Rechte oder vorab berechnete Projektionen autoritativ mitsenden. Der Server setzt Akteur, Zeitpunkte und Revisionen. Operations-ID und Payload bleiben nach dem ersten Sendversuch unverändert. Canonical JSON mit sortierten Objektschlüsseln dient als Input für SHA-256 zur Erkennung abweichender Wiederverwendung; Arrayreihenfolge bleibt erhalten.
+Fachoperation samt vollständigem Änderungsset wird clientseitig validiert, verschlüsselt und mit zertifiziertem Geräteschlüssel signiert. Server prüft Sitzungszugehörigkeit, Manifest und deklarierte CAS-Revisionen; er setzt nur Transportcursor/-empfangszeit, keine signierten Finanzfelder. Vollständige Hülle einschließlich Nonce/Signatur bleibt nach erstem Sendversuch unverändert. Hash/RFC-8785-Kanonisierung gemäß E2EE-Vertrag; der Server hasht nur die verschlüsselte Hülle.
 
 ## Zustände und lokale Änderungen
 
@@ -46,17 +48,17 @@ Wenn Pull einen ausstehenden Entwurf überholt, wird dessen Basis geprüft. Änd
 2. Batchgrenzen und Operationsformat prüfen; pro Operation die aktuelle Schreibberechtigung prüfen.
 3. Receipt anhand Bereich/Epoche/Operations-ID suchen. Identischer Hash liefert das gespeicherte Ergebnis; abweichender Hash ergibt `OPERATION_ID_REUSED`.
 4. Erwartete Revisionen und bestätigte Vorgänger prüfen; stale Operation ergibt `conflict`, unbekannter Vorgänger `DEPENDENCY_NOT_ACCEPTED`.
-5. Fachbefehl gegen aktuellen Zustand validieren und berechnen.
-6. Alle Aggregate, Projektionen, Change und Receipt in einer SQLite-Transaktion committen. Fehler rollt vollständig zurück.
-7. Ergebnis mit bestätigten Revisionen und geändertem Stand liefern. Verbindungsabbruch nach Commit ist durch Wiederholung sicher.
+5. Gerätezertifikat, Signatur, signiertes Rollenmanifest und aktuelle K-Version prüfen; Fachpayload bleibt opak.
+6. Opake Aggregatheads, verschlüsseltes Änderungsbundle, Change und Receipt in einer SQLite-Transaktion committen. Fehler rollt vollständig zurück.
+7. Ergebnis mit CAS-Revisionen und unverändert verschlüsselten Bundles liefern. Verbindungsabbruch nach Commit ist durch Wiederholung sicher. Empfänger prüfen/entschlüsseln/validieren Inhalte selbst.
 
 Batch bis 100 Operationen und 2 MiB; jede Operation ist atomar, der Batch insgesamt nicht. Der Server verarbeitet in Eingabereihenfolge. Bereits akzeptierte Operationen werden bei nachfolgendem Fehler nicht zurückgerollt. Für Konflikte/Invalidität bleibt die ursprüngliche Operation abgeschlossen; Auflösung erhält neue ID. Temporäre Transport-/Storagefehler erzeugen kein endgültiges Receipt.
 
 ## Pull und Initialisierung
 
-Pull nimmt Epoche und Cursor entgegen, liefert maximal 500 Changes mit `nextCursor`, `hasMore`, `epoch` und vollständigen geänderten Aggregaten/Tombstones. Ein Change enthält eine vollständige Fachoperation; er wird nicht über Seiten geteilt. Initiales Laden verwendet einen konsistenten Snapshot mit `snapshotCursor`; anschließend Pull ab diesem Cursor.
+Pull liefert maximal 500 Changes mit `nextCursor`, `hasMore`, `epoch` und verschlüsselten signierten Bundles. Aggregate/Tombstones sind nur nach Cliententschlüsselung verfügbar. Ein Change bleibt atomar und wird nicht über Seiten geteilt. Initiales Laden verwendet einen clientgeprüften verschlüsselten Snapshot mit gebundenem `snapshotCursor`; anschließend Pull ab diesem Cursor.
 
-Seite und neuer Cursor werden atomar lokal gespeichert. Absturz vor Commit lässt alten Cursor bestehen, Wiederholung ist unschädlich. Ein bereits per Push empfangenes Aggregat wird bei identischer Revision nicht erneut angewandt. Ältere bestätigte Revisionen werden verworfen, Entwürfe separat gehalten.
+Nach Signatur-/AAD-/AEAD-/Fachprüfung werden Seite und Cursor atomar gespeichert. Ungültige Nachrichten werden quarantänisiert, Cursor nicht still weitergesetzt. Ein vertraut gepinnter Hashstand darf nicht auf ältere/abweichende Historie zurückfallen. Absturz vor Commit lässt alten Cursor bestehen; identische bereits angewandte Operationen werden übersprungen, Entwürfe separat gehalten.
 
 Sync bei Start, Fokus, Reconnect und spätestens alle 15 Sekunden bei sichtbarer App. Neue lokale Änderungen lösen einen debouncten Push nach 500 ms aus. Unsichtbare Tabs pollen nicht. Ein Bereich hat nur einen aktiven Synclauf; Browser-Tabs koordinieren dies über Web Locks. Retry exponentiell mit Jitter von 1 bis 60 Sekunden; 401 erfordert Anmeldung, 403/404 sperren den Bereich statt endloser Wiederholung.
 
@@ -74,10 +76,10 @@ Private Veröffentlichung erzeugt einen freigegebenen SharedExpense-Datensatz im
 
 ## Snapshotersatz und Epochen
 
-Ersetzen eines bestehenden Bereichs ist owner/admin-Aktion mit expliziter Bestätigung und erwarteter Epoche. Vorher vollständiger Backup-Snapshot. Der Server prüft alle Daten, schreibt sie atomar, setzt neue zufällige Epoche und Cursor 0 und startet neue Receipt-/Changehistorie. Alte Operationen werden mit `EPOCH_MISMATCH` abgewiesen.
+Ersetzen eines Bereichs ist owner/admin-Clientaktion mit Bestätigung, erwarteter Epoche und verschlüsseltem Backup. Der Client prüft Finanzdaten, erzeugt neue zufällige Epoche und signierten verschlüsselten Snapshot. Server prüft öffentliche Autorisierung/Signatur/Container/CAS, aktiviert atomar Epoche/Cursor 0 und startet neue Receipt-/Changehistorie. Alte Operationen erhalten `EPOCH_MISMATCH`. Mitgliedsentfernung rotiert zusätzlich Bereichsschlüssel und signiertes Manifest atomar mit neuem Snapshot.
 
 Clients exportieren oder sichern ausstehende Entwürfe vor Übernahme des neuen Snapshots. Die Oberfläche führt durch die Entscheidung; ohne Platz für Sicherung keine destruktive lokale Übernahme. Fremde Alt-Epochen werden nicht automatisch auf die neue Epoche umgeschrieben. Bewusst übernommene Entwürfe werden neu referenziert und validiert.
 
 ## Versionskompatibilität
 
-v1 akzeptiert schemaVersion 1 und dokumentierte commandTypes. Unbekannte Version liefert `UPDATE_REQUIRED`; unbekannte Befehle `UNKNOWN_COMMAND`. Health/Meta enthält minimale Client-/Protokollversion. Finanzdatenmigration und Protokolländerung benötigen einen neuen ADR und Kompatibilitätstests. Receipts/Tombstones bleiben für die gesamte Epoche erhalten.
+Server akzeptiert v1-Hüllen und bekannte Cryptosuites; unbekannte Transportversion liefert `UPDATE_REQUIRED`. Clients prüfen entschlüsselte schemaVersion/commandTypes und zeigen unbekannte/ungültige Inhalte ohne Anwendung an. Health/Meta enthält minimale Transportversion, keinen Finanzschema-Downgradefallback. Receipts/verschlüsselte Tombstones bleiben für die gesamte Epoche erhalten. KEY_VERSION_MISMATCH/ROSTER_MISMATCH erfordern aktuelle geprüfte Schlüssel-/Rollenstände, niemals Klartextsync.

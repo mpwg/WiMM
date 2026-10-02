@@ -12,6 +12,7 @@ WhereIsMyMoney ist ein geplanter Open-Source-Finanzmanager für Familien. Gemein
 - Optional selbst gehosteter Server für persönliche Konten, Familienrollen und Synchronisierung.
 - Mehrere getrennte Familien pro Server und mehrere Haushalte pro Person.
 - Persönliche Bereiche ohne automatische Freigabe von Konten, Buchungen oder Summen.
+- Verpflichtende Ende-zu-Ende-Verschlüsselung aller Finanzdaten; der Finanzserver erhält keine Entschlüsselungsschlüssel.
 - Konten, Buchungen, Dateiimporte, Regeln, Dauerzahlungen, beide Budgetmethoden, Sparziele und Berichte.
 - Geteilte Ausgaben, flexible Kostenverteilung, Beiträge und Ausgleichszahlungen.
 
@@ -22,6 +23,7 @@ Die erste Version richtet sich an Erwachsene im deutschsprachigen Raum, verwende
 1. [Arbeitsregeln](AGENTS.md) lesen.
 2. Im [Dokumentationsindex](docs/README.md) die Lesereihenfolge beachten.
 3. [Fachliche Architektur](docs/domain.md), [technische Architektur](docs/architecture.md) und [Entscheidungen](docs/decisions.md) verstehen.
+   Zusätzlich [Verschlüsselung und Schlüsselverwaltung](docs/encryption.md) vor Speicher-/Syncarbeit lesen.
 4. Bei einem ausdrücklichen Implementierungsauftrag das erste offene, freigegebene [Arbeitspaket](docs/tasks.md) mit erfüllten Voraussetzungen übernehmen.
 5. Paket anhand der [Test- und Abnahmeregeln](docs/testing.md) abschließen und seinen Status aktualisieren.
 

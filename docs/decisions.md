@@ -1,6 +1,6 @@
 # Architekturentscheidungen
 
-Stand: 2. Oktober 2026. Status aller folgenden Entscheidungen: angenommen. Nutzerentscheidungen sind verbindlich; technische Defaults präzisieren das Konzept. Änderungen benötigen einen neuen Eintrag mit Grund, betroffenen Verträgen und Migration/Tests. Alte Einträge bleiben als Historie erhalten.
+Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Einträgen. Nutzerentscheidungen sind verbindlich; technische Defaults präzisieren das Konzept. Änderungen benötigen einen neuen Eintrag mit Grund, betroffenen Verträgen und Migration/Tests. Alte Einträge bleiben als Historie erhalten.
 
 | ID | Entscheidung | Herkunft und Begründung | Konsequenz |
 |---|---|---|---|
@@ -11,7 +11,7 @@ Stand: 2. Oktober 2026. Status aller folgenden Entscheidungen: angenommen. Nutze
 | ADR-005 | Überwiegend neue Architektur statt Actual-Fork | Nutzerentscheidung | Actual als Referenz und selektive Quelle; kein kompatibles Actual-Syncprotokoll voraussetzen |
 | ADR-006 | Familienkern zuerst, Plan- und Umschlagbudget | Nutzerentscheidung | P1–P11, Spezialfunktionen später; beide Methoden ohne doppelte Kontobuchungen |
 | ADR-007 | Dateiimporte vor Bankanbindung, EUR zuerst | Nutzerentscheidung | CSV/CAMT/OFX/QFX; keine Providersecrets, Mehrwährung oder Wertpapierbewertung |
-| ADR-008 | Vertrauenswürdiger Server, keine E2EE in v1 | Nutzerentscheidung | Betreiber kann Daten lesen; individuelle Mitgliederzugriffe serverseitig begrenzen |
+| ADR-008 | Ursprünglich mitlesender Server ohne E2EE | Ersetzt durch ADR-025 auf neue Nutzeranweisung | Nur historische Entscheidung; darf nicht implementiert werden |
 | ADR-009 | Flexible Verteilung und nur freiwillige private Angaben | Nutzerentscheidung | Policygrundlagen ausdrücklich angeben; keine Einkommensableitung aus Privatbereich |
 | ADR-010 | Mehrere Familien pro Server, mehrere Haushalte pro Person | Nutzerentscheidung | Mitgliedschaft unabhängig vom Privatbereich; kein globaler Familienadminzugriff |
 | ADR-011 | admin/member/viewer; eigene Konten plus optional OIDC | Nutzerentscheidung | Keine öffentliche Registrierung, getrennte Betreiberrolle, Einladungsannahme |
@@ -28,6 +28,9 @@ Stand: 2. Oktober 2026. Status aller folgenden Entscheidungen: angenommen. Nutze
 | ADR-022 | WIMM-Export einzelner Bereiche, getrennte Adminsicherung | Technischer Default | Finanzrestore verleiht keine Benutzerrechte; Nutzerexport enthält keine Credentials |
 | ADR-023 | Offlinegeräte gelten als vertrauenswürdige lokale Geräte | Technischer Default aus Lokalbetrieb | Kein Fernwiderruf schon bekannter Daten; OS-Schutz statt behaupteter Appverschlüsselung |
 | ADR-024 | Finanzlogik in TypeScript, begrenzte Rust-Speicherbrücke | Technischer Default | Keine zweite Budgetengine, kein uneingeschränktes SQL aus der UI |
+| ADR-025 | E2EE ist Pflicht ab v1, ersetzt ADR-008 | Nutzerentscheidung: sonst kein Vertrauen | Finanzserver nur Chiffrate/öffentliche Metadaten; Fachvalidierung und Berechnungen auf Clients |
+| ADR-026 | Bereichsschlüssel, signierte Rollen/Geräte und eigenständige Recovery | Technischer Default für ADR-025 | libsodium, Fingerprintprüfung, Schlüsselfreigabe, Rotation und separate Tresorentsperrung; Serverpasswortreset entschlüsselt nichts |
+| ADR-027 | Authentifizierte Clients sind vertrauenswürdig; keine Codesignatur als Sicherheitsbasis | Zusätzliche Nutzerentscheidung | Web/PWA/Desktop gleich zugelassen; keine Attestierung/Build-Allowlist; Nachrichten-/Schlüsselsignaturen schützen Datenintegrität, keine Appherkunft |
 
 ## Nicht mehr offen
 

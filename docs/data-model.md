@@ -4,7 +4,7 @@
 
 IDs sind UUIDs; technische IDs werden zufällig lokal erzeugt. Geld = sicherer ganzzahliger Centbetrag, Datum = validiertes `YYYY-MM-DD`, Monat = `YYYY-MM`, Zeitpunkt = ISO-8601 UTC. Revision ist eine nichtnegative sichere Ganzzahl; neue serverseitige Aggregate starten bei 1, erwartete Revision 0 bedeutet Neuanlage.
 
-Finanzaggregate besitzen `id`, `spaceId`, `revision`, `createdAt`, `updatedAt`, `deletedAt?`. Kindzeilen besitzen IDs, aber verwenden die Revision des Elternaggregats. Zeitpunkte und bestätigte Revisionen stammen beim Serverbetrieb vom Server; lokale Erfassungszeiten dürfen zusätzlich gespeichert werden, entscheiden aber nicht über Konflikte.
+Finanzaggregate besitzen `id`, `spaceId`, `revision`, `createdAt`, `updatedAt`, `deletedAt?`. Kindzeilen verwenden die Revision des Elternaggregats. Finanzzeitpunkte und neue Aggregate werden clientseitig erstellt und authentifiziert verschlüsselt; der Server darf signierten Inhalt nicht verändern. Er bestätigt nur öffentliche erwartete/neue Revisionen per CAS. Zeitpunkte entscheiden nicht über Konflikte.
 
 ## Verwaltungsdaten
 
@@ -18,6 +18,14 @@ Finanzaggregate besitzen `id`, `spaceId`, `revision`, `createdAt`, `updatedAt`, 
 | Participant | spaceId, name, kind, archived, userId? | kind person/household; genau ein technischer Haushaltsteilnehmer; Benutzerzuordnung nur mit Zustimmung |
 | Invitation | householdId, role, tokenHash, expiresAt, createdBy, consumedAt? | Rohcode nur beim Erstellen; sieben Tage gültig, einmal nutzbar; nicht finanziell synchronisieren |
 | Session / Device | userId, tokenHash, expiry, revokedAt? / name | Sessiondaten nie exportieren; Device-ID allein authentifiziert nicht |
+
+## E2EE-Speicherebenen
+
+Die Finanztabellen unten existieren ausschließlich auf Clients bzw. in entschlüsselten Exports. Server-Household enthält ID und Verwaltungsreferenzen, keinen Klartext-Familiennamen/Zeitzoneninhalt. Login-displayName/E-Mail sind notwendige öffentliche Accountmetadaten; finanzielle Teilnehmernamen bleiben verschlüsselt.
+
+Serverobjekte: `EncryptedUserVault` (Ciphertext/Nonce und KDF-/Keywrapmetadaten), `IdentityPublicKeys`, `DeviceCertificate`, `KeyRoster` (signierte Rollen-/Identitätskette), `KeyGrant` (signierte sealed box pro Empfänger), `EncryptedOperation`, `EncryptedSnapshot`, `OpaqueAggregateHead` (Handle/Revision/Chiffrathash) und `OperationReceipt`. Kein Klartext-Finanzindex, keine Budgetprojektionen oder privaten Schlüssel. `Membership.status` ergänzt `pending_key_grant`; aktive kryptografische Rechte folgen dem geprüften Roster.
+
+Clientobjekte zusätzlich: entsperrter UserVault nur zur Laufzeit, gepinnte Identitätsfingerprints/Manifeststände, K pro Bereich/Version, lokaler Device-Signaturschlüssel und Quarantäne für ungültige verschlüsselte Nachrichten. Verbindlicher Lebenszyklus siehe [Verschlüsselung](encryption.md).
 
 ## Finanzdaten
 
@@ -55,8 +63,8 @@ Offline-Veröffentlichung und privater Link werden zunächst in derselben lokale
 
 - `ConfirmedAggregate`: letzter bestätigter Stand einschließlich Revision, Epoche und Payload.
 - `PendingOperation`: Operations-ID, Befehl, erwartete Revisionen, Vorgänger-IDs, Zustandsautomat, lokaler Entwurf und Wiederholungsmetadaten.
-- `OperationReceipt`: serverseitig Operations-ID, Payloadhash, Ergebnis, Akteur und Epoche; Unique(spaceId, epoch, operationId).
-- `Change`: spaceId, epoch, cursor, operationId, geänderte vollständige Aggregate/Tombstones; Cursor monoton je Bereich.
+- `OperationReceipt`: serverseitig Operations-ID, Hash der vollständigen verschlüsselten Hülle, Ergebnis, Akteur und Epoche; Unique(spaceId, epoch, operationId).
+- `Change`: spaceId, epoch, cursor, operationId und unveränderte EncryptedOperation; vollständige Finanzaggregate/Tombstones ausschließlich im verschlüsselten Payload; Cursor monoton je Bereich.
 - `SyncState`: Serverbindung, spaceId, epoch, zuletzt dauerhaft angewandter Cursor.
 - `Projection`: Kontostand, Kategorie/Monat, Teilnehmerguthaben, Reserve, Index für Suche; stets neu aufbaubar.
 - `Conflict`: Operations-ID, erwarteter Stand, bestätigter Stand, lokaler Entwurf, betroffene Aggregate; kein gemeinsamer Finanzdatensatz.
@@ -68,7 +76,7 @@ Transaction samt Splits, Transfer samt beiden Seiten, SharedExpense samt Anteile
 
 Pflichtindizes: Transaktionen nach space/account/date/id, Kategorie/Datum und Importquell-ID; Budgets nach space/month/method; aktive Membership nach user/household; Teilnehmer nach space; Regeln nach space/order/id; Occurrences nach schedule/date; Change nach space/epoch/cursor; Outbox nach space/state/createdAt; Receipt nach space/epoch/operationId.
 
-Fremdschlüssel werden in SQLite aktiviert, in IndexedDB durch denselben Fachvalidator geprüft. Referenzen auf gelöschte Objekte dürfen nicht neu erzeugt werden. Tombstones werden innerhalb einer Epoche nicht bereinigt; Epochwechsel erfolgt nur durch bestätigten Snapshotersatz. Administrationsdaten gehören nicht in gewöhnliche Finanzsnapshots.
+Fachfremdschlüssel werden in clientseitigem SQLite aktiviert, in IndexedDB durch denselben Fachvalidator geprüft. Der CiphertextStore kann keine Finanzreferenzen prüfen. Referenzen auf gelöschte Objekte dürfen nicht neu erzeugt werden. Tombstones bleiben verschlüsselt erhalten; Epochwechsel nur durch clientgeprüften, signierten Snapshotersatz. Administrationsdaten gehören nicht in gewöhnliche Finanzsnapshots.
 
 ## Schemaentwicklung
 

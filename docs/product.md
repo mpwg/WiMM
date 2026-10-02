@@ -12,9 +12,9 @@ Erfolg bedeutet: Eine Familie kann ihr tägliches Haushaltsbuch, Monatsplanung u
 |---|---|---|
 | Lokal, Desktop | Alle Fachfunktionen, lokale Personen, Dateiimport, Export und automatische Sicherungen | Betriebssystemprofil schützt Dateien; lokale Personen sind keine getrennten Benutzerkonten |
 | Lokal, PWA | Alle Fachfunktionen, lokale Personen, Import und Export | Erstes Laden/Installieren benötigt Zugriff auf statisch ausgelieferte App; Browserdaten können gelöscht werden |
-| Serververbunden | Zusätzlich Konten, Einladungen, Rollen, Zusammenarbeit und Gerätesync | Selbst gehosteter vertrauenswürdiger Server; temporär offline weiter nutzbar |
+| Serververbunden | Zusätzlich Konten, Einladungen, Rollen, Zusammenarbeit und Gerätesync | Finanzdaten verpflichtend Ende-zu-Ende-verschlüsselt; Anmeldung plus lokale Tresorentsperrung; temporär offline weiter nutzbar |
 
-Eine PWA kann von einem statischen Host geladen werden, ohne ein Finanzbackend zu verwenden. Für den Serverbetrieb werden App und API unter derselben Origin ausgeliefert.
+Eine PWA kann von einem statischen Host geladen werden, ohne ein Finanzbackend zu verwenden. Same-Origin-Self-Hosting ist regulärer Serverbetrieb. Authentifizierte Clients werden unabhängig von Codesignatur vertraut; E2EE benötigt zusätzlich lokal entsperrte Finanzschlüssel. Die [Verschlüsselungsspezifikation](encryption.md) trennt Clientvertrauen, Anmeldung und Nachrichtenintegrität.
 
 ## Umfang der ersten Version
 
@@ -48,7 +48,7 @@ Bereichswechsel: Privat, Haushalte und deren Syncstatus. Innerhalb eines Bereich
 | Budget | Methode/Monat wählen, Planwerte oder Zuweisungen setzen, Abweichungen ansehen | Bestehende Kategorien ohne Vorgaben; gezielte Eingabeaktionen | Überbudgetierung angezeigt, erwartetes Einkommen nicht als Geld verwendet; Methodenwechsel nur am Monatsanfang |
 | Ausgabe teilen | Private Buchung auswählen oder externe Ausgabe erfassen, öffentliche Felder und Anteile bestätigen | Teilnehmer und Verteilungsregel anlegen | Unpassende Summe verhindert Veröffentlichung; private Bearbeitung wird nicht automatisch veröffentlicht |
 | Ausgleich | Guthaben, Herkunft und Erstattungsverpflichtungen prüfen; tatsächlichen Zahlungsweg erfassen | Keine offenen Beträge, vergangene Zahlungen bleiben auffindbar | Überschrittene Erstattung/fehlende Kontobuchung blockiert Abschluss; Saldo allein ist kein Zahlungsnachweis |
-| Einladung | admin erstellt Link mit Rolle; Empfänger registriert sich oder meldet sich an und nimmt an | Mitgliederübersicht mit Einladung | Abgelaufen/verwendet/widerrufen: verständliche Meldung, neue Einladung durch admin |
+| Einladung | admin erstellt Link; Empfänger meldet sich an; Fingerprints vergleichen; entsperrter admin gibt verschlüsselten Bereichsschlüssel frei | Mitglied pending_key_grant bis bestätigter Freigabe | Abgelaufen/widerrufen/falscher Fingerprint: keine Freigabe; admin bestätigt neu |
 | Offline/Sync | Lokale Erfassung, bei Verbindung push/pull; Änderungen als bestätigt markieren | Kein Server verbunden bedeutet regulären Lokalbetrieb | Authentifizierung erneuern, Konflikt entscheiden oder Entwürfe exportieren; keine automatische Verwerfung |
 | Wiederherstellung | Export prüfen, Vorschau, neuen lokalen Bereich anlegen oder bestätigten Serverbereich ersetzen | Dateiauswahl | Unbekannte Version/kaputte Datei vor Änderungen ablehnen; vorhandene Daten vorher sichern |
 
@@ -58,4 +58,4 @@ Die gemeinsame App darf veröffentlichte Ausgaben und freiwillige Einkommensgrun
 
 ## Veröffentlichungskriterien
 
-P1 bis P11 sind abgeschlossen, kritische Fach- und Zugriffstests bestanden und Datenwiederherstellung nachgewiesen. Die Apps wurden auf macOS, Windows, Linux sowie mobiler PWA geprüft. Fehlende Plattform-Signierung erlaubt interne Tests, aber keine als fertig bezeichnete öffentliche Distribution.
+P1 bis P11 sind abgeschlossen, kritische Fach-, Crypto- und Zugriffstests bestanden und Daten-/Schlüsselwiederherstellung nachgewiesen. E2EE ist ohne Abschaltmöglichkeit implementiert; Finanzserverdump und Backup enthalten keine Finanzklartexte. Die Apps wurden auf macOS, Windows, Linux sowie mobiler PWA geprüft. Fehlende Plattform-Signierung erlaubt interne Tests, aber keine als fertig bezeichnete öffentliche Distribution.

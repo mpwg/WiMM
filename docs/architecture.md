@@ -6,19 +6,20 @@
 |---|---|---|
 | packages/domain | Geld, Datum, Regeln, Budget, Ausgleich; pure Validatoren und Änderungsberechnung | Plattformfreie Vertragstypen |
 | packages/contracts | Validierte Ein-/Ausgaben, Fehlertypen und Versionen | Plattformfreie Schema-Bibliothek |
+| packages/crypto | Clientseitige Verschlüsselung, Tresor, Signaturen, KeyGrants | contracts, gepflegte libsodium-Bindung; keine Serverprivatschlüssel |
 | packages/storage | Adapter, Transaktionen, Projektionen, Migrationen | domain, contracts |
-| packages/sync | Outbox, Push/Pull, Revisionen, Konflikte | domain, contracts, Storage-Port |
+| packages/sync | Verschlüsselte Outbox, Push/Pull, Revisionen, Konflikte | domain, contracts, crypto, Storage-Port |
 | packages/importers | Dateiparser, Normalisierung, Vorschau, Dubletten | domain, contracts |
 | packages/ui | Fachkomponenten, Plattformtokens, Eingabe- und Ansichtsmuster | domain/contract-Typen, React; injizierte Anwendungsdienste |
 | apps/web | PWA, Browserrouting, Service Worker, IndexedDB-Komposition | gemeinsame Pakete |
 | apps/desktop | Tauri-Hülle, gemeinsame React-App, Rust-Speicher-/Systembrücke | gemeinsame Pakete; begrenzte Tauri-Commands |
-| apps/server | Fastify, Identitäten, Rechte, SQLite, Sync und statische PWA | domain, contracts, servergeeignete Speicherteile |
+| apps/server | Fastify, Identitäten, öffentliche Rechte/Zertifikate, SQLite-Chiffratspeicher und PWA | öffentliche contracts, Signaturprüfung und servergeeignete Speicherteile; kein Finanzfachkern |
 
-Keine UI-Abhängigkeiten im Fachkern; Contracts importieren nicht domain. Für Anwendungsorchestrierung verwenden die Apps gemeinsame Dienste aus storage/sync; UI erhält Ports über Composition Root. Keine zweite Fachimplementierung in Rust oder Serverrouten.
+Keine UI-Abhängigkeiten im Fachkern; Contracts importieren nicht domain. Für Anwendungsorchestrierung verwenden die Clients gemeinsame Dienste aus storage/sync/crypto; UI erhält Ports über Composition Root. Der Server kann Finanzinhalte wegen verpflichtender E2EE nicht validieren oder berechnen. Apps gelten nach Authentifizierung als vertrauenswürdige Clients; keine Codesignatur/Attestierung als Zugangsvoraussetzung. Nachrichten-/Schlüsselsignaturen sind davon getrennte Integritätsprüfungen.
 
 ## Bibliotheken und Toolchain
 
-pnpm-Workspace, TypeScript strict, React, Vite, Tauri 2, Fastify, Dexie, Zod für Verträge, Vitest für Fach-/Integrationsprüfungen, Playwright für Web-E2E. SQLite im Server mit einem gepflegten Node-Binding; Desktop über Rust/SQLite. In P1 kompatible stabile Versionen und eine unterstützte Node-LTS-Version festlegen und exakt sperren. Keine beta-Abhängigkeiten als Default.
+pnpm-Workspace, TypeScript strict, React, Vite, Tauri 2, Fastify, Dexie, Zod für Verträge, gepflegte libsodium-WASM-Bindung, RFC-8785-Kanonisierung, Vitest und Playwright. SQLite im Server mit einem gepflegten Node-Binding; Desktop über Rust/SQLite. In P1 kompatible stabile Versionen und eine unterstützte Node-LTS-Version festlegen und exakt sperren. Keine beta-Abhängigkeiten als Default. Cryptoverträge stehen in [Verschlüsselung](encryption.md).
 
 Routing und UI-Zustand bleiben von persistenten Fachdaten getrennt. Kontolisten werden virtualisiert; große Imports und Berichtsprojektionen laufen im Web Worker. Lucide liefert Werkzeugicons, Systemschriften die Typografie. Native Funktionen werden über `PlatformServices` injiziert, nicht durch Plattformprüfungen in jedem Fachwidget.
 
@@ -26,7 +27,7 @@ Routing und UI-Zustand bleiben von persistenten Fachdaten getrennt. Kontolisten 
 
 `StorageAdapter` bietet `readAggregate`, `query`, `applyAtomicBatch`, `loadConfirmed`, `loadPending`, `saveSyncPage`, `exportSnapshot`, `replaceSnapshot` und `rebuildProjections`. `applyAtomicBatch` prüft erwartete lokale Revisionen und schreibt Aggregate, Outbox und Projektionen gemeinsam. `saveSyncPage` schreibt alle Seitenänderungen samt Folgekursor in einer Transaktion.
 
-IndexedDB und SQLite erfüllen dieselbe Contract-Suite. Die Desktopbrücke akzeptiert katalogisierte Batchtypen mit Schema-/Referenzprüfung; die UI erhält keinen unbeschränkten SQL- oder Dateisystemzugriff. Der Server führt jeden akzeptierten Fachbefehl, Receipt und Change in derselben SQLite-Transaktion aus.
+IndexedDB und SQLite auf Clients erfüllen dieselbe Fachspeicher-Contract-Suite. Die Desktopbrücke akzeptiert katalogisierte Batchtypen; die UI erhält keinen unbeschränkten SQL-/Dateizugriff. Der Server besitzt einen separaten CiphertextStore: opake Handles/Revisionen, verschlüsselte Bundles, öffentliche Manifeste, Receipts und Changes. Er committet diese atomar, niemals Finanzaggregate/Projektionen im Klartext.
 
 ## Datenfluss
 
@@ -38,14 +39,15 @@ flowchart LR
   LOCAL --> VIEW[Projektionen]
   VIEW --> UI
   LOCAL --> OUT[Outbox bei Serverbindung]
-  OUT --> API[API mit Sitzung und Bereichsrechten]
-  API --> VALID[Serverseitiger Fachkern]
-  VALID --> DB[SQLite + Receipt + Änderungslog]
-  DB --> PULL[Pull nach Bereich und Cursor]
-  PULL --> LOCAL
+  OUT --> ENC[Client: verschlüsseln und Nachricht signieren]
+  ENC --> API[API: Sitzung, öffentliche Signatur und CAS]
+  API --> DB[SQLite: Chiffrat + Receipt + Änderungslog]
+  DB --> PULL[Pull: verschlüsselte Bundles]
+  PULL --> DEC[Client: prüfen, entschlüsseln, Fachvalidierung]
+  DEC --> LOCAL
 ```
 
-Der Lokalbetrieb durchläuft denselben Fachkern, benötigt aber keine Outbox. Serverbestätigung kann Entwürfe bestätigen oder Konflikte erzeugen; sie überschreibt sie nicht still. Der UI-Erfolg eines Schreibvorgangs bedeutet dauerhafte lokale Speicherung, nicht bereits abgeschlossene Serversynchronisierung.
+Der Lokalbetrieb durchläuft denselben Clientfachkern, benötigt aber keine Outbox. Serverbestätigung bedeutet Speicherung einer gültigen verschlüsselten Hülle, nicht serverseitige Bestätigung von Geldberechnungen. Empfänger validieren Inhalte vor Anwendung. Der UI-Erfolg eines Schreibvorgangs bedeutet dauerhafte lokale Speicherung, nicht bereits abgeschlossene Serversynchronisierung.
 
 ## Lokaler und verbundener Betrieb
 
@@ -53,7 +55,7 @@ Der Desktopstart benötigt keine Netzwerkverbindung. Die PWA cached ausschließl
 
 Ein lokales Profil besitzt einen privaten Bereich und beliebig viele Haushalte mit Teilnehmern. Das ist kein Mehrbenutzer-Sicherheitsmodell. Verbundene Profile werden nach Serverinstanz und User-ID getrennt; mehrere Browser-Tabs koordinieren Schreib-/Syncführung über Web Locks/BroadcastChannel. Logout löscht Sessionmaterial und sperrt die UI; lokale Daten bleiben auf ausdrücklichen Wunsch für erneute Anmeldung erhalten.
 
-Ein lokaler Bereich wird über die API `spaces/from-snapshot` zu einem neuen Serverbereich. Der bereits bei Kontoanlage erzeugte leere eigene Privatbereich kann ausdrücklich als Initialbereich übernommen werden; enthält er bereits Finanzdaten, ist stattdessen bestätigter Restore mit Backup nötig. Haushaltsteilnehmer bleiben zunächst ungebundene Personen. Mitglieder werden später eingeladen und zugeordnet. Für jeden Bereich kann der Nutzer einen lokalen unabhängigen Export erzeugen; Serverbindung wird im Export nicht als gültige Zugangsbefugnis übernommen.
+Ein lokaler Bereich wird nach bestätigter Rettungscodesicherung über `spaces/from-snapshot` als verschlüsselter, signierter Snapshot servergebunden. Ein leerer privater Initialbereich kann ausdrücklich übernommen werden; vorhandene Finanzdaten verlangen bestätigten Restore mit Backup. Teilnehmer bleiben zunächst ungebundene Personen; Familienbeitritt benötigt zusätzlich bestätigte KeyGrants. Nutzerexporte sind eigenständig verschlüsselt; ihre Schlüssel und Serverbindung verleihen keine Mitgliedschaft.
 
 ## Plattformintegration
 
@@ -65,7 +67,7 @@ Tauri lädt nur gebündelte Inhalte. Netzwerkanfragen gehen über eine begrenzte
 
 Eine Serverinstanz mit SQLite und lokalem dauerhaftem Volume ist v1-Betriebsmodell. Schreibzugriffe werden serialisiert, Leseseiten paginiert. Kein Cluster, kein Netzwerkdateisystem und keine externe Queue. SQL-Schema und finanzielle Snapshots werden durch Integrationstests mit 50.000 Buchungen geprüft.
 
-Protokollversion 1 akzeptiert ausschließlich bekannte Befehle/Schemas; inkompatible Clients bekommen `UPDATE_REQUIRED`. Service-Worker-Updates werden angeboten, nicht während eines Imports oder Dialogs erzwungen. Vor Storage-Migration wird gesichert. Serverherabstufung erfolgt nur durch vollständige Wiederherstellung des passenden Backups.
+Protokollversion 1 akzeptiert bekannte verschlüsselte Hüllen/Cryptosuites; Fachbefehle/-schemas prüfen ausschließlich Clients. Inkompatible Clients bekommen `UPDATE_REQUIRED`. Service-Worker-Updates werden angeboten, nicht während eines Imports/Dialoges erzwungen. Vor Storage-Migration wird verschlüsselt gesichert. Serverherabstufung nur durch passendes Betreiberbackup mit clientbestätigtem Wiederanlauf.
 
 ## Quellen und Lizenz
 
