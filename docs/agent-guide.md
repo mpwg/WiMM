@@ -49,7 +49,7 @@ Externe Skills sind derzeit nicht erforderlich: Das Projekt hat kein aktives CI,
 
 ## GitHub und Commits
 
-Projekt wird auf GitHub gehostet, Entwicklung in VS Code. Remoteadresse/Owner nicht erfinden; vor jedem Push echte `git remote`-Konfiguration prüfen. Aktuell ist noch kein Remote eingerichtet. Templates liegen bereits lokal und funktionieren nach Veröffentlichung; sie veröffentlichen selbst keine Issues/PRs.
+Projekt wird auf GitHub gehostet, Entwicklung in VS Code. Remoteadresse/Owner nicht erfinden; vor jedem Push echte `git remote`-Konfiguration prüfen. Ein Remote ist eingerichtet, verleiht aber keine Push- oder Veröffentlichungsfreigabe. Templates liegen bereits lokal und funktionieren nach Veröffentlichung; sie veröffentlichen selbst keine Issues/PRs.
 
 Neue Arbeitsbranches heißen `codex/<paket>-<thema>`, z. B. `codex/p3-speicheradapter`. Bestehende Branches nicht ungefragt wechseln; vorhandenen Arbeitsstand erhalten. Bei bestehender ausdrücklicher Autorisierung Zwischenschritte als zusammenhängende Commits, keine mechanisch leeren Commits und keine fremden Dateien.
 

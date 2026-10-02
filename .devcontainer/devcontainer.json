@@ -1,0 +1,25 @@
+{
+  "name": "WhereIsMyMoney",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "node",
+  "updateRemoteUserUID": true,
+  "mounts": [
+    "source=wimm-node-modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=wimm-pnpm-store,target=/home/node/.local/share/pnpm/store,type=volume"
+  ],
+  "postCreateCommand": "pnpm install --frozen-lockfile",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "redhat.vscode-yaml",
+        "yzhang.markdown-all-in-one"
+      ]
+    }
+  }
+}

@@ -2,6 +2,7 @@
   "recommendations": [
     "EditorConfig.EditorConfig",
     "DavidAnson.vscode-markdownlint",
+    "ms-vscode-remote.remote-containers",
     "redhat.vscode-yaml",
     "GitHub.vscode-pull-request-github"
   ]

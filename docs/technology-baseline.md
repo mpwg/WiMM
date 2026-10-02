@@ -14,7 +14,7 @@ Stand: 2. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Her
 | Bestandteil | Gewählte Version | Offizielle Quelle und Lizenz | Kompatibilitätsgrund |
 | --- | --- | --- | --- |
 | Node.js | 24.21.0 | [Node-Release](https://github.com/nodejs/node/releases/tag/v24.21.0), [Releaseplan](https://github.com/nodejs/Release); MIT | Aktive LTS-Linie zum Stichtag, unterstützt bis 30. April 2028. |
-| pnpm | 12.8.1 | [npm-Metadaten](https://registry.npmjs.org/pnpm/12.8.1); MIT | Dokumentierte Mindestversion Node 18, daher mit Node 24 kompatibel. |
+| pnpm | 12.8.1 | [npm-Metadaten](https://registry.npmjs.org/pnpm/12.8.1); MIT | Dokumentierte Mindestversion Node 18, daher mit Node 24 kompatibel. Die Workspace-Konfiguration verwendet den strikten Linker, einen gemeinsamen Lockfile, mindestens sieben Tage Reifezeit für neue Abhängigkeiten und eine explizite Buildfreigabe. |
 | Rust | 1.98.1 | [Rust-Releaseankündigungen](https://blog.rust-lang.org/releases/); Apache-2.0 oder MIT | Stabile Toolchain; über der Mindestversion Rust 1.90 von Tauri 2.12.1. |
 | Tauri | 2.12.1 | [npm-Metadaten](https://registry.npmjs.org/@tauri-apps%2fcli/2.12.1), [Crate-Metadaten](https://crates.io/api/v1/crates/tauri/2.12.1); Apache-2.0 oder MIT | Stabiles Tauri-2-Release, passend zur Architektur; keine 3.x-Alpha. |
 
@@ -23,13 +23,13 @@ Stand: 2. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Her
 | Bereich | Gewählte Versionen | Offizielle Quelle und Lizenz | Kompatibilitätsgrund |
 | --- | --- | --- | --- |
 | Sprache | TypeScript 7.0.2 | [npm-Metadaten](https://registry.npmjs.org/typescript/7.0.2); Apache-2.0 | TypeScript strict/ESM gemäß Architektur; Node-Mindestversion 16.20.0. |
-| Weboberfläche | React und React DOM 19.3.0, Vite 8.3.2, `@vitejs/plugin-react` 6.1.1 | [React](https://registry.npmjs.org/react/19.3.0), [Vite](https://registry.npmjs.org/vite/8.3.2), [Plugin](https://registry.npmjs.org/@vitejs%2fplugin-react/6.1.1); jeweils MIT | Vite und Plugin verlangen Node 20.19.0 oder mindestens 22.12.0; Node 24 erfüllt beides. |
+| Weboberfläche | React und React DOM 19.3.0, Vite 8.3.1, `@vitejs/plugin-react` 6.1.1 | [React](https://registry.npmjs.org/react/19.3.0), [Vite](https://registry.npmjs.org/vite/8.3.1), [Plugin](https://registry.npmjs.org/@vitejs%2fplugin-react/6.1.1); jeweils MIT | Vite und Plugin verlangen Node 20.19.0 oder mindestens 22.12.0; Node 24 erfüllt beides. Vite 8.3.1 erfüllt zusätzlich die gewählte Reifezeitpolicy. |
 | Server | Fastify 5.12.5 | [npm-Metadaten](https://registry.npmjs.org/fastify/5.12.5); MIT | Stabile Fastify-Hauptlinie für die später isolierte öffentliche Serverhülle. |
 | Browserdatenbank | Dexie 4.4.6 | [npm-Metadaten](https://registry.npmjs.org/dexie/4.4.6); Apache-2.0 | Entspricht dem vorgesehenen IndexedDB-Adapter; Browserintegration erst ab P3. |
 | Verträge | Zod 4.6.5 | [npm-Metadaten](https://registry.npmjs.org/zod/4.6.5); MIT | Plattformfreie Schema-Bibliothek für `packages/contracts`. |
 | Server-SQLite | better-sqlite3 13.0.3 | [npm-Metadaten](https://registry.npmjs.org/better-sqlite3/13.0.3), [Release](https://github.com/WiseLibs/better-sqlite3/releases/tag/v13.0.3); MIT | Dokumentierte Node-Mindestversion 22; Version 13 verwendet N-API und entfernt den Installations-Compile-Schritt. |
 | Desktop-SQLite | rusqlite 0.40.2 mit gebündeltem SQLite | [Crate-Metadaten](https://crates.io/api/v1/crates/rusqlite/0.40.2); MIT, SQLite Public Domain | Rust-Brücke gemäß Architektur; konkrete Features und Lizenzkette werden bei der Cargo-Auflösung in P1.2 festgeschrieben. |
-| Tests | Vitest 5.0.3, Playwright 1.63.0 | [Vitest](https://registry.npmjs.org/vitest/5.0.3); MIT, [Playwright](https://registry.npmjs.org/playwright/1.63.0); Apache-2.0 | Vitest unterstützt Node 24, Playwright verlangt mindestens Node 20. |
+| Tests | Vitest 5.0.2, Playwright 1.63.0 | [Vitest](https://registry.npmjs.org/vitest/5.0.2); MIT, [Playwright](https://registry.npmjs.org/playwright/1.63.0); Apache-2.0 | Vitest unterstützt Node 24, Playwright verlangt mindestens Node 20. Vitest 5.0.2 erfüllt zusätzlich die gewählte Reifezeitpolicy. |
 
 ## Kryptografie und Kanonisierung
 
@@ -39,6 +39,12 @@ Stand: 2. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Her
 | RFC-8785-Kanonisierung | canonicalize 5.1.0 | [npm-Metadaten](https://registry.npmjs.org/canonicalize/5.1.0), [Upstream](https://github.com/erdtman/canonicalize); Apache-2.0 | Etablierte JCS-Kanonisierung, Node-Mindestversion 22. Der konkrete API-Einsatz wird in P1.4 gegen RFC 8785 und feste Vektoren geprüft. |
 
 `json-canonicalize` wird nicht ausgewählt: Sein Upstream dokumentiert für die Standardfunktion eine von RFC 8785 abweichende Behandlung von `undefined` in Arrays. Dadurch wäre der beabsichtigte Standard nur über eine fehleranfällige Optionsvorgabe erreichbar.
+
+## Paketmanagerentscheidung
+
+pnpm 12.8.1 bleibt der einzige Paketmanager dieses Repositories. Seine [Workspaceunterstützung](https://pnpm.io/workspaces) verbindet interne Pakete ausschließlich über `workspace:`; fehlende lokale Ziele werden dadurch nicht unbemerkt aus einer Registry geladen. Ein gemeinsames `pnpm-lock.yaml` und der isolierte Linker verhindern undeclared beziehungsweise zufällig erreichbare Abhängigkeiten. Die versionierte [`allowBuilds`-Policy](https://pnpm.io/cli/approve-builds) verlangt für Installationsskripte eine explizite Entscheidung. `minimumReleaseAge: 10080` hält neue Registry-Releases für sieben Tage zurück.
+
+npm erfüllt Workspace-Grundfunktionen, liefert aber diese projektweit versionierte Freigabepolicy nicht. Bun ist für Installationen schnell und unterstützt Workspaces, bleibt hier jedoch nur eine mögliche spätere Laufzeitprüfung: Node 24, pnpm und der pnpm-Lockfile sind die verbindliche Entwicklungsbasis. Yarn wird nicht zusätzlich eingeführt, weil sein PnP-/Linkermodell für die gewählte Tauri-/Native-Binding-Toolchain keinen zusätzlichen Nutzen bietet.
 
 ## Plattformstatus
 

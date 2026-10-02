@@ -2,7 +2,7 @@
 
 WhereIsMyMoney ist ein geplanter Open-Source-Finanzmanager für Familien. Gemeinsame Haushaltsfinanzen, persönliche Finanzbereiche, Budgetplanung und ein nachvollziehbarer Ausgleich zwischen Erwachsenen stehen im Mittelpunkt.
 
-**Projektstatus: Dokumentationsphase. Es gibt noch keine lauffähige Anwendung.** Anwendungscode, Paketkonfiguration, Deploymentinfrastruktur und Installationspakete wurden noch nicht angelegt. D0 und D1 enthalten Spezifikation sowie Agenten-/Editor-/GitHubhilfen; D2 ergänzt Einstieg, Beispiele und P1-Teilaufgaben; P1 bis P11 benötigen einen späteren ausdrücklichen Implementierungsauftrag.
+**Projektstatus: P1.2. Es gibt noch keine lauffähige Anwendung.** D0 und D1 enthalten Spezifikation sowie Agenten-/Editor-/GitHubhilfen; D2 ergänzt Einstieg, Beispiele und P1-Teilaufgaben. P1.1 ist abgeschlossen. P1.2 legt den Workspace und eine reproduzierbare Entwicklungsumgebung an; P1.3 bis P11 bleiben offen.
 
 ## Geplantes Produkt
 

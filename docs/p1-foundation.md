@@ -18,15 +18,15 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 
 ## P1.2 — Workspace und Paketgraph
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P1.
+- Status: erledigt (2. Oktober 2026).
+- Freigabe: Nutzerauftrag vom 2. Oktober 2026, ergänzt um OrbStack-/VS-Code-Integration.
 - Voraussetzungen: P1.1 erledigt.
 - Schritte: pnpm-Workspace mit den Architekturpaketen und Appverzeichnissen anlegen; Versionen/Lockfile sperren, TypeScript strict/ESM und AGPL-Metadaten konfigurieren; erlaubte Importgrenzen automatisch prüfbar machen.
 - Ergebnis: installierbare Paketstruktur mit minimalen Modulen; noch keine Finanzfunktionen.
 - Verträge: Paketgraph der Architektur; domain bleibt plattformfrei, contracts importiert nicht domain, Server erhält keine Finanzfachlogik.
 - Abnahme: Installation mit unverändertem Lockfile und Typprüfung funktionieren; Grenze zwischen öffentlichen Serververträgen und clientseitigen Fachverträgen ist explizit.
 - Prüfungen: frischer Checkout, Typprüfung und Paketgraphprüfung; absichtlich verbotenen Import in temporärem Prüfstand als negativen Kontrollfall erkennen und anschließend entfernen.
-- Prüfbelege: noch keine.
+- Prüfbelege: pnpm-Workspace mit zehn Architekturpaketen/-apps, striktem TypeScript/ESM und AGPL-Metadaten angelegt. `pnpm-lock.yaml` mit pnpm 12.8.1 erstellt und unverändert im OrbStack-Dev-Container installiert. Dort Node 24.21.0, pnpm 12.8.1, Rust/Cargo 1.98.1, `pnpm typecheck` und `pnpm check:package-graph` erfolgreich. Temporärer verbotener Import `@wimm/contracts` → `@wimm/domain` wurde erwartungsgemäß abgewiesen und danach entfernt. Docker-Kontext auf OrbStack gesetzt; VS-Code-Dev-Containers-Erweiterung vorhanden. Keine App, Finanzfunktion, Server-API oder Tauri-App gestartet.
 
 ## P1.3 — Gemeinsame Verträge und Ports
 

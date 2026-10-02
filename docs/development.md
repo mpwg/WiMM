@@ -2,13 +2,15 @@
 
 ## Stand
 
-Dieses Repository enthält Spezifikation, Agentenhilfen und Editor-/GitHubvorlagen. Es enthält noch keine installierbare App, Entwicklungsserver, pnpm-Workspace oder CI-Workflows. Die Befehle `dev:web`, `dev:server`, `dev:desktop`, `test` und `build` werden erst in P1 angelegt. Nicht so tun, als ließen sie sich bereits ausführen.
+Dieses Repository enthält P1.2-Workspace, Agentenhilfen und Editor-/GitHubvorlagen, aber noch keine installierbare App, Entwicklungsserver oder CI-Workflows. `typecheck` und `check:package-graph` sind vorhanden; `dev:web`, `dev:server`, `dev:desktop`, `test` und `build` werden erst in den passenden P1-Teilaufgaben angelegt. Nicht so tun, als ließen sie sich bereits ausführen.
 
 ## VS-Code-Arbeitsbereich
 
-Projektordner in VS Code öffnen. Die versionierten `.vscode/settings.json`-Einstellungen verwenden UTF-8, LF, zwei Leerzeichen und Markdown-Softwrap; Rust später vier Leerzeichen. `.editorconfig` hält dieselben Formatregeln für andere Editoren fest. Autoformat beim Speichern bleibt zunächst aus, damit bestehende Absätze nicht ungefragt umgeschrieben werden; explizite Formatierung wird später über die Projekttoolchain vereinheitlicht.
+Projektordner in VS Code öffnen und **Dev Containers: Reopen in Container** ausführen. Der mitgelieferte [Dev Container](../.devcontainer/devcontainer.json) baut über OrbStack eine isolierte Linux-arm64-Umgebung mit Node 24.21.0, pnpm 12.8.1, Rust 1.98.1 und den Linux-Buildabhängigkeiten für Tauri. `node_modules` und der pnpm-Store bleiben als OrbStack-Volumes außerhalb des Projektordners. Docker muss dafür auf den Kontext `orbstack` zeigen. Der Container hat keinen Zugriff auf den Docker-Socket und keine Projektsecrets werden gemountet.
 
-[Erweiterungsempfehlungen](../.vscode/extensions.json): EditorConfig, markdownlint, YAML und GitHub Pull Requests. Sie sind Empfehlungen im Workspace und nicht heimlich global installiert. Die ersten drei unterstützen direkt die aktuelle Dokumentation; GitHubintegration wird mit dem echten Repositorykonto nutzbar. TypeScript/JSON/Markdown-Unterstützung liefert VS Code selbst. Rust-analyzer, ESLint, Formatter und Playwrightintegration erst passend zu P1/P4 konfigurieren.
+Die versionierten `.vscode/settings.json`-Einstellungen verwenden UTF-8, LF, zwei Leerzeichen und Markdown-Softwrap; Rust später vier Leerzeichen. `.editorconfig` hält dieselben Formatregeln für andere Editoren fest. Autoformat beim Speichern bleibt zunächst aus, damit bestehende Absätze nicht ungefragt umgeschrieben werden; explizite Formatierung wird später über die Projekttoolchain vereinheitlicht.
+
+[Erweiterungsempfehlungen](../.vscode/extensions.json): EditorConfig, markdownlint, Dev Containers, YAML und GitHub Pull Requests. Sie sind Empfehlungen im Workspace und nicht heimlich global installiert. Die ersten drei unterstützen direkt die aktuelle Dokumentation und die Containerumgebung; GitHubintegration wird mit dem echten Repositorykonto nutzbar. TypeScript/JSON/Markdown-Unterstützung liefert VS Code selbst. Rust-analyzer, ESLint und Formatter werden innerhalb des Dev Containers bereitgestellt; Playwrightintegration folgt passend zu P4.
 
 Keine VS-Code-Task/Debugkonfiguration mit nicht existierenden Appbefehlen. Keine globale Änderung von Benutzerprefs, Authkonten oder Workspace-Trust. [Workspace-Einstellungen](https://code.visualstudio.com/docs/configure/settings), [Erweiterungsempfehlungen](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace).
 
@@ -20,11 +22,11 @@ Die [Agentenregeln](../AGENTS.md) gelten für Codex und andere beteiligte Agente
 
 Bereits angelegt: [PR-Vorlage](../.github/pull_request_template.md), [Aufgabenformular](../.github/ISSUE_TEMPLATE/task.yml) und [Fehlerformular](../.github/ISSUE_TEMPLATE/bug.yml). Keine Labels/Assignees/Owners voraussetzen, die erst auf GitHub existieren müssten. Die Formulare nutzen deutsche Inhalte und dieselben Paket-/Vertrags-/Prüfbelegfelder wie die lokale Dokumentation.
 
-GitHub-Remote ist derzeit nicht konfiguriert. Kein Repository erstellen, pushen oder veröffentlichen, nur weil hier sein Hosting beschrieben ist. Nach tatsächlicher Einrichtung Owner/URL, Branchschutz und private Sicherheitsmeldungen dokumentieren. CI ab P1; Checks erst als verpflichtend konfigurieren, wenn sie existieren und funktionieren. [GitHub-Templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/about-issue-and-pull-request-templates).
+Ein GitHub-Remote ist konfiguriert. Vor jedem Push muss die tatsächliche `git remote`-Konfiguration geprüft werden; diese Dokumentation autorisiert weder Push noch Veröffentlichung. Branchschutz und private Sicherheitsmeldungen werden erst nach einer autorisierten GitHub-Konfiguration dokumentiert. CI ab P1; Checks erst als verpflichtend konfigurieren, wenn sie existieren und funktionieren. [GitHub-Templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/about-issue-and-pull-request-templates).
 
 ## Nächster Implementierungsschritt
 
-P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft; Details stehen in der [Versions- und Lizenzbasis](technology-baseline.md). P1.2 legt darauf aufbauend Workspace, exakte Lockfiles und konkrete Installations-/Prüfbefehle an. Finanzen bleiben clientseitig; Backend transportiert Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
+P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft; Details stehen in der [Versions- und Lizenzbasis](technology-baseline.md). P1.2 legt darauf aufbauend Workspace, exakte Lockfiles und konkrete Installations-/Prüfbefehle an. Im Dev Container `pnpm install --frozen-lockfile`, `pnpm typecheck` und `pnpm check:package-graph` verwenden. Finanzen bleiben clientseitig; Backend transportiert Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
 
 Die [P1-Teilaufgaben](p1-foundation.md) legen Reihenfolge und Abnahme fest. Für den ersten Einstieg den [Kurzleitfaden](getting-started.md) nutzen; [Referenzhaushalt](reference-household.md) und [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) helfen bei konkreten Aufgaben.
 

@@ -1,0 +1,20 @@
+{
+  "name": "where-is-my-money",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Gemeinsame Grundlage für WhereIsMyMoney.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "packageManager": "pnpm@12.8.1",
+  "engines": {
+    "node": "24.21.0",
+    "pnpm": "12.8.1"
+  },
+  "scripts": {
+    "check:package-graph": "node scripts/check-package-graph.mjs",
+    "typecheck": "tsc --project tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "7.0.2"
+  }
+}
