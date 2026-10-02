@@ -6,6 +6,8 @@ ARG RUST_VERSION=1.98.1
 
 USER root
 
+RUN install --directory --mode=0700 --owner=node --group=node /home/node/.ssh
+
 RUN apt-get update \
   && apt-get install --yes --no-install-recommends \
     build-essential \
