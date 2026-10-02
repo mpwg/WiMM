@@ -9,7 +9,7 @@ Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein ge
 ## Endpunkte
 
 | Methode und Pfad | Eingabe | Ausgabe / Rechte |
-|---|---|---|
+| --- | --- | --- |
 | GET `/health/live` | keine | Liveness ohne Datenbankdetails, öffentlich |
 | GET `/health/ready` | keine | 200 bereit oder 503; keine persönlichen Daten |
 | GET `/meta` | keine | App-/Protokollversion, setupRequired, OIDC verfügbar, Lizenz, Source-URL |
@@ -57,7 +57,7 @@ Ein Finanzsnapshot ersetzt keine Benutzer-/Rollenverwaltung. Das Löschen eines 
 Die folgende Tabelle beschreibt ausschließlich clientintern entschlüsselte Fachbefehle. Payloads enthalten ID und Felder aus dem Datenmodell; vollständige saves ersetzen ein Aggregat. Clients prüfen Pflichtreferenzen und erzeugen Änderungssets. commandType, aggregateType, Finanzfelder und Referenzen werden nicht im Klartext an den Server gesendet. Schreibnachrichten benötigen member/admin bzw. privates Eigentum laut signiertem Roster; Appcodesignatur ist unerheblich.
 
 | commandType | Payload / atomarer Umfang |
-|---|---|
+| --- | --- |
 | `account.save`, `account.archive` | Konto bzw. id/archived |
 | `categoryGroup.save`, `category.save`, `category.archive` | Gruppe/Kategorie bzw. Archivstatus |
 | `payee.save`, `payee.merge` | Empfänger bzw. sourceIds/targetId; alle Referenzen atomar |
@@ -109,7 +109,7 @@ Das Beispiel kürzt `encryptedBundles`; eine reale Antwort enthält unverändert
 ```
 
 | HTTP | Codes | Wirkung |
-|---|---|---|
+| --- | --- | --- |
 | 400 | INVALID_ENVELOPE, INVALID_SIGNATURE, UNSUPPORTED_CRYPTO_SUITE | Keine Änderung; Hülle/Schlüssel prüfen |
 | 401 | AUTH_REQUIRED, SESSION_EXPIRED | Erneut anmelden; Entwürfe erhalten |
 | 403 | FORBIDDEN, CSRF_FAILED | Kein Schreibrecht bzw. ungültiger Anmeldekontext |

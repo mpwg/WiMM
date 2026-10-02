@@ -9,7 +9,7 @@ Statische PWA-Auslieferung ohne Backend ist ebenfalls möglich. Browser-Origin i
 ## Konfigurationsvertrag
 
 | Variable | Default | Bedeutung |
-|---|---|---|
+| --- | --- | --- |
 | WIMM_HOST / WIMM_PORT | 0.0.0.0 / 3000 | Containerlistener; lokaler Entwicklungsstart bindet ausdrücklich 127.0.0.1 |
 | WIMM_PUBLIC_URL | verpflichtend für Serverbetrieb | HTTPS-Origin ohne Pfad; localhost-HTTP nur Entwicklung |
 | WIMM_DATA_DIR | /data | DB, Migrationen und betriebliche Daten |
@@ -33,7 +33,7 @@ Shutdown: neue Requests stoppen, laufende Schreibtransaktion abschließen/rollba
 ## Sicherungsarten
 
 | Sicherung | Inhalt | Zeitpunkt / Aufbewahrung |
-|---|---|---|
+| --- | --- | --- |
 | Nutzerexport .wimm | clientverschlüsselter einzelner Finanzbereich, keine Auth-/Rollenrechte | separate Exportpassphrase, beliebige lokale Ziele |
 | Desktopbackup | verschlüsselte Daten/Entwürfe, keine OS-Tokens | täglich beim ersten Lauf und vor Migration, 30 Tage; Backupschlüssel lokal im Tresor, nicht neben Datei |
 | Vollserverbackup | konsistente Chiffrat-DB, öffentliche Schlüsselpakete, Verwaltung/Syncmetadaten; keine Finanzklartexte | täglich 03:00 Betreiberzeitzone, Default Europe/Vienna; 30 Tage |

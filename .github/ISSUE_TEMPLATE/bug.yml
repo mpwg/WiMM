@@ -1,0 +1,32 @@
+name: "Fehlerbericht"
+description: "Einen Fehler mit reproduzierbarem Ablauf und synthetischen Daten melden."
+title: "[Fehler] "
+body:
+  - type: markdown
+    attributes:
+      value: "Keine echten Finanzdaten, Passphrasen, Rettungscodes oder Schlüssel hochladen. Sicherheitslücken über den privaten GitHub-Meldeweg melden, sofern im Repository aktiviert."
+  - type: input
+    id: environment
+    attributes:
+      label: "Version und Umgebung"
+      description: "Build/Commit, Plattform/Browser, lokal oder serververbunden."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: "Reproduktion"
+      description: "Schritte und minimale synthetische Daten; Request-ID ohne Logs mit Secrets."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Erwartetes und tatsächliches Verhalten"
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: "Prüfbelege oder Screenshot"
+      description: "Nur redigierte/synthetische Daten; bekannte Paket-/Testfall-ID optional."

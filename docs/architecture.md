@@ -3,7 +3,7 @@
 ## Komponenten und Zielstruktur
 
 | Bereich | Verantwortung | Darf abhängen von |
-|---|---|---|
+| --- | --- | --- |
 | packages/domain | Geld, Datum, Regeln, Budget, Ausgleich; pure Validatoren und Änderungsberechnung | Plattformfreie Vertragstypen |
 | packages/contracts | Validierte Ein-/Ausgaben, Fehlertypen und Versionen | Plattformfreie Schema-Bibliothek |
 | packages/crypto | Clientseitige Verschlüsselung, Tresor, Signaturen, KeyGrants | contracts, gepflegte libsodium-Bindung; keine Serverprivatschlüssel |

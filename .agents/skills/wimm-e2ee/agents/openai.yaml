@@ -1,0 +1,6 @@
+interface:
+  display_name: "WhereIsMyMoney: E2EE"
+  short_description: "Schlüssel, verschlüsselten Sync und Recovery prüfen"
+  default_prompt: "Nutze $wimm-e2ee für diese Änderung und prüfe ihre Auswirkungen auf Schlüssel und Transport."
+policy:
+  allow_implicit_invocation: true

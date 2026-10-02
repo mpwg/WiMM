@@ -9,7 +9,7 @@ Finanzaggregate besitzen `id`, `spaceId`, `revision`, `createdAt`, `updatedAt`, 
 ## Verwaltungsdaten
 
 | Entität | Pflichtfelder neben ID/Zeitpunkten | Beziehungen und Regeln |
-|---|---|---|
+| --- | --- | --- |
 | User | displayName, normalizedEmail, status | E-Mail eindeutig auf Server; privater Bereich genau einer; keine Passwörter in Finanzexporten |
 | Credential / OidcIdentity | userId, Art, Hash bzw. issuer/subject | issuer + subject eindeutig; E-Mail-Gleichheit verknüpft Identitäten nicht automatisch |
 | Household | name, timezone, sharedSpaceId | Genau ein gemeinsamer Bereich; sharedSpaceId eindeutig |
@@ -30,7 +30,7 @@ Clientobjekte zusätzlich: entsperrter UserVault nur zur Laufzeit, gepinnte Iden
 ## Finanzdaten
 
 | Aggregat | Felder | Kinder und Grenzen |
-|---|---|---|
+| --- | --- | --- |
 | Account | name, type, onBudget, archived | Keine mutable balance; Kontostand berechnet; credit immer off-budget |
 | CategoryGroup | name, kind, sortOrder, archived | kind income/expense; Systemgruppe für unzugeordnet |
 | Category | groupId, name, sortOrder, archived | Gruppe im selben Bereich |

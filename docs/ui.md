@@ -16,7 +16,7 @@ Desktop- und Touchansichten werden bewusst unterschiedlich komponiert; gemeinsam
 ## Hauptansichten
 
 | Ansicht | Inhalte | Primäre Aktionen |
-|---|---|---|
+| --- | --- | --- |
 | Übersicht | verfügbares Geld, Monatsausgaben, kommende Zahlungen, Ziele; Haushalt zusätzlich Ausgleich | Buchung erfassen, fällige Zahlung bestätigen |
 | Buchungen | Datum, Konto, Empfänger, Kategorie, Betrag, Abgleich-/Syncstatus; Filter und Suche | hinzufügen, importieren, bearbeiten, splitten, teilen |
 | Konten | Guthaben, Budgetzugehörigkeit, Archivstatus und Kontodetails | Konto anlegen, Umbuchung, Abgleich |

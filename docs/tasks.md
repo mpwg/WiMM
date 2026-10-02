@@ -2,7 +2,7 @@
 
 ## Auftrag und Statusführung
 
-Aktuelle Freigabe: ausschließlich D0. P1–P11 sind keine durch diese Dokumentation freigegebenen Ausführungsaufträge. Alle folgenden Pakete beginnen mit Status `offen`; D0 wird nach tatsächlicher Konsistenzprüfung abgeschlossen. Keine App-Abhängigkeiten, Toolchain oder Infrastruktur während D0 anlegen.
+Aktuelle Freigabe: D0 und die Dokumentations-/Agentenergänzung D1. Beide sind abgeschlossen; P1–P11 bleiben offen und benötigen einen späteren Implementierungsauftrag. Keine App-Abhängigkeiten, App-Toolchain oder Deploymentinfrastruktur in diesem Auftrag anlegen. Temporäre Dokumentationsvalidatoren sind keine Anwendungspakete.
 
 Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
 
@@ -15,6 +15,17 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 - Verträge: alle Dokumente; Begriffe, Lizenz, Rechte, Buchungs-/Budget-/Ausgleichsregeln konsistent.
 - Abnahme: alle relativen Links lösen auf, JSON-Beispiele parsebar, geplante Pakete bleiben offen, keine veraltete MIT-Projektlizenz, keine behaupteten Anwendungstests oder existierenden APIs.
 - Prüfbelege: 17 Dateien (16 Markdown-Dateien und vollständiger Lizenztext); 42 relative Links auf vorhandene Ziele geprüft; drei JSON-Beispiele erfolgreich geparst; P1–P11 vollständig und offen; Cent-Referenzrechnungen für Umschlag, Eigenanteilsverrechnung und Teilrückerstattung geprüft; Whitespaceprüfung bestanden. Keine Anwendungstests, Paketinstallation oder Infrastruktur ausgeführt. Zwischencommits: `07c0608` (Fachmodell/Schnittstellen/Lizenz), `14f2784` (UI/Sicherheit/Betrieb); Abschlusscommit ergänzt Agentenübergabe und Konsistenzkorrekturen.
+
+## D1 — E2EE-Präzisierung und Agentenhilfen
+
+- Status: erledigt (2. Oktober 2026).
+- Freigabe: Nutzerauftrag zu verpflichtender E2EE, authentifiziertem Clientvertrauen sowie Skills/Guides für GitHub und VS Code; keine App-Implementierung.
+- Voraussetzungen: D0 erledigt; spätere Nutzerentscheidungen ersetzen alte Defaults.
+- Schritte: Verschlüsselungsspezifikation, API/Sync/Speicherung/Recovery und C01–C14 konsistent anpassen; vier Repository-Skills und zentrale Agenten-/Beitrags-/Editorleitfäden; Task-/ADR-/Handoff- und GitHubvorlagen; Formatkonfiguration.
+- Ergebnis: gemeinsame versionierte Richtlinien und nach Bedarf ladbare Skills; verpflichtende E2EE ohne Appcodesignatur/Attestierung als Clientzugangsbedingung.
+- Verträge: ADR-025–ADR-028, Verschlüsselung/API/Sync/Formate, Agentenregeln und Vorlagen.
+- Abnahme: P1–P11 bleiben offen, kein Appcode/Remote-Push; Skills validiert, Markdown/JSON/YAML/Links geprüft; keine aktuellen Klartextserverannahmen; Repositorystatus sauber nach Abschlusscommit.
+- Prüfbelege: vier Skills erfolgreich mit dem mitgelieferten Validator geprüft; 29 Markdown-Dateien ohne Markdownlintfehler, 105 relative Links auf vorhandene Ziele, drei JSON-Beispiele/drei JSON-Konfigurationen und sechs YAML-Dateien geprüft. YAML-Metadaten inkl. Aufrufnamen/automatischer Auswahl und GitHubformularfelder gültig. P1–P11 offen, kein Anwendungscode/Remote/Push. E2EE-Zwischencommits `d84846e` und `dfebdcd`; Abschlusscommit enthält Guides und einheitliches Tabellenformat. Crypto-/App-Tests sind spezifiziert, mangels Implementierung noch nicht ausgeführt.
 
 ## P1 — Projektgrundlage
 
@@ -80,7 +91,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 
 - Status: offen. Voraussetzung: P6.
 - Schritte: Haushalte/Teilnehmer ohne Login; Policies und freiwillige Einkommen; eingefrorene Anteile und Restcent; SharedExpense mit beiden Quellen/Erstattungswegen; Beiträge/Settlements/Eigenanteilsverrechnung; Reserve und kumulative Refunds; Veröffentlichungsvorschau/privater Link; Guthaben-/Ausgleichsberichte und Vorschlagszahlungen.
-- Ergebnis: vollständiger Familienalltag lokal, identische Fachregeln als spätere Servergrundlage.
+- Ergebnis: vollständiger Familienalltag lokal, identische Fachregeln für den späteren verschlüsselten Mehrgerätebetrieb auf Clients.
 - Verträge: participant/allocationPolicy/sharedExpense/contribution/settlement/advanceOffset/expenseRefund; Budgetreserve; private Veröffentlichung.
 - Abnahme: F07–F13/F16; Salden einschließlich H summieren null; Reserve unabhängig von Beitragssaldo; Ausgaben/Erstattung genau einmal; private Felder gelangen nicht in gemeinsamen Snapshot; historische Policies unverändert.
 - Prüfungen: Restcent-/Rückerstattungs-Eigenschaften, private Link-/Anteilskorrektur-/Löschfehlfälle, komplette Haushaltsabläufe in UI.

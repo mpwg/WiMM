@@ -2,12 +2,12 @@
 
 ## Status und Auftrag
 
-D0 ist die reine Spezifikations- und Dokumentationsübergabe. Es existiert noch keine Anwendung. P1 bis P11 sind geplant und benötigen einen späteren Implementierungsauftrag. Datenschemata und JSON-Beispiele sind Verträge für zukünftigen Code, keine bereits vorhandenen APIs.
+D0 ist die Spezifikationsübergabe, D1 ergänzt verpflichtende E2EE und Agenten-/GitHub-/Editorhilfen. Beide sind abgeschlossen. Es existiert noch keine Anwendung. P1 bis P11 sind geplant und benötigen einen späteren Implementierungsauftrag. Schemata und JSON-Beispiele sind Verträge für zukünftigen Code, keine bereits vorhandenen APIs.
 
 ## Lesereihenfolge
 
 | Schritt | Dokument | Zweck |
-|---|---|---|
+| --- | --- | --- |
 | 1 | [Arbeitsregeln](../AGENTS.md), [Produkt](product.md) | Auftrag, Zielgruppe, Funktionen, Rollen und Abläufe |
 | 2 | [Fachmodell](domain.md) | Begriffe, Geldregeln, Budget und Ausgleich |
 | 3 | [Datenmodell](data-model.md) | Entitäten, Beziehungen, Aggregate und Indizes |
@@ -18,6 +18,7 @@ D0 ist die reine Spezifikations- und Dokumentationsübergabe. Es existiert noch 
 | 7 | [Oberfläche](ui.md), [Sicherheit](security.md) | Plattformbedienung, private Daten und Sitzungen |
 | 8 | [Betrieb](operations.md), [Tests](testing.md) | Installation, Sicherung, Migration und Abnahme |
 | 9 | [Aufgaben](tasks.md) | Geordnete Arbeitspakete mit Ergebnis und Nachweisen |
+| 10 | [Agentenleitfaden](agent-guide.md), [Entwicklung](development.md) | Projektskills, GitHub, VS Code und einheitliche Vorlagen |
 
 ## Verbindlichkeit und Fortschritt
 

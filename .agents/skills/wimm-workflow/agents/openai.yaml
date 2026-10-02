@@ -1,0 +1,6 @@
+interface:
+  display_name: "WhereIsMyMoney: Arbeitsablauf"
+  short_description: "Arbeitspakete, Prüfbelege und Übergaben vereinheitlichen"
+  default_prompt: "Nutze $wimm-workflow für das aktuelle WhereIsMyMoney-Arbeitspaket und seine überprüfbare Übergabe."
+policy:
+  allow_implicit_invocation: true

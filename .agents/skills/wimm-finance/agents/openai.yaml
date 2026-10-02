@@ -1,0 +1,6 @@
+interface:
+  display_name: "WhereIsMyMoney: Finanzlogik"
+  short_description: "Centgenaue Budgets und Familienausgleich prüfen"
+  default_prompt: "Nutze $wimm-finance für die angefragte Finanzänderung und prüfe die passenden Referenzfälle."
+policy:
+  allow_implicit_invocation: true

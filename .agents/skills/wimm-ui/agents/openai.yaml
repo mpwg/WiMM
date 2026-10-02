@@ -1,0 +1,6 @@
+interface:
+  display_name: "WhereIsMyMoney: App-Oberfläche"
+  short_description: "Native Anmutung und zugängliche Finanzansichten"
+  default_prompt: "Nutze $wimm-ui für diese Ansicht und prüfe Desktop- sowie mobile Bedienung."
+policy:
+  allow_implicit_invocation: true

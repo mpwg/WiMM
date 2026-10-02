@@ -9,7 +9,7 @@ Erfolg bedeutet: Eine Familie kann ihr tägliches Haushaltsbuch, Monatsplanung u
 ## Betriebsarten
 
 | Betriebsart | Verfügbar | Voraussetzungen und Grenzen |
-|---|---|---|
+| --- | --- | --- |
 | Lokal, Desktop | Alle Fachfunktionen, lokale Personen, Dateiimport, Export und automatische Sicherungen | Betriebssystemprofil schützt Dateien; lokale Personen sind keine getrennten Benutzerkonten |
 | Lokal, PWA | Alle Fachfunktionen, lokale Personen, Import und Export | Erstes Laden/Installieren benötigt Zugriff auf statisch ausgelieferte App; Browserdaten können gelöscht werden |
 | Serververbunden | Zusätzlich Konten, Einladungen, Rollen, Zusammenarbeit und Gerätesync | Finanzdaten verpflichtend Ende-zu-Ende-verschlüsselt; Anmeldung plus lokale Tresorentsperrung; temporär offline weiter nutzbar |
@@ -23,7 +23,7 @@ Konten, Buchungen und Splits; Umbuchungen innerhalb eines Finanzbereichs; Konten
 ## Rollenmatrix
 
 | Aktion | Privat: Eigentümer | Haushalt: admin | Haushalt: member | Haushalt: viewer |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | Finanzdaten lesen und berechtigten Bereich exportieren | Ja | Ja | Ja | Ja |
 | Buchungen, Budget, Ziele, Regeln und Ausgleich bearbeiten | Ja | Ja | Ja | Nein |
 | Teilnehmer als fachliche Personen verwalten | Nicht anwendbar | Ja | Ja | Nein |
@@ -40,7 +40,7 @@ Bereichswechsel: Privat, Haushalte und deren Syncstatus. Innerhalb eines Bereich
 ## Abläufe und Zustände
 
 | Ablauf | Normalfall | Leerer Zustand | Fehler und Wiederaufnahme |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Lokaler Einstieg | Ohne Anmeldung starten, Privatbereich oder Haushalt anlegen, Konto und Anfangsbestand erfassen | Erfassungsaktion für erstes Konto; keine erfundenen Guthaben | Speicherfehler erklärt, Eingaben bleiben erhalten; keine Erfolgsmeldung vor dauerhafter Speicherung |
 | Servereinrichtung | Betreiber richtet Erstkonto ein; Benutzer meldet sich an und legt Haushalt an | Einrichtungsansicht nur vor abgeschlossenem Bootstrap | Ungültiges Setupgeheimnis/Parallelversuch ändern nichts; nach Einrichtung ist Bootstrap gesperrt |
 | Buchung | Bereich/Konto wählen, Datum/Betrag/Kategorie eingeben, optional splitten, speichern | Liste bietet Buchung und Import an | Feldfehler inline; offline dauerhaft gespeichert und als ausstehend markiert |

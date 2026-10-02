@@ -3,7 +3,7 @@
 Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Einträgen. Nutzerentscheidungen sind verbindlich; technische Defaults präzisieren das Konzept. Änderungen benötigen einen neuen Eintrag mit Grund, betroffenen Verträgen und Migration/Tests. Alte Einträge bleiben als Historie erhalten.
 
 | ID | Entscheidung | Herkunft und Begründung | Konsequenz |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | ADR-001 | Öffentliches Open-Source-Projekt für Familien, DACH zuerst | Nutzerentscheidung | Keine kommerzielle Registrierung/Billing in v1 |
 | ADR-002 | Private Bereiche und gemeinsame Haushalte getrennt | Nutzerentscheidung | Bereich ist Autorisierungs- und Synceinheit; keine versteckten privaten Zeilen in gemeinsamen Snapshots |
 | ADR-003 | PWA und Desktop macOS/Windows/Linux | Nutzerentscheidung | Offlinefähige gemeinsame Fachlogik, keine mobilen Store-Apps in v1 |
@@ -31,6 +31,7 @@ Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Eintr
 | ADR-025 | E2EE ist Pflicht ab v1, ersetzt ADR-008 | Nutzerentscheidung: sonst kein Vertrauen | Finanzserver nur Chiffrate/öffentliche Metadaten; Fachvalidierung und Berechnungen auf Clients |
 | ADR-026 | Bereichsschlüssel, signierte Rollen/Geräte und eigenständige Recovery | Technischer Default für ADR-025 | libsodium, Fingerprintprüfung, Schlüsselfreigabe, Rotation und separate Tresorentsperrung; Serverpasswortreset entschlüsselt nichts |
 | ADR-027 | Authentifizierte Clients sind vertrauenswürdig; keine Codesignatur als Sicherheitsbasis | Zusätzliche Nutzerentscheidung | Web/PWA/Desktop gleich zugelassen; keine Attestierung/Build-Allowlist; Nachrichten-/Schlüsselsignaturen schützen Datenintegrität, keine Appherkunft |
+| ADR-028 | Repositorylokale Agenten-Skills und gemeinsame Vorlagen, GitHub/VS Code | Nutzerauftrag plus technischer Default | Vier Skills in .agents/skills; zentrale Docs statt Regelkopien; keine globale Plugininstallation, kein Push/CI/Appstart |
 
 ## Nicht mehr offen
 

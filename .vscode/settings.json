@@ -1,0 +1,16 @@
+{
+  "files.encoding": "utf8",
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.formatOnSave": false,
+  "[markdown]": { "editor.wordWrap": "on" },
+  "[rust]": { "editor.tabSize": 4 },
+  "markdown.validate.enabled": true,
+  "markdown.validate.fileLinks.enabled": true,
+  "markdown.validate.fragmentLinks.enabled": true,
+  "markdown.validate.referenceLinks.enabled": true
+}

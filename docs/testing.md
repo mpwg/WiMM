@@ -7,7 +7,7 @@ D0 umfasst Dokumentationsprüfung. Es wurden keine Anwendungstests implementiert
 ## Testebenen und Werkzeuge
 
 | Ebene | Werkzeug ab Paket | Prüfgegenstand |
-|---|---|---|
+| --- | --- | --- |
 | Dokumentation | Link-/Datei-/Konsistenzprüfung in D0 | vollständige Übergabe, Lizenz, Status, Querverweise |
 | Fachkern | Vitest ab P2 | pure Berechnungen, fachliche Invarianten, negative Fälle |
 | Speicher | Vitest + echte IndexedDB/SQLite ab P3 | gleiche Contract-Suite für beide Adapter |
@@ -24,7 +24,7 @@ Tests behaupten Verhalten, nicht private Implementierungsdetails. Fachreferenzen
 Teilnehmer-IDs A vor B vor C lexikografisch festlegen. Technischer Haushalt H. Beträge in den Tabellen in EUR, intern Cent. Daten sind synthetisch. Jeder Fall beginnt mit seinem dokumentierten Ausgangsstand und wird unabhängig ausgeführt.
 
 | ID | Eingabe | Erwartung |
-|---|---|---|
+| --- | --- | --- |
 | F01 Konten | Anfang 1.000, Ausgabe 100, Einnahme 200 | Saldo 1.100; Konsumausgabe 100, Konsumeinnahme 200, Anfang kein Einkommen |
 | F02 Splits | Ausgabe -100, Splits -60/-40; Fehlfall -60/-39 | erster gültig, zweiter vollständig abgewiesen |
 | F03 Transfer | Konto1 1.000, Konto2 0, Umbuchung 200 | 800/200; Gesamtvermögen 1.000; Einnahmen/Ausgaben null |
@@ -47,7 +47,7 @@ Weitere Pflichtfälle: sichere Ganzzahlgrenzen und Zwischenwertüberlauf; ungül
 ## Speicher- und Syncmatrix
 
 | ID | Szenario | Erwartung |
-|---|---|---|
+| --- | --- | --- |
 | S01 | Fehler zwischen Transfertochterbuchungen | keine Teilbuchung/Projektion/Outbox gespeichert |
 | S02 | Browser-/Desktop-Neustart offline | dieselben dauerhaft gespeicherten Finanzdaten und Entwürfe |
 | S03 | Disk-full/Quota bei neuer Buchung | verständlicher Fehler; Eingaben erhalten; kein vermeintlicher Erfolg |
@@ -82,12 +82,10 @@ Web: Chromium, Firefox und WebKit in Playwright; zusätzlich echtes iOS-Safari-S
 
 Referenzleistung: 50.000 Buchungen, zehn Konten, 100 Kategorien, 36 Monate, 1.000 SharedExpenses. Testgerät/Browser/Build dokumentieren. Ziele: sichtbare Buchungsliste innerhalb zwei Sekunden nach lokalem Öffnen, p95 Filter-/Scrollreaktion unter 100 ms bei warmem Datensatz; Importfortschritt ohne blockierenden UI-Thread. Ergebnisse messen, nicht aus Virtualisierung allein ableiten.
 
-## Betrieb und Definition of Done
-
 ## Verpflichtende Crypto-Abnahme
 
 | ID | Szenario | Erwartung |
-|---|---|---|
+| --- | --- | --- |
 | C01 | Identischer Finanzdatensatz auf PWA/Desktop verschlüsselt | interoperabel entschlüsselbar; neue Nonce pro neuer Verschlüsselung |
 | C02 | Chiffrat, Nonce, AAD, Signatur oder Bereichs-/Keyversion verändert | Ablehnung, keine Finanz-/Cursoränderung |
 | C03 | Serverdatenbank, Netzwerkpayloads, Logs und Betreiberbackup durchsuchen | keine Kontonamen/Beträge/Notizen/privaten Schlüssel; öffentliche Metadaten dokumentiert |

@@ -1,0 +1,32 @@
+name: "Arbeitspaket oder Teilaufgabe"
+description: "Umsetzung mit Voraussetzungen, Verträgen und überprüfbarer Abnahme planen."
+title: "[Aufgabe] "
+body:
+  - type: input
+    id: package
+    attributes:
+      label: "Paket-ID und Voraussetzungen"
+      description: "P1–P11 bzw. Teilaufgabe; ein Issue allein erteilt keinen Implementierungsauftrag."
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: "Ziel und Ergebnis"
+      description: "Konkretes Verhalten, betroffene Nutzer und Grenzen."
+    validations:
+      required: true
+  - type: textarea
+    id: contracts
+    attributes:
+      label: "Betroffene Verträge und Entscheidungen"
+      description: "Links auf Repositorydokumente oder ADRs; Migration/Kompatibilität falls nötig."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "Abnahme und Prüfungen"
+      description: "Beobachtbare Kriterien, passende F-/S-/C-Fälle und Plattformen."
+    validations:
+      required: true
