@@ -22,9 +22,9 @@ Bereits angelegt: [PR-Vorlage](../.github/pull_request_template.md), [Aufgabenfo
 
 GitHub-Remote ist derzeit nicht konfiguriert. Kein Repository erstellen, pushen oder veröffentlichen, nur weil hier sein Hosting beschrieben ist. Nach tatsächlicher Einrichtung Owner/URL, Branchschutz und private Sicherheitsmeldungen dokumentieren. CI ab P1; Checks erst als verpflichtend konfigurieren, wenn sie existieren und funktionieren. [GitHub-Templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/about-issue-and-pull-request-templates).
 
-## Späterer Start
+## Nächster Implementierungsschritt
 
-Nach ausdrücklicher Implementierungsfreigabe mit P1 beginnen. Stabile Bibliotheks-/SDKversionen aus offiziellen Quellen prüfen, Lockfiles anlegen und konkrete Installations-/Startbefehle hier ergänzen. Finanzen bleiben clientseitig; Backend transportiert Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
+P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft; Details stehen in der [Versions- und Lizenzbasis](technology-baseline.md). P1.2 legt darauf aufbauend Workspace, exakte Lockfiles und konkrete Installations-/Prüfbefehle an. Finanzen bleiben clientseitig; Backend transportiert Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
 
 Die [P1-Teilaufgaben](p1-foundation.md) legen Reihenfolge und Abnahme fest. Für den ersten Einstieg den [Kurzleitfaden](getting-started.md) nutzen; [Referenzhaushalt](reference-household.md) und [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) helfen bei konkreten Aufgaben.
 

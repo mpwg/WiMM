@@ -2,19 +2,19 @@
 
 ## Auftrag und Reihenfolge
 
-Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage), ohne Implementierung freizugeben. Alle sind offen und benötigen einen späteren ausdrücklichen Implementierungsauftrag. P1.1 bis P1.6 werden in Reihenfolge bearbeitet. P1 ist erst mit der Abnahme des Gesamtpakets erledigt; P2 beginnt danach. Nach Umsetzung Status und Prüfbelege hier sowie den Gesamtstatus in tasks.md pflegen.
+Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis P1.6 werden in Reihenfolge bearbeitet. P1 ist erst mit der Abnahme des Gesamtpakets erledigt; P2 beginnt danach. Nach Umsetzung Status und Prüfbelege hier sowie den Gesamtstatus in tasks.md pflegen.
 
 ## P1.1 — Versions- und Lizenzprüfung
 
-- Status: offen.
-- Freigabe: späterer ausdrücklicher Implementierungsauftrag für P1.
+- Status: erledigt (2. Oktober 2026).
+- Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn der Umsetzung.
 - Voraussetzungen: D0/D1 erledigt; [Architektur](architecture.md) und [Entscheidungen](decisions.md) gelesen.
 - Schritte: unterstützte Node-LTS-/pnpm-/Rust-/Tauri-Versionen und stabile kompatible Bibliotheken aus offiziellen Quellen ermitteln; libsodium-Binding, RFC-8785-Bibliothek und Node-SQLite-Binding berücksichtigen; Lizenzen und Plattformvoraussetzungen prüfen.
 - Ergebnis: datierte Versions-/Lizenzübersicht und Herkunftsregistergrundlage, ohne neue Produktentscheidungen.
 - Verträge: Architektur, E2EE und AGPL-3.0-or-later; Fremdhinweise erhalten.
 - Abnahme: jede Auswahl nennt Version, offizielle Quelle, Lizenz und Kompatibilitätsgrund; verfügbare und noch ungeprüfte Zielsysteme sind getrennt ausgewiesen.
 - Prüfungen: Quellen-/Lizenzprüfung und Abgleich der Engine-/SDK-Anforderungen; tatsächliche Builds folgen ab P1.2.
-- Prüfbelege: noch keine.
+- Prüfbelege: [Versions- und Lizenzbasis](technology-baseline.md) erstellt. Offizielle Release-/Registryquellen, Lizenzen und Engine-/SDK-Anforderungen für Node 24.21.0, pnpm 12.8.1, Rust 1.98.1, Tauri 2.12.1 und die Architekturabhängigkeiten geprüft. macOS arm64 mit Xcode, Node 24.21.0 und pnpm 12.8.1 festgestellt; Rust und alle Zielsystembuilds nicht verfügbar beziehungsweise nicht ausgeführt. Kein Lockfile oder Produktcode angelegt.
 
 ## P1.2 — Workspace und Paketgraph
 

@@ -43,14 +43,15 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 
 ## P1 — Projektgrundlage
 
-- Status: offen. Freigabe: erst späterer ausdrücklicher Implementierungsauftrag. Voraussetzung: D0 erledigt.
+- Status: in Arbeit. Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn mit P1.1. Voraussetzung: D0 erledigt.
+- Fortschritt: P1.1 ist erledigt; [P1.2](p1-foundation.md#p12--workspace-und-paketgraph) ist der nächste freigegebene Schritt.
 - Teilaufgaben: [P1.1–P1.6](p1-foundation.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: stabile kompatible Toolchain prüfen; Workspace einschließlich `packages/crypto`; TS strict/ESM; Fach- und öffentliche EncryptedOperation-/KeyRoster-Verträge trennen; gepflegte libsodium-Bindung und RFC-8785-Bibliothek; Crypto-Testvektoren; leere Apphüllen/Lockfiles/CI. Keine Klartext-FinanzAPI als Zwischenlösung.
 - Ergebnis: reproduzierbare Entwicklungsbasis, ohne bereits vollständige Finanzfunktionen zu behaupten. Rootbefehle `dev:web`, `dev:server`, `dev:desktop`, `typecheck`, `test`, `test:e2e`, `build` dokumentieren.
 - Verträge: Paketabhängigkeiten, gemeinsame Primitive/Versionen, PlatformServices, künftige Storage-Ports.
 - Abnahme: frischer Checkout installierbar, Typ-/Buildprüfungen laufen; Web-/Tauri-Hülle startet; Backendhealth liefert korrekte Zustände. Versionskombination und getestete Betriebssysteme festgehalten. AGPL-Metadaten, Herkunftsregistergrundlage und Sourcehinweis angelegt.
 - Prüfungen: CI lokal reproduzieren, Paketgraph auf verbotene Imports prüfen, Buildsmokechecks; keine Secrets erforderlich.
-- Prüfbelege: noch keine.
+- Prüfbelege: P1.1: [Versions- und Lizenzbasis](technology-baseline.md) am 2. Oktober 2026 anhand offizieller Release-, Registry- und Tauri-Quellen geprüft. Node 24.21.0 und pnpm 12.8.1 auf macOS arm64 festgestellt; Rust fehlt. Keine Paketinstallation, kein Lockfile, keine App und kein Build ausgeführt.
 
 ## P2 — Fachkern
 
