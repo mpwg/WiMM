@@ -60,7 +60,7 @@ Pull liefert maximal 500 Changes mit `nextCursor`, `hasMore`, `epoch` und versch
 
 Nach Signatur-/AAD-/AEAD-/Fachprüfung werden Seite und Cursor atomar gespeichert. Ungültige Nachrichten werden quarantänisiert, Cursor nicht still weitergesetzt. Ein vertraut gepinnter Hashstand darf nicht auf ältere/abweichende Historie zurückfallen. Absturz vor Commit lässt alten Cursor bestehen; identische bereits angewandte Operationen werden übersprungen, Entwürfe separat gehalten.
 
-Sync bei Start, Fokus, Reconnect und spätestens alle 15 Sekunden bei sichtbarer App. Neue lokale Änderungen lösen einen debouncten Push nach 500 ms aus. Unsichtbare Tabs pollen nicht. Ein Bereich hat nur einen aktiven Synclauf; Browser-Tabs koordinieren dies über Web Locks. Retry exponentiell mit Jitter von 1 bis 60 Sekunden; 401 erfordert Anmeldung, 403/404 sperren den Bereich statt endloser Wiederholung.
+Sync bei Start, Fokus, Reconnect und spätestens alle 15 Sekunden bei sichtbarer App. Neue lokale Änderungen lösen einen debouncten Push nach 500 ms aus. Unsichtbare Tabs pollen nicht. Ein Bereich hat nur einen aktiven Synclauf; Browser-Tabs koordinieren dies über Web Locks. Retry exponentiell mit Jitter von 1 bis 60 Sekunden; 401 erfordert erneute Anmeldung beim externen Identitätsanbieter, 403/404 sperren den Bereich statt endloser Wiederholung.
 
 ## Konfliktauflösung
 

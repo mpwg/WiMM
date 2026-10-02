@@ -51,7 +51,7 @@ Der folgende Ablauf verwendet R01 und wird erst über P2/P3/P4/P8/P9 umgesetzt. 
 
 | Abweichung | Verhalten und passende Referenz |
 | --- | --- |
-| Vollständiger Lokalbetrieb | Gleicher Fachkern und atomarer Speicher; kein Pflichtlogin, kein Push und keine Outbox. Kein wartender Syncstatus ohne Serverbindung; S02 |
+| Vollständiger Lokalbetrieb | Gleicher Fachkern und atomarer Speicher; eigenständige Apps ohne Anmeldung oder Benutzerverwaltung, kein Push und keine Outbox. Kein wartender Syncstatus ohne Serverbindung; S02 |
 | Speicherfehler/Quota vor Commit | Gesamter lokaler Vorgang zurückgerollt; keine Teilbuchung, neue Projektion oder Outbox; Eingaben erhalten, kein Erfolg; S01/S03 |
 | Verbindung bricht nach Servercommit ab | O einschließlich Nonce, Signatur und Chiffrat unverändert erneut senden; identischer Hash liefert gleiches Receipt, keine zweite Buchung; S04/S05 |
 | Zwei Geräte ändern später T auf derselben Revision | Eine Änderung angenommen, andere als Konflikt erhalten; bestätigter Stand und lokaler Entwurf sichtbar, nur abhängige Entwürfe blockiert. Auflösung nach Prüfung als neue Operation gegen aktuelle Revision; S06/S07 |

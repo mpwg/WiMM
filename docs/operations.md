@@ -15,14 +15,14 @@ Statische PWA-Auslieferung ohne Backend ist ebenfalls möglich. Browser-Origin i
 | WIMM_DATA_DIR | /data | DB, Migrationen und betriebliche Daten |
 | WIMM_BACKUP_DIR | /data/backups | konsistente Vollserversicherungen; bevorzugt zweites gesichertes Medium |
 | WIMM_BACKUP_RETENTION_DAYS | 30 | tägliche Aufbewahrung, nicht unter 1 |
-| WIMM_SETUP_SECRET_FILE | optional | Datei mit einmaligem Bootstrapgeheimnis; sonst lokale Generierung |
-| WIMM_OIDC_ISSUER / WIMM_OIDC_CLIENT_ID | leer | zusammen aktivieren optionales OIDC |
-| WIMM_OIDC_CLIENT_SECRET_FILE | leer | Secretdatei, nicht direkt in Compose einchecken |
+| WIMM_OIDC_ISSUER | verpflichtend für Serveranmeldung | HTTPS-Issuer des externen Identitätsanbieters, z. B. Authentik |
+| WIMM_OIDC_CLIENT_ID | verpflichtend für Serveranmeldung | registrierte WIMM-Client-ID beim Provider |
+| WIMM_OIDC_CLIENT_SECRET_FILE | providerabhängig | Secretdatei, nicht direkt in Compose einchecken; bei öffentlichen Clients nicht verwenden |
 | WIMM_TRUST_PROXY | false | explizite vertrauenswürdige Proxyadressen/Hops konfigurieren |
 | WIMM_LOG_LEVEL | info | strukturierte Logs ohne Nutzdaten |
 | WIMM_SOURCE_URL | Release-Quellarchiv | Quellcodeangebot für exakt betriebenen Build |
 
-Konfiguration wird vor Datenmigration validiert; unvollständiges OIDC und ungültige öffentliche URL verhindern Start mit verständlichem Fehler. Pfade gehören dem Dienstbenutzer, Secretdateien haben restriktive Rechte. WIMM_SOURCE_URL darf für lokale Entwicklung auf den eigenen Quellstand verweisen, Releases benötigen tatsächlich verfügbares Archiv.
+Konfiguration wird vor Datenmigration validiert; fehlende oder unvollständige externe Identitätsprovider-Konfiguration und ungültige öffentliche URL verhindern den Serverstart mit verständlichem Fehler. Kein Setupgeheimnis oder lokaler Benutzerbootstrap ist vorgesehen. Pfade gehören dem Dienstbenutzer, Secretdateien haben restriktive Rechte. WIMM_SOURCE_URL darf für lokale Entwicklung auf den eigenen Quellstand verweisen, Releases benötigen tatsächlich verfügbares Archiv.
 
 ## Start und Wartung
 
@@ -61,7 +61,7 @@ Codesignierung und macOS-Notarisierung über externe Secrets dienen Distribution
 
 ## AGPL-3.0-or-later und Herkunft
 
-Projekt einschließlich eigener Dokumentation und späterer Pakete: AGPL-3.0-or-later. Der unveränderte [Lizenztext](../LICENSE) nennt Version 3; der [Projektlizenzhinweis](../README.md) erlaubt ausdrücklich Version 3 oder jede spätere Version. Eigene Paketmetadaten/SPDX-Header verwenden `AGPL-3.0-or-later`.
+Projekt einschließlich eigener Dokumentation und späterer Pakete: AGPL-3.0-or-later. Der unveränderte [Lizenztext](../LICENSE.md) nennt Version 3; der [Projektlizenzhinweis](../README.md) erlaubt ausdrücklich Version 3 oder jede spätere Version. Eigene Paketmetadaten/SPDX-Header verwenden `AGPL-3.0-or-later`.
 
 Releases liefern vollständigen zugehörigen Quellcode einschließlich Build-/Installationsskripten und gesperrten Abhängigkeiten sowie Lizenztext und Fremdhinweise. Die Oberfläche besitzt unter Hilfe/Über einen erreichbaren Quellcode- und Lizenzpunkt; Serverbuilds bieten den tatsächlich betriebenen, gegebenenfalls geänderten Quellstand an. Source-URL und Commit-/Build-ID werden in `/api/v1/meta` ausgegeben. Buildpakete dürfen ohne passende Quellcodeverfügbarkeit nicht als veröffentlichungsfertig markiert werden. [AGPL-Lizenztext, insbesondere §§ 6, 13, 14](https://www.gnu.org/licenses/agpl-3.0.html).
 

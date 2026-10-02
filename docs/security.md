@@ -8,13 +8,9 @@ Lokale Dateien/Browserdaten sind nicht standardmäßig appverschlüsselt. Betrie
 
 ## Identitäten und Einrichtung
 
-Initialer Serverstart erzeugt bzw. liest ein einmaliges Setupgeheimnis. Der Betreiber erhält es lokal außerhalb gewöhnlicher Requestlogs. Bootstrap erzeugt User, private Space und Betreiberrolle atomar und wird danach deaktiviert. Keine standardmäßigen Zugangsdaten.
+Serverkonten und Anmeldedaten werden nicht lokal verwaltet. Vor der ersten Serveranmeldung konfiguriert der Betreiber einen externen OpenID-Connect-Anbieter oder einen vergleichbaren Identitätsdienst; Authentik ist ein mögliches Beispiel, keine fest eingebaute Abhängigkeit. Der Server unterstützt keine lokalen Passwörter, Benutzerregistrierung, Passwortzurücksetzung oder einmaligen Setupkonten. Erste Serveradministratoren werden über Gruppen-/Rollenclaims des Providers oder einen gleichwertigen dokumentierten Provider-Administrationsweg zugeordnet.
 
-Eigene Benutzerkonten benötigen displayName, normalisierte E-Mail und Loginpasswort. Dieses ist unabhängig von der ausschließlich lokal verwendeten Tresorpassphrase. Normalisierung trimmt E-Mail und verwendet konsistente Kleinschreibung; keine providerspezifischen Punkt-/Plusaliasregeln. Passwort mindestens 12 Zeichen, bis 256 Unicodezeichen, nicht still trimmen. Argon2id mit individuellem Salt; Untergrenze 64 MiB, drei Iterationen, Parallelität 1; Benchmark in P8 und Parameter mit Hash speichern. Kein Loginpasswort-/OIDC-Reset darf Finanzschlüssel freilegen.
-
-Registrierung nur über einmalige Einladung oder Bootstrap. Einladungen sieben Tage gültig, mindestens 256 Bit zufälliges Token, nur Hash serverseitig. Annahme und Rollenvergabe atomar; Replay und Parallelannahme werden abgewiesen. Keine E-Mails werden ohne später ausdrücklich eingebauten Versand verschickt; admin teilt Link selbst.
-
-OIDC: Authorization Code + PKCE S256, State und Nonce, Discovery nur für Betreiber-konfigurierten HTTPS-Issuer, Prüfung von Issuer/Audience/Signatur/Zeit. Identity eindeutig nach issuer/subject. Keine automatische Verknüpfung bestehender Benutzer nur anhand E-Mail. Clientsecret gehört in Betreiber-Secrets; Tokens des Identitätsproviders werden nicht in Finanzdaten gespeichert. [OAuth-Standard](https://datatracker.ietf.org/doc/html/rfc9700).
+OIDC verwendet Authorization Code + PKCE S256, State und Nonce, Discovery nur für einen Betreiber-konfigurierten HTTPS-Issuer sowie Prüfung von Issuer/Audience/Signatur/Zeit. Die stabile Identität ist issuer/subject; E-Mail-Gleichheit verknüpft keine Identitäten automatisch. Provider-Clientsecrets gehören in Betreiber-Secrets. Tokens des Identitätsproviders werden nicht in Finanzdaten gespeichert. Andere Protokolle sind nur zulässig, wenn sie gleichwertig sichere externe Authentifizierung und eine stabile Identität bereitstellen; lokale Passwortkonten sind kein Fallback. [OAuth-Sicherheitsstandard](https://datatracker.ietf.org/doc/html/rfc9700).
 
 ## Sitzungen und Gerätekopplung
 
@@ -24,13 +20,13 @@ Desktop: Browseranmeldung und ausdrücklich bestätigte Gerätekopplung. deviceC
 
 Offline dürfen bereits bekannte verbundene Profile ihre lokale Datenkopie verwenden. Dies ist keine serverseitige Anmeldung und verlängert keine Sitzung. Neue Profile und neue Geräte benötigen Onlineanmeldung; nach erkanntem Widerruf werden Zugriffe gesperrt und ausstehende Entwürfe exportierbar gehalten. Aus der Offlinekopie kann die App keinen aktuellen Rechtebestand garantieren.
 
-Logout widerruft Online-Session und entfernt Credentials. Die Oberfläche bietet lokales Profil beibehalten oder lokale Kopie löschen; Löschung erfordert Sicherungsentscheidung bei unbestätigten Änderungen. Passwortwechsel widerruft andere eigene Sitzungen. Passwortverlust wird ohne Maildienst über dokumentierten lokalen Betreiber-Reset mit kurzlebigem Einmalcode behandelt, niemals durch ein dauerhaftes Reset-API ohne Nachweis.
+Logout widerruft Online-Session und entfernt Credentials. Die Oberfläche bietet lokales Profil beibehalten oder lokale Kopie löschen; Löschung erfordert Sicherungsentscheidung bei unbestätigten Änderungen. Änderungen und Sperrungen der Anmeldung erfolgen beim externen Identitätsanbieter. Der WIMM-Server stellt weder Passwortwechsel noch Passwortreset bereit; die Wiederherstellung der Finanzschlüssel bleibt davon unabhängig.
 
 ## Autorisierung
 
 Jeder Serverzugriff prüft Eigentum/aktive Membership, öffentliche Nachrichtensignatur und signiertes KeyRoster. Konten-/Kategorie-/Finanzreferenzen kann nur der entschlüsselnde Client prüfen. Haushalts-admin erhält keine privaten K anderer Personen. Betreiberrolle bedeutet Dienstverwaltung, weder Zugriff auf Finanzklartexte noch Fähigkeit, gültige fremde Fachnachrichten/KeyGrants zu signieren.
 
-Lesende erhalten Leseschlüssel, aber keine im signierten Manifest wirksame Schreibberechtigung. Finanzrestore benötigt owner/admin-Signatur. Letzter admin kann nicht entfernt werden. Membership erst nach Einladung und bestätigtem KeyGrant aktiv; Participant.userId allein verleiht keinen Zugriff. Entfernung rotiert K und verschlüsselten Snapshot atomar; Rollen-/Gerätewiderruf ist signiert. Keine Appcodesignatur als Berechtigungsnachweis.
+Lesende erhalten Leseschlüssel, aber keine im signierten Manifest wirksame Schreibberechtigung. Finanzrestore benötigt owner/admin-Signatur. Letzter admin kann nicht entfernt werden. Membership erst nach Einladung und bestätigtem KeyGrant aktiv; eine fachliche Teilnehmerverknüpfung allein verleiht keinen Zugriff. Entfernung rotiert K und verschlüsselten Snapshot atomar; Rollen-/Gerätewiderruf ist signiert. Keine Appcodesignatur als Berechtigungsnachweis.
 
 ## Datenminimierung und Angriffsflächen
 
@@ -38,7 +34,7 @@ Keine automatische private Veröffentlichung, keine Telemetrie, keine Nutzerdate
 
 TLS außer ausdrücklich lokalem Entwicklungsbetrieb. Same-Origin-PWA/API regulär; bei optional getrenntem Hosting nur konfigurierte konkrete CORS-Origin, keine Wildcards. CSP beschränkt Skripte auf Appassets; kein eval/Inline-Skriptfallback. Authentifiziertes Clientvertrauen umfasst die Laufzeit, behauptet aber keinen Schutz gegen manipulierten Clientcode. Notizen sind Text, nie HTML. Parser verhindern XML-Entitäten, ZIP-Pfadtraversal und Dekompressionsbomben; Formatgrenzen werden geprüft.
 
-Rate-Limits: Login zehn Versuche je 15 Minuten pro IP und Konto, Device-Poll mindestens fünf Sekunden, Einladungs-/Setupversuche 20 pro 15 Minuten/IP. Normaler Sync 120 Requests/Minute/Session; Limits liefern Retry-After. Keine personenbezogenen Unterschiede in Loginfehlern.
+Rate-Limits: OIDC-Start/Callback, Device-Poll mindestens fünf Sekunden und Einladungsannahme 20 Versuche je 15 Minuten/IP; Authentifizierungsversuche werden zusätzlich vom externen Identitätsanbieter begrenzt. Normaler Sync 120 Requests/Minute/Session; Limits liefern Retry-After. Keine personenbezogenen Unterschiede in Loginfehlern.
 
 Tauri lädt keine Remoteinhalte. Capabilities erlauben nur benötigte Dialoge, ausgewählten Datenpfad, explizite Serverorigin und sichere Tokenspeicherung. Dateipfade werden nicht als beliebige Client-Kommandos ausgeführt. Fremdlinks öffnen Systembrowser. Updates werden signiert und nur vom konfigurierten Projektkanal geladen. [Tauri-Capabilities](https://v2.tauri.app/security/capabilities/).
 
@@ -50,4 +46,4 @@ WIMM-/Entwurfsexporte und Desktopbackups sind standardmäßig verschlüsselt, mi
 
 ## Abnahme
 
-[Zugriffstests](testing.md) decken Fremd-IDs, Rollenwechsel, private Veröffentlichungen, Sessionablauf, CSRF, OIDC, Setup-/Invitereplay und lokale Limits ab. Abhängigkeits-/Lizenzprüfung vor Release; Änderungen am Vertrauensmodell benötigen Nutzerentscheidung und ADR. AGPL-Quellcodeangebot ist eine Produkteigenschaft, keine Freigabe zum Offenlegen von Secrets oder Finanzdaten.
+[Zugriffstests](testing.md) decken Fremd-IDs, Rollenwechsel, private Veröffentlichungen, Sessionablauf, CSRF, OIDC-State-/Nonce-/Issuerfehler, Einladungsreplay und lokale Limits ab. Abhängigkeits-/Lizenzprüfung vor Release; Änderungen am Vertrauensmodell benötigen Nutzerentscheidung und ADR. AGPL-Quellcodeangebot ist eine Produkteigenschaft, keine Freigabe zum Offenlegen von Secrets oder Finanzdaten.

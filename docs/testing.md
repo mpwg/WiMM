@@ -72,7 +72,7 @@ In S04/S06 nach Wiederverbindung identische kanonische Snapshotdaten auf allen C
 
 Für jeden Endpoint mit Ressourcen-ID Tests als Eigentümer, anderer Haushaltsadmin, member, viewer, fremder Benutzer und anonym. Für jeden Fachbefehl member/viewer und fremde Referenz prüfen. Prüfen auch Snapshot, Restore, Push/Pull, Receipt, Such-/Berichtsprojektionen und Fehlerantworten. Serveradmin ohne Membership bekommt keinen automatischen API-Finanzzugriff.
 
-Authfälle: paralleler Bootstrap, Setupreplay, Invite-Expiry/Replay, letzte admin-Entfernung, OIDC falscher State/Nonce/Issuer, E-Mail-Accountübernahme, CSRF, Session-/Devicerevocation, Rate-Limits und Device-Token-Einmalausgabe. Native Schlüsselablage auf macOS/Windows/Linux testen; unsicherer Linuxfallback verboten.
+Authfälle: keine lokalen Login-/Setup-/Passwortpfade, Invite-Expiry/Replay, letzte admin-Entfernung, OIDC falscher State/Nonce/Issuer, keine automatische Identitätsverknüpfung über E-Mail, Providerentzug, CSRF, Session-/Devicerevocation, Rate-Limits und Device-Token-Einmalausgabe. Standalone-Apps müssen ohne Serverkonfiguration oder Anmeldung start- und nutzbar sein. Native Schlüsselablage auf macOS/Windows/Linux testen; unsicherer Linuxfallback verboten.
 
 Parserfixtures: CSV BOM/Semikolon/Quotes/Mehrzeilen/Windows-1252, Zahl `1.234,56`, echte gleiche Zahlungen, FITID-Änderung mit gleicher ID, CAMT-Namespaces und mehrere TransactionDetails. Fehlfälle: DTD, externe Entität, Nicht-EUR, ZIP-Pfadtraversal, Zipbomb, falsche Checksummen, fehlende Datei, unsichere Zahl, unauflösbare Referenz, neuere Version. Kein Fehlfall darf vorhandene Daten teilweise verändern.
 
@@ -91,7 +91,7 @@ Referenzleistung: 50.000 Buchungen, zehn Konten, 100 Kategorien, 36 Monate, 1.00
 | C01 | Identischer Finanzdatensatz auf PWA/Desktop verschlüsselt | interoperabel entschlüsselbar; neue Nonce pro neuer Verschlüsselung |
 | C02 | Chiffrat, Nonce, AAD, Signatur oder Bereichs-/Keyversion verändert | Ablehnung, keine Finanz-/Cursoränderung |
 | C03 | Serverdatenbank, Netzwerkpayloads, Logs und Betreiberbackup durchsuchen | keine Kontonamen/Beträge/Notizen/privaten Schlüssel; öffentliche Metadaten dokumentiert |
-| C04 | Backendlogin/OIDC-/Passwortreset ohne Tresorschlüssel | kein Entschlüsseln, auch nicht für Serveradmin |
+| C04 | Externe OIDC-Anmeldung ohne Tresorschlüssel | kein Entschlüsseln, auch nicht für Serveradmin; lokale Passwortanmeldung existiert nicht |
 | C05 | Falscher Empfänger/ausgetauschter Identitätsschlüssel | Fingerprint-/Grantprüfung scheitert, keine Schlüsselfreigabe |
 | C06 | viewer kennt symmetrischen K und erzeugt Chiffrat | keine wirksame Fachmutation ohne schreibberechtigte Nachrichtensignatur |
 | C07 | Neues Web-/PWA-/Desktopgerät ohne Appsignatur, aber mit Anmeldung und entsperrten Schlüsseln | regulärer Zugang, keine Attestierungs-/Build-Allowlist-Prüfung |

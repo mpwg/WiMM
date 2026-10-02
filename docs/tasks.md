@@ -41,6 +41,15 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 
 - Nächster Schritt: Nach ausdrücklicher Implementierungsfreigabe P1.1 übernehmen; davor kein Anwendungscode.
 
+## D3 — Externe Serveridentität und eigenständiger Lokalbetrieb
+
+- Status: erledigt (2. Oktober 2026).
+- Freigabe: ausdrückliche Nutzeranforderung zur ausschließlichen externen Authentifizierung für Serververbindungen und zu eigenständig nutzbaren Apps; Dokumentationsänderung, keine App-Implementierung.
+- Ergebnis: Serveridentitäten und Anmeldung erfolgen über OIDC oder einen gleichwertigen externen Identitätsdienst; lokale Passwörter, Benutzeranlage und Setupkonten sind ausgeschlossen. Desktop/PWA bleiben ohne Server vollständig nutzbar.
+- Verträge: ADR-030; Produkt, Architektur, Sicherheit, API, Betrieb, Datenmodell, Verschlüsselung und Tests.
+- Prüfbelege: Dokumentationskonsistenz sowie lokale Linkziele, Markdownstruktur und Whitespace geprüft; PR dient als Nachweis. Keine Anwendungstests oder Infrastruktur gestartet.
+
+
 ## P1 — Projektgrundlage
 
 - Status: in Arbeit. Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn mit P1.1. Voraussetzung: D0 erledigt.
@@ -106,7 +115,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P7 — Familienfinanzen lokal
 
 - Status: offen. Voraussetzung: P6.
-- Schritte: Haushalte/Teilnehmer ohne Login; Policies und freiwillige Einkommen; eingefrorene Anteile und Restcent; SharedExpense mit beiden Quellen/Erstattungswegen; Beiträge/Settlements/Eigenanteilsverrechnung; Reserve und kumulative Refunds; Veröffentlichungsvorschau/privater Link; Guthaben-/Ausgleichsberichte und Vorschlagszahlungen.
+- Schritte: Haushalte und fachliche Teilnehmer ohne eigene Anmeldung oder Benutzerkonto; Policies und freiwillige Einkommen; eingefrorene Anteile und Restcent; SharedExpense mit beiden Quellen/Erstattungswegen; Beiträge/Settlements/Eigenanteilsverrechnung; Reserve und kumulative Refunds; Veröffentlichungsvorschau/privater Link; Guthaben-/Ausgleichsberichte und Vorschlagszahlungen.
 - Ergebnis: vollständiger Familienalltag lokal, identische Fachregeln für den späteren verschlüsselten Mehrgerätebetrieb auf Clients.
 - Verträge: participant/allocationPolicy/sharedExpense/contribution/settlement/advanceOffset/expenseRefund; Budgetreserve; private Veröffentlichung.
 - Abnahme: F07–F13/F16; Salden einschließlich H summieren null; Reserve unabhängig von Beitragssaldo; Ausgaben/Erstattung genau einmal; private Felder gelangen nicht in gemeinsamen Snapshot; historische Policies unverändert.
@@ -116,11 +125,11 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P8 — Server und Identitäten
 
 - Status: offen. Voraussetzung: P7.
-- Schritte: Server-CiphertextStore und öffentliche Berechtigungsprüfung; Login/OIDC/Sessions/CSRF; getrennte Tresorentsperrung; öffentliche Identitäten/Gerätezertifikate, KeyRosters/Grants, Fingerprintprüfung und Geräteaufnahme; pending_key_grant/Bestätigung, Widerruf und Rotation; OS-Keyring, Verwaltungs-API/Health/Meta. Keine Appcodesignatur/Attestierung als Zugriffsvoraussetzung.
-- Ergebnis: abgesicherte Verwaltung persönlicher Konten und mehrerer Familien; noch keine vollständige Multi-Client-Syncabnahme.
+- Schritte: Server-CiphertextStore und öffentliche Berechtigungsprüfung; externe OIDC-/gleichwertige Identitätsanbindung, Sessions/CSRF und Provider-Rollenzuordnung; keine lokalen Passwörter, Benutzerkonten oder Setupkonten; getrennte Tresorentsperrung; öffentliche Identitäten/Gerätezertifikate, KeyRosters/Grants, Fingerprintprüfung und Geräteaufnahme; pending_key_grant/Bestätigung, Widerruf und Rotation; OS-Keyring, Verwaltungs-API/Health/Meta. Keine Appcodesignatur/Attestierung als Zugriffsvoraussetzung.
+- Ergebnis: abgesicherte Zuordnung externer Identitäten, Geräte und Rollen für mehrere Familien; noch keine vollständige Multi-Client-Syncabnahme.
 - Verträge: API-Verwaltungsendpunkte, Rollenmatrix, Session-/Einladungsregeln.
-- Abnahme: Fremd-IDs geschützt, letzter admin bleibt; Authreplays abgewiesen; Loginreset entschlüsselt nichts; authentifizierte Clients unabhängig von Appsignatur zugelassen; C04–C08/C10–C11; keine privaten Keys auf Server; sichere Linux-Keyringalternative.
-- Prüfungen: vollständige Auth-/Zugriffsmatrix, Argon2benchmark, echte Desktopkopplung, CSRF-/Origin-/Rate-Limittests.
+- Abnahme: Fremd-IDs geschützt, letzter admin bleibt; Authreplays abgewiesen; Änderungen beim Identitätsanbieter entschlüsseln keine Finanzdaten; authentifizierte Clients unabhängig von Appsignatur zugelassen; C04–C08/C10–C11; keine privaten Keys auf Server; sichere Linux-Keyringalternative.
+- Prüfungen: vollständige Auth-/Zugriffsmatrix, OIDC-Providerinteroperabilität, echte Desktopkopplung, CSRF-/Origin-/Rate-Limittests.
 - Prüfbelege: noch keine.
 
 ## P9 — Zusammenarbeit und Synchronisierung

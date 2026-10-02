@@ -50,13 +50,13 @@ Dateiauswahl und Speichern sind Desktop-native, im Browser gewöhnliche Datei-/D
 
 ## Schlüsselbedienung
 
-Anmeldung und Tresorentsperren sind getrennte Zustände: angemeldet/gesperrt zeigt keine Finanzdaten. Entsperrpassphrase bleibt lokal; Rettungscode beim Anlegen anzeigen und Sicherung bestätigen lassen. Passwortreset meldet ausdrücklich, dass er keine verlorenen Finanzschlüssel ersetzt. Neues Gerät kann über bereits entsperrtes Gerät oder Tresorpassphrase/Rettungscode aufgenommen werden; kein Hinweis auf erforderliche Appattestierung.
+Die externe Serveranmeldung und lokale Tresorentsperrung sind getrennte Zustände: extern angemeldet/gesperrt zeigt keine Finanzdaten. Standalone-Nutzung erfordert keine Anmeldung. Die Entsperrpassphrase bleibt lokal; Rettungscode beim Anlegen anzeigen und Sicherung bestätigen lassen. Änderungen beim Identitätsanbieter stellen keine verlorenen Finanzschlüssel wieder her. Neues Gerät kann über bereits entsperrtes Gerät oder Tresorpassphrase/Rettungscode aufgenommen werden; kein Hinweis auf erforderliche Appattestierung.
 
 Familieneinladung zeigt bis KeyGrant `Schlüsselfreigabe ausstehend`. Fingerprint-/QR-Vergleich und bestätigte Freigabe erfolgen auf Clients; keine automatische private Freigabe. Entfernen nennt verbleibende alte Kopien und startet Rotation; Offlinealtversionen bleiben als Entwürfe erhalten. Export fragt separate Exportpassphrase ab. Ungültige Nachrichten, fehlende Keys und Recoveryverlust besitzen eigene Zustände statt stillen Klartextfallbacks.
 
 ## Zustände und Barrierefreiheit
 
-Jede Hauptansicht besitzt Laden/leer/Fehler/offline/ausstehend/Konflikt. Lokal ohne Server ist kein Warnzustand. Serveroffline zeigt weiterhin reale lokale Daten mit letzter Synchronisierung; Platzhalter verändern keine Zahlen. Neue Mitglieder sehen nur freigegebene Bereiche.
+Jede Hauptansicht besitzt Laden/leer/Fehler/offline/ausstehend/Konflikt. Lokal ohne Server und ohne Anmeldung ist regulärer Standalone-Betrieb, kein Warnzustand. Serveroffline zeigt weiterhin reale lokale Daten mit letzter Synchronisierung; Platzhalter verändern keine Zahlen. Neue Mitglieder sehen nur freigegebene Bereiche.
 
 Semantische Tabellen, beschriftete Formulare, Fokusreihenfolge, sichtbarer Fokus, Screenreader-Statusmeldungen und modaler Fokusfang. WCAG 2.2 AA als Ziel, Textkontrast mindestens 4,5:1, Touchziele mindestens 44 × 44 CSS-Pixel. Bei 200 % Zoom bleiben Funktionen erreichbar; reduced motion deaktiviert dekorative Bewegung. Fehler erhalten Text und Feldbezug, nicht nur Farbe.
 
