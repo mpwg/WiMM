@@ -7,7 +7,8 @@
   "updateRemoteUserUID": true,
   "mounts": [
     "source=wimm-node-modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
-    "source=wimm-pnpm-store,target=/home/node/.local/share/pnpm/store,type=volume"
+    "source=wimm-pnpm-store,target=/home/node/.local/share/pnpm/store,type=volume",
+    "source=${localEnv:HOME}/.ssh/id_ed25519.pub,target=/home/node/.ssh/id_ed25519.pub,type=bind,readonly"
   ],
   "postCreateCommand": "pnpm install --frozen-lockfile",
   "customizations": {
