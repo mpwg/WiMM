@@ -19,7 +19,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P1 — Projektgrundlage
 
 - Status: offen. Freigabe: erst späterer ausdrücklicher Implementierungsauftrag. Voraussetzung: D0 erledigt.
-- Schritte: stabile kompatible Node-LTS/pnpm/TypeScript/React/Vite/Tauri/Fastify/Schema-/Testversionen prüfen; Workspace mit in [Architektur](architecture.md) definierten Paketen anlegen; gemeinsame TS-Konfiguration strict; ESM und dokumentierte Packageexports; Zod-Vertragsschemas/Fehlertypen; leere Web-/Desktop-/Server-Hüllen; Lockfiles; CI für Typprüfung, Tests und Builds.
+- Schritte: stabile kompatible Toolchain prüfen; Workspace einschließlich `packages/crypto`; TS strict/ESM; Fach- und öffentliche EncryptedOperation-/KeyRoster-Verträge trennen; gepflegte libsodium-Bindung und RFC-8785-Bibliothek; Crypto-Testvektoren; leere Apphüllen/Lockfiles/CI. Keine Klartext-FinanzAPI als Zwischenlösung.
 - Ergebnis: reproduzierbare Entwicklungsbasis, ohne bereits vollständige Finanzfunktionen zu behaupten. Rootbefehle `dev:web`, `dev:server`, `dev:desktop`, `typecheck`, `test`, `test:e2e`, `build` dokumentieren.
 - Verträge: Paketabhängigkeiten, gemeinsame Primitive/Versionen, PlatformServices, künftige Storage-Ports.
 - Abnahme: frischer Checkout installierbar, Typ-/Buildprüfungen laufen; Web-/Tauri-Hülle startet; Backendhealth liefert korrekte Zustände. Versionskombination und getestete Betriebssysteme festgehalten. AGPL-Metadaten, Herkunftsregistergrundlage und Sourcehinweis angelegt.
@@ -39,7 +39,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P3 — Speicher und Offlinebasis
 
 - Status: offen. Voraussetzung: P2.
-- Schritte: Dexie-Schema und SQLite-Schema/Indizes; StorageAdapter und Rustbatch-Brücke; Transaktionen; getrennte bestätigte Daten/Entwürfe; Query-/Projektionsaufbau; lokale Profiltrennung; Migration und Export-Snapshotport. Service Worker für versionierte Appassets, persistente Speicheranfrage und Tabkoordination.
+- Schritte: Client-Speicheradapter/Rustbatch-Brücke, Transaktionen/Projektionen/Entwürfe; lokaler verschlüsselter UserVault, unabhängige Bereichsschlüssel, Entsperrung/Rettungscode und Schlüsselports; keine persistierten Klartextkeys. Export-Snapshotport verschlüsselt. Service Worker, persistenter Browserstore und Tabkoordination.
 - Ergebnis: dauerhafte lokale Datenhaltung in beiden Clients; vorbereitete Outbox ohne Netzwerkpflicht.
 - Verträge: StorageAdapter, lokale Revisionen, Snapshot-/Outboxzustände; Datenmodellindizes.
 - Abnahme: gemeinsame Konformitätssuite für beide Adapter; S01–S03/S14; offline Neustart ohne verlorene Buchungen; Quota/Disk-full kein Erfolg; private Profile getrennt.
@@ -89,37 +89,37 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P8 — Server und Identitäten
 
 - Status: offen. Voraussetzung: P7.
-- Schritte: Server-SQLite und zentrale Berechtigungsprüfung; Bootstrap; lokale Konten/Argon2id/Sessions/CSRF; OIDC mit etablierter Bibliothek; Device-Pairing/OS-Keyring; Haushalts-/Mitgliedschafts-/Invite-API; Teilnehmerverknüpfung; explizite Profildatenlöschung und Betreiberresetverfahren; Health/Meta und redigierte Logs.
+- Schritte: Server-CiphertextStore und öffentliche Berechtigungsprüfung; Login/OIDC/Sessions/CSRF; getrennte Tresorentsperrung; öffentliche Identitäten/Gerätezertifikate, KeyRosters/Grants, Fingerprintprüfung und Geräteaufnahme; pending_key_grant/Bestätigung, Widerruf und Rotation; OS-Keyring, Verwaltungs-API/Health/Meta. Keine Appcodesignatur/Attestierung als Zugriffsvoraussetzung.
 - Ergebnis: abgesicherte Verwaltung persönlicher Konten und mehrerer Familien; noch keine vollständige Multi-Client-Syncabnahme.
 - Verträge: API-Verwaltungsendpunkte, Rollenmatrix, Session-/Einladungsregeln.
-- Abnahme: Fremd-IDs/Snapshotzugriff konsequent geschützt; letzter admin bleibt erhalten; Bootstrap/Invite/Device-Replay abgewiesen; OIDC-Mailgleichheit keine Kontoübernahme; sichere Linux-Keyringalternative gemäß Sicherheitsvertrag.
+- Abnahme: Fremd-IDs geschützt, letzter admin bleibt; Authreplays abgewiesen; Loginreset entschlüsselt nichts; authentifizierte Clients unabhängig von Appsignatur zugelassen; C04–C08/C10–C11; keine privaten Keys auf Server; sichere Linux-Keyringalternative.
 - Prüfungen: vollständige Auth-/Zugriffsmatrix, Argon2benchmark, echte Desktopkopplung, CSRF-/Origin-/Rate-Limittests.
 - Prüfbelege: noch keine.
 
 ## P9 — Zusammenarbeit und Synchronisierung
 
 - Status: offen. Voraussetzung: P8.
-- Schritte: serverseitige Fachhandler und atomare Receipts/Changes; Snapshots; Push/Pull; Clientscheduler/Retry/Tabkoordination; abhängige Offlineentwürfe; Konfliktdialog/Rebase/Gegenoperationen; Membershipänderungen; private Veröffentlichungslinks über getrennte Bereichsoperationen; lokales Snapshot-Onboarding.
+- Schritte: verschlüsselte signierte Änderungssets/Snapshots, CAS-Handles und Receipts/Changes; Client-Fachvalidierung nach Entschlüsselung; Scheduler/Retry/abhängige Entwürfe/Konflikte; Hash-/Roster-/K-Versionprüfung und Quarantäne; atomare Mitgliedsrotation; getrennte private Veröffentlichungen; verschlüsseltes Onboarding. Keine serverseitigen Finanzfachhandler.
 - Ergebnis: mehrere Geräte arbeiten offline weiter und konvergieren ohne stilles Überschreiben; private und gemeinsame Daten bleiben getrennt.
 - Verträge: Operationsformat, Cursor/Epoche, Konflikt-/Receiptstatus, UPDATE_REQUIRED.
 - Abnahme: S04–S15 und drei Clients mit privaten/gemeinsamen Bereichen; doppelte Requests unschädlich; fremde Epoche kein Replay; blockierte Vorgänger blockieren nur Abhängige; Entwürfe exportierbar.
-- Prüfungen: Netzwerkabbrüche vor/nach Commit, parallele Revisionen, Neuverbindung und Snapshotgleichheit; Benutzerablauf Rechteentzug/Sessionablauf.
+- Prüfungen: S04–S15 sowie C01–C03/C05–C09/C12; Netzwerkabbrüche, Revisionen, entschlüsselte Snapshotgleichheit; Serverdump ohne Finanzklartext, viewer-Fälschung und Keyrotation.
 - Prüfbelege: noch keine.
 
 ## P10 — Sicherung und Betrieb
 
 - Status: offen. Voraussetzung: P9.
-- Schritte: vollständiges WIMM-Format/Validierung/Referenzabbildung; Draftsexport; Backup auf Desktop/Server; Retention und Migrationbackups; Snapshot-/Vollrestore mit Epoch-/Sessionreset; Dockerfile/Compose/Healthchecks; Betreiberkonfiguration/HTTPS-Anleitung; Service-Worker-/Updateverhalten.
+- Schritte: verschlüsselter WIMM-/Draftscontainer, clientseitige Validierung/Referenzabbildung, Schlüsselrecovery; verschlüsselte Desktop-/Chiffratserverbackups, Retention/Migration; clientbestätigter Snapshot-/Vollrestore ohne serverseitige Signatur-/Epochenfälschung; Docker/HTTPS/Updates gemäß Betriebsvertrag.
 - Ergebnis: getesteter Schutz gegen Verlust und reproduzierbarer Self-Hosting-Betrieb.
 - Verträge: Exportmanifest, Limits, Restore/Revisions-/Epochenregeln und WIMM-Konfiguration.
 - Abnahme: Export/Restore bewahrt alle Fachprojektionen; fehlerhafte Datei verändert nichts; Vollrestore widerruft Sessions; tägliche Rotation behält letzte funktionierende Sicherung; kein ready während Migration/Restore; RPO/RTO-Prüfziele gemessen.
-- Prüfungen: Nutzer-/Vollrestore, Altclientwrites, Disk-full bei Sicherung, Zeitzone/Retention, Migrationsabbruch und Wiederanlauf, Docker-Neustart mit Volume.
+- Prüfungen: C10–C14, verschlüsselte Nutzer-/Vollrestores, Altclientwrites, verlorene Keys/falsche Passphrase, Disk-full/Retention/Migrationsabbruch und Docker-Neustart.
 - Prüfbelege: noch keine.
 
 ## P11 — Veröffentlichung
 
 - Status: offen. Voraussetzung: P10 und Abnahme aller vorherigen Pakete.
-- Schritte: Benutzer-/Installations-/Backupanleitungen, synthetische Beispieldaten; Plattformbuilds und native Smokechecks; DMG/Windowsinstaller/AppImage; externe Signierung/Notarisierung und signierter Updater; Dockerdigest; AGPL-Quellarchiv/Source-URL/Fremdhinweise; Lizenz-/Abhängigkeitsscan und vollständige Abnahmematrix.
+- Schritte: Nutzer-/Installations-/Backup-/Schlüsselrecoveryanleitungen; Plattformbuilds/native Smokechecks; Paketcodesignierung/Notarisierung für Distribution und signierter Updater, unabhängig vom Clientvertrauen; AGPL-Sourcearchive/Fremdhinweise; C01–C14 und unabhängige Protokoll-/Bindingprüfung vor öffentlichem Sicherheitsrelease.
 - Ergebnis: öffentliche reproduzierbare Distribution pro nachweislich geprüfter Plattform.
 - Verträge: Lizenz, Releaseversion/Commit, Source-URL, signierter Updatekanal, unterstützte Plattformliste.
 - Abnahme: passende Sourcearchive verfügbar, Installationspakete starten und stellen Daten wieder her; verfügbare native Plattformprüfungen belegt; fehlende Signierung/Tests verhindern nur betroffene Distribution, kein fingierter Gesamtrelease.

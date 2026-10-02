@@ -26,7 +26,7 @@ Konfiguration wird vor Datenmigration validiert; unvollständiges OIDC und ungü
 
 ## Start und Wartung
 
-Start: Konfiguration prüfen → DB exklusiv öffnen → Version prüfen → Backup vor notwendiger Migration → Migration transaktional ausführen → Fachreferenzen prüfen → Bereitschaft setzen. Livecheck zeigt laufenden Prozess, Readycheck zusätzlich erreichbaren konsistenten Speicher. Kein ready während Migration/Restore.
+Start: Konfiguration prüfen → DB exklusiv öffnen → Version prüfen → Backup vor Migration → öffentliche Verwaltungs-/Chiffratschemata migrieren → öffentliche Referenzen/Signaturen prüfen → Bereitschaft setzen. Finanzschemamigration und Fachvalidierung ausschließlich auf entsperrten Clients. Kein ready während Migration/Restore.
 
 Shutdown: neue Requests stoppen, laufende Schreibtransaktion abschließen/rollback, SQLite schließen. Disk-full und SQLITE_BUSY werden als konkrete Betriebsfehler mit Request-ID sichtbar; keine still verworfenen Operationen. Schreibkonkurrenz hat begrenzte Retryzeit, danach 503. Datenbankpfad und Backupordner sind nicht als statische Webdateien erreichbar.
 
@@ -34,12 +34,12 @@ Shutdown: neue Requests stoppen, laufende Schreibtransaktion abschließen/rollba
 
 | Sicherung | Inhalt | Zeitpunkt / Aufbewahrung |
 |---|---|---|
-| Nutzerexport .wimm | kompletter einzelner Finanzbereich, keine Auth-/Rollenrechte | ausdrücklich, beliebige lokale Ziele |
-| Desktopbackup | lokale bestätigte Daten plus Entwürfe, Profilmetadaten ohne OS-Tokens | täglich beim ersten Lauf und vor Migration, 30 Tage |
-| Vollserverbackup | konsistente SQLite-DB, Schema-/Buildmanifest, Verwaltung und Syncmetadaten | täglich 03:00 Betreiberzeitzone, Default Europe/Vienna; 30 Tage |
+| Nutzerexport .wimm | clientverschlüsselter einzelner Finanzbereich, keine Auth-/Rollenrechte | separate Exportpassphrase, beliebige lokale Ziele |
+| Desktopbackup | verschlüsselte Daten/Entwürfe, keine OS-Tokens | täglich beim ersten Lauf und vor Migration, 30 Tage; Backupschlüssel lokal im Tresor, nicht neben Datei |
+| Vollserverbackup | konsistente Chiffrat-DB, öffentliche Schlüsselpakete, Verwaltung/Syncmetadaten; keine Finanzklartexte | täglich 03:00 Betreiberzeitzone, Default Europe/Vienna; 30 Tage |
 | Vor-Migrationsbackup | identischer vollständiger Stand vor Upgrade | unabhängig von täglicher Rotation bis bestätigtem Upgrade und 30 Tagen danach |
 
-Server-/Desktop-SQLite-Backup nutzt Online Backup API oder getestetes VACUUM INTO, nie bloßes Kopieren einer aktiven DB ohne WAL. Temporäre Sicherung nach Abschluss integritätsprüfen und atomar umbenennen. Retention bereinigt erst nach erfolgreicher neuer Sicherung. [SQLite-Backup](https://www.sqlite.org/backup.html).
+Server-SQLite-Backup nutzt Online Backup API oder getestetes VACUUM INTO, nie bloßes Kopieren einer aktiven DB ohne WAL. Desktop erzeugt konsistenten lokalen Snapshot und verschlüsselt ihn vor Schreiben der Backupdatei; keine unverschlüsselte temporäre Datenkopie. Sicherung integritätsprüfen und atomar umbenennen. Retention erst nach Erfolg. Der Server erhält keine Backup-/Bereichsschlüssel. [SQLite-Backup](https://www.sqlite.org/backup.html).
 
 PWA kann Downloads nicht ohne Nutzerinteraktion als verlässliche tägliche Sicherung garantieren. Sie erinnert nach sieben Tagen ohne Export und nach wichtigen Datenmigrationen. Hinweise sind quittierbar; Browserpersistenz wird angefragt und Speicherfehler klar angezeigt. Ein Gerät, das am vorgesehenen Zeitpunkt nicht läuft, sichert Desktopdaten beim nächsten Start.
 
@@ -47,7 +47,7 @@ PWA kann Downloads nicht ohne Nutzerinteraktion als verlässliche tägliche Sich
 
 Nutzerrestore legt standardmäßig unabhängigen lokalen Bereich an; vorhandenen Bereich nur nach expliziter Bestätigung ersetzen. Datenvalidierung und Referenzabbildung vor Änderungen. Serverbereichsrestore erzeugt neue Epoche; Clients sichern ausstehende Operationen und laden neuen Snapshot. Details in [Formate](formats.md) und [Sync](synchronization.md).
 
-Vollserverrestore: Dienst stoppen, aktuellen Datenordner sichern, Build-/Schemasversion der Sicherung installieren, Backupintegrität prüfen, konsistente DB einspielen, alle Sessions/Device-Tokens widerrufen und alle Bereichsepochen erneuern. Erst danach ready setzen. Benutzer-/Mitgliedschaftsdaten bleiben aus dem Backup; Clients benötigen neue Anmeldung und Entwurfsprüfung. Kein Start eines älteren Binaries auf einer neueren DB.
+Vollserverrestore: Dienst stoppen, Datenordner sichern, passenden Build installieren, Backupintegrität prüfen, Chiffrat-DB einspielen und Sessions/Device-Tokens widerrufen. Signierte Epochen/Roster nicht serverseitig umschreiben; je Bereich zunächst Wiederanlaufstatus. Autorisierte entsperrte Clients vergleichen gepinnte Hashstände, sichern Entwürfe und aktivieren bestätigten signierten Snapshot mit neuer Epoche. Erst dann reguläre Writes für diesen Bereich. Betreiber allein kann keine Finanzdaten entschlüsseln oder Schlüssel wiederherstellen.
 
 RPO bei funktionierender täglicher Sicherung maximal 24 Stunden; ungesicherte Offlinegeräte können mehr verlieren. Wiederherstellung auf dem dokumentierten Referenzsystem soll bei 50.000 Buchungen unter zehn Minuten abgeschlossen werden. Diese Ziele sind Prüfziele, keine garantierte Verfügbarkeit ohne funktionierende Backups.
 
@@ -57,7 +57,7 @@ Storage-, Export- und Protokollversion getrennt führen. Nur vorwärts gerichtet
 
 CI ab P1: Format-/Typprüfung, Vitest, Builds. Ab P4 Web-E2E; ab P8 API-/Zugriffstests; vor Release Plattformbuilds und native Smokechecks. Desktoppakete: macOS DMG, Windows Installer, Linux AppImage; unterstützte Architekturen in P1 festlegen: macOS arm64/x64, Windows x64, Linux x64. Plattformen ohne verfügbar getesteten Build bleiben ausdrücklich unveröffentlicht.
 
-Signierung und macOS-Notarisierung über externe Secrets. Dockerimage wird nach Commit und Releaseversion getaggt, Deployment pinnt digest statt latest. Desktopupdater prüft signierte Metadaten, verlangt Updatezustimmung und führt Backup vor Migration durch. Web-Service-Worker wartet bei laufender Bearbeitung auf ausdrücklichen Neustart.
+Codesignierung und macOS-Notarisierung über externe Secrets dienen Distribution, nicht Clientvertrauen oder E2EE-Autorisierung. Authentifizierte Clients werden nicht anhand Binarysignaturen/Attestierung ausgeschlossen. Dockerimage nach Commit/Release taggen, digest pinnen. Updater prüft signierte Paketmetadaten, verlangt Zustimmung und verschlüsseltes Backup. PWA wartet bei Bearbeitung auf Neustartzustimmung.
 
 ## AGPL-3.0-or-later und Herkunft
 

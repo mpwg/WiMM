@@ -17,7 +17,7 @@ D0 umfasst Dokumentationsprüfung. Es wurden keine Anwendungstests implementiert
 | Synchronisierung | simuliertes Netzwerk + echte DB ab P9 | mehrere Clients, Wiederholungen und Konflikte |
 | Betrieb/Release | Integrationsprüfung ab P10 | Restore, Migration, Sicherung, Signatur/Source-Archiv |
 
-Tests behaupten Verhalten, nicht private Implementierungsdetails. Referenzrechnungen werden mit derselben erwarteten Ausgabe auf Client und Server geprüft. Zufalls-/Eigenschaftstests ergänzen deterministische Beispiele für Summen, Rundung und Replays.
+Tests behaupten Verhalten, nicht private Implementierungsdetails. Fachreferenzen laufen auf allen Clients, nie auf dem E2EE-Server. Dessen Suite prüft öffentliche Crypto-/Transport-/CAS-Verträge. Zufalls-/Eigenschaftstests ergänzen Beispiele für Summen, Rundung und Replays.
 
 ## Referenzdatensätze
 
@@ -84,8 +84,31 @@ Referenzleistung: 50.000 Buchungen, zehn Konten, 100 Kategorien, 36 Monate, 1.00
 
 ## Betrieb und Definition of Done
 
+## Verpflichtende Crypto-Abnahme
+
+| ID | Szenario | Erwartung |
+|---|---|---|
+| C01 | Identischer Finanzdatensatz auf PWA/Desktop verschlüsselt | interoperabel entschlüsselbar; neue Nonce pro neuer Verschlüsselung |
+| C02 | Chiffrat, Nonce, AAD, Signatur oder Bereichs-/Keyversion verändert | Ablehnung, keine Finanz-/Cursoränderung |
+| C03 | Serverdatenbank, Netzwerkpayloads, Logs und Betreiberbackup durchsuchen | keine Kontonamen/Beträge/Notizen/privaten Schlüssel; öffentliche Metadaten dokumentiert |
+| C04 | Backendlogin/OIDC-/Passwortreset ohne Tresorschlüssel | kein Entschlüsseln, auch nicht für Serveradmin |
+| C05 | Falscher Empfänger/ausgetauschter Identitätsschlüssel | Fingerprint-/Grantprüfung scheitert, keine Schlüsselfreigabe |
+| C06 | viewer kennt symmetrischen K und erzeugt Chiffrat | keine wirksame Fachmutation ohne schreibberechtigte Nachrichtensignatur |
+| C07 | Neues Web-/PWA-/Desktopgerät ohne Appsignatur, aber mit Anmeldung und entsperrten Schlüsseln | regulärer Zugang, keine Attestierungs-/Build-Allowlist-Prüfung |
+| C08 | Mitglied entfernt, neuer Snapshot/K; alte Schlüssel vorhanden | neue Daten nicht entschlüsselbar; alte Kopien ausdrücklich nicht widerrufbar |
+| C09 | Offlinewrite mit alter K-/Roster-Version | Entwurf erhalten; nur berechtigter Client kann neu validieren/verschlüsseln |
+| C10 | Rettungscode + verschlüsselter Tresor auf neuem Gerät | eigene/private Daten wiederherstellbar, ohne Serverkenntnis des Codes |
+| C11 | Alle Keys/Geräte/Passphrase/Rettungscode verloren | keine behauptete Betreiberrecovery; gemeinsame Keys nur durch verbleibende admins |
+| C12 | Manipuliertes Roster/Zertifikat, bekanntes Replay/Hashrollback | Ablehnung/Quarantäne; kein stiller Fachdatenverlust |
+| C13 | Exportpassphrase falsch oder Container verändert | vor ZIP-Verarbeitung/Dateneingriff abgewiesen |
+| C14 | Vollserverrestore mit alten signierten Manifeste/Epochen | kein Serverneusignieren; clientbestätigter Wiederanlauf |
+
+Audit-/Reviewbeleg für Cryptobinding und Schlüssel-/Transportprotokoll vor öffentlichem Release; niemals Audit behaupten, das nicht erfolgt ist. App-Codesignatur wird getrennt als Distributionsprüfung bewertet, nicht als E2EE-Sicherheitstest. Quellen/Verträge: [Verschlüsselung](encryption.md).
+
+## Abschluss und Wiederherstellung
+
 Nutzerexport nach Import/Restore mit kanonischem Snapshot vergleichen; Kontostände, Budgets, Ausgleich und Referenzen müssen erhalten sein. Vollserverrestore mit ungültiger Session/Epochen und Wiederanmeldung prüfen. Migration von jedem unterstützten Ausgangsschema mit Backup, Fehlerrollback und Neustart. Retention entfernt nie letzte funktionierende Sicherung nach fehlgeschlagener neuer Sicherung.
 
 Ein Paket gilt erst als erledigt, wenn Ergebnis und seine Abnahmekriterien erfüllt sind, relevante Tests bestanden haben und Dokumentation/Verträge angepasst sind. Prüfbelege nennen Befehl/Testgruppe, Plattform, Ergebnis und Einschränkungen. Keine generelle hundertprozentige Coveragepflicht; Fachinvarianten, Autorisierung und Restore haben obligatorische Verhaltensabdeckung.
 
-Vor P11 außerdem AGPL-Lizenzmetadaten, vollständiges zum Build passendes Quellarchiv, Fremdhinweise und Buildanleitungen prüfen. Fehlende Signierung oder Plattformtests verhindern entsprechende öffentliche Releasefreigabe, nicht vorherige Entwicklungspakete.
+Vor P11 AGPL-Lizenzmetadaten, passendes Quellarchiv, Fremdhinweise/Buildanleitungen und C01–C14 prüfen. Fehlende Paketcodesignierung kann Plattformdistribution verhindern, aber weder Anmeldung noch E2EE-Zugang anderer authentifizierter Clients. Ungeprüftes E2EE-Protokoll verhindert die öffentliche Sicherheitsabnahme.

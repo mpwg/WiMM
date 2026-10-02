@@ -24,6 +24,7 @@ Desktop- und Touchansichten werden bewusst unterschiedlich komponiert; gemeinsam
 | Ausgleich | Guthaben je Teilnehmer, Haushalt, Vorleistungen und Reserve, Zahlungshistorie | Anteil prüfen, Zahlung erfassen, Eigenanteil verrechnen |
 | Berichte | Monatsvergleich, Kategorien, Budgetabweichungen, Vermögen, Prognose | Zeitraum/Perspektive wechseln, Detailbuchungen öffnen |
 | Einstellungen | Kategorien, Empfänger, Regeln, Dauerzahlungen, Ziele, Sicherung; Haushalt Rollen | konkret benannte Verwaltungsvorgänge |
+| Tresor und Geräte | lokales Entsperren, Rettungscode, Keyversionen, Fingerprints und Geräte | Schlüssel freigeben, Gerät widerrufen, Recovery starten |
 
 ## Bedienelemente
 
@@ -45,7 +46,13 @@ Konflikt: bestätigte und lokale Fassung, markierte Unterschiede, Optionen best�
 
 Desktopmenüs: App/Datei mit Import/Export/Einstellungen/Beenden, Bearbeiten mit Undo/Redo/Standardtextaktionen, Ansicht und Hilfe mit Version/Lizenz/Quellcode. macOS verwendet Systemmenü und Cmd, Windows/Linux Fenstermenü und Ctrl. Ctrl/Cmd+N neue Buchung, Ctrl/Cmd+F Suche, Ctrl/Cmd+Z Undo, plattformübliches Redo; nicht global während Texteingaben umdeuten. Escape schließt einen Dialog nur ohne Verlust oder nach Rückfrage.
 
-Dateiauswahl und Speichern sind Desktop-native, im Browser gewöhnliche Datei-/Downloadabläufe. Externe Links öffnen im Systembrowser und keine entfernte Seite in der privilegierten Tauri-Ansicht. App-Updates werden sichtbar angeboten und nicht mitten in Formular/Import erzwungen.
+Dateiauswahl und Speichern sind Desktop-native, im Browser gewöhnliche Datei-/Downloadabläufe. Externe Links öffnen im Systembrowser und keine entfernte Seite in der privilegierten Tauri-Ansicht. Updates sichtbar anbieten, nicht mitten in Bearbeitung erzwingen. Appcodesignatur ist keine Zugangsvoraussetzung; Web/PWA/Desktop gelten nach Authentifizierung als vertrauenswürdig.
+
+## Schlüsselbedienung
+
+Anmeldung und Tresorentsperren sind getrennte Zustände: angemeldet/gesperrt zeigt keine Finanzdaten. Entsperrpassphrase bleibt lokal; Rettungscode beim Anlegen anzeigen und Sicherung bestätigen lassen. Passwortreset meldet ausdrücklich, dass er keine verlorenen Finanzschlüssel ersetzt. Neues Gerät kann über bereits entsperrtes Gerät oder Tresorpassphrase/Rettungscode aufgenommen werden; kein Hinweis auf erforderliche Appattestierung.
+
+Familieneinladung zeigt bis KeyGrant `Schlüsselfreigabe ausstehend`. Fingerprint-/QR-Vergleich und bestätigte Freigabe erfolgen auf Clients; keine automatische private Freigabe. Entfernen nennt verbleibende alte Kopien und startet Rotation; Offlinealtversionen bleiben als Entwürfe erhalten. Export fragt separate Exportpassphrase ab. Ungültige Nachrichten, fehlende Keys und Recoveryverlust besitzen eigene Zustände statt stillen Klartextfallbacks.
 
 ## Zustände und Barrierefreiheit
 

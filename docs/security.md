@@ -2,7 +2,7 @@
 
 ## Vertrauensmodell
 
-Der Nutzer hat einen vertrauenswürdigen selbst gehosteten Server gewählt. Serveradministratoren können technisch Finanzdaten lesen; es gibt in v1 keine Ende-zu-Ende-Verschlüsselung und keinen Anspruch auf Geheimhaltung gegenüber dem Betreiber. Private Daten werden gegenüber anderen angemeldeten Personen durch Autorisierung abgeschottet.
+Ende-zu-Ende-Verschlüsselung ist Pflicht ab v1. Der Server erhält keine Finanzklartexte oder privaten Schlüssel und wird für Vertraulichkeit nicht vertraut. Authentifizierte Clients gelten nach Nutzerfestlegung als vertrauenswürdig, unabhängig von Codesignatur, Attestierung oder Buildherkunft. Anmeldung und lokale Schlüsselentsperrung sind getrennt. [Verschlüsselung](encryption.md) beschreibt Schlüsselverwaltung, signierte Nachrichten und unvermeidbare Metadaten.
 
 Lokale Dateien/Browserdaten sind nicht standardmäßig appverschlüsselt. Betriebssystemprofil, Gerätesperre und Festplattenverschlüsselung bilden den lokalen Schutz. Lokale Teilnehmer sind keine gegeneinander isolierten Nutzer. Bereits synchronisierte Kopien lassen sich bei Rechteentzug nicht zuverlässig entfernen.
 
@@ -10,7 +10,7 @@ Lokale Dateien/Browserdaten sind nicht standardmäßig appverschlüsselt. Betrie
 
 Initialer Serverstart erzeugt bzw. liest ein einmaliges Setupgeheimnis. Der Betreiber erhält es lokal außerhalb gewöhnlicher Requestlogs. Bootstrap erzeugt User, private Space und Betreiberrolle atomar und wird danach deaktiviert. Keine standardmäßigen Zugangsdaten.
 
-Eigene Benutzerkonten benötigen displayName, normalisierte E-Mail und Passwort. Normalisierung trimmt E-Mail und verwendet konsistente Kleinschreibung; keine providerspezifischen Punkt-/Plusaliasregeln. Passwort mindestens 12 Zeichen, bis 256 Unicodezeichen, nicht still trimmen. Argon2id mit individuellem Salt; initiale Untergrenze 64 MiB, drei Iterationen, Parallelität 1; Hardwarebenchmark in P8 prüfen und Parameter mit Hash speichern.
+Eigene Benutzerkonten benötigen displayName, normalisierte E-Mail und Loginpasswort. Dieses ist unabhängig von der ausschließlich lokal verwendeten Tresorpassphrase. Normalisierung trimmt E-Mail und verwendet konsistente Kleinschreibung; keine providerspezifischen Punkt-/Plusaliasregeln. Passwort mindestens 12 Zeichen, bis 256 Unicodezeichen, nicht still trimmen. Argon2id mit individuellem Salt; Untergrenze 64 MiB, drei Iterationen, Parallelität 1; Benchmark in P8 und Parameter mit Hash speichern. Kein Loginpasswort-/OIDC-Reset darf Finanzschlüssel freilegen.
 
 Registrierung nur über einmalige Einladung oder Bootstrap. Einladungen sieben Tage gültig, mindestens 256 Bit zufälliges Token, nur Hash serverseitig. Annahme und Rollenvergabe atomar; Replay und Parallelannahme werden abgewiesen. Keine E-Mails werden ohne später ausdrücklich eingebauten Versand verschickt; admin teilt Link selbst.
 
@@ -28,15 +28,15 @@ Logout widerruft Online-Session und entfernt Credentials. Die Oberfläche bietet
 
 ## Autorisierung
 
-Jeder Zugriff prüft Eigentum oder aktive Membership der konkreten Ressource, nicht nur erfolgreiche Anmeldung. Zugehörigkeit aller referenzierten Konten/Kategorien/Aggregate wird geprüft. Haushalts-admin darf private Bereiche nicht lesen. Betreiberrolle bedeutet Verwaltung des Dienstes, nicht reguläre Finanz-API-Leseberechtigung für fremde Haushalte.
+Jeder Serverzugriff prüft Eigentum/aktive Membership, öffentliche Nachrichtensignatur und signiertes KeyRoster. Konten-/Kategorie-/Finanzreferenzen kann nur der entschlüsselnde Client prüfen. Haushalts-admin erhält keine privaten K anderer Personen. Betreiberrolle bedeutet Dienstverwaltung, weder Zugriff auf Finanzklartexte noch Fähigkeit, gültige fremde Fachnachrichten/KeyGrants zu signieren.
 
-Lesende erhalten keine Fachmutationen. Finanzsnapshot-Restore benötigt privaten owner/Haushalts-admin. Letzter admin kann nicht entfernt werden. Neue Membership gilt erst nach Einladung/Annahme; ein Participant mit userId allein verleiht keinen Zugriff. Berechtigungscaches werden bei Änderung invalidiert, Receipts/Conflictdetails erst nach aktueller Leseberechtigung geliefert.
+Lesende erhalten Leseschlüssel, aber keine im signierten Manifest wirksame Schreibberechtigung. Finanzrestore benötigt owner/admin-Signatur. Letzter admin kann nicht entfernt werden. Membership erst nach Einladung und bestätigtem KeyGrant aktiv; Participant.userId allein verleiht keinen Zugriff. Entfernung rotiert K und verschlüsselten Snapshot atomar; Rollen-/Gerätewiderruf ist signiert. Keine Appcodesignatur als Berechtigungsnachweis.
 
 ## Datenminimierung und Angriffsflächen
 
 Keine automatische private Veröffentlichung, keine Telemetrie, keine Nutzerdaten in Beispielen oder Screenshots. Logs enthalten Request-ID, Route, Status, Laufzeit und generische Fehlercodes; keine Body-Payloads, Passwörter, Cookies, E-Mail-Einladungslinks oder Buchungsnotizen. Finanz-Audithistorie bleibt im berechtigten Bereich und ist kein Betriebslog.
 
-TLS außer ausdrücklich lokalem Entwicklungsbetrieb. Same-Origin-PWA/API; keine allgemeinen CORS-Freigaben. Content Security Policy beschränkt Skripte auf gebündelte Assets, kein eval/Inline-Skriptfallback. Benutzernotizen sind Text, nie HTML. Parser verhindern XML-Entitäten, ZIP-Pfadtraversal und Dekompressionsbomben; [Formatgrenzen](formats.md) werden geprüft.
+TLS außer ausdrücklich lokalem Entwicklungsbetrieb. Same-Origin-PWA/API regulär; bei optional getrenntem Hosting nur konfigurierte konkrete CORS-Origin, keine Wildcards. CSP beschränkt Skripte auf Appassets; kein eval/Inline-Skriptfallback. Authentifiziertes Clientvertrauen umfasst die Laufzeit, behauptet aber keinen Schutz gegen manipulierten Clientcode. Notizen sind Text, nie HTML. Parser verhindern XML-Entitäten, ZIP-Pfadtraversal und Dekompressionsbomben; Formatgrenzen werden geprüft.
 
 Rate-Limits: Login zehn Versuche je 15 Minuten pro IP und Konto, Device-Poll mindestens fünf Sekunden, Einladungs-/Setupversuche 20 pro 15 Minuten/IP. Normaler Sync 120 Requests/Minute/Session; Limits liefern Retry-After. Keine personenbezogenen Unterschiede in Loginfehlern.
 
@@ -46,7 +46,7 @@ Tauri lädt keine Remoteinhalte. Capabilities erlauben nur benötigte Dialoge, a
 
 Bereichslöschung löscht aktiven Serverbestand und widerruft zugehörige Synczugriffe; tägliche Sicherungen können Daten bis zum Ablauf der 30 Tage enthalten. Die Oberfläche erklärt die Aufbewahrung. Referenzierte Teilnehmer bleiben als fachliche Personen historisch erhalten, ohne Loginverknüpfung. Selbstlöschung benötigt vorher Übergabe letzter admin-Rollen; privater Bereich und Sitzungen werden entfernt.
 
-WIMM-Exporte und Finanzbackups sind ohne ausdrücklich andere Betreiberkonfiguration unverschlüsselt. Keine Passwörter/Device-Tokens in Nutzerexporten. Vollserversicherungen enthalten Authdaten und werden separat mit restriktiven Dateirechten geschützt. Wiederherstellung eines Vollservers widerruft alle Web-/Device-Sessions.
+WIMM-/Entwurfsexporte und Desktopbackups sind standardmäßig verschlüsselt, mit unabhängiger Exportpassphrase bzw. lokal gesichertem Backupschlüssel. Serverbackups enthalten Finanzchiffrate und öffentliche Schlüsselpakete, nie deren privaten Schlüssel. Authdaten im Vollbackup brauchen weiterhin restriktive Dateirechte. Wiederherstellung widerruft Sessions; signierte Bereichsepochen/Manifeste werden erst durch autorisierte Clients erneuert. Ohne Geräte/Tresorpassphrase/Rettungscode kann der Betreiber private Finanzen nicht wiederherstellen.
 
 ## Abnahme
 

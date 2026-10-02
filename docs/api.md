@@ -2,7 +2,7 @@
 
 ## Allgemeine Regeln
 
-Basis `/api/v1`, UTF-8 JSON, camelCase, keine stillschweigende Typkonvertierung. IDs sind UUIDs, Geldbeträge sichere ganze Cent; Datums-/Versionsregeln siehe [Datenmodell](data-model.md). Listen verwenden `items`, `nextCursor` und `hasMore`; Standardgröße 50, maximal 200, außer Sync-Pull. Alle Verwaltungsänderungen verlangen bei bestehenden Ressourcen eine erwartete Revision.
+Basis `/api/v1`, UTF-8 JSON, camelCase, keine stillschweigende Typkonvertierung. IDs sind UUIDs. Finanzpayloads einschließlich Geld/Datum ausschließlich Ende-zu-Ende-verschlüsselt; ihre fachlichen Typen gelten auf Clients, nicht als Klartext-HTTP-Body. Listen: `items`, `nextCursor`, `hasMore`, Standardgröße 50/maximal 200 außer Sync-Pull. Verwaltungsänderungen verlangen erwartete Revision bzw. signierte Rosterfolgeversion. [E2EE-Vertrag](encryption.md) ist verbindlich.
 
 Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein generisches ORM-Objekt darf Sessionhashes oder private Referenzen offenlegen. Sessionpflicht gilt außer Health, öffentlichen Metadaten und den jeweils bezeichneten Einrichtungs-/Anmeldewegen. Mutationen mit Cookie-Sitzung benötigen CSRF-Token und Originprüfung.
 
@@ -25,20 +25,28 @@ Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein ge
 | POST `/auth/device/approve` | userCode, Session/CSRF | einmalige browserseitige Bestätigung für eingeloggte Person |
 | POST `/auth/device/poll` | deviceCode, publicClientNonce | pending/denied/expired oder einmaliges Device-Token |
 | GET/DELETE `/auth/sessions[/:id]` | eigene Session-ID | eigene Sitzungen auflisten/widerrufen |
+| POST `/crypto/identity` | eigene öffentliche Identitätsschlüssel, Besitznachweis | Erstregistrierung; Austausch nur nach alter Identitätssignatur bzw. ausdrücklich getrenntem Kontoneustart ohne Zugriff auf alte Finanzen |
+| GET/PUT `/crypto/vault` | verschlüsselter UserVault, Keywrap-/KDFmetadaten, erwartete Vaultversion | eigener Tresor ausschließlich als Chiffrat; Loginreset liefert keine Entschlüsselung |
+| GET/POST `/crypto/devices` | öffentliche Geräteschlüssel und Identitätszertifikat | eigene zertifizierte Geräte; Anmeldung plus gültiges Zertifikat, keine App-/Binaryattestierung |
+| POST `/crypto/devices/:id/revoke` | signierter Identitätswiderruf | eigenes Gerät widerrufen; möglicher Schlüsselabfluss zusätzlich Bereichsrotation |
+| GET `/spaces/:id/keys` | Session | signierte Rosterkette/KeyGrants ausschließlich für eigene berechtigte Identität |
+| POST `/spaces/:id/keys/grant` | neues signiertes Roster, signierter Empfänger-KeyGrant | owner/admin-Client; Mitglied noch pending bis Empfängerbestätigung |
+| POST `/spaces/:id/keys/accept` | bestätigter Rosterhash/K-Version, Empfängersignatur | eigene Schlüsselannahme; keine Passphrase/privater Schlüssel im Body |
+| POST `/spaces/:id/keys/rotate` | expectedRosterHash, neues Roster, KeyGrants, verschlüsselter signierter Snapshot | owner/admin; Rollen-/Widerrufsänderung und K-Rotation atomar, Konflikt bei veraltetem Roster |
 | GET `/spaces` | Session | ausschließlich eigene private/zugängliche gemeinsame Bereiche |
-| POST `/spaces/from-snapshot` | Name, Typ, validierter Snapshot, neue Upload-ID, adoptEmptyPrivate? | neuer Haushalt inklusive Teilnehmern; private Anlage nur ohne Privatbereich oder explizite Übernahme eines leeren eigenen Initialbereichs |
-| GET `/spaces/:id/snapshot` | optional Epoche | konsistenter Snapshot + snapshotCursor; alle berechtigten Leser |
-| POST `/spaces/:id/restore` | Snapshot, expectedEpoch, confirm=true | neue Epoche; private owner oder Haushalts-admin |
+| POST `/spaces/from-snapshot` | Typ, verschlüsselter signierter Snapshot/Genesis/KeyGrants, Upload-ID, adoptEmptyPrivate? | neues servergebundenes Chiffrat; Name/Teilnehmer innerhalb verschlüsselter Daten |
+| GET `/spaces/:id/snapshot` | optional Epoche | verschlüsselter signierter Snapshot + gebundener snapshotCursor; berechtigte Leser mit eigenem KeyGrant |
+| POST `/spaces/:id/restore` | verschlüsselter signierter Snapshot, expectedEpoch, neue signierte Epoche, confirm=true | owner/admin; Server prüft keine Fachklartexte |
 | DELETE `/spaces/:id` | expectedRevision, confirm=true | Haushalts-admin/owner; privater Bereich nicht allein löschbar, dafür Konto-/Datenlöschablauf |
-| POST `/spaces/:id/sync/push` | operations[] | Ergebnisse pro Operation; member/admin oder privater owner |
-| GET `/spaces/:id/sync/pull` | epoch, cursor, limit bis 500 | Changes/nextCursor/hasMore; jeder berechtigte Leser |
-| POST `/households` | name, timezone | neuer Haushalt, Space, Haushaltsteilnehmer und admin-Membership atomar |
-| PATCH `/households/:id` | name?, timezone?, expectedRevision | admin; keine Rückwirkung auf Buchungsdaten |
+| POST `/spaces/:id/sync/push` | EncryptedOperation[] | Receipts/CAS-Stände und Chiffrate; member/admin oder privater owner mit gültiger Nachrichtensignatur |
+| GET `/spaces/:id/sync/pull` | epoch, cursor, limit bis 500 | verschlüsselte Changes/nextCursor/hasMore; aktive Leser |
+| POST `/households` | verschlüsselter Initialsnapshot, signierte Genesis/Grants | Verwaltungs-ID, verschlüsselter Space und admin-Membership; keinerlei Finanzklartext |
+| PATCH `/households/:id` | signiertes admin-Settings-Bundle, expectedRevision | Name/Zeitzone verschlüsselt; keine Serverprojektion |
 | GET `/households/:id/memberships` | Session | aktive Mitgliedschaften; Haushaltsmitglieder |
-| PATCH/DELETE `/households/:id/memberships/:membershipId` | role oder expectedRevision | admin; kein Entfernen letzten admin |
+| PATCH/DELETE `/households/:id/memberships/:membershipId` | signierte Rosteränderung, expectedRevision; bei Entfernung neuer verschlüsselter Snapshot und Grants | admin; atomare Rotation bei Entfernung, letzter admin bleibt |
 | POST `/households/:id/invitations` | role, optionale E-Mail-Bindung | Link/Code einmal angezeigt; admin |
 | DELETE `/households/:id/invitations/:invitationId` | expectedRevision | admin, widerrufen |
-| POST `/invitations/accept` | Code, bei neuem Konto email/displayName/password | atomare Konto-/Mitgliedschaftsanlage, einmalige Verwendung |
+| POST `/invitations/accept` | Code, bei neuem Konto email/displayName/password | atomare Konto-/pending_key_grant-Mitgliedschaft; Finanzzugriff erst nach Fingerprint-/Schlüsselfreigabe |
 | POST `/households/:id/participants/:participantId/link` | Zielbenutzer aus aktiver Membership, erwartete Revision | admin bereitet Zuordnung vor; noch keine wirksame Änderung von userId |
 | POST `/households/:id/participants/:participantId/link/accept` | eigener Benutzer, erwartete Revision | eingeladener Benutzer bestätigt vorbereitete eigene Zuordnung |
 
@@ -46,7 +54,7 @@ Ein Finanzsnapshot ersetzt keine Benutzer-/Rollenverwaltung. Das Löschen eines 
 
 ## Fachbefehle
 
-Payloads enthalten ID und sämtliche notwendigen Felder des jeweiligen Aggregats aus dem [Datenmodell](data-model.md), keine UI-Projektionen. Vollständige saves ersetzen ein Aggregat; Pflichtreferenzen werden gegen den aktuellen Bereich geprüft. Alle schreibenden Befehle verlangen member/admin bzw. privates Eigentum.
+Die folgende Tabelle beschreibt ausschließlich clientintern entschlüsselte Fachbefehle. Payloads enthalten ID und Felder aus dem Datenmodell; vollständige saves ersetzen ein Aggregat. Clients prüfen Pflichtreferenzen und erzeugen Änderungssets. commandType, aggregateType, Finanzfelder und Referenzen werden nicht im Klartext an den Server gesendet. Schreibnachrichten benötigen member/admin bzw. privates Eigentum laut signiertem Roster; Appcodesignatur ist unerheblich.
 
 | commandType | Payload / atomarer Umfang |
 |---|---|
@@ -79,22 +87,22 @@ Payloads enthalten ID und sämtliche notwendigen Felder des jeweiligen Aggregats
     "operationId": "00000000-0000-4000-8000-000000000101",
     "status": "accepted",
     "cursor": "42",
-    "revisions": [{ "aggregateType": "transaction", "id": "00000000-0000-4000-8000-000000000501", "revision": 1 }],
-    "aggregates": []
+    "revisions": [{ "handle": "00000000-0000-4000-8000-000000000501", "revision": 1 }],
+    "encryptedBundles": []
   }]
 }
 ```
 
-Das Beispiel kürzt `aggregates` aus Platzgründen; eine reale Antwort enthält den vollständigen bestätigten Stand der betroffenen Aggregate. Operationsergebnisse können Konfliktstände nur bei weiterhin gültigem Leserecht enthalten. Ein nicht zugänglicher Bereich erzeugt keinen teilweisen erfolgreichen Batch.
+Das Beispiel kürzt `encryptedBundles`; eine reale Antwort enthält unveränderte verschlüsselte signierte Hüllen, niemals entschlüsselte Aggregate. Konfliktstände sind ebenfalls Chiffrate und nur bei gültigem Leserecht erhältlich. Ein nicht zugänglicher Bereich erzeugt keinen teilweise erfolgreichen Batch.
 
 ## Fehler
 
 ```json
 {
   "error": {
-    "code": "VALIDATION_FAILED",
-    "message": "Die Aufteilung entspricht nicht dem Buchungsbetrag.",
-    "fields": [{ "path": "payload.splits", "code": "SUM_MISMATCH" }],
+    "code": "INVALID_ENVELOPE",
+    "message": "Die verschlüsselte Nachricht ist ungültig.",
+    "fields": [{ "path": "header.keyVersion", "code": "KEY_VERSION_MISMATCH" }],
     "requestId": "req-opaque"
   }
 }
@@ -102,14 +110,14 @@ Das Beispiel kürzt `aggregates` aus Platzgründen; eine reale Antwort enthält 
 
 | HTTP | Codes | Wirkung |
 |---|---|---|
-| 400 | VALIDATION_FAILED, UNKNOWN_COMMAND, UNSUPPORTED_FORMAT | Keine Änderung; Felder korrigieren |
+| 400 | INVALID_ENVELOPE, INVALID_SIGNATURE, UNSUPPORTED_CRYPTO_SUITE | Keine Änderung; Hülle/Schlüssel prüfen |
 | 401 | AUTH_REQUIRED, SESSION_EXPIRED | Erneut anmelden; Entwürfe erhalten |
 | 403 | FORBIDDEN, CSRF_FAILED | Kein Schreibrecht bzw. ungültiger Anmeldekontext |
 | 404 | NOT_FOUND | Auch nicht zugängliche Ressourcen; keine Existenzoffenlegung |
-| 409 | REVISION_CONFLICT, EPOCH_MISMATCH, OPERATION_ID_REUSED, LAST_ADMIN, DEPENDENCY_NOT_ACCEPTED | Konflikt/Verwaltungsproblem sichtbar auflösen |
+| 409 | REVISION_CONFLICT, EPOCH_MISMATCH, KEY_VERSION_MISMATCH, ROSTER_MISMATCH, OPERATION_ID_REUSED, LAST_ADMIN, DEPENDENCY_NOT_ACCEPTED | Konflikt/Schlüsselstand sichtbar auflösen |
 | 413 | PAYLOAD_TOO_LARGE | Batch reduzieren, keine abgeschnittene Übernahme |
 | 429 | RATE_LIMITED | Retry-After beachten |
 | 426 | UPDATE_REQUIRED | Protokoll/Client aktualisieren |
 | 500/503 | INTERNAL_ERROR, STORAGE_UNAVAILABLE | Request-ID; keine internen Details, sichere Wiederholung |
 
-Fachfehler innerhalb eines gültigen Pushbatches erscheinen im jeweiligen Operationsergebnis; HTTP 400 betrifft den ungültigen Batchumschlag. Auth-/Bereichsfehler gelten für den gesamten Request. Uploadgrenzen und Sitzungsregeln stehen in [Betrieb](operations.md) und [Sicherheit](security.md).
+Serverergebnisse betreffen nur Hülle, Signatur, Autorisierung und CAS; Finanzfehler entstehen ausschließlich auf entschlüsselnden Clients. HTTP 400 betrifft einen ungültigen Batchumschlag; Auth-/Bereichsfehler den gesamten Request. Nach Entschlüsselung ungültiger Inhalt wird quarantänisiert und nicht automatisch angewandt. Uploadgrenzen und Sitzungsregeln stehen in Betrieb/Sicherheit.
