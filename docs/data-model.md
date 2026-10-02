@@ -28,7 +28,7 @@ Finanzaggregate besitzen `id`, `spaceId`, `revision`, `createdAt`, `updatedAt`, 
 | Category | groupId, name, sortOrder, archived | Gruppe im selben Bereich |
 | Payee | name, aliases[], archived | Aliasse normalisiert; Merge als expliziter Fachbefehl |
 | Transaction | accountId, date, amount, kind, payeeId?, note?, clearance, importReference?, scheduleOccurrenceId? | splits[] mit id/categoryId/amount; normale Buchungen mindestens ein Split |
-| Transfer | date, sourceAccountId, targetAccountId, amount | Zwei Transaction-Kinder, vollständiges Aggregat; Betrag positiv, Konten verschieden |
+| Transfer | date, sourceAccountId, targetAccountId, amount, budgetCategoryId? | Zwei Transaction-Kinder, vollständiges Aggregat; Betrag positiv, Konten verschieden; budgetCategoryId bei Abgang aus on-budget zu off-budget verpflichtend |
 | Reconciliation | accountId, statementDate, statementBalance, transactionIds[] | Betroffene Buchungsrevisionen prüfen; historische Bestätigung |
 | BudgetMethodPeriod | effectiveMonth, method | Pro Bereich/Monat eindeutig, chronologische Historie |
 | BudgetMonth | month, method, lines[] | lines: categoryId, planned?/assigned; vollständiger Monatsstand mit einer Revision |

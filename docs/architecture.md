@@ -53,7 +53,7 @@ Der Desktopstart benötigt keine Netzwerkverbindung. Die PWA cached ausschließl
 
 Ein lokales Profil besitzt einen privaten Bereich und beliebig viele Haushalte mit Teilnehmern. Das ist kein Mehrbenutzer-Sicherheitsmodell. Verbundene Profile werden nach Serverinstanz und User-ID getrennt; mehrere Browser-Tabs koordinieren Schreib-/Syncführung über Web Locks/BroadcastChannel. Logout löscht Sessionmaterial und sperrt die UI; lokale Daten bleiben auf ausdrücklichen Wunsch für erneute Anmeldung erhalten.
 
-Ein lokaler Bereich wird über `createFromSnapshot` zu einem neuen Serverbereich. Haushaltsteilnehmer bleiben zunächst ungebundene Personen. Mitglieder werden später eingeladen und zugeordnet. Für jeden Bereich kann der Nutzer einen lokalen unabhängigen Export erzeugen; Serverbindung wird im Export nicht als gültige Zugangsbefugnis übernommen.
+Ein lokaler Bereich wird über die API `spaces/from-snapshot` zu einem neuen Serverbereich. Der bereits bei Kontoanlage erzeugte leere eigene Privatbereich kann ausdrücklich als Initialbereich übernommen werden; enthält er bereits Finanzdaten, ist stattdessen bestätigter Restore mit Backup nötig. Haushaltsteilnehmer bleiben zunächst ungebundene Personen. Mitglieder werden später eingeladen und zugeordnet. Für jeden Bereich kann der Nutzer einen lokalen unabhängigen Export erzeugen; Serverbindung wird im Export nicht als gültige Zugangsbefugnis übernommen.
 
 ## Plattformintegration
 

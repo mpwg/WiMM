@@ -18,6 +18,7 @@ Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein ge
 | POST `/auth/logout` | Session/CSRF | 204 und widerrufene Sitzung |
 | GET `/auth/me` | Session | eigener Benutzer, aktive Haushaltsmitgliedschaften, CSRF-Token |
 | POST `/auth/password/change` | altes/neues Passwort | 204, andere eigene Sessions widerrufen |
+| POST `/auth/account/delete` | frische Anmeldung, confirm=true | eigener privater Bereich/Sessions entfernen; letzte admin-Rollen vorher übergeben |
 | GET `/auth/oidc/start` | erlaubtes Rückkehrziel, optional Invite-Kontext | Redirect; State/Nonce/PKCE serverseitig kurzzeitig |
 | GET `/auth/oidc/callback` | code, state | OIDC-Prüfung, Session; Kontoanlage nur über Einladung |
 | POST `/auth/device/start` | deviceName, publicClientNonce | deviceCode, userCode, Bestätigungs-URL, expiresIn=600, interval=5 |
@@ -25,7 +26,7 @@ Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein ge
 | POST `/auth/device/poll` | deviceCode, publicClientNonce | pending/denied/expired oder einmaliges Device-Token |
 | GET/DELETE `/auth/sessions[/:id]` | eigene Session-ID | eigene Sitzungen auflisten/widerrufen |
 | GET `/spaces` | Session | ausschließlich eigene private/zugängliche gemeinsame Bereiche |
-| POST `/spaces/from-snapshot` | Name, Typ, validierter Snapshot, neue Upload-ID | neuer Bereich; Haushalt inklusive Teilnehmern, private Anlage nur wenn noch keiner vorhanden |
+| POST `/spaces/from-snapshot` | Name, Typ, validierter Snapshot, neue Upload-ID, adoptEmptyPrivate? | neuer Haushalt inklusive Teilnehmern; private Anlage nur ohne Privatbereich oder explizite Übernahme eines leeren eigenen Initialbereichs |
 | GET `/spaces/:id/snapshot` | optional Epoche | konsistenter Snapshot + snapshotCursor; alle berechtigten Leser |
 | POST `/spaces/:id/restore` | Snapshot, expectedEpoch, confirm=true | neue Epoche; private owner oder Haushalts-admin |
 | DELETE `/spaces/:id` | expectedRevision, confirm=true | Haushalts-admin/owner; privater Bereich nicht allein löschbar, dafür Konto-/Datenlöschablauf |
@@ -38,9 +39,10 @@ Antworten serialisieren ausschließlich ausdrücklich definierte Felder. Kein ge
 | POST `/households/:id/invitations` | role, optionale E-Mail-Bindung | Link/Code einmal angezeigt; admin |
 | DELETE `/households/:id/invitations/:invitationId` | expectedRevision | admin, widerrufen |
 | POST `/invitations/accept` | Code, bei neuem Konto email/displayName/password | atomare Konto-/Mitgliedschaftsanlage, einmalige Verwendung |
-| POST `/households/:id/participants/:participantId/link` | eigener Benutzer, erwartete Revision | eingeladener Benutzer stimmt eigener Zuordnung zu; admin kann Zuordnung vorbereiten |
+| POST `/households/:id/participants/:participantId/link` | Zielbenutzer aus aktiver Membership, erwartete Revision | admin bereitet Zuordnung vor; noch keine wirksame Änderung von userId |
+| POST `/households/:id/participants/:participantId/link/accept` | eigener Benutzer, erwartete Revision | eingeladener Benutzer bestätigt vorbereitete eigene Zuordnung |
 
-Ein Finanzsnapshot ersetzt keine Benutzer-/Rollenverwaltung. Das Löschen eines Kontos/Haushalts benötigt einen ausdrücklich bestätigten Verwaltungsablauf; Rollen können nicht durch importierte Finanzdateien erlangt werden. OIDC-Verknüpfung bestehender Konten erfordert eine bestehende Sitzung und frische OIDC-Authentifizierung.
+Ein Finanzsnapshot ersetzt keine Benutzer-/Rollenverwaltung. Das Löschen eines Kontos/Haushalts benötigt einen ausdrücklich bestätigten Verwaltungsablauf; Rollen können nicht durch importierte Finanzdateien erlangt werden. OIDC-Verknüpfung bestehender Konten erfordert eine bestehende Sitzung und frische OIDC-Authentifizierung. Ein neuer User erhält einen leeren privaten Initialbereich. `adoptEmptyPrivate=true` nutzt ausschließlich diesen nachweislich leeren eigenen Bereich und aktualisiert seine Epoche; bei bestehenden Finanzdaten ist expliziter Restore mit Backup nötig, nie automatisches Zusammenführen.
 
 ## Fachbefehle
 

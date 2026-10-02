@@ -1,0 +1,131 @@
+# Umsetzungsplan und Agentenübergabe
+
+## Auftrag und Statusführung
+
+Aktuelle Freigabe: ausschließlich D0. P1–P11 sind keine durch diese Dokumentation freigegebenen Ausführungsaufträge. Alle folgenden Pakete beginnen mit Status `offen`; D0 wird nach tatsächlicher Konsistenzprüfung abgeschlossen. Keine App-Abhängigkeiten, Toolchain oder Infrastruktur während D0 anlegen.
+
+Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
+
+## D0 — Dokumentationsübergabe
+
+- Status: erledigt (2. Oktober 2026).
+- Voraussetzung: bestätigtes Konzept, Nutzerlizenz AGPL-3.0-or-later und Freigabe für Dokumentation.
+- Schritte: Root-README/Agentenregeln/Lizenz; Produkt/Fachmodell/Datenmodell; Architektur/Sync/API/Formate; UI/Sicherheit/Betrieb; Entscheidungen/Tests/Aufgaben anlegen. Nutzer wünscht Zwischencommits pro abgeschlossenem Abschnitt.
+- Ergebnis: vollständiges verlinktes Übergabepaket, keine Anwendungscode- oder Infrastrukturdateien.
+- Verträge: alle Dokumente; Begriffe, Lizenz, Rechte, Buchungs-/Budget-/Ausgleichsregeln konsistent.
+- Abnahme: alle relativen Links lösen auf, JSON-Beispiele parsebar, geplante Pakete bleiben offen, keine veraltete MIT-Projektlizenz, keine behaupteten Anwendungstests oder existierenden APIs.
+- Prüfbelege: 17 Dateien (16 Markdown-Dateien und vollständiger Lizenztext); 42 relative Links auf vorhandene Ziele geprüft; drei JSON-Beispiele erfolgreich geparst; P1–P11 vollständig und offen; Cent-Referenzrechnungen für Umschlag, Eigenanteilsverrechnung und Teilrückerstattung geprüft; Whitespaceprüfung bestanden. Keine Anwendungstests, Paketinstallation oder Infrastruktur ausgeführt. Zwischencommits: `07c0608` (Fachmodell/Schnittstellen/Lizenz), `14f2784` (UI/Sicherheit/Betrieb); Abschlusscommit ergänzt Agentenübergabe und Konsistenzkorrekturen.
+
+## P1 — Projektgrundlage
+
+- Status: offen. Freigabe: erst späterer ausdrücklicher Implementierungsauftrag. Voraussetzung: D0 erledigt.
+- Schritte: stabile kompatible Node-LTS/pnpm/TypeScript/React/Vite/Tauri/Fastify/Schema-/Testversionen prüfen; Workspace mit in [Architektur](architecture.md) definierten Paketen anlegen; gemeinsame TS-Konfiguration strict; ESM und dokumentierte Packageexports; Zod-Vertragsschemas/Fehlertypen; leere Web-/Desktop-/Server-Hüllen; Lockfiles; CI für Typprüfung, Tests und Builds.
+- Ergebnis: reproduzierbare Entwicklungsbasis, ohne bereits vollständige Finanzfunktionen zu behaupten. Rootbefehle `dev:web`, `dev:server`, `dev:desktop`, `typecheck`, `test`, `test:e2e`, `build` dokumentieren.
+- Verträge: Paketabhängigkeiten, gemeinsame Primitive/Versionen, PlatformServices, künftige Storage-Ports.
+- Abnahme: frischer Checkout installierbar, Typ-/Buildprüfungen laufen; Web-/Tauri-Hülle startet; Backendhealth liefert korrekte Zustände. Versionskombination und getestete Betriebssysteme festgehalten. AGPL-Metadaten, Herkunftsregistergrundlage und Sourcehinweis angelegt.
+- Prüfungen: CI lokal reproduzieren, Paketgraph auf verbotene Imports prüfen, Buildsmokechecks; keine Secrets erforderlich.
+- Prüfbelege: noch keine.
+
+## P2 — Fachkern
+
+- Status: offen. Voraussetzung: P1.
+- Schritte: exakte Geld-/Datumsparser; Aggregate/Revisionstypen; Konten/Kategorien/Empfänger; Buchungen/Splits/Opening; Transfers und Kontenabgleich; pure Befehlshandler mit Änderungssets; Projektionen für Salden und Einnahmen/Ausgaben. Reconciled-Lock und Referenzarchivierung berücksichtigen.
+- Ergebnis: plattformfreie Fachlogik ohne Datenbank/React/HTTP, die sämtliche Eingabe- und Summeninvarianten prüft.
+- Verträge: Datenmodell und Befehle account/category/payee/transaction/transfer/reconciliation.
+- Abnahme: Referenzfälle F01–F03 und Geld-/Datums-/Abgleichfehlfälle bestehen; Updates ohne alle erwarteten Revisionen abgewiesen; keine Teiländerungssets.
+- Prüfungen: deterministische Vitest-Fachtests sowie Eigenschaften für Summen, Transfererhaltung und Ganzzahlüberlauf.
+- Prüfbelege: noch keine.
+
+## P3 — Speicher und Offlinebasis
+
+- Status: offen. Voraussetzung: P2.
+- Schritte: Dexie-Schema und SQLite-Schema/Indizes; StorageAdapter und Rustbatch-Brücke; Transaktionen; getrennte bestätigte Daten/Entwürfe; Query-/Projektionsaufbau; lokale Profiltrennung; Migration und Export-Snapshotport. Service Worker für versionierte Appassets, persistente Speicheranfrage und Tabkoordination.
+- Ergebnis: dauerhafte lokale Datenhaltung in beiden Clients; vorbereitete Outbox ohne Netzwerkpflicht.
+- Verträge: StorageAdapter, lokale Revisionen, Snapshot-/Outboxzustände; Datenmodellindizes.
+- Abnahme: gemeinsame Konformitätssuite für beide Adapter; S01–S03/S14; offline Neustart ohne verlorene Buchungen; Quota/Disk-full kein Erfolg; private Profile getrennt.
+- Prüfungen: echte DB-/IndexedDB-Integrationsprüfungen, Absturzpunkte in Batch-/Cursorcommit simulieren; PWA-Network-off-Neustart.
+- Prüfbelege: noch keine.
+
+## P4 — Oberfläche und native App
+
+- Status: offen. Voraussetzung: P3.
+- Schritte: Composition Root, PlatformServices, Bereichswechsel; Übersicht/Konten/Buchungslisten/Formulare; Splits/Transfer/Abgleich; virtuelle Listen; Touch-/Desktoplayout; Systemschrift/-Farbschema; native Menüs, Dialoge, Kurzbefehle und Systembrowserlinks; leer/Fehler/offline/ausstehend-Zustände.
+- Ergebnis: lokal benutzbares Haushaltsbuch auf Web/PWA und Tauri, noch ohne alle Planungsfunktionen.
+- Verträge: UI-Ansichten, Befehlseingaben, Dateidialog-/Menüports, Bildschirm-/Fokusregeln.
+- Abnahme: neue Buchung, Transfer, Abgleich per Tastatur und Touch; alle Daten nach Neustart; Screenshots ohne Überlappung; native Dialog-/Menü-Smokecheck auf verfügbaren Zielsystemen. Fehlende Plattformprüfung konkret markieren.
+- Prüfungen: Playwright für Kernabläufe und Viewports; echte Tauri-Prüfung nach [UI](ui.md), Screenreader-/Zoomsmokecheck.
+- Prüfbelege: noch keine.
+
+## P5 — Import und Automatisierung
+
+- Status: offen. Voraussetzung: P4.
+- Schritte: etablierte CSV/XML/OFX-Parser auswählen/lizenzprüfen; normalisierte Zwischenform; Mappingvorlagen und Vorschau; Dublettenentscheidungen; gruppierte Übernahme/Wiederaufnahme; Regeln mit Priorität und Stop; Schedule/Fälligkeiten/Bestätigung und Zuordnung importierter Zahlungen.
+- Ergebnis: alltagstauglicher Import ohne Bankanbieter und deterministische wiederkehrende Vorschläge.
+- Verträge: Formate, rule/schedule-Befehle, Quellreferenzen, Importbatchstatus.
+- Abnahme: CSV/CAMT/OFX/QFX-Referenzfixtures; keine automatische Übernahme ungültiger Zeilen; Wiederimport/Bestätigung ohne Doppelbuchung; Monatsende ohne Drift; Vorschläge verändern keine Salden.
+- Prüfungen: F14, Parser-/Dubletten-/Limitsuite, Replay/Abbruch eines Großimports, UI bleibt interaktiv.
+- Prüfbelege: noch keine.
+
+## P6 — Budget, Ziele und Berichte
+
+- Status: offen. Voraussetzung: P5.
+- Schritte: Budgetmethodenhistorie; Plan/Ist, Umschläge, Vorträge, Zuweisung und Umschichtung; off-budget Transfers; Sparziele/Monatsraten; Dauerzahlungsprognose; Monats-/Kategorie-/Vermögensberichte; Workerprojektion und Detailnavigation.
+- Ergebnis: beide vollständigen Budgetmethoden ohne doppelte Kontoführung oder Vorwegnahme künftiger Einnahmen.
+- Verträge: budget/savingsGoal-Befehle, Monatsprojektionen und Berichtsperspektiven.
+- Abnahme: F04–F06/F15, negative Überträge, Methodenwechsel und Folge-Neuberechnung; Ausgabe-/Einnahmevorzeichen nachvollziehbar; Zuweisung über verfügbares Geld abgewiesen.
+- Prüfungen: Fachreferenzen, Berichtssummen gegen Einzelbuchungen, UI Monatswechsel/Undo/Prognose, Leistungsdatensatz.
+- Prüfbelege: noch keine.
+
+## P7 — Familienfinanzen lokal
+
+- Status: offen. Voraussetzung: P6.
+- Schritte: Haushalte/Teilnehmer ohne Login; Policies und freiwillige Einkommen; eingefrorene Anteile und Restcent; SharedExpense mit beiden Quellen/Erstattungswegen; Beiträge/Settlements/Eigenanteilsverrechnung; Reserve und kumulative Refunds; Veröffentlichungsvorschau/privater Link; Guthaben-/Ausgleichsberichte und Vorschlagszahlungen.
+- Ergebnis: vollständiger Familienalltag lokal, identische Fachregeln als spätere Servergrundlage.
+- Verträge: participant/allocationPolicy/sharedExpense/contribution/settlement/advanceOffset/expenseRefund; Budgetreserve; private Veröffentlichung.
+- Abnahme: F07–F13/F16; Salden einschließlich H summieren null; Reserve unabhängig von Beitragssaldo; Ausgaben/Erstattung genau einmal; private Felder gelangen nicht in gemeinsamen Snapshot; historische Policies unverändert.
+- Prüfungen: Restcent-/Rückerstattungs-Eigenschaften, private Link-/Anteilskorrektur-/Löschfehlfälle, komplette Haushaltsabläufe in UI.
+- Prüfbelege: noch keine.
+
+## P8 — Server und Identitäten
+
+- Status: offen. Voraussetzung: P7.
+- Schritte: Server-SQLite und zentrale Berechtigungsprüfung; Bootstrap; lokale Konten/Argon2id/Sessions/CSRF; OIDC mit etablierter Bibliothek; Device-Pairing/OS-Keyring; Haushalts-/Mitgliedschafts-/Invite-API; Teilnehmerverknüpfung; explizite Profildatenlöschung und Betreiberresetverfahren; Health/Meta und redigierte Logs.
+- Ergebnis: abgesicherte Verwaltung persönlicher Konten und mehrerer Familien; noch keine vollständige Multi-Client-Syncabnahme.
+- Verträge: API-Verwaltungsendpunkte, Rollenmatrix, Session-/Einladungsregeln.
+- Abnahme: Fremd-IDs/Snapshotzugriff konsequent geschützt; letzter admin bleibt erhalten; Bootstrap/Invite/Device-Replay abgewiesen; OIDC-Mailgleichheit keine Kontoübernahme; sichere Linux-Keyringalternative gemäß Sicherheitsvertrag.
+- Prüfungen: vollständige Auth-/Zugriffsmatrix, Argon2benchmark, echte Desktopkopplung, CSRF-/Origin-/Rate-Limittests.
+- Prüfbelege: noch keine.
+
+## P9 — Zusammenarbeit und Synchronisierung
+
+- Status: offen. Voraussetzung: P8.
+- Schritte: serverseitige Fachhandler und atomare Receipts/Changes; Snapshots; Push/Pull; Clientscheduler/Retry/Tabkoordination; abhängige Offlineentwürfe; Konfliktdialog/Rebase/Gegenoperationen; Membershipänderungen; private Veröffentlichungslinks über getrennte Bereichsoperationen; lokales Snapshot-Onboarding.
+- Ergebnis: mehrere Geräte arbeiten offline weiter und konvergieren ohne stilles Überschreiben; private und gemeinsame Daten bleiben getrennt.
+- Verträge: Operationsformat, Cursor/Epoche, Konflikt-/Receiptstatus, UPDATE_REQUIRED.
+- Abnahme: S04–S15 und drei Clients mit privaten/gemeinsamen Bereichen; doppelte Requests unschädlich; fremde Epoche kein Replay; blockierte Vorgänger blockieren nur Abhängige; Entwürfe exportierbar.
+- Prüfungen: Netzwerkabbrüche vor/nach Commit, parallele Revisionen, Neuverbindung und Snapshotgleichheit; Benutzerablauf Rechteentzug/Sessionablauf.
+- Prüfbelege: noch keine.
+
+## P10 — Sicherung und Betrieb
+
+- Status: offen. Voraussetzung: P9.
+- Schritte: vollständiges WIMM-Format/Validierung/Referenzabbildung; Draftsexport; Backup auf Desktop/Server; Retention und Migrationbackups; Snapshot-/Vollrestore mit Epoch-/Sessionreset; Dockerfile/Compose/Healthchecks; Betreiberkonfiguration/HTTPS-Anleitung; Service-Worker-/Updateverhalten.
+- Ergebnis: getesteter Schutz gegen Verlust und reproduzierbarer Self-Hosting-Betrieb.
+- Verträge: Exportmanifest, Limits, Restore/Revisions-/Epochenregeln und WIMM-Konfiguration.
+- Abnahme: Export/Restore bewahrt alle Fachprojektionen; fehlerhafte Datei verändert nichts; Vollrestore widerruft Sessions; tägliche Rotation behält letzte funktionierende Sicherung; kein ready während Migration/Restore; RPO/RTO-Prüfziele gemessen.
+- Prüfungen: Nutzer-/Vollrestore, Altclientwrites, Disk-full bei Sicherung, Zeitzone/Retention, Migrationsabbruch und Wiederanlauf, Docker-Neustart mit Volume.
+- Prüfbelege: noch keine.
+
+## P11 — Veröffentlichung
+
+- Status: offen. Voraussetzung: P10 und Abnahme aller vorherigen Pakete.
+- Schritte: Benutzer-/Installations-/Backupanleitungen, synthetische Beispieldaten; Plattformbuilds und native Smokechecks; DMG/Windowsinstaller/AppImage; externe Signierung/Notarisierung und signierter Updater; Dockerdigest; AGPL-Quellarchiv/Source-URL/Fremdhinweise; Lizenz-/Abhängigkeitsscan und vollständige Abnahmematrix.
+- Ergebnis: öffentliche reproduzierbare Distribution pro nachweislich geprüfter Plattform.
+- Verträge: Lizenz, Releaseversion/Commit, Source-URL, signierter Updatekanal, unterstützte Plattformliste.
+- Abnahme: passende Sourcearchive verfügbar, Installationspakete starten und stellen Daten wieder her; verfügbare native Plattformprüfungen belegt; fehlende Signierung/Tests verhindern nur betroffene Distribution, kein fingierter Gesamtrelease.
+- Prüfungen: frischer Installationslauf und Sourcebuild, Update mit Datenmigration, Quellarchiv entspricht Binary/Dockerbuild; Releasecheck in Betrieb.
+- Prüfbelege: noch keine.
+
+## Übergabe nach einem Paket
+
+Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen ausführen und nach Nutzerwunsch einen Zwischencommit erstellen. Der Commit enthält zusammengehörige Änderungen und keine fremden/unverwandten Dateien. Für den nächsten Agenten verbleibende Einschränkungen und erstes nächstes Paket nennen. Keine automatische Veröffentlichung durch Abschluss von P11 ohne entsprechenden Auftrag.
