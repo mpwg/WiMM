@@ -2,7 +2,7 @@
 
 ## Aktueller Stand
 
-D0 umfasst Dokumentationsprüfung. P1.3 ergänzt vier ausgeführte Vertragstests für öffentliche Hüllen und gemeinsame Primitive; eine Anwendung, Speicher-, Sync- oder Cryptotestsuite existiert noch nicht. Die folgenden Datensätze und Prüfungen sind verbindliche Spezifikation für P1–P11, keine bereits bestandene Testsuite.
+D0 umfasst Dokumentationsprüfung. P1.3 ergänzt vier ausgeführte Vertragstests für öffentliche Hüllen und gemeinsame Primitive. P1.4 ergänzt sieben Crypto-Binding-/Manipulationstests mit synthetischen Daten. P1.5 ergänzt zwei Serverhüllentests für Health- und Metadaten sowie Start- und Buildsmokechecks für Web und Tauri. Speicher-, Sync- und Fachtests existieren noch nicht. Die folgenden Datensätze und Prüfungen sind verbindliche Spezifikation für P1–P11, keine bereits bestandene Testsuite.
 
 ## Testebenen und Werkzeuge
 

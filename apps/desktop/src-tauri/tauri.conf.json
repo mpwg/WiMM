@@ -1,0 +1,27 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "WhereIsMyMoney",
+  "version": "0.0.0",
+  "identifier": "at.mpwg.wimm",
+  "build": {
+    "beforeBuildCommand": "pnpm build:frontend",
+    "beforeDevCommand": "pnpm dev:frontend",
+    "devUrl": "http://127.0.0.1:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "security": {
+      "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost http://127.0.0.1:1420 ws://127.0.0.1:1420; img-src 'self' asset:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"
+    },
+    "windows": [
+      {
+        "height": 720,
+        "title": "WhereIsMyMoney",
+        "width": 960
+      }
+    ]
+  },
+  "bundle": {
+    "active": false
+  }
+}

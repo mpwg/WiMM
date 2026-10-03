@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="WhereIsMyMoney">
+  <rect width="512" height="512" rx="112" fill="#0d3b66"/>
+  <path d="M112 138h58l43 206 49-153h48l48 153 44-206h58l-66 276h-58l-50-153-50 153h-58z" fill="#ffffff"/>
+</svg>

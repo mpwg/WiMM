@@ -11,13 +11,22 @@
     "pnpm": "12.8.1"
   },
   "scripts": {
+    "build": "pnpm -r --if-present build",
     "check:package-graph": "node scripts/check-package-graph.mjs",
+    "dev:desktop": "pnpm --filter @wimm/desktop dev",
+    "dev:server": "pnpm --filter @wimm/server dev",
+    "dev:web": "pnpm --filter @wimm/web dev",
+    "test": "pnpm test:contracts && pnpm test:crypto && pnpm --filter @wimm/server test",
     "test:contracts": "pnpm --filter @wimm/contracts test",
     "test:crypto": "pnpm --filter @wimm/crypto test",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "devDependencies": {
+    "@types/node": "24.19.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "typescript": "7.0.2",
+    "tsx": "4.23.15",
     "vitest": "5.0.2"
   }
 }

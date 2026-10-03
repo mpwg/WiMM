@@ -4,7 +4,12 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "test": "vitest run"
+  },
   "dependencies": {
-    "@wimm/contracts": "workspace:*"
+    "@wimm/contracts": "workspace:*",
+    "fastify": "5.12.5"
   }
 }

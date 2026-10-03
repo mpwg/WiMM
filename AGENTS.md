@@ -11,7 +11,7 @@
 - Der aktuelle Auftrag umfasst Dokumentation und Agenten-/Editor-/GitHubhilfen, Pakete D0/D1 sowie die Einstiegsergänzung D2. Beginne P1 oder Anwendungscode erst nach einem späteren ausdrücklichen Implementierungsauftrag. Das Zitieren des gesamten Plans innerhalb des Dokumentationsauftrags ist keine zusätzliche Freigabe für P1 bis P11.
 - Lies vor Arbeit [Dokumentationsindex](docs/README.md), [Fachmodell](docs/domain.md), [Architektur](docs/architecture.md), [Entscheidungen](docs/decisions.md) und [Aufgaben](docs/tasks.md).
 - Aktuell zusätzlich freigegeben: Agenten-Skills/Guides und GitHub-/VS-Codevorlagen. Dies startet keine App-Implementierung. Nutze den [Agentenleitfaden](docs/agent-guide.md) und passende Skills unter `.agents/skills`; weitere Produktregeln nicht in Kopien pro Agent verteilen.
-- Bewahre vorhandene Änderungen anderer Beteiligter. Keine ungefragten Commits, Veröffentlichungen oder Zurücksetzungen.
+- Bewahre vorhandene Änderungen anderer Beteiligter. Erstelle die verpflichtenden Zwischencommits nur für eigene abgeschlossene Abschnitte; keine Veröffentlichungen oder Zurücksetzungen.
 
 ## Architektur
 

@@ -14,7 +14,7 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 - Verträge: Architektur, E2EE und AGPL-3.0-or-later; Fremdhinweise erhalten.
 - Abnahme: jede Auswahl nennt Version, offizielle Quelle, Lizenz und Kompatibilitätsgrund; verfügbare und noch ungeprüfte Zielsysteme sind getrennt ausgewiesen.
 - Prüfungen: Quellen-/Lizenzprüfung und Abgleich der Engine-/SDK-Anforderungen; tatsächliche Builds folgen ab P1.2.
-- Prüfbelege: [Versions- und Lizenzbasis](technology-baseline.md) erstellt. Offizielle Release-/Registryquellen, Lizenzen und Engine-/SDK-Anforderungen für Node 24.21.0, pnpm 12.8.1, Rust 1.98.1, Tauri 2.12.1 und die Architekturabhängigkeiten geprüft. macOS arm64 mit Xcode, Node 24.21.0 und pnpm 12.8.1 festgestellt; Rust und alle Zielsystembuilds nicht verfügbar beziehungsweise nicht ausgeführt. Kein Lockfile oder Produktcode angelegt.
+- Prüfbelege: [Versions- und Lizenzbasis](technology-baseline.md) erstellt. Offizielle Release-/Registryquellen, Lizenzen und Engine-/SDK-Anforderungen für Node 24.21.0, pnpm 12.8.1, Rust 1.98.1, Tauri CLI 2.11.5, JS-API 2.11.1, Rust-Core 2.11.6 und Rust-Build 2.6.3 sowie die Architekturabhängigkeiten geprüft. Tauri 2.12.1 wurde wegen der sieben Tage Reifezeit nicht übernommen. macOS arm64 mit Xcode, Node 24.21.0 und pnpm 12.8.1 festgestellt; Zielsystembuilds folgen in P1.5. Kein Lockfile oder Produktcode angelegt.
 
 ## P1.2 — Workspace und Paketgraph
 
@@ -54,7 +54,7 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 
 ## P1.5 — Minimale Apphüllen
 
-- Status: offen.
+- Status: erledigt (3. Oktober 2026).
 - Freigabe: Implementierungsauftrag für P1.
 - Voraussetzungen: P1.4 erledigt.
 - Schritte: minimale Vite-/React-Webhülle, Tauri-Hülle und Fastify-Serverhülle anlegen; Healthzustände gemäß Betriebsvertrag und Source-/Lizenzhinweis vorsehen; keine Finanz-HTTP-API oder Finanzoberfläche vorziehen.
@@ -62,7 +62,7 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 - Verträge: Architektur, API-Health und [Betrieb](operations.md); Bereitschaft nur für tatsächlich vorhandene Komponenten melden.
 - Abnahme: Web und Tauri starten auf dokumentierten verfügbaren Zielsystemen; Server liefert richtige Healthstatuscodes ohne persönliche Daten; fehlende Plattformprüfungen sind benannt.
 - Prüfungen: Start-/Buildsmokechecks, Health-Tests und Crypto-Binding in beiden Clienthüllen ausführen.
-- Prüfbelege: noch keine.
+- Prüfbelege: Vite-/React-Hüllen für Web und Tauri zeigen ausschließlich einen vorbereitenden Zustand, den AGPL-Quellcodehinweis und den Status der `libsodium-wrappers-sumo`-Initialisierung; es gibt keine Finanzoberfläche. Die Fastify-Hülle bindet nur an `127.0.0.1` und liefert `GET /api/v1/health/live` (200), `GET /api/v1/health/ready` (200 oder 503) sowie `GET /api/v1/meta` mit Lizenz-, Versions- und Quellcodeangabe, ohne Finanzdaten. Zwei Vitest-Fälle bestätigen diese Antworten. `pnpm dev:web`, `pnpm dev:server` und `pnpm dev:desktop` starteten auf macOS arm64; die Web- und Tauri-Hüllen initialisierten dabei die Crypto-Bindung. `pnpm --filter @wimm/web build`, `pnpm --filter @wimm/desktop build:frontend` und der native `pnpm --filter @wimm/desktop build` bestanden. Der Tauri-Build lief mit Xcode 27.0 und Rust 1.99.0 aus Homebrew; das Cargo-Lockfile sperrt den Rust-Core 2.11.6 mit seinen kompatiblen Runtime-Komponenten. Windows, Linux und Browser-PWA sind noch nicht geprüft. Vite meldet für das absichtlich ungeteilte libsodium-Sumo-Binding einen 754-kB-JavaScript-Chunk; Optimierung folgt bei realen Anwendungsflächen.
 
 ## P1.6 — CI, Prüfungen und Entwicklungsanleitung
 

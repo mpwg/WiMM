@@ -4,6 +4,11 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite --host 127.0.0.1",
+    "preview": "vite preview --host 127.0.0.1"
+  },
   "dependencies": {
     "@wimm/contracts": "workspace:*",
     "@wimm/crypto": "workspace:*",
@@ -11,6 +16,12 @@
     "@wimm/importers": "workspace:*",
     "@wimm/storage": "workspace:*",
     "@wimm/sync": "workspace:*",
-    "@wimm/ui": "workspace:*"
+    "@wimm/ui": "workspace:*",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.1.1",
+    "vite": "8.3.1"
   }
 }

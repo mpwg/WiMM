@@ -1,12 +1,12 @@
 # Versions- und Lizenzbasis
 
-Stand: 2. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Herkunftsregistergrundlage für P1.2. Es legt noch keine Paketdatei, kein Lockfile und keine transitive Abhängigkeitsauflösung an. P1.2 übernimmt die gewählten Versionen exakt und ergänzt dann die vollständigen, aus dem Lockfile ermittelten Fremdhinweise.
+Stand: 3. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Herkunftsregistergrundlage für P1.2. Es legt noch keine Paketdatei, kein Lockfile und keine transitive Abhängigkeitsauflösung an. P1.2 übernimmt die gewählten Versionen exakt und ergänzt dann die vollständigen, aus dem Lockfile ermittelten Fremdhinweise.
 
 ## Auswahlregeln
 
 - Es werden ausschließlich stabile Releases verwendet; Vorabversionen, insbesondere Tauri 3-Alpha, sind ausgeschlossen.
 - Node 24 bleibt die Laufzeitbasis, weil sie eine aktive LTS-Linie ist. Node 26 war am Stichtag zwar aktuell, aber noch keine LTS-Linie.
-- Alle hier gewählten Laufzeiten erfüllen ihre dokumentierten Mindestversionen mit Node 24.21.0. Tatsächliche Installation, Typprüfung und Builds sind ausdrücklich erst P1.2 beziehungsweise P1.5.
+- Alle hier gewählten Laufzeiten erfüllen ihre dokumentierten Mindestversionen mit Node 24.21.0. Tatsächliche Installation, Typprüfung und Builds sind ausdrücklich erst P1.2 beziehungsweise P1.5. Tauri 2.12.1 wurde nicht übernommen, weil die Veröffentlichung am 30. September 2026 die festgelegte Reifezeit von sieben Tagen noch nicht erfüllt; die neueste reife kompatible 2.11-Kombination ist festgelegt.
 - MIT, ISC und Apache-2.0 sind mit der Projektlizenz AGPL-3.0-or-later vereinbar. Vollständige Lizenztexte und Copyright-Hinweise der tatsächlich aufgelösten transitiven Abhängigkeiten werden vor einer Distribution aus dem Lockfile in Fremdhinweise übernommen.
 
 ## Toolchain
@@ -16,7 +16,7 @@ Stand: 2. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Her
 | Node.js | 24.21.0 | [Node-Release](https://github.com/nodejs/node/releases/tag/v24.21.0), [Releaseplan](https://github.com/nodejs/Release); MIT | Aktive LTS-Linie zum Stichtag, unterstützt bis 30. April 2028. |
 | pnpm | 12.8.1 | [npm-Metadaten](https://registry.npmjs.org/pnpm/12.8.1); MIT | Dokumentierte Mindestversion Node 18, daher mit Node 24 kompatibel. Die Workspace-Konfiguration verwendet den strikten Linker, einen gemeinsamen Lockfile, mindestens sieben Tage Reifezeit für neue Abhängigkeiten und eine explizite Buildfreigabe. |
 | Rust | 1.98.1 | [Rust-Releaseankündigungen](https://blog.rust-lang.org/releases/); Apache-2.0 oder MIT | Stabile Toolchain; über der Mindestversion Rust 1.90 von Tauri 2.12.1. |
-| Tauri | 2.12.1 | [npm-Metadaten](https://registry.npmjs.org/@tauri-apps%2fcli/2.12.1), [Crate-Metadaten](https://crates.io/api/v1/crates/tauri/2.12.1); Apache-2.0 oder MIT | Stabiles Tauri-2-Release, passend zur Architektur; keine 3.x-Alpha. |
+| Tauri | CLI 2.11.5; JS-API 2.11.1; Rust-Core 2.11.6; Rust-Build 2.6.3 | [CLI-Metadaten](https://registry.npmjs.org/@tauri-apps%2fcli/2.11.5), [API-Metadaten](https://registry.npmjs.org/@tauri-apps%2fapi/2.11.1), [Rust-Core](https://crates.io/api/v1/crates/tauri/2.11.6), [Rust-Build](https://crates.io/api/v1/crates/tauri-build/2.6.3); Apache-2.0 oder MIT | Neueste reife stabile Tauri-2-Kombination gemäß sieben Tagen Reifezeit, passend zur Architektur. Rust-Core und Rust-Build folgen eigenständigen Versionslinien; keine 3.x-Alpha. |
 
 ## JavaScript- und Laufzeitbibliotheken
 
@@ -40,6 +40,8 @@ Stand: 2. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Her
 
 `json-canonicalize` wird nicht ausgewählt: Sein Upstream dokumentiert für die Standardfunktion eine von RFC 8785 abweichende Behandlung von `undefined` in Arrays. Dadurch wäre der beabsichtigte Standard nur über eine fehleranfällige Optionsvorgabe erreichbar.
 
+Vite und `tsx` verwenden transitiv `esbuild` für ihre Build- beziehungsweise TypeScript-Transformation. Das versionierte `allowBuilds` erlaubt ausschließlich dessen Installationsskript; andere Installationsskripte bleiben gesperrt. `esbuild` ist MIT-lizenziert und wird nur als Entwicklungswerkzeug eingesetzt.
+
 ## Paketmanagerentscheidung
 
 pnpm 12.8.1 bleibt der einzige Paketmanager dieses Repositories. Seine [Workspaceunterstützung](https://pnpm.io/workspaces) verbindet interne Pakete ausschließlich über `workspace:`; fehlende lokale Ziele werden dadurch nicht unbemerkt aus einer Registry geladen. Ein gemeinsames `pnpm-lock.yaml` und der isolierte Linker verhindern undeclared beziehungsweise zufällig erreichbare Abhängigkeiten. Die versionierte [`allowBuilds`-Policy](https://pnpm.io/cli/approve-builds) verlangt für Installationsskripte eine explizite Entscheidung. `minimumReleaseAge: 10080` hält neue Registry-Releases für sieben Tage zurück.
@@ -50,13 +52,13 @@ npm erfüllt Workspace-Grundfunktionen, liefert aber diese projektweit versionie
 
 | Zielsystem | Voraussetzung laut Quelle | Stand dieses Pakets |
 | --- | --- | --- |
-| macOS arm64 | Xcode oder Command Line Tools, Rust und Node; [Tauri-Voraussetzungen](https://v2.tauri.app/start/prerequisites/) | Entwicklungsrechner: macOS 27.0.1 arm64, Xcode vorhanden, Node 24.21.0 und pnpm 12.8.1 vorhanden; Rust fehlt. Kein Tauri-/Web-Build ausgeführt. |
+| macOS arm64 | Xcode oder Command Line Tools, Rust und Node; [Tauri-Voraussetzungen](https://v2.tauri.app/start/prerequisites/) | Entwicklungsrechner: macOS 27.0.1 arm64, Xcode vorhanden, Node 24.21.0 und pnpm 12.8.1 vorhanden; Rust 1.99.0 über Homebrew installiert. P1.5 hat Tauri-Build und -Start ausgeführt. |
 | macOS x64 | Xcode oder Command Line Tools, Rust und Node | Nicht geprüft. |
 | Windows x64 | Rust MSVC-Toolchain, Microsoft C++ Build Tools, WebView2 und Node | Nicht geprüft. |
 | Linux x64 | distributionsabhängige WebKitGTK-/Build-Abhängigkeiten, Rust und Node | Nicht geprüft. |
 | Browser-PWA | Aktueller Chromium, Firefox und WebKit | Nicht geprüft; Playwright-Browser werden erst mit P1.2 installiert und ab P4 für Verhalten verwendet. |
 
-Die Tauri-Dokumentation nennt zielsystemabhängige Voraussetzungen und keinen Ersatz durch Cross-Compilation. P1.5 führt deshalb tatsächliche Start-/Build-Smokechecks getrennt für verfügbare Zielsysteme aus. Fehlendes Rust blockiert hier nur die lokale Tauri-Prüfung, nicht die abgeschlossene Quellen- und Lizenzprüfung von P1.1.
+Die Tauri-Dokumentation nennt zielsystemabhängige Voraussetzungen und keinen Ersatz durch Cross-Compilation. P1.5 führt deshalb tatsächliche Start-/Build-Smokechecks getrennt für verfügbare Zielsysteme aus.
 
 ## Herkunftsregister ab P1.2
 

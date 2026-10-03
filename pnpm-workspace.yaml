@@ -2,7 +2,8 @@ packages:
   - 'apps/*'
   - 'packages/*'
 
-allowBuilds: {}
+allowBuilds:
+  esbuild: true
 engineStrict: true
 linkWorkspacePackages: false
 minimumReleaseAge: 10080

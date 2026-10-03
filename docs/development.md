@@ -2,15 +2,28 @@
 
 ## Stand
 
-Dieses Repository enthält P1.3-Workspace, öffentliche Verträge, Agentenhilfen und Editor-/GitHubvorlagen, aber noch keine installierbare App, Entwicklungsserver oder CI-Workflows. `typecheck`, `check:package-graph` und `test:contracts` sind vorhanden; `dev:web`, `dev:server`, `dev:desktop`, `test` und `build` werden erst in den passenden P1-Teilaufgaben angelegt. Nicht so tun, als ließen sie sich bereits ausführen.
+Dieses Repository enthält die abgeschlossenen P1.1–P1.5: Workspace, öffentliche Verträge, Crypto-Binding sowie minimale Web-, Desktop- und Serverhüllen. Es gibt noch keine Finanzfunktion, Speicher- oder Sync-Implementierung und keine CI-Workflows. P1.6 ergänzt CI, Dokumentationsprüfungen und Hook-Aktivierung.
+
+Die installierte lokale Toolchain muss Node 24.21.0, pnpm 12.8.1 sowie für die Desktop-Hülle Rust und Xcode enthalten. Der entwickelte macOS-arm64-Rechner verwendet Rust 1.99.0 aus Homebrew. Vor der ersten Installation `pnpm install --frozen-lockfile` ausführen. Verfügbare Befehle:
+
+| Zweck | Befehl |
+| --- | --- |
+| Webhülle starten | `pnpm dev:web` |
+| Serverhülle starten | `pnpm dev:server` |
+| Tauri-Entwicklung starten | `pnpm dev:desktop` |
+| Alle vorhandenen Pakete bauen | `pnpm build` |
+| Typen und Paketgrenzen prüfen | `pnpm typecheck` / `pnpm check:package-graph` |
+| Vertrags-, Crypto- und Servertests | `pnpm test` |
+
+Der Server bindet für die lokale Entwicklung nur an `127.0.0.1:3000`. Er stellt ausschließlich `/api/v1/health/live`, `/api/v1/health/ready` und `/api/v1/meta` bereit. Finanz-HTTP-Endpunkte und `test:e2e` entstehen erst in späteren Paketen.
 
 ## VS-Code-Arbeitsbereich
 
 Projektordner direkt in VS Code oder einem anderen Editor öffnen. Die benötigten Laufzeitversionen sind in der [Versions- und Lizenzbasis](technology-baseline.md) festgehalten; Einrichtung und Prüfungen erfolgen in der lokalen Entwicklungsumgebung. Keine Projektsecrets, Bankdateien, Rettungscodes oder persönlichen Beispiele einchecken.
 
-Die versionierten `.vscode/settings.json`-Einstellungen verwenden UTF-8, LF, zwei Leerzeichen und Markdown-Softwrap; Rust später vier Leerzeichen. `.editorconfig` hält dieselben Formatregeln für andere Editoren fest. Autoformat beim Speichern bleibt zunächst aus, damit bestehende Absätze nicht ungefragt umgeschrieben werden; explizite Formatierung wird später über die Projekttoolchain vereinheitlicht.
+Die versionierten `.vscode/settings.json`-Einstellungen verwenden UTF-8, LF, zwei Leerzeichen und Markdown-Softwrap; Rust verwendet vier Leerzeichen. `.editorconfig` hält dieselben Formatregeln für andere Editoren fest. Autoformat beim Speichern bleibt zunächst aus, damit bestehende Absätze nicht ungefragt umgeschrieben werden; explizite Formatierung wird später über die Projekttoolchain vereinheitlicht.
 
-[Erweiterungsempfehlungen](../.vscode/extensions.json): EditorConfig, markdownlint, YAML und GitHub Pull Requests. Sie sind Empfehlungen im Workspace und nicht heimlich global installiert. GitHubintegration wird mit dem echten Repositorykonto nutzbar. TypeScript/JSON/Markdown-Unterstützung liefert VS Code selbst. Rust-analyzer, ESLint und Formatter können passend zur lokalen Toolchain eingerichtet werden; Playwrightintegration folgt passend zu P4.
+[Erweiterungsempfehlungen](../.vscode/extensions.json): EditorConfig, markdownlint, YAML, GitHub Pull Requests und Tauri. Sie sind Empfehlungen im Workspace und nicht heimlich global installiert. GitHubintegration wird mit dem echten Repositorykonto nutzbar. TypeScript/JSON/Markdown-Unterstützung liefert VS Code selbst. Rust-analyzer, ESLint und Formatter können passend zur lokalen Toolchain eingerichtet werden; Playwrightintegration folgt passend zu P4.
 
 Keine VS-Code-Task/Debugkonfiguration mit nicht existierenden Appbefehlen. Keine globale Änderung von Benutzerprefs, Authkonten oder Workspace-Trust. [Workspace-Einstellungen](https://code.visualstudio.com/docs/configure/settings), [Erweiterungsempfehlungen](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace).
 
@@ -26,7 +39,7 @@ Ein GitHub-Remote ist konfiguriert. Vor jedem Push muss die tatsächliche `git r
 
 ## Nächster Implementierungsschritt
 
-P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft; Details stehen in der [Versions- und Lizenzbasis](technology-baseline.md). P1.2 und P1.3 legen darauf aufbauend Workspace, exakte Lockfiles, öffentliche Hüllen und konkrete Installations-/Prüfbefehle an. Lokal `pnpm install --frozen-lockfile`, `pnpm test:contracts`, `pnpm typecheck` und `pnpm check:package-graph` verwenden. Finanzen bleiben clientseitig; Backend transportiert Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
+P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft; Details stehen in der [Versions- und Lizenzbasis](technology-baseline.md). P1.2 bis P1.5 legen darauf aufbauend Workspace, exakte Lockfiles, öffentliche Hüllen, Crypto-Binding und lokale Prüfungen an. Lokal `pnpm install --frozen-lockfile`, `pnpm test`, `pnpm typecheck`, `pnpm check:package-graph` und `pnpm build` verwenden. Finanzen bleiben clientseitig; Backend transportiert später Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
 
 Die [P1-Teilaufgaben](p1-foundation.md) legen Reihenfolge und Abnahme fest. Für den ersten Einstieg den [Kurzleitfaden](getting-started.md) nutzen; [Referenzhaushalt](reference-household.md) und [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) helfen bei konkreten Aufgaben.
 

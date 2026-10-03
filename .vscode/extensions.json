@@ -3,6 +3,7 @@
     "EditorConfig.EditorConfig",
     "DavidAnson.vscode-markdownlint",
     "redhat.vscode-yaml",
-    "GitHub.vscode-pull-request-github"
+    "GitHub.vscode-pull-request-github",
+    "tauri-apps.tauri-vscode"
   ]
 }

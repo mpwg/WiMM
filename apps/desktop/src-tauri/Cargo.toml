@@ -1,0 +1,13 @@
+[package]
+name = "wimm-desktop"
+version = "0.0.0"
+description = "WhereIsMyMoney-Desktopanwendung"
+authors = ["WhereIsMyMoney contributors"]
+edition = "2024"
+license = "AGPL-3.0-or-later"
+
+[build-dependencies]
+tauri-build = { version = "=2.6.3", features = [] }
+
+[dependencies]
+tauri = { version = "=2.11.6", features = [] }

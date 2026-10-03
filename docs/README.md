@@ -2,7 +2,7 @@
 
 ## Status und Auftrag
 
-D0 ist die Spezifikationsübergabe, D1 ergänzt verpflichtende E2EE und Agenten-/GitHub-/Editorhilfen. Beide sind abgeschlossen. D2 ergänzt Einstieg, Referenzhaushalt und P1-Teilaufgaben einschließlich Hook-Konzept. D3 legt externe Serveridentität und eigenständige Apps fest. D4 führt die Arbeitsregeln ohne VS-Code-DevContainer in der aktiven Arbeitskopie fort. P1.1 bis P1.3 sind abgeschlossen; P1 insgesamt ist in Arbeit, ohne angelegte Anwendung. P1.4 bis P11 bleiben offen. Der Lokalbetrieb benötigt keine Benutzerverwaltung; Serveranmeldung ist extern. Schemata und JSON-Beispiele sind Verträge für zukünftigen Code, keine bereits vorhandenen APIs.
+D0 ist die Spezifikationsübergabe, D1 ergänzt verpflichtende E2EE und Agenten-/GitHub-/Editorhilfen. Beide sind abgeschlossen. D2 ergänzt Einstieg, Referenzhaushalt und P1-Teilaufgaben einschließlich Hook-Konzept. D3 legt externe Serveridentität und eigenständige Apps fest. D4 führt die Arbeitsregeln ohne VS-Code-DevContainer in der aktiven Arbeitskopie fort. P1.1 bis P1.5 sind abgeschlossen; P1 insgesamt ist mit startbaren Web-, Desktop- und Serverhüllen in Arbeit. P1.6 bis P11 bleiben offen. Der Lokalbetrieb benötigt keine Benutzerverwaltung; Serveranmeldung ist extern. Schemata und JSON-Beispiele sind Verträge für zukünftigen Code, keine bereits vorhandenen APIs.
 
 Für den ersten Überblick: [Einstieg](getting-started.md). Für den laufenden Implementierungsstart: [P1-Teilaufgaben](p1-foundation.md) und die [Versions- und Lizenzbasis](technology-baseline.md). Der [Referenzhaushalt](reference-household.md) verbindet Fachbeispiele mit dem Buchungs-/Syncablauf; er ist kein importierbarer Snapshot.
 
