@@ -8,6 +8,10 @@ Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlag
 
 Für neue Mitwirkende: [kompakter Einstieg](getting-started.md), [P1-Teilaufgaben](p1-foundation.md) und [Referenzhaushalt mit durchgängigem Ablauf](reference-household.md). Die [Klärungsmatrix](getting-started.md#entscheidung-oder-rückfrage) unterscheidet verbindliche Festlegungen, technische Ermittlungen und Nutzerentscheidungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
 
+## Arbeitsumgebung
+
+Alle Projektarbeiten erfolgen ausschließlich im aktiven VS-Code-DevContainer dieses Repositorys. Dateisuche, Lesen, Bearbeiten, Git-Befehle, Builds, Tests, Linter, Typechecks und sonstige Prüfungen laufen dort. Hostbefehle dürfen nur den Container ansprechen und keine lokale Arbeitskopie bearbeiten. Wenn der Container nicht verfügbar ist, halte vor Änderungen an und fordere den Zugriff an. Die verbindliche Regel steht in [AGENTS.md](../AGENTS.md).
+
 ## Lesematrix nach Aufgabe
 
 Die Pflichtlektüre aus AGENTS.md bleibt erhalten. Danach gezielt diese Abschnitte lesen; bei übergreifenden Aufgaben mehrere Zeilen kombinieren.

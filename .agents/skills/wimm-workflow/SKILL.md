@@ -6,6 +6,8 @@ license: AGPL-3.0-or-later
 
 # WhereIsMyMoney-Arbeitsablauf
 
+Führe Dateisuche, Lesen, Bearbeiten, Git-Befehle, Builds, Tests, Linter, Typechecks und sonstige Prüfungen ausschließlich im aktiven VS-Code-DevContainer des Repositorys aus. Verwende Hostbefehle nur als Transport zum Container; bearbeite keine lokale Arbeitskopie. Fehlt der Containerzugriff, halte vor Änderungen an. Die verbindliche Regel steht in [AGENTS.md](../../../AGENTS.md).
+
 Lies [AGENTS.md](../../../AGENTS.md), [Agentenleitfaden](../../../docs/agent-guide.md) und den aktuellen [Paketstatus](../../../docs/tasks.md). Regeln und Spezifikation stehen dort; dupliziere sie nicht in einem zweiten Plan.
 
 1. Prüfe den tatsächlichen Auftrag und vorhandene Änderungen. Dokumentation/Skills/Editorvorlagen sind derzeit freigegeben; P1–P11 benötigen einen späteren ausdrücklichen Implementierungsauftrag.

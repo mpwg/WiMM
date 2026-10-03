@@ -1,5 +1,11 @@
 # Regeln für Agenten
 
+## Arbeitsumgebung
+
+- Sämtliche Projektarbeit findet ausschließlich im aktiven VS-Code-DevContainer dieses Repositorys statt. Dateisuche, Lesen, Bearbeiten, Git-Befehle, Installationen, Builds, Tests, Linter, Typechecks und sonstige Prüfungen laufen im Container.
+- Lokale Arbeitskopien werden nicht gelesen oder verändert. Hostbefehle sind nur als Transport zum Container zulässig (zum Beispiel über `docker exec`) und dürfen Projektdateien ausschließlich dort bearbeiten.
+- Ist der DevContainer nicht verfügbar, halte vor Änderungen an und fordere den Containerzugriff an; weiche nicht auf lokale Ausführung aus.
+
 ## Auftrag und Sprache
 
 - Verwende deutsche Sprache und deutsche Umlaute in Dokumentation, Benutzeroberfläche und verständlichen Meldungen. Technische Bezeichner bleiben englisch.
