@@ -56,15 +56,15 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P3.5 — Lokale Orchestrierung und getrennte Entwürfe
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P3 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P3.4 erledigt.
 - Schritte: Fachbefehle über Speicherports ausführen; bestätigten Stand, lokale Revisionen, anwendbare Entwürfe und Konflikte getrennt modellieren; Outbox nur für servergebundene Bereiche vorbereiten; saveSyncPage/exportSnapshot/replaceSnapshot katalogisieren.
 - Ergebnis: gemeinsame Clientdienste für dauerhafte lokale Schreibvorgänge und spätere Synchronisierung.
 - Verträge: [Datenfluss](architecture.md#datenfluss), [Synczustände](synchronization.md), [Speicherdaten](data-model.md).
 - Abnahme: UI-Erfolg erst nach Commit; Standalone ohne Anmeldung/Outbox; Originalentwürfe bleiben erhalten; Snapshotaustausch und Seiten-/Cursorcommit ohne Zwischenzustand.
 - Prüfungen: beide Adapter mit Befehlsketten, stale Revisionen, Abbruch vor Seiten-/Cursorcommit und Profil-/Bereichstrennung; Netzwerk noch nicht behaupten.
-- Prüfbelege: noch keine.
+- Prüfbelege: `LocalAreaService` führt Fachänderungsmengen über atomare Adapterbatches aus. Nur verbundene Bereiche erhalten eine Outbox; unterbrochene Übertragungen werden als `queued` erhalten. Der `SnapshotProtector` ist ein zwingender Port für Export/Ersetzung; seine crypto-seitige Implementierung schützt verschlüsseltes JSON gegen Manipulation. Sechs Speichertests, elf Kryptotests und `pnpm typecheck` bestanden.
 
 ## P3.6 — Offline-Start und Gesamt-Abnahme
 

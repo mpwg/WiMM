@@ -61,6 +61,42 @@ export class VaultUnlockError extends Error {
   }
 }
 
+/** Generischer Clientport für verschlüsselte Snapshots; die Speicherschicht kennt keine Kryptobibliothek. */
+export function createEncryptedJsonSnapshotProtector<T>(key: Uint8Array): {
+  seal(value: T): Promise<Uint8Array>;
+  unseal(bytes: Uint8Array): Promise<T>;
+} {
+  if (key.length !== 32) throw new TypeError('Der Snapshotschlüssel muss 32 Byte lang sein.');
+  return {
+    async seal(value) {
+      const encrypted = await encryptXChaCha20Poly1305({
+        associatedData: vaultAad,
+        key,
+        plaintext: encoder.encode(JSON.stringify(value))
+      });
+      return encoder.encode(JSON.stringify({
+        version: vaultVersion,
+        nonce: toBase64Url(encrypted.nonce),
+        ciphertext: toBase64Url(encrypted.ciphertext)
+      }));
+    },
+    async unseal(bytes) {
+      try {
+        const envelope = JSON.parse(decoder.decode(bytes)) as EncryptedVaultEnvelope;
+        const plaintext = await decryptXChaCha20Poly1305({
+          associatedData: vaultAad,
+          key,
+          nonce: fromBase64Url(envelope.nonce),
+          ciphertext: fromBase64Url(envelope.ciphertext)
+        });
+        return JSON.parse(decoder.decode(plaintext)) as T;
+      } catch {
+        throw new VaultUnlockError();
+      }
+    }
+  };
+}
+
 export async function createUserVault(passphrase: string): Promise<CreatedUserVault> {
   assertPassphrase(passphrase);
   await initializeCrypto();

@@ -3,4 +3,5 @@ export * from './contracts.js';
 export * from './desktop-bridge.js';
 export * from './indexeddb-adapter.js';
 export * from './memory-adapter.js';
+export * from './orchestrator.js';
 export * from './tab-coordination.js';
