@@ -32,15 +32,15 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P3.3 — SQLite-Adapter und begrenzte Rust-Brücke
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P3 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P3.2 erledigt.
 - Schritte: Desktopadapter mit katalogisierten Rust-Batches, aktivierten Fremdschlüsseln und lokalen Transaktionen implementieren; Aggregate, Projektionen und Entwürfe gemeinsam speichern; Migrations-/Fehlerpfade integrieren.
 - Ergebnis: dauerhafter Desktopspeicher ohne zweite Fachengine in Rust.
 - Verträge: [Desktop-Speicherports](architecture.md), [Aggregate und Indizes](data-model.md), [Tauri-Grenzen](security.md).
 - Abnahme: kein beliebiges SQL/Dateikommando aus UI; stale Revisionen und Disk-full ohne Teilerfolg; gespeicherte Daten nach Offline-Neustart unverändert.
 - Prüfungen: gemeinsame Suite gegen echte SQLite, S01–S03, Fehler zwischen Transferseiten und vor Commit, Migrationsabbruch/Neustart.
-- Prüfbelege: noch keine.
+- Prüfbelege: Tauri-Rustbrücke mit gebündeltem SQLite, aktivierten Fremdschlüsseln und katalogisierten `storage_apply_batch`-/`storage_read_aggregate`-Befehlen ergänzt. Batch, Outbox und Projektionen werden in einer SQLite-Transaktion gespeichert; UI erhält keinen SQL- oder Pfadport. `cargo check --manifest-path apps/desktop/src-tauri/Cargo.toml` und `pnpm typecheck` bestanden.
 
 ## P3.4 — IndexedDB-Adapter und Tabkoordination
 
