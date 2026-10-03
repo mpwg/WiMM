@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Quellcode auschecken
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: pnpm einrichten
         uses: pnpm/action-setup@v4
