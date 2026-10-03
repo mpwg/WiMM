@@ -68,12 +68,12 @@ Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie 
 
 ## P2.6 — Projektionen und Gesamt-Abnahme
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P2 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach P2 komplett fertig. mach nach jedem zwischenschritt commits“).
 - Voraussetzungen: P2.5 erledigt.
 - Schritte: Kontosalden und Einnahmen-/Ausgabenprojektionen aus Aggregaten ableiten; Vorzeichen/Opening/Transfer korrekt behandeln; P2-Fachsuite in Projektprüfungen aufnehmen und Paketabschluss dokumentieren.
-- Ergebnis: reproduzierbarer Fachkern als Basis für Speicher und UI.
+- Ergebnis: reproduzierbarer Fachkern als Basis für Speicher und UI. Kontosalden werden aus allen nicht gelöschten Buchungen abgeleitet; Verbrauch betrachtet ausschließlich normale kategorisierte Buchungen, sodass Anfangsbestände und Umbuchungen nicht als Einnahme oder Ausgabe erscheinen.
 - Verträge: [Fachinvarianten](domain.md), [P2](tasks.md#p2--fachkern), [Teststrategie](testing.md).
 - Abnahme: F01–F03 sowie Geld-/Datum-/Abgleichfehlfälle bestanden; Neuaufbau gleich inkrementellem Ergebnis; Summen sicher; keine UI-/HTTP-/Speicherabhängigkeit und keine Teiländerungssets.
 - Prüfungen: vollständige P2-Fachsuite, Summen-/Transfer-/Überlaufeigenschaften, Vertrags-/Typ-/Paketgraph- und Dokumentationsprüfung.
-- Prüfbelege: noch keine.
+- Prüfbelege: `packages/domain/src/projections.test.ts` deckt F01, F03, positive Erstattungen in Ausgabenkategorien sowie den gleichen Endstand bei vollständigem Neuaufbau und schrittweiser Übernahme ab. Zusammen mit den vorherigen Suites bestanden 50 Domänentests; Geld-/Datum-/Überlauf-, Abgleich- und atomare Fehlpfade sind abgedeckt. Mit Node 26.10.0 und pnpm 12.8.1 bestand `pnpm check:ci` vollständig: Dokumentations- und Dokumentationstests, Paketgraph, TypeScript, Contracts-, Domain-, Crypto- und Servertests sowie Web- und Desktop-Build. Die bekannten Vite-Hinweise für ein über 500 kB großes gebündeltes JavaScript-Modul bleiben ohne Buildfehler bestehen.

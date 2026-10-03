@@ -105,15 +105,15 @@ P2–P11 enthalten insgesamt 62 offene Teilaufgaben. Bei fehlenden Plattformen o
 
 ## P2 — Fachkern
 
-- Status: in Arbeit. Voraussetzung: P1.
-- Fortschritt: P2.1 bis P2.5 sind erledigt; P2.6 folgt innerhalb der vollständigen Nutzerfreigabe vom 3. Oktober 2026.
+- Status: erledigt (3. Oktober 2026). Voraussetzung: P1.
+- Fortschritt: P2.1 bis P2.6 und die P2-Gesamtabnahme sind erledigt.
 - Teilaufgaben: [P2.1–P2.6](p2-domain.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: exakte Geld-/Datumsparser; Aggregate/Revisionstypen; Konten/Kategorien/Empfänger; Buchungen/Splits/Opening; Transfers und Kontenabgleich; pure Befehlshandler mit Änderungssets; Projektionen für Salden und Einnahmen/Ausgaben. Reconciled-Lock und Referenzarchivierung berücksichtigen.
-- Ergebnis: plattformfreie Fachlogik ohne Datenbank/React/HTTP, die sämtliche Eingabe- und Summeninvarianten prüft.
+- Ergebnis: plattformfreie Fachlogik ohne Datenbank/React/HTTP, die sämtliche Eingabe- und Summeninvarianten prüft sowie Saldo- und Verbrauchsprojektionen reproduzierbar aus vollständigen Aggregaten ableitet.
 - Verträge: Datenmodell und Befehle account/category/payee/transaction/transfer/reconciliation.
 - Abnahme: Referenzfälle F01–F03 und Geld-/Datums-/Abgleichfehlfälle bestehen; Updates ohne alle erwarteten Revisionen abgewiesen; keine Teiländerungssets.
 - Prüfungen: deterministische Vitest-Fachtests sowie Eigenschaften für Summen, Transfererhaltung und Ganzzahlüberlauf.
-- Prüfbelege: P2.1: Dezimalgeld-, sichere Summen-/Zwischenwert- und Kalenderprimitive im plattformfreien Paket `@wimm/domain` umgesetzt. 26 neue Fachtests sowie die vier vorhandenen Vitest-Suiten mit insgesamt 39 Tests bestanden; TypeScript, Paketgraph und positive/negative Dokumentationsprüfung bestanden. Nach Aktualisierung auf Node 26.10.0 und pnpm 12.8.1 bestanden außerdem die gesperrte Installation und `pnpm check:ci`. P2.2: vollständige Aggregate, Revisionskopfstände, atomare Änderungsmengen und injizierte ID-/Zeitgeber ergänzt; die Fachtests decken Mehraggregat- und Fehlpfade ab. P2.3: Konten, Kategorien und Empfänger einschließlich atomarer Empfänger-Merges ergänzt. P2.4: vollständige Buchungen, Splits, Anfangsbestandsregeln und Tombstones ergänzt; 43 Domänentests und `pnpm check:ci` bestanden. P2.5: atomare Umbuchungen mit Gegenbuchungen, Budgetgrenzen und Kontenabgleich ergänzt; 47 Domänentests und `pnpm check:ci` bestanden. Die Details stehen im [P2-Teilplan](p2-domain.md). P2-Gesamtprüfung folgt erst nach P2.6.
+- Prüfbelege: P2.1: Dezimalgeld-, sichere Summen-/Zwischenwert- und Kalenderprimitive im plattformfreien Paket `@wimm/domain` umgesetzt. 26 neue Fachtests sowie die vier vorhandenen Vitest-Suiten mit insgesamt 39 Tests bestanden; TypeScript, Paketgraph und positive/negative Dokumentationsprüfung bestanden. Nach Aktualisierung auf Node 26.10.0 und pnpm 12.8.1 bestanden außerdem die gesperrte Installation und `pnpm check:ci`. P2.2: vollständige Aggregate, Revisionskopfstände, atomare Änderungsmengen und injizierte ID-/Zeitgeber ergänzt; die Fachtests decken Mehraggregat- und Fehlpfade ab. P2.3: Konten, Kategorien und Empfänger einschließlich atomarer Empfänger-Merges ergänzt. P2.4: vollständige Buchungen, Splits, Anfangsbestandsregeln und Tombstones ergänzt; 43 Domänentests und `pnpm check:ci` bestanden. P2.5: atomare Umbuchungen mit Gegenbuchungen, Budgetgrenzen und Kontenabgleich ergänzt; 47 Domänentests und `pnpm check:ci` bestanden. P2.6: reine Saldo- und Verbrauchsprojektionen mit F01/F03, Erstattungs- und Neuaufbaugleichheit ergänzt. Die P2-Gesamtabnahme mit 50 Domänentests und vollständigem `pnpm check:ci` ist bestanden. Details und Teilnachweise stehen im [P2-Teilplan](p2-domain.md).
 
 ## P3 — Speicher und Offlinebasis
 
