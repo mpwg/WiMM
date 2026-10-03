@@ -9,6 +9,8 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    cooldown:
+      default-days: 7
   - package-ecosystem: "cargo" # See documentation for possible values
     directory: "/apps/desktop/src-tauri" # Location of package manifests
     schedule:

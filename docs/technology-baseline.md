@@ -15,14 +15,14 @@ Stand: 3. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Her
 | --- | --- | --- | --- |
 | Node.js | 26.10.0, Engine `>=26.10.0 <28` | [Node-Release](https://nodejs.org/en/download/current), [Releaseplan](https://github.com/nodejs/Release); MIT | Aktuelle stabile Linie; der Bereich lässt die nächste Hauptlinie zu, ohne beliebig unbekannte Hauptversionen freizugeben. |
 | pnpm | 12.8.1, Engine `>=12.8.1 <14` | [npm-Metadaten](https://registry.npmjs.org/pnpm/12.8.1); MIT | Aktuelle stabile Version; `packageManager` bleibt für reproduzierbare Installationen bei 12.8.1, während der Engine-Bereich kompatible neuere Versionen bis vor 14 zulässt. |
-| Rust | 1.98.1 | [Rust-Releaseankündigungen](https://blog.rust-lang.org/releases/); Apache-2.0 oder MIT | Stabile Toolchain; über der Mindestversion Rust 1.90 von Tauri 2.12.1. |
+| Rust | 1.99.0 | [Rust-Releaseankündigungen](https://blog.rust-lang.org/releases/); Apache-2.0 oder MIT | Aktuelle stabile Toolchain; über der Mindestversion Rust 1.90 von Tauri 2.12.1. |
 | Tauri | CLI 2.11.5; JS-API 2.11.1; Rust-Core 2.11.6; Rust-Build 2.6.3 | [CLI-Metadaten](https://registry.npmjs.org/@tauri-apps%2fcli/2.11.5), [API-Metadaten](https://registry.npmjs.org/@tauri-apps%2fapi/2.11.1), [Rust-Core](https://crates.io/api/v1/crates/tauri/2.11.6), [Rust-Build](https://crates.io/api/v1/crates/tauri-build/2.6.3); Apache-2.0 oder MIT | Neueste reife stabile Tauri-2-Kombination gemäß sieben Tagen Reifezeit, passend zur Architektur. Rust-Core und Rust-Build folgen eigenständigen Versionslinien; keine 3.x-Alpha. |
 
 ## JavaScript- und Laufzeitbibliotheken
 
 | Bereich | Gewählte Versionen | Offizielle Quelle und Lizenz | Kompatibilitätsgrund |
 | --- | --- | --- | --- |
-| Sprache | TypeScript 7.0.2 | [npm-Metadaten](https://registry.npmjs.org/typescript/7.0.2); Apache-2.0 | TypeScript strict/ESM gemäß Architektur; Node-Mindestversion 16.20.0. |
+| Sprache | TypeScript 7.0.2 | [npm-Metadaten](https://registry.npmjs.org/typescript/7.0.2); Apache-2.0 | TypeScript strict/ESM gemäß Architektur; Node-Mindestversion 16.20.0. Die Projektquellen bleiben strikt; `skipLibCheck` übergeht ausschließlich eine inkompatible Fremddeklaration von `thread-stream` mit aktuellen Node-26-Typen. |
 | Weboberfläche | React und React DOM 19.3.0, Vite 8.3.1, `@vitejs/plugin-react` 6.1.1 | [React](https://registry.npmjs.org/react/19.3.0), [Vite](https://registry.npmjs.org/vite/8.3.1), [Plugin](https://registry.npmjs.org/@vitejs/plugin-react/6.1.1); jeweils MIT | Vite und Plugin verlangen Node 20.19.0 oder mindestens 22.12.0; Node 26 erfüllt beides. Vite 8.3.1 erfüllt zusätzlich die gewählte Reifezeitpolicy. |
 | Server | Fastify 5.12.5 | [npm-Metadaten](https://registry.npmjs.org/fastify/5.12.5); MIT | Stabile Fastify-Hauptlinie für die später isolierte öffentliche Serverhülle. |
 | Browserdatenbank | Dexie 4.4.6 | [npm-Metadaten](https://registry.npmjs.org/dexie/4.4.6); Apache-2.0 | Entspricht dem vorgesehenen IndexedDB-Adapter; Browserintegration erst ab P3. |

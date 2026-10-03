@@ -21,15 +21,15 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Quellcode auschecken
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: pnpm einrichten
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 12.8.1
 
       - name: Node einrichten
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 26.10.0
           cache: pnpm
