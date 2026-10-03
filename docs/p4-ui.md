@@ -20,51 +20,51 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P4.2 — Navigation, Übersicht und Stammdaten
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P4 erforderlich.
+- Status: in Arbeit.
+- Freigabe: Nutzerauftrag zum Abschluss von P4.
 - Voraussetzungen: P4.1 erledigt.
 - Schritte: Desktop-/Tablet-/Mobilnavigation, Bereichskennzeichnung, Übersicht und Konto-/Kategorie-/Empfängerverwaltung umsetzen; Systemtypografie, Hell/Dunkel und zugängliche Zustände aufbauen.
 - Ergebnis: passende Arbeitsansichten für Tastatur und Touch mit echten lokalen Zahlen.
 - Verträge: [Layout und Navigation](ui.md), [Produkt](product.md), P2-Stammdatenbefehle in [API](api.md).
 - Abnahme: erster Kontostart/Anfangsbestand möglich; leere Daten erzeugen keine erfundenen Guthaben; Archivierung und Merge nachvollziehbar; 320-Pixel-Ansicht ohne Seitenüberlauf.
 - Prüfungen: Playwright für Einstieg/Bereichswechsel/Stammdaten, Hell/Dunkel, lange deutsche Namen, Fokus und 200 % Zoom.
-- Prüfbelege: noch keine.
+- Prüfbelege: Gemeinsame Web-/Desktopansicht mit Bereichskennzeichnung, Übersicht sowie Konto-, Kategoriegruppen-, Kategorie- und Empfängerverwaltung liegt in `packages/ui/src/workspace.tsx` vor. Lokale Salden entstehen aus `projectAccountBalances`; leere Bereiche zeigen keinen erfundenen Saldo. Systemschrift, Hell-/Dunkelmodus und ein Touchlayout unter 768 CSS-Pixeln sind vorhanden. TypeScript sowie Web-/Desktop-Build bestanden im aktuellen CI-Lauf. Offen: Archivierung und Empfänger-Merge, Playwright-/Viewport-/Zoom-/Fokusnachweise.
 
 ## P4.3 — Buchungslisten und Erfassungsformulare
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P4 erforderlich.
+- Status: in Arbeit.
+- Freigabe: Nutzerauftrag zum Abschluss von P4.
 - Voraussetzungen: P4.2 erledigt.
 - Schritte: virtualisierte Buchungslisten, Suche/Filter, Einzelbuchung und Splits anbinden; exakte Betragseingabe, Datum, Feldfehler und Speicherstatus umsetzen; mobile Details statt gequetschter Tabelle gestalten.
 - Ergebnis: nutzbare Buchungserfassung mit dauerhaftem Speichern und erhaltenen Fehlereingaben.
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Oberflächenmatrix](testing.md#oberflächenmatrix-und-leistung).
 - Abnahme: Tastatur-/Toucherfassung und Bearbeitung möglich; falsche Splitsumme abgewiesen; keine Erfolgsmeldung vor Commit; Quota/Disk-full erhält Eingaben.
 - Prüfungen: F01/F02 über UI, Fehler-/Offlinezustände, virtuelle Liste mit Leistungsdatensatz und dokumentierter Messumgebung.
-- Prüfbelege: noch keine.
+- Prüfbelege: Einzelbuchung, Anfangsbestand, Suche und ein zweizeiliger Split sind an `saveTransaction` gebunden. Betragstexte werden nur durch `parseMoney` im Fachkern verarbeitet; der zweite Split entsteht mit `subtractMoney`. Speichererfolg wird erst nach `LocalAreaService.applyChangeSet` angezeigt; Fachfehler bleiben im Formular sichtbar. Offen: Bearbeiten/Löschen, echte Virtualisierung, UI-Referenzfälle F01/F02, Quota-/Offline- und Leistungsnachweise.
 
 ## P4.4 — Transfer, Abgleich und Rückgängig
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P4 erforderlich.
+- Status: in Arbeit.
+- Freigabe: Nutzerauftrag zum Abschluss von P4.
 - Voraussetzungen: P4.3 erledigt.
 - Schritte: Transfer-/Abgleichdialoge und atomare Entsperrung anbinden; Differenz ausdrücklich anzeigen; Undo/Redo als reguläre Gegenbefehle mit aktuellen Revisionen durchführen; ungespeicherte Eingaben schützen.
 - Ergebnis: vollständige lokale Kontenpflege ohne versteckte Korrekturbuchungen.
 - Verträge: [Transfer-/Abgleichregeln](domain.md), [Fachbefehle](api.md#fachbefehle), [Tastaturregeln](ui.md#tastatur-und-systemintegration).
 - Abnahme: Transferseiten bleiben gemeinsam; abgeglichene Änderung erfordert Entsperrung; Korrekturbuchung nur nach eigener Bestätigung; Undo kann stale Revisionen nicht überschreiben.
 - Prüfungen: F03, Abgleichdifferenz, gesperrte Bearbeitung, Gegenbefehl bei veraltetem Stand, Tastatur-/Touchdialoge.
-- Prüfbelege: noch keine.
+- Prüfbelege: Die Kontenansicht besitzt Formulare für `saveTransfer` und `confirmReconciliation`; beide verwenden vollständige Fachaggregate und werden über den atomaren lokalen Speicher ausgeführt. Der Abgleich zeigt die vom Fachkern gelieferte Differenz und erzeugt keine verdeckte Korrekturbuchung. Offen: Entsperren abgeglichener Buchungen, Gegenbefehle für Undo/Redo, Schutz ungespeicherter Eingaben sowie UI-Prüfungen F03 und Stale-Revision.
 
 ## P4.5 — Native Menüs, Dialoge und Plattformbedienung
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P4 erforderlich.
+- Status: in Arbeit.
+- Freigabe: Nutzerauftrag zum Abschluss von P4.
 - Voraussetzungen: P4.4 erledigt.
 - Schritte: originale Fensterdekoration, Systemmenüs, Cmd-/Ctrl-Kurzbefehle, native Datei-/Speicherdialogports und Systembrowserlinks integrieren; Capabilities begrenzen; spätere Import-/Exportaktionen nur entsprechend vorhandenem Funktionsumfang anbieten.
 - Ergebnis: plattformgerecht bedienbare Tauri-App und passende Browseralternativen.
 - Verträge: [Plattformintegration](architecture.md#plattformintegration), [Systemintegration](ui.md), [Tauri-Sicherheit](security.md).
 - Abnahme: echte native Menüs/Dialoge auf verfügbaren Zielsystemen; Textfeld-Undo unverändert plattformüblich; externe Links öffnen Systembrowser; Tauri lädt nur gebündelte Inhalte.
 - Prüfungen: native Smokechecks mit Plattform/Architektur, Menü, Dialog, Shortcut, Fremdlink und Offline-Neustart; ungeprüfte Systeme konkret ausweisen.
-- Prüfbelege: noch keine.
+- Prüfbelege: Die Tauri-Hülle erstellt ein natives Datei-/Bearbeiten-Menü mit Neu, Undo/Redo und Standard-Textaktionen; `cargo check` und der Desktop-Produktionsbuild bestanden. Ein PlatformServices-Port wird sowohl in Web als auch Desktop injiziert. Offen: Anbindung der Menübefehle, native Datei-/Speicherdialoge, Systembrowserlinks, begrenzte Capabilities und echter nativer Smokecheck.
 
 ## P4.6 — Barrierefreiheit, Leistung und Gesamt-Abnahme
 
