@@ -43,6 +43,11 @@ describe('Geldprimitive', () => {
     expectDomainError(() => multiplyMoney(Number.MAX_SAFE_INTEGER, 2), 'MONEY_OVERFLOW');
   });
 
+  it('lehnt unsichere Geldwerte und Gewichtungsfaktoren ab', () => {
+    expectDomainError(() => sumMoney([Number.MAX_SAFE_INTEGER + 1]), 'INVALID_SAFE_INTEGER');
+    expectDomainError(() => multiplyMoney(100, 1.5), 'INVALID_SAFE_INTEGER');
+  });
+
   it('erhält Summen im sicheren Bereich und weist überlaufende Zwischenwerte zurück', () => {
     expect(sumMoney([1234, -34, 800])).toBe(2000);
     expectDomainError(
