@@ -20,15 +20,15 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P3.2 — Lokaler Tresor und Schlüsselports
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P3 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P3.1 erledigt; Crypto-Binding aus P1 vorhanden.
 - Schritte: UserVault, unabhängige Bereichsschlüssel, Passphrase-/Rettungscodeverpackung und Entsperr-/Sperrlebenszyklus umsetzen; KDF-Limits prüfen; sichere Schlüsselports vorbereiten, OS-Keyringintegration folgt in P8.
 - Ergebnis: serverunabhängige lokale Schlüsselverwaltung und verschlüsselter Snapshotport.
 - Verträge: [Schlüsselhierarchie und Entsperren](encryption.md), [Sicherheit](security.md), [Krypto-Testvektoren](crypto-test-vectors.md).
 - Abnahme: keine persistierten Klartextkeys; PWA nach Neustart gesperrt; Passphrase bleibt lokal; Rettungscode und verschlüsselter Tresor stellen eigene Keys wieder her; Verlust aller Mittel nicht als recoverbar dargestellt.
 - Prüfungen: falsche Passphrase, manipuliertes Keywrap, KDF-Grenzen, frische Salt/Nonce, unabhängige Bereichsschlüssel und lokale Grundlagen von C10/C11.
-- Prüfbelege: noch keine.
+- Prüfbelege: UserVault mit Argon2id-Passphraseverpackung, unabhängigem 32-Byte-Rettungscode, frischen Salts/Nonces, Ed25519-/X25519-Identitäten und unabhängigen Bereichsschlüsseln ergänzt. Persistierbare Datensätze enthalten keine Klartextschlüssel. Falsche Passphrase, manipuliertes Chiffrat, Wiederherstellung und Sperren wurden in drei neuen Tests geprüft; `pnpm --filter @wimm/crypto exec vitest run` (10 Tests) sowie `pnpm typecheck` bestanden.
 
 ## P3.3 — SQLite-Adapter und begrenzte Rust-Brücke
 

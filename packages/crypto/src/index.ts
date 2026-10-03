@@ -113,3 +113,5 @@ export async function verifyEd25519(
 
   return sodium.crypto_sign_verify_detached(signature, message, publicKey);
 }
+
+export * from './vault.js';
