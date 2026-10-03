@@ -128,14 +128,14 @@ P4–P11 enthalten 50 offene Teilaufgaben. Bei fehlenden Plattformen oder Signie
 
 ## P4 — Oberfläche und native App
 
-- Status: in Arbeit. Voraussetzung: P3. P4.1 ist erledigt; P4.2–P4.5 besitzen Teilimplementierungen, erfüllen ihre Abnahmen aber noch nicht; P4.6 ist offen.
+- Status: in Arbeit. Voraussetzung: P3. P4.1 und P4.2 sind erledigt; P4.3–P4.5 besitzen Teilimplementierungen, erfüllen ihre Abnahmen aber noch nicht; P4.6 ist offen.
 - Teilaufgaben: [P4.1–P4.6](p4-ui.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Composition Root, PlatformServices, Bereichswechsel; Übersicht/Konten/Buchungslisten/Formulare; Splits/Transfer/Abgleich; virtuelle Listen; Touch-/Desktoplayout; Systemschrift/-Farbschema; native Menüs, Dialoge, Kurzbefehle und Systembrowserlinks; leer/Fehler/offline/ausstehend-Zustände.
 - Ergebnis: lokal benutzbares Haushaltsbuch auf Web/PWA und Tauri, noch ohne alle Planungsfunktionen.
 - Verträge: UI-Ansichten, Befehlseingaben, Dateidialog-/Menüports, Bildschirm-/Fokusregeln.
 - Abnahme: neue Buchung, Transfer, Abgleich per Tastatur und Touch; alle Daten nach Neustart; Screenshots ohne Überlappung; native Dialog-/Menü-Smokecheck auf verfügbaren Zielsystemen. Fehlende Plattformprüfung konkret markieren.
 - Prüfungen: Playwright für Kernabläufe und Viewports; echte Tauri-Prüfung nach [UI](ui.md), Screenreader-/Zoomsmokecheck.
-- Prüfbelege: Aktueller Stand: lokaler Tresor-/Bereichseinstieg mit Rettungscode und drei UI-Tests; lokale Navigation und Stammdaten; einfache Buchungen, Anfangsbestände und exakte Zweiweg-Splits; Formulare für atomare Umbuchung und Abgleich; natives Tauri-Datei-/Bearbeiten-Menü. `pnpm check:ci` bestand am 3. Oktober 2026 mit Dokumentation, Paketgraph, TypeScript, Vertrags-, Domain-, Krypto-, Speicher-, Offline- und Servertests sowie Web- und Desktop-Produktionsbuild. Nicht als erfüllt dokumentiert: P4.2-Archivierung/Merge und Viewportprüfung; P4.3-Bearbeitung, Virtualisierung, F01/F02 und Fehlerpfade; P4.4-Entsperren/Undo und F03; P4.5-Dateidialoge/Systembrowser/Smokecheck; P4.6-Playwright, Screenshot-/Barrierefreiheits-/Leistungs- und Plattformmatrix.
+- Prüfbelege: Aktueller Stand: lokaler Tresor-/Bereichseinstieg mit Rettungscode und drei UI-Tests; lokale Navigation und Stammdaten; einfache Buchungen, Anfangsbestände und exakte Zweiweg-Splits; Formulare für atomare Umbuchung und Abgleich; natives Tauri-Datei-/Bearbeiten-Menü. P4.2 ergänzt Archivierung von Konten/Kategorien und atomaren Empfänger-Merge über die bestehenden Fachbefehle sowie zwei Chromium-Playwright-Abläufe für Ersteinrichtung/Anfangsbestand/Archivierung bei 320 × 568, CSS-Zoom 200 %, Bereichswechsel, Dark Mode und Fokusregel. `pnpm check:ci` bestand am 3. Oktober 2026 mit Dokumentation, Paketgraph, TypeScript, Vertrags-, Domain-, Krypto-, Speicher-, Offline-, Server- und Chromium-UI-Tests sowie Web- und Desktop-Produktionsbuild. Nicht als erfüllt dokumentiert: P4.3-Bearbeitung, Virtualisierung, F01/F02 und Fehlerpfade; P4.4-Entsperren/Undo und F03; P4.5-Dateidialoge/Systembrowser/Smokecheck; P4.6-weitere Browser, Screenshot-/Barrierefreiheits-/Leistungs- und Plattformmatrix.
 
 ## P5 — Import und Automatisierung
 

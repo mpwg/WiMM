@@ -9,7 +9,7 @@ import { parseAllDocuments } from 'yaml';
 
 const markdown = new MarkdownIt({ html: true });
 const textExtensions = new Set(['.json', '.md', '.yaml', '.yml']);
-const skippedDirectories = new Set(['.git', '.githooks', 'dist', 'gen', 'node_modules', 'target']);
+const skippedDirectories = new Set(['.git', '.githooks', 'dist', 'gen', 'node_modules', 'target', 'test-results']);
 
 function parseArguments(argumentsList) {
   const rootFlag = argumentsList.indexOf('--root');

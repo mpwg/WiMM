@@ -2,7 +2,7 @@
 
 ## Auftrag und Reihenfolge
 
-Diese Teilaufgaben konkretisieren [P4](tasks.md#p4--oberfläche-und-native-app). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt ihre Planung; die Implementierungsfreigabe für P4 steht aus. P4.1 bis P4.6 werden in Reihenfolge nach abgeschlossenem [P3](p3-storage.md) bearbeitet. Die verbindliche Gestaltung steht in [ui.md](ui.md); spätere Budget-, Import-, Familien- und Syncflächen entstehen in ihren Paketen.
+Diese Teilaufgaben konkretisieren [P4](tasks.md#p4--oberfläche-und-native-app). P4.1 und P4.2 sind durch ausdrückliche Nutzeraufträge vom 3. Oktober 2026 umgesetzt; weitere Teilaufgaben benötigen jeweils ihre eigene Freigabe. P4.1 bis P4.6 werden in Reihenfolge nach abgeschlossenem [P3](p3-storage.md) bearbeitet. Die verbindliche Gestaltung steht in [ui.md](ui.md); spätere Budget-, Import-, Familien- und Syncflächen entstehen in ihren Paketen.
 
 Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen; nach jedem abgeschlossenen Abschnitt einen zusammengehörigen Zwischencommit und eine [Übergabe](templates/handoff.md) erstellen. P4 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P5](p5-import.md). Für die Umsetzung wimm-ui verwenden, bei Schlüsselbedienung zusätzlich wimm-e2ee. Native Prüfungen und Browseremulation getrennt belegen.
 
@@ -20,15 +20,15 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P4.2 — Navigation, Übersicht und Stammdaten
 
-- Status: in Arbeit.
-- Freigabe: Nutzerauftrag zum Abschluss von P4.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: expliziter Nutzerauftrag „setze P4.2 vollständig um“.
 - Voraussetzungen: P4.1 erledigt.
 - Schritte: Desktop-/Tablet-/Mobilnavigation, Bereichskennzeichnung, Übersicht und Konto-/Kategorie-/Empfängerverwaltung umsetzen; Systemtypografie, Hell/Dunkel und zugängliche Zustände aufbauen.
 - Ergebnis: passende Arbeitsansichten für Tastatur und Touch mit echten lokalen Zahlen.
 - Verträge: [Layout und Navigation](ui.md), [Produkt](product.md), P2-Stammdatenbefehle in [API](api.md).
 - Abnahme: erster Kontostart/Anfangsbestand möglich; leere Daten erzeugen keine erfundenen Guthaben; Archivierung und Merge nachvollziehbar; 320-Pixel-Ansicht ohne Seitenüberlauf.
 - Prüfungen: Playwright für Einstieg/Bereichswechsel/Stammdaten, Hell/Dunkel, lange deutsche Namen, Fokus und 200 % Zoom.
-- Prüfbelege: Gemeinsame Web-/Desktopansicht mit Bereichskennzeichnung, Übersicht sowie Konto-, Kategoriegruppen-, Kategorie- und Empfängerverwaltung liegt in `packages/ui/src/workspace.tsx` vor. Lokale Salden entstehen aus `projectAccountBalances`; leere Bereiche zeigen keinen erfundenen Saldo. Systemschrift, Hell-/Dunkelmodus und ein Touchlayout unter 768 CSS-Pixeln sind vorhanden. TypeScript sowie Web-/Desktop-Build bestanden im aktuellen CI-Lauf. Offen: Archivierung und Empfänger-Merge, Playwright-/Viewport-/Zoom-/Fokusnachweise.
+- Prüfbelege: Gemeinsame Web-/Desktopansicht mit Bereichskennzeichnung, Übersicht sowie Konto-, Kategoriegruppen-, Kategorie- und Empfängerverwaltung liegt in `packages/ui/src/workspace.tsx` vor. Lokale Salden entstehen aus `projectAccountBalances`; leere Bereiche zeigen keinen erfundenen Saldo. Konten und Kategorien werden über die P2-Fachbefehle archiviert und bleiben damit an historischen Referenzen erhalten; ein Empfänger-Merge erfasst alle lokal vorhandenen Quellreferenzen in einer atomaren Änderungsmenge und archiviert die Quelle. Systemschrift, Hell-/Dunkelmodus, sichtbare Fokusregel und ein Touchlayout unter 768 CSS-Pixeln sind vorhanden. `pnpm test:ui` bestand am 3. Oktober 2026 in Chromium mit zwei Abläufen: 320 × 568 einschließlich langem deutschem Kontonamen, Ersteinrichtung/Anfangsbestand, Archivierung und CSS-Zoom 200 % ohne Seitenüberlauf; außerdem Bereichswechsel, Dark Mode, Fokusregel und Empfänger-Merge. `pnpm typecheck`, die UI-Unit-Tests sowie Web- und Desktop-Frontend-Build bestanden ebenfalls. Firefox/WebKit, echter Screenreader und native Desktop-Prüfungen sind nicht Teil dieser Teilabnahme und bleiben für P4.5/P4.6 ausdrücklich offen.
 
 ## P4.3 — Buchungslisten und Erfassungsformulare
 

@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "pnpm -r --if-present build",
-    "check:ci": "pnpm check:docs && pnpm test:docs && pnpm check:package-graph && pnpm typecheck && pnpm test && pnpm build",
+    "check:ci": "pnpm check:docs && pnpm test:docs && pnpm check:package-graph && pnpm typecheck && pnpm test && pnpm test:ui && pnpm build",
     "check:docs": "node scripts/check-documentation.mjs",
     "check:package-graph": "node scripts/check-package-graph.mjs",
     "dev:desktop": "pnpm --filter @wimm/desktop dev",
@@ -24,10 +24,12 @@
     "test:domain": "pnpm --filter @wimm/domain test",
     "test:offline": "node --test scripts/service-worker.test.mjs",
     "test:storage": "pnpm --filter @wimm/storage test",
+    "test:ui": "playwright test",
     "test:docs": "node --test scripts/check-documentation.test.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "devDependencies": {
+    "@playwright/test": "1.58.2",
     "@types/node": "26.6.3",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
