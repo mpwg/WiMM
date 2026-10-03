@@ -5,6 +5,7 @@ use std::sync::Mutex;
 use rusqlite::{params, Connection, OptionalExtension, Transaction};
 use serde::Deserialize;
 use serde_json::Value;
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::Manager;
 
 struct StorageState(Mutex<Connection>);
@@ -143,6 +144,13 @@ fn storage_read_aggregate(state: tauri::State<'_, StorageState>, profile_id: Str
 
 fn main() {
     tauri::Builder::default()
+        .menu(|handle| {
+            let new_transaction = MenuItem::with_id(handle, "new-transaction", "Neue Buchung", true, Some("CmdOrCtrl+N"))?;
+            let settings = MenuItem::with_id(handle, "settings", "Einstellungen", true, None::<&str>)?;
+            let file = Submenu::with_items(handle, "Datei", true, &[&new_transaction, &settings, &PredefinedMenuItem::close_window(handle, None)?])?;
+            let edit = Submenu::with_items(handle, "Bearbeiten", true, &[&PredefinedMenuItem::undo(handle, None)?, &PredefinedMenuItem::redo(handle, None)?, &PredefinedMenuItem::separator(handle)?, &PredefinedMenuItem::cut(handle, None)?, &PredefinedMenuItem::copy(handle, None)?, &PredefinedMenuItem::paste(handle, None)?, &PredefinedMenuItem::select_all(handle, None)?])?;
+            Menu::with_items(handle, &[&file, &edit])
+        })
         .setup(|app| {
             let directory = app.path().app_local_data_dir()?;
             fs::create_dir_all(&directory)?;
