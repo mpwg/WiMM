@@ -18,10 +18,12 @@
     "dev:desktop": "pnpm --filter @wimm/desktop dev",
     "dev:server": "pnpm --filter @wimm/server dev",
     "dev:web": "pnpm --filter @wimm/web dev",
-    "test": "pnpm test:contracts && pnpm test:domain && pnpm test:crypto && pnpm --filter @wimm/server test",
+    "test": "pnpm test:contracts && pnpm test:domain && pnpm test:crypto && pnpm test:storage && pnpm test:offline && pnpm --filter @wimm/server test",
     "test:contracts": "pnpm --filter @wimm/contracts test",
     "test:crypto": "pnpm --filter @wimm/crypto test",
     "test:domain": "pnpm --filter @wimm/domain test",
+    "test:offline": "node --test scripts/service-worker.test.mjs",
+    "test:storage": "pnpm --filter @wimm/storage test",
     "test:docs": "node --test scripts/check-documentation.test.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },

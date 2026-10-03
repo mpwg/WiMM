@@ -155,3 +155,24 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("Die Desktop-Anwendung konnte nicht gestartet werden.");
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sqlite_aktiviert_fremdschluessel_und_rollt_abbruch_zurueck() {
+        let mut connection = Connection::open_in_memory().expect("In-Memory-SQLite verfügbar");
+        initialize_storage(&connection).expect("Schema wird angelegt");
+        let foreign_keys: i64 = connection.query_row("PRAGMA foreign_keys", [], |row| row.get(0)).expect("Pragma lesbar");
+        assert_eq!(foreign_keys, 1);
+        let transaction = connection.transaction().expect("Transaktion beginnt");
+        transaction.execute(
+            "INSERT INTO aggregates(profile_id, handle, space_id, revision, payload) VALUES ('p', 'h', 's', 1, '{}')",
+            [],
+        ).expect("Testdatensatz einfügbar");
+        transaction.rollback().expect("Rollback gelingt");
+        let count: i64 = connection.query_row("SELECT count(*) FROM aggregates", [], |row| row.get(0)).expect("Anzahl lesbar");
+        assert_eq!(count, 0);
+    }
+}

@@ -16,3 +16,11 @@ createRoot(rootElement).render(
     <App />
   </StrictMode>
 );
+
+if ('serviceWorker' in navigator) {
+  void navigator.serviceWorker.register('/service-worker.js').then((registration) => {
+    registration.addEventListener('updatefound', () => {
+      window.dispatchEvent(new CustomEvent('wimm:update-available'));
+    });
+  });
+}

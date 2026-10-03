@@ -68,12 +68,22 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P3.6 — Offline-Start und Gesamt-Abnahme
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P3 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P3.5 erledigt.
 - Schritte: versionierte Appassets per Service Worker cachen; Offline-Start und sichere Updateübergabe vorbereiten; Projektionen rebuildbar halten; beide Adapter und Schlüssel-/Snapshotports gemeinsam abnehmen.
 - Ergebnis: dauerhaft nutzbare Offlinebasis für PWA und Desktop.
 - Verträge: [Offlinearchitektur](architecture.md), [P3](tasks.md#p3--speicher-und-offlinebasis), [Tests](testing.md).
 - Abnahme: S01–S03 und lokaler Teil von S14 bestanden; keine API-Antworten im Service-Worker-Cache; Neustart bewahrt Buchungen/Entwürfe; Profile getrennt; kein Klartextkey im persistenten Store.
 - Prüfungen: echte Adapterkonformität, Network-off-Neustart beider Clients, Quota/Disk-full, Projektionen neu aufbauen und mit Original vergleichen; vollständiger Synclaufteil von S14 folgt in P9.
-- Prüfbelege: noch keine.
+- Prüfbelege: versionierter Service Worker cached nur Same-Origin-App-Assets und schließt `/api/` aus. Acht Speicher-, elf Kryptotests, ein Service-Worker-Test und ein Rust-SQLite-Test bestanden; zusätzlich `pnpm typecheck`, Web-Produktionsbuild und die vollständige lokale CI-Prüfung. Der echte PWA-Network-off-Neustart und die Disk-full-Simulation des nativen Dateisystems bleiben mangels verfügbarem Browser-/Dateisystemfehlerinjektionssystem als Plattformsmokecheck vor P4 nachzuholen; atomare Abbruch- und Quota-Pfade sind adapterseitig getestet.
+
+## P3 — Übergabe
+
+- Ergebnis: Beide Clients besitzen einen gemeinsamen, atomaren Speichervertrag, Dexie-/IndexedDB- und SQLite-Grundlage, einen verschlüsselten lokalen Tresor, getrennte Entwürfe und eine Offline-Assetbasis.
+- Geänderte Verträge: `StorageAdapter`-Ausprägung, lokale Snapshot-/Syncdaten und Tresor-/Snapshot-Schutzport; keine Änderung des Finanzfachvertrags.
+- Geprüft: Speicher- und Kryptosuiten, Service-Worker-Regressionstest, Rust-SQLite-Test, TypeScript, Paketgraph, Dokumentation, Web-/Desktopbuild und lokale CI-Prüfung.
+- Nicht geprüft: Echte Network-off-PWA- und native Disk-full-Smokechecks; hierfür steht in dieser Arbeitskopie kein automatisierbarer Zielbrowser bzw. Fehlerport bereit.
+- Commits: `c7f85a9`, `4ac93f0`, `cce5114`, `4e739a1`, `9b49dfb`; Abschlusscommit folgt mit der Gesamt-Abnahme.
+- Einschränkungen: Netzwerktransport und Mehrgeräte-Synchronisierung sind ausdrücklich erst P8/P9; ein Service Worker speichert keine API-Antworten.
+- Nächster Schritt: [P4.1 — Lokaler Einstieg und Plattformcomposition](p4-ui.md#p41--composition-root-und-lokaler-einstieg) nach ausdrücklicher Freigabe.

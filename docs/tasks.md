@@ -2,7 +2,7 @@
 
 ## Auftrag und Statusführung
 
-Aktuelle Freigabe: D0, die Dokumentations-/Agentenergänzung D1 und die Einstiegsergänzung D2 sind abgeschlossen. Der Nutzer hat die Umsetzung von P1 freigegeben. P1 ist erledigt. Der Nutzerauftrag vom 3. Oktober 2026 ergänzt mit D5 die schrittweisen Teilaufgaben für P2–P11; ihre Implementierung benötigt weiterhin einen späteren ausdrücklichen Auftrag.
+Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. Der nächste offene Schritt ist P4 und benötigt eine ausdrückliche Implementierungsfreigabe.
 
 Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
 
@@ -24,7 +24,7 @@ Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.
 | P10 | [P10.1–P10.6](p10-backup.md) | Container → Clientrestore → Backups → Serverrestore → Self-Hosting → Betriebsabnahme |
 | P11 | [P11.1–P11.6](p11-release.md) | Anleitungen → Plattformen → Signierung → Quellarchive → unabhängige Prüfung → Releaseübergabe |
 
-P2–P11 enthalten insgesamt 62 offene Teilaufgaben. Bei fehlenden Plattformen oder Signierungsgeheimnissen nur die betroffene Prüfung/Distribution blockieren und unabhängige bereits freigegebene Arbeit fortsetzen; keine Abnahme überspringen oder erledigt behaupten. P11-Abschluss erteilt keine Veröffentlichungsfreigabe.
+P4–P11 enthalten 50 offene Teilaufgaben. Bei fehlenden Plattformen oder Signierungsgeheimnissen nur die betroffene Prüfung/Distribution blockieren und unabhängige bereits freigegebene Arbeit fortsetzen; keine Abnahme überspringen oder erledigt behaupten. P11-Abschluss erteilt keine Veröffentlichungsfreigabe.
 
 ## D0 — Dokumentationsübergabe
 
@@ -94,7 +94,7 @@ P2–P11 enthalten insgesamt 62 offene Teilaufgaben. Bei fehlenden Plattformen o
 ## P1 — Projektgrundlage
 
 - Status: erledigt (3. Oktober 2026). Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn mit P1.1. Voraussetzung: D0 erledigt.
-- Fortschritt: P1.1 bis P1.6 sind erledigt; P2 ist der nächste offene Schritt und benötigt eine eigene Implementierungsfreigabe.
+- Fortschritt: P1.1 bis P1.6 sind erledigt.
 - Teilaufgaben: [P1.1–P1.6](p1-foundation.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: stabile kompatible Toolchain prüfen; Workspace einschließlich `packages/crypto`; TS strict/ESM; Fach- und öffentliche EncryptedOperation-/KeyRoster-Verträge trennen; gepflegte libsodium-Bindung und RFC-8785-Bibliothek; Crypto-Testvektoren; leere Apphüllen/Lockfiles/CI. Keine Klartext-FinanzAPI als Zwischenlösung.
 - Ergebnis: reproduzierbare Entwicklungsbasis, ohne bereits vollständige Finanzfunktionen zu behaupten. Rootbefehle `dev:web`, `dev:server`, `dev:desktop`, `typecheck`, `test` und `build` sind vorhanden; `test:e2e` folgt mit den E2E-Tests.
@@ -117,14 +117,14 @@ P2–P11 enthalten insgesamt 62 offene Teilaufgaben. Bei fehlenden Plattformen o
 
 ## P3 — Speicher und Offlinebasis
 
-- Status: in Arbeit. Voraussetzung: P2 erledigt.
+- Status: erledigt (3. Oktober 2026). Voraussetzung: P2 erledigt.
 - Teilaufgaben: [P3.1–P3.6](p3-storage.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Client-Speicheradapter/Rustbatch-Brücke, Transaktionen/Projektionen/Entwürfe; lokaler verschlüsselter UserVault, unabhängige Bereichsschlüssel, Entsperrung/Rettungscode und Schlüsselports; keine persistierten Klartextkeys. Export-Snapshotport verschlüsselt. Service Worker, persistenter Browserstore und Tabkoordination.
 - Ergebnis: dauerhafte lokale Datenhaltung in beiden Clients; vorbereitete Outbox ohne Netzwerkpflicht.
 - Verträge: StorageAdapter, lokale Revisionen, Snapshot-/Outboxzustände; Datenmodellindizes.
 - Abnahme: gemeinsame Konformitätssuite für beide Adapter; S01–S03/S14; offline Neustart ohne verlorene Buchungen; Quota/Disk-full kein Erfolg; private Profile getrennt.
 - Prüfungen: echte DB-/IndexedDB-Integrationsprüfungen, Absturzpunkte in Batch-/Cursorcommit simulieren; PWA-Network-off-Neustart.
-- Prüfbelege: noch keine.
+- Prüfbelege: P3.1–P3.6 mit atomarem Speichervertrag, lokalem UserVault, begrenzter SQLite-Brücke, Dexie-Adapter, Orchestrierung und Service Worker abgeschlossen. Acht Speichertests, elf Kryptotests, Service-Worker- und Rust-SQLite-Test sowie TypeScript, Paketgraph, Dokumentation, Web-/Desktopbuild und lokale CI-Prüfung bestanden. Echte Network-off-PWA- und native Disk-full-Smokechecks bleiben als explizite Plattformprüfung vor P4 offen; Details stehen im [P3-Teilplan](p3-storage.md).
 
 ## P4 — Oberfläche und native App
 

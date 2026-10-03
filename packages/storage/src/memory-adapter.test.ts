@@ -55,4 +55,12 @@ describe('MemoryStorageAdapter', () => {
     expect(await adapter.loadConfirmed(spaceId)).toHaveLength(1);
     expect(await adapter.loadPending(spaceId)).toHaveLength(0);
   });
+
+  it('rollt bei einem Fehler vor dem Commit sämtliche Daten zurück', async () => {
+    const adapter = new MemoryStorageAdapter(profileId, { beforeCommit: () => { throw new Error('Quota'); } });
+    await expect(adapter.applyAtomicBatch({
+      expectedRevisions: [{ handle: accountId, expectedRevision: 0 }], aggregates: [account()], outbox: [], projections: []
+    })).rejects.toThrow('Quota');
+    expect(await adapter.readAggregate(accountId)).toBeUndefined();
+  });
 });

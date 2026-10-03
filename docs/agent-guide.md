@@ -4,9 +4,9 @@
 
 [AGENTS.md](../AGENTS.md) enthält globale Regeln. [Dokumentationsindex](README.md) führt zur Fachspezifikation; [Aufgaben](tasks.md) enthalten Paketstatus; [Entscheidungen](decisions.md) begründen Defaults. Diese Quellen werden gemeinsam gepflegt. Issues und Skills sind Arbeitsmittel, keine abweichenden Fachspezifikationen.
 
-Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlagen. Mit Nutzerauftrag vom 2. Oktober 2026 sind zusätzlich P1.1 bis P1.6 abgeschlossen; P2–P11 bleiben offen. Nach jedem abgeschlossenen Abschnitt ist ein Zwischencommit mit zusammengehörigen Änderungen verpflichtend. Pushes und Veröffentlichungen bleiben ausgeschlossen.
+Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlagen. P1 bis P3 sind abgeschlossen; P4–P11 bleiben offen. Nach jedem abgeschlossenen Abschnitt ist ein Zwischencommit mit zusammengehörigen Änderungen verpflichtend. Pushes und Veröffentlichungen bleiben ausgeschlossen.
 
-Für neue Mitwirkende: [kompakter Einstieg](getting-started.md), [Teilaufgabenübersicht P1–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) und [Referenzhaushalt mit durchgängigem Ablauf](reference-household.md). P2.1 ist nach Freigabe der nächste Implementierungsschritt; der Planungsauftrag D5 startet keine Implementierung. Die [Klärungsmatrix](getting-started.md#entscheidung-oder-rückfrage) unterscheidet verbindliche Festlegungen, technische Ermittlungen und Nutzerentscheidungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
+Für neue Mitwirkende: [kompakter Einstieg](getting-started.md), [Teilaufgabenübersicht P1–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) und [Referenzhaushalt mit durchgängigem Ablauf](reference-household.md). P4.1 ist nach Freigabe der nächste Implementierungsschritt. Die [Klärungsmatrix](getting-started.md#entscheidung-oder-rückfrage) unterscheidet verbindliche Festlegungen, technische Ermittlungen und Nutzerentscheidungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
 
 ## Arbeitsumgebung
 

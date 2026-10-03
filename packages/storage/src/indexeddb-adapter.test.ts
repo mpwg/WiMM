@@ -42,4 +42,17 @@ describe('IndexedDbStorageAdapter', () => {
     await first.applyAtomicBatch({ expectedRevisions: [{ handle: accountId, expectedRevision: 0 }], aggregates: [aggregate()], outbox: [], projections: [] });
     expect(await other.query({ spaceId })).toEqual([]);
   });
+
+  it('verliert bei konkurrierenden Tabs keine Änderung still', async () => {
+    const name = `wimm-test-${crypto.randomUUID()}`;
+    const first = new IndexedDbStorageAdapter(profileId, name); adapters.push(first);
+    const second = new IndexedDbStorageAdapter(profileId, name); adapters.push(second);
+    await first.applyAtomicBatch({ expectedRevisions: [{ handle: accountId, expectedRevision: 0 }], aggregates: [aggregate()], outbox: [], projections: [] });
+    const results = await Promise.allSettled([
+      first.applyAtomicBatch({ expectedRevisions: [{ handle: accountId, expectedRevision: 1 }], aggregates: [aggregate(2)], outbox: [], projections: [] }),
+      second.applyAtomicBatch({ expectedRevisions: [{ handle: accountId, expectedRevision: 1 }], aggregates: [aggregate(2)], outbox: [], projections: [] })
+    ]);
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+  });
 });

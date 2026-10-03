@@ -2,12 +2,12 @@
 
 ## In zehn Minuten orientieren
 
-WhereIsMyMoney besitzt die abgeschlossene Projektgrundlage P1 mit Workspace, Verträgen, Crypto-Binding, minimalen Apphüllen und lokalen/CI-Prüfwerkzeugen. Finanzfunktionen sind noch nicht implementiert. D5 ergänzt [62 offene Teilaufgaben für P2–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge). Der aktuelle Auftrag erlaubt ihre Planung; die Implementierung von P2–P11 benötigt weiterhin einen ausdrücklichen Auftrag. Diese Anleitung erteilt ihn nicht.
+WhereIsMyMoney besitzt die abgeschlossenen Pakete P1 bis P3 mit Workspace, Fachkern, Crypto-Binding, lokalem Speicher und Offline-Assetbasis. D5 ergänzt die Teilaufgaben bis P11. Die [50 offenen Teilaufgaben für P4–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) benötigen weiterhin einen ausdrücklichen Auftrag. Diese Anleitung erteilt ihn nicht.
 
 1. [Arbeitsregeln](../AGENTS.md) und [Dokumentationsindex](README.md) lesen, danach die dort vorgeschriebenen Grundlagen: Fachmodell, Architektur, Entscheidungen und Aufgaben.
 2. Den tatsächlichen Nutzerauftrag mit dem [Paketstatus](tasks.md) abgleichen. Vorhandene Änderungen prüfen und bewahren; keinen Branch ungefragt wechseln.
 3. Über die [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) die aufgabenspezifischen Abschnitte und den passenden Projektskill wählen.
-4. Das konkrete Ergebnis, betroffene Verträge und Abnahmekriterien benennen. Nach Implementierungsfreigabe für P2 ist [P2.1](p2-domain.md#p21--exakte-geld--und-kalenderprimitive) der erste Schritt; die weiteren Pakete besitzen eigene verlinkte Teilpläne in der Aufgabenübersicht.
+4. Das konkrete Ergebnis, betroffene Verträge und Abnahmekriterien benennen. Nach Implementierungsfreigabe für P4 ist [P4.1](p4-ui.md#p41--composition-root-und-lokaler-einstieg) der erste Schritt; die weiteren Pakete besitzen eigene verlinkte Teilpläne in der Aufgabenübersicht.
 5. Erst den begrenzten Arbeitsschritt bearbeiten, dann passende Prüfungen ausführen und die Nachweise im Paket festhalten. Nicht ausgeführte Prüfungen ausdrücklich nennen.
 
 Für den Zusammenhang der Komponenten anschließend das [durchgängige Buchungsbeispiel](reference-household.md#durchgängiger-ablauf-einer-buchung) lesen. Für die vollständige Lesereihenfolge bleibt der Dokumentationsindex maßgeblich.
