@@ -2,21 +2,21 @@
 
 ## Auftrag und Reihenfolge
 
-Diese Teilaufgaben konkretisieren [P2](tasks.md#p2--fachkern) nach der [P1-Vorlage](p1-foundation.md). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt ihre Planung; die Implementierungsfreigabe für P2 steht aus. P2.1 bis P2.6 werden in Reihenfolge nach abgeschlossenem P1 bearbeitet. Die Fachquellen bleiben verbindlich; dieser Plan führt keine neuen Produktregeln ein.
+Diese Teilaufgaben konkretisieren [P2](tasks.md#p2--fachkern) nach der [P1-Vorlage](p1-foundation.md). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt P2.1; die weiteren Teilaufgaben benötigen jeweils eine ausdrückliche Implementierungsfreigabe. P2.1 bis P2.6 werden in Reihenfolge nach abgeschlossenem P1 bearbeitet. Die Fachquellen bleiben verbindlich; dieser Plan führt keine neuen Produktregeln ein.
 
 Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen, einen zusammengehörigen Zwischencommit erstellen und mit der [Übergabevorlage](templates/handoff.md) den nächsten Schritt nennen. P2 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P3](p3-storage.md). Für die Umsetzung den Skill wimm-finance verwenden.
 
 ## P2.1 — Exakte Geld- und Kalenderprimitive
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P2 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach mit P2.1 weiter“).
 - Voraussetzungen: P1 erledigt; Fachmodell und vorhandene Primitive aus contracts gelesen.
 - Schritte: Dezimaltexte ohne Gleitkommaberechnung in Cent umwandeln; geprüfte Summen und Zwischenwerte bereitstellen; echte Kalenderdaten und Monatsschlüssel validieren; UUID-/Revisionsprimitive wiederverwenden.
-- Ergebnis: plattformfreie Parser und Rechenhilfen mit verständlichen Fehlern.
+- Ergebnis: plattformfreie, exportierte Parser für Dezimalgeld, Finanzdaten und Monatsschlüssel sowie überlaufsichere Summen- und gewichtete Rechenhilfen. Die Parser verwenden weder Gleitkommarechnung noch Zeitzonen.
 - Verträge: [Geld und Datum](domain.md), [gemeinsame Typen](data-model.md), [Fachtests](testing.md).
 - Abnahme: Vorzeichen und höchstens zwei Nachkommastellen korrekt; unsichere Zahlen, Zwischenwertüberlauf und ungültige Kalenderdaten abgewiesen; Finanzdatum unabhängig von Zeitzone.
 - Prüfungen: Vitest mit Grenzwerten, Schaltjahren und ungültigen Texten; Eigenschaften für sichere Summen.
-- Prüfbelege: noch keine.
+- Prüfbelege: `packages/domain/src/primitives.test.ts` enthält 25 Vitest-Fälle für Vorzeichen, eine und zwei Nachkommastellen, ungültige Texte, sichere Grenzen, Summen- und Multiplikationsüberlauf, gewichtete Ganzzahldivision, Schaltjahre, ungültige Kalenderdaten und zeitunabhängige Monatsschlüssel. Die vier Vitest-Suiten mit 38 Tests bestanden; TypeScript, Paketgraph sowie positive und negative Dokumentationsprüfung bestanden ebenfalls. Die vorhandene lokale Laufzeit bietet nur Node 24.19.0 und pnpm 11.25.0 statt der gesperrten Node 24.21.0 und pnpm 12.8.1; deshalb liefen die unveränderten lokal installierten Vitest-/TypeScript-Werkzeuge direkt mit Node 24.19.0. Der reguläre `pnpm`-Aufruf wurde nicht durch Abschwächen der Engine-Sperre erzwungen.
 
 ## P2.2 — Fachaggregate und atomare Befehlsverträge
 
