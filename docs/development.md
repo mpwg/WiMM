@@ -4,7 +4,7 @@
 
 Dieses Repository enthält die abgeschlossenen P1.1–P1.6: Workspace, öffentliche Verträge, Crypto-Binding, minimale Web-, Desktop- und Serverhüllen sowie reproduzierbare Prüfungen. Es gibt noch keine Finanzfunktion, Speicher- oder Sync-Implementierung. P2 ergänzt den plattformunabhängigen Fachkern.
 
-Die installierte lokale Toolchain muss Node 24.21.0, pnpm 12.8.1 sowie für die Desktop-Hülle Rust und Xcode enthalten. Der entwickelte macOS-arm64-Rechner verwendet Rust 1.99.0 aus Homebrew. Vor der ersten Installation `pnpm install --frozen-lockfile` ausführen. Verfügbare Befehle:
+Die installierte lokale Toolchain benötigt Node `>=26.10.0 <28`, pnpm `>=12.8.1 <14` sowie für die Desktop-Hülle Rust und Xcode. Der entwickelte macOS-arm64-Rechner verwendet Node 26.10.0, pnpm 12.8.1 und Rust 1.99.0 aus Homebrew. Für reproduzierbare Installationen bleibt pnpm 12.8.1 in `packageManager` festgelegt. Vor der ersten Installation `pnpm install --frozen-lockfile` ausführen. Verfügbare Befehle:
 
 | Zweck | Befehl |
 | --- | --- |
