@@ -2,7 +2,7 @@
 
 ## Auftrag und Reihenfolge
 
-Diese Teilaufgaben konkretisieren [P2](tasks.md#p2--fachkern) nach der [P1-Vorlage](p1-foundation.md). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt P2.1; die weiteren Teilaufgaben benötigen jeweils eine ausdrückliche Implementierungsfreigabe. P2.1 bis P2.6 werden in Reihenfolge nach abgeschlossenem P1 bearbeitet. Die Fachquellen bleiben verbindlich; dieser Plan führt keine neuen Produktregeln ein.
+Diese Teilaufgaben konkretisieren [P2](tasks.md#p2--fachkern) nach der [P1-Vorlage](p1-foundation.md). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt den vollständigen Abschluss von P2. P2.1 bis P2.6 werden in Reihenfolge nach abgeschlossenem P1 bearbeitet. Die Fachquellen bleiben verbindlich; dieser Plan führt keine neuen Produktregeln ein.
 
 Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen, einen zusammengehörigen Zwischencommit erstellen und mit der [Übergabevorlage](templates/handoff.md) den nächsten Schritt nennen. P2 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P3](p3-storage.md). Für die Umsetzung den Skill wimm-finance verwenden.
 
@@ -44,15 +44,15 @@ Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie 
 
 ## P2.4 — Buchungen, Splits und Anfangsbestand
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P2 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach P2 komplett fertig. mach nach jedem zwischenschritt commits“).
 - Voraussetzungen: P2.3 erledigt.
 - Schritte: transaction.save/delete einschließlich vollständiger Splits und Anfangsbestand umsetzen; Erstattungszeichen und unzugeordnete Kategorie beachten; Tombstones sowie Sperre abgeglichener Buchungen prüfen.
-- Ergebnis: vollständig validierte Buchungsänderungssets ohne Speicherzugriff.
+- Ergebnis: vollständig validierte Buchungsänderungssets ohne Speicherzugriff. Normale Buchungen führen mindestens einen kategorisierten Split, während Anfangsbestände und andere nicht normale Buchungsarten keine Splits tragen. Positive Splitbeträge bleiben für Ausgabenerstattungen zulässig.
 - Verträge: [Buchungsregeln](domain.md), Transaction in [Datenmodell](data-model.md), F01/F02 in [Tests](testing.md).
 - Abnahme: Splitsumme exakt gleich Betrag; Opening kein Einkommen; negative Guthaben zulässig; abgeglichene Buchung ohne Entsperrung unveränderbar; Fehler verändern kein Aggregat.
 - Prüfungen: F01/F02, positive Ausgabenerstattung, Splitüberlauf, Löschung und Reconciled-Lock.
-- Prüfbelege: noch keine.
+- Prüfbelege: `packages/domain/src/transactions.test.ts` prüft exakte negative Splits, positive Ausgabenerstattungen, unvollständige und überlaufende Splits sowie Tombstone-Löschung und die Sperre abgeglichener Buchungen. Mit Node 26.10.0 und pnpm 12.8.1 bestanden 43 Domänentests und `pnpm check:ci` vollständig einschließlich Typ-, Dokumentations-, Vertrags- und Paketgraphprüfung sowie Web- und Desktop-Build.
 
 ## P2.5 — Umbuchungen und Kontenabgleich
 
