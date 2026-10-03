@@ -9,6 +9,7 @@
     "@wimm/contracts": "workspace:*",
     "@wimm/crypto": "workspace:*",
     "@wimm/domain": "workspace:*",
+    "@wimm/storage": "workspace:*",
     "react": "19.3.0"
   },
   "devDependencies": {

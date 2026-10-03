@@ -355,6 +355,9 @@ importers:
       '@wimm/domain':
         specifier: workspace:*
         version: link:../domain
+      '@wimm/storage':
+        specifier: workspace:*
+        version: link:../storage
       react:
         specifier: 19.3.0
         version: 19.3.0
