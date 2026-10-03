@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { AppShell, createBrowserProfileStore, FinanceWorkspace } from '@wimm/ui';
+import { AppShell, createBrowserPlatformServices, createBrowserProfileStore, FinanceWorkspace } from '@wimm/ui';
 
 const profileStore = createBrowserProfileStore();
+const platform = createBrowserPlatformServices();
 
 export function App() {
-  return <AppShell store={profileStore} title="WhereIsMyMoney">{(context) => <FinanceWorkspace context={context} />}</AppShell>;
+  return <AppShell platform={platform} store={profileStore} title="WhereIsMyMoney">{(context) => <FinanceWorkspace context={context} />}</AppShell>;
 }

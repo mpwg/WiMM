@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import type { PlatformServices } from '@wimm/contracts';
 
 import {
   addIndependentSpaceKey,
@@ -36,6 +37,7 @@ export interface ProfileStore {
 export interface AppShellProps {
   readonly title: string;
   readonly store: ProfileStore;
+  readonly platform: PlatformServices;
   readonly children?: (context: UnlockedAppContext) => ReactNode;
 }
 
@@ -45,6 +47,12 @@ export interface UnlockedAppContext {
   readonly selectArea: (areaId: string) => void;
   readonly createHousehold: () => Promise<void>;
   readonly lock: () => Promise<void>;
+  readonly platform: PlatformServices;
+}
+
+export interface CreatedLocalProfile {
+  readonly profile: LocalProfile;
+  readonly recoveryCode: string;
 }
 
 type Screen =
@@ -71,6 +79,12 @@ export function createBrowserProfileStore(key = 'wimm/local-profile/v1'): Profil
   };
 }
 
+/** Browserport: Systemaktionen werden nur auf explizite Nutzeraktionen ausgeführt. */
+export function createBrowserPlatformServices(): PlatformServices {
+  const tokens = new Map<string, Uint8Array>();
+  return { chooseImportFiles: async () => [], writeExport: async () => undefined, openExternalUrl: async (url) => { window.open(url, '_blank', 'noopener,noreferrer'); }, setMenuCommands: async () => undefined, getDataDirectory: async () => undefined, secureTokens: { read: async (key) => tokens.get(key), write: async (key, value) => { tokens.set(key, value.slice()); }, remove: async (key) => { tokens.delete(key); } } };
+}
+
 /** Test- und Plattformport ohne Browserpersistenz; niemals als Produktstandard verwenden. */
 export function createMemoryProfileStore(initial?: LocalProfile): ProfileStore {
   let profile = initial;
@@ -85,7 +99,23 @@ export function selectLocalArea(profile: LocalProfile, areaId: string): LocalPro
   return { ...profile, selectedAreaId: areaId };
 }
 
-export function AppShell({ title, store, children }: AppShellProps) {
+/** Erzeugt den verschlüsselten lokalen Anfangszustand ohne eine Serveranmeldung. */
+export async function createLocalProfile(passphrase: string): Promise<CreatedLocalProfile> {
+  const created = await createUserVault(passphrase);
+  const privateAreaId = crypto.randomUUID();
+  const vault = await addIndependentSpaceKey(await unlockUserVaultWithPassphrase(created.record, passphrase), privateAreaId);
+  return {
+    recoveryCode: created.recoveryCode,
+    profile: {
+      profileId: crypto.randomUUID(),
+      areas: [{ id: privateAreaId, kind: 'private', label: initialAreaLabel }],
+      selectedAreaId: privateAreaId,
+      vault: await reencryptUserVault(vault, passphrase, created.recoveryCode)
+    }
+  };
+}
+
+export function AppShell({ title, store, platform, children }: AppShellProps) {
   const [screen, setScreen] = useState<Screen>({ kind: 'loading' });
   const [notice, setNotice] = useState<string>();
 
@@ -133,6 +163,7 @@ export function AppShell({ title, store, children }: AppShellProps) {
       await lockUserVault(screen.vault);
       setScreen({ kind: 'unlock', profile: screen.profile });
     }
+    , platform
   };
 
   return children === undefined ? <LocalStart context={context} title={title} /> : <>{children(context)}</>;
