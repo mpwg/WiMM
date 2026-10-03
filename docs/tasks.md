@@ -113,7 +113,7 @@ P2–P11 enthalten insgesamt 62 offene Teilaufgaben. Bei fehlenden Plattformen o
 - Verträge: Datenmodell und Befehle account/category/payee/transaction/transfer/reconciliation.
 - Abnahme: Referenzfälle F01–F03 und Geld-/Datums-/Abgleichfehlfälle bestehen; Updates ohne alle erwarteten Revisionen abgewiesen; keine Teiländerungssets.
 - Prüfungen: deterministische Vitest-Fachtests sowie Eigenschaften für Summen, Transfererhaltung und Ganzzahlüberlauf.
-- Prüfbelege: P2.1: Dezimalgeld-, sichere Summen-/Zwischenwert- und Kalenderprimitive im plattformfreien Paket `@wimm/domain` umgesetzt. 27 neue Fachtests sowie die vier vorhandenen Vitest-Suiten mit insgesamt 40 Tests bestanden; TypeScript, Paketgraph und positive/negative Dokumentationsprüfung bestanden. Die Details einschließlich der lokalen Laufzeitabweichung stehen bei [P2.1](p2-domain.md#p21--exakte-geld--und-kalenderprimitive). P2-Gesamtprüfung folgt erst nach P2.6.
+- Prüfbelege: P2.1: Dezimalgeld-, sichere Summen-/Zwischenwert- und Kalenderprimitive im plattformfreien Paket `@wimm/domain` umgesetzt. 26 neue Fachtests sowie die vier vorhandenen Vitest-Suiten mit insgesamt 39 Tests bestanden; TypeScript, Paketgraph und positive/negative Dokumentationsprüfung bestanden. Die Details einschließlich der lokalen Laufzeitabweichung stehen bei [P2.1](p2-domain.md#p21--exakte-geld--und-kalenderprimitive). P2-Gesamtprüfung folgt erst nach P2.6.
 
 ## P3 — Speicher und Offlinebasis
 
