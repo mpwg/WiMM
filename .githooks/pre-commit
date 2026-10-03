@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+set -euo pipefail
+
+repository_root="$(git rev-parse --show-toplevel)"
+needs_documentation_check=0
+
+while IFS= read -r -d '' file; do
+  case "$file" in
+    *.md|*.json|*.yaml|*.yml)
+      needs_documentation_check=1
+      break
+      ;;
+  esac
+done < <(git diff --cached --name-only --diff-filter=ACMRD -z)
+
+if [[ "$needs_documentation_check" -eq 0 ]]; then
+  exit 0
+fi
+
+if [[ ! -d "$repository_root/node_modules" ]]; then
+  printf '%s\n' 'Hook kann nicht laufen: Abhängigkeiten fehlen. Bitte pnpm install --frozen-lockfile ausführen.' >&2
+  exit 1
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+  printf '%s\n' 'Hook kann nicht laufen: Node fehlt im PATH. Bitte die dokumentierte Node-Toolchain einrichten.' >&2
+  exit 1
+fi
+
+temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/wimm-index.XXXXXX")"
+cleanup() {
+  rm -rf "$temporary_root"
+}
+trap cleanup EXIT
+
+git -C "$repository_root" checkout-index --all --prefix="$temporary_root/"
+ln -s "$repository_root/node_modules" "$temporary_root/node_modules"
+node "$temporary_root/scripts/check-documentation.mjs" --root "$temporary_root"

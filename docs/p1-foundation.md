@@ -66,7 +66,7 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 
 ## P1.6 — CI, Prüfungen und Entwicklungsanleitung
 
-- Status: offen.
+- Status: erledigt (3. Oktober 2026).
 - Freigabe: Implementierungsauftrag für P1; externe GitHubeinstellungen nur bei entsprechender Autorisierung ändern.
 - Voraussetzungen: P1.5 erledigt.
 - Schritte: Rootbefehle aus P1 bereitstellen, CI-Workflow mit gesperrten Abhängigkeiten anlegen und lokal reproduzieren; gemeinsame Dokumentationsprüfung und optionalen pre-commit-Hook gemäß [Hook-Konzept](development.md#hooks-und-automatisierte-prüfungen-ab-p1) einrichten; Installations-/Start-/Prüfanleitung aktualisieren.
@@ -74,4 +74,4 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 - Verträge: Entwicklungsanleitung, Teststrategie, Hook-Konzept und Gesamt-Abnahme P1.
 - Abnahme: dokumentierte Befehle sind vorhanden und tatsächlich ausführbar; Hookaktivierung/-deaktivierung ist checkoutlokal dokumentiert; vorgemerkte Inhalte werden ohne Dateiumschreiben geprüft. Noch leere App-/E2E-Suites werden als solche ausgewiesen. CI-Konfiguration lokal geprüft; Remoteausführung erst nach autorisiertem Push belegen.
 - Prüfungen: frischer Checkout mit gesperrtem Lockfile; Typ-/Build-/Vertragstests und Paketgraph; Dokumentationsprüfung einschließlich absichtlich defekter Links/JSON/YAML in temporären Prüfständen. Hook mit teilweise vorgemerkter Datei prüfen; Arbeitskopie darf das geprüfte Commitbild nicht ersetzen. Vorhandenen abweichenden hooksPath bei Aktivierung erkennen und nicht automatisch überschreiben.
-- Prüfbelege: noch keine.
+- Prüfbelege: `pnpm check:docs` prüft UTF-8/LF/Zeilenenden, JSON, YAML sowie relative Markdown-Links und Anker mit `markdown-it` 15.0.2 und `yaml` 2.9.1. `pnpm test:docs` enthält einen gültigen Fall und absichtlich defekte Link-, JSON- und YAML-Dateien; beide Fälle bestanden. `.githooks/pre-commit` erzeugt aus dem Git-Index eine temporäre Kopie und prüft sie ohne Arbeitskopieänderungen; ein teilweise vorgemerkter Test mit abweichender Arbeitskopie bestand. Der Hook wird nicht automatisch aktiviert; Anleitung und sichere lokale Aktivierung stehen in [Entwicklung](development.md#hooks-und-automatisierte-prüfungen-ab-p1). `.github/workflows/ci.yml` installiert mit gesperrtem Lockfile und führt `pnpm check:ci` auf `ubuntu-latest` einschließlich der Tauri-Linux-Systempakete aus. Die Workflowdatei und `pnpm check:ci` wurden lokal geprüft; kein Remote-Lauf oder Push erfolgte. E2E-Tests und Windows bleiben ausstehend.

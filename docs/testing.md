@@ -2,13 +2,13 @@
 
 ## Aktueller Stand
 
-D0 umfasst Dokumentationsprüfung. P1.3 ergänzt vier ausgeführte Vertragstests für öffentliche Hüllen und gemeinsame Primitive. P1.4 ergänzt sieben Crypto-Binding-/Manipulationstests mit synthetischen Daten. P1.5 ergänzt zwei Serverhüllentests für Health- und Metadaten sowie Start- und Buildsmokechecks für Web und Tauri. Speicher-, Sync- und Fachtests existieren noch nicht. Die folgenden Datensätze und Prüfungen sind verbindliche Spezifikation für P1–P11, keine bereits bestandene Testsuite.
+D0 umfasst Dokumentationsprüfung. P1.3 ergänzt vier ausgeführte Vertragstests für öffentliche Hüllen und gemeinsame Primitive. P1.4 ergänzt sieben Crypto-Binding-/Manipulationstests mit synthetischen Daten. P1.5 ergänzt zwei Serverhüllentests für Health- und Metadaten sowie Start- und Buildsmokechecks für Web und Tauri. P1.6 ergänzt zwei Tests der Dokumentationsprüfung mit gültigen und absichtlich defekten Links, JSON und YAML. Speicher-, Sync-, Fach- und E2E-Tests existieren noch nicht. Die folgenden Datensätze und Prüfungen sind verbindliche Spezifikation für P2–P11, keine bereits bestandene Testsuite.
 
 ## Testebenen und Werkzeuge
 
 | Ebene | Werkzeug ab Paket | Prüfgegenstand |
 | --- | --- | --- |
-| Dokumentation | Link-/Datei-/Konsistenzprüfung in D0 | vollständige Übergabe, Lizenz, Status, Querverweise |
+| Dokumentation | Node, markdown-it und yaml ab P1.6 | UTF-8/LF/Zeilenenden, JSON/YAML, relative Links und lokale Anker |
 | Fachkern | Vitest ab P2 | pure Berechnungen, fachliche Invarianten, negative Fälle |
 | Speicher | Vitest + echte IndexedDB/SQLite ab P3 | gleiche Contract-Suite für beide Adapter |
 | Web/Touch | Playwright ab P4 | Nutzerabläufe, Offline, Screenshots, Tastatur/Fokus |

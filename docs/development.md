@@ -2,7 +2,7 @@
 
 ## Stand
 
-Dieses Repository enthält die abgeschlossenen P1.1–P1.5: Workspace, öffentliche Verträge, Crypto-Binding sowie minimale Web-, Desktop- und Serverhüllen. Es gibt noch keine Finanzfunktion, Speicher- oder Sync-Implementierung und keine CI-Workflows. P1.6 ergänzt CI, Dokumentationsprüfungen und Hook-Aktivierung.
+Dieses Repository enthält die abgeschlossenen P1.1–P1.6: Workspace, öffentliche Verträge, Crypto-Binding, minimale Web-, Desktop- und Serverhüllen sowie reproduzierbare Prüfungen. Es gibt noch keine Finanzfunktion, Speicher- oder Sync-Implementierung. P2 ergänzt den plattformunabhängigen Fachkern.
 
 Die installierte lokale Toolchain muss Node 24.21.0, pnpm 12.8.1 sowie für die Desktop-Hülle Rust und Xcode enthalten. Der entwickelte macOS-arm64-Rechner verwendet Rust 1.99.0 aus Homebrew. Vor der ersten Installation `pnpm install --frozen-lockfile` ausführen. Verfügbare Befehle:
 
@@ -14,6 +14,9 @@ Die installierte lokale Toolchain muss Node 24.21.0, pnpm 12.8.1 sowie für die 
 | Alle vorhandenen Pakete bauen | `pnpm build` |
 | Typen und Paketgrenzen prüfen | `pnpm typecheck` / `pnpm check:package-graph` |
 | Vertrags-, Crypto- und Servertests | `pnpm test` |
+| Dokumentation prüfen | `pnpm check:docs` |
+| Validator mit fehlerhaften Testdaten prüfen | `pnpm test:docs` |
+| Lokale CI-Prüfserie | `pnpm check:ci` |
 
 Der Server bindet für die lokale Entwicklung nur an `127.0.0.1:3000`. Er stellt ausschließlich `/api/v1/health/live`, `/api/v1/health/ready` und `/api/v1/meta` bereit. Finanz-HTTP-Endpunkte und `test:e2e` entstehen erst in späteren Paketen.
 
@@ -39,23 +42,23 @@ Ein GitHub-Remote ist konfiguriert. Vor jedem Push muss die tatsächliche `git r
 
 ## Nächster Implementierungsschritt
 
-P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft; Details stehen in der [Versions- und Lizenzbasis](technology-baseline.md). P1.2 bis P1.5 legen darauf aufbauend Workspace, exakte Lockfiles, öffentliche Hüllen, Crypto-Binding und lokale Prüfungen an. Lokal `pnpm install --frozen-lockfile`, `pnpm test`, `pnpm typecheck`, `pnpm check:package-graph` und `pnpm build` verwenden. Finanzen bleiben clientseitig; Backend transportiert später Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
+P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft; Details stehen in der [Versions- und Lizenzbasis](technology-baseline.md). P1.2 bis P1.6 legen darauf aufbauend Workspace, exakte Lockfiles, öffentliche Hüllen, Crypto-Binding und lokale Prüfungen an. Lokal `pnpm install --frozen-lockfile` und danach `pnpm check:ci` verwenden. Die CI-Prüfserie umfasst Dokumentation, Paketgraph, TypeScript, die vorhandenen Tests und alle Builds. Finanzen bleiben clientseitig; Backend transportiert später Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
 
 Die [P1-Teilaufgaben](p1-foundation.md) legen Reihenfolge und Abnahme fest. Für den ersten Einstieg den [Kurzleitfaden](getting-started.md) nutzen; [Referenzhaushalt](reference-household.md) und [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) helfen bei konkreten Aufgaben.
 
 ## Hooks und automatisierte Prüfungen ab P1
 
-Dies ist ein Konzept für P1. Es gibt noch keinen projektspezifischen Hook, keine Aktivierungsroutine und keinen ausführbaren Dokumentationsprüfbefehl. In D2 werden weder Werkzeuge installiert noch Gitkonfigurationen geändert.
+P1.6 stellt `pnpm check:docs` und den optionalen Hook in `.githooks/pre-commit` bereit. Beide verwenden `markdown-it` für Markdown-Links und `yaml` für YAML; JSON verarbeitet die Node-Standardbibliothek. Sie prüfen gültiges UTF-8 mit LF, Abschlusszeile und fehlenden Zeilenendleerraum sowie JSON, YAML und relative Markdown-Links mit lokalen Ankern. Externe URLs werden dabei nicht über das Netz aufgerufen.
 
 ### Gemeinsame Prüfwerkzeuge
 
-P1.6 legt einen dokumentierten Projektbefehl für Dokumentationsprüfungen an: Markdown-/Whitespace-/UTF-8-/LF-Prüfung, JSON-/YAML-Parsing mit etablierten Parsern und relative Links einschließlich lokaler Anker. Externe URLs werden nicht bei jedem Commit über das Netz geprüft. Platzhalter in Vorlagen werden als solche berücksichtigt. Dieselben Validatoren laufen lokal, im Hook und in CI; die zu prüfende Datenquelle ist explizit (Git-Index im Hook, Checkout in CI).
+`pnpm check:docs` prüft den Checkout. `pnpm test:docs` enthält absichtlich ungültige Link-, JSON- und YAML-Fixtures, um Fehlerpfade des Validators zu prüfen. Derselbe Validator läuft im Hook gegen den Git-Index und in CI gegen den Checkout. Platzhalter in Vorlagen werden als solche berücksichtigt.
 
 ### Optionaler pre-commit-Hook
 
 Der Hook prüft kurze Format-/JSON-/YAML-/Linkprüfungen für vorgemerkte Änderungen einschließlich Löschungen und Umbenennungen. Bei entfernten Zielen auch unveränderte Dokumente auf eingehende Verweise prüfen. Inhalte und Linkziele stammen aus dem Git-Index; eine teilweise vorgemerkte Datei darf nicht über die abweichende Arbeitskopie geprüft werden. Dateinamen mit Leerzeichen und Unicode sicher behandeln. Der Hook schreibt keine Dateien um und übernimmt keine Änderungen automatisch.
 
-Aktivierung ist eine bewusste, checkoutlokale Entscheidung. P1.6 dokumentiert die echten Aktivierungs-/Deaktivierungsbefehle sowie den vorherigen hooksPath; eine vorhandene abweichende Konfiguration wird nicht automatisch ersetzt. Keine globalen Git-/Editoränderungen. Ohne Aktivierung bleiben die gemeinsamen Prüfungen manuell und in CI verfügbar. Lokale Hooks können umgangen werden und ersetzen weder Review noch CI. Fehlende Werkzeuge erzeugen eine verständliche Meldung mit dem dokumentierten Einrichtungsschritt, keine automatische Installation.
+Aktivierung ist eine bewusste, checkoutlokale Entscheidung. Zuerst `git config --local --get core.hooksPath` ausführen. Gibt der Befehl keinen Wert aus, aktiviert `git config --local core.hooksPath .githooks` den Hook. Zeigt er einen anderen Wert, diesen nicht überschreiben. Zur Deaktivierung ausschließlich bei dem Wert `.githooks` `git config --local --unset core.hooksPath` ausführen. Keine globalen Git-/Editoränderungen. Ohne Aktivierung bleiben die gemeinsamen Prüfungen manuell und in CI verfügbar. Lokale Hooks können umgangen werden und ersetzen weder Review noch CI. Fehlende Werkzeuge erzeugen eine verständliche Meldung mit dem dokumentierten Einrichtungsschritt, keine automatische Installation.
 
 ### CI und Umfang
 
@@ -63,10 +66,10 @@ Aktivierung ist eine bewusste, checkoutlokale Entscheidung. P1.6 dokumentiert di
 | --- | --- |
 | Vor Commit, optional | Kurze Dokumentations-/Formatprüfungen auf den vorgemerkten Inhalten |
 | Lokal vor Paketabschluss | Risikogerechte Prüfungen nach testing.md, einschließlich betroffener Fach-/Crypto-/Adapterfälle |
-| CI ab P1 | Dokumentation, Paketgraph, Typprüfung, Build und vorhandene Vertragstests mit gesperrten Abhängigkeiten |
+| CI ab P1.6 | Dokumentation, Paketgraph, Typprüfung, vorhandene Tests und Build mit gesperrten Abhängigkeiten auf `ubuntu-latest` |
 | CI ab späteren Paketen | Tatsächlich implementierte Fach-, Adapter-, Zugriffs- und E2E-Suites passend zum betroffenen Verhalten |
 
-Umfangreiche Builds, E2E-Tests und Plattformsmokechecks werden nicht bei jedem Commit erzwungen. Vorhandene Rootbefehle und tatsächliche CI-Ergebnisse werden nach Einrichtung hier dokumentiert; eine leere Suite gilt nicht als Verhaltensnachweis. Erforderliche GitHubchecks erst festlegen, wenn sie existieren, funktionieren und Änderungen der Repositoryeinstellungen autorisiert sind.
+Der Workflow `.github/workflows/ci.yml` installiert auf `ubuntu-latest` die offiziellen Tauri-Systempakete für WebKitGTK und baut dort auch die Tauri-Hülle. Umfangreiche E2E-Tests und Plattformsmokechecks werden nicht bei jedem Commit erzwungen. Es gibt noch keine E2E-Suite; ihr Fehlen ist kein Verhaltensnachweis. Die Workflowdatei wurde lokal als YAML und durch `pnpm check:ci` geprüft; einen Remote-Lauf gibt es erst nach einem autorisierten Push. Erforderliche GitHubchecks erst festlegen, wenn sie existieren, funktionieren und Änderungen der Repositoryeinstellungen autorisiert sind.
 
 ### Agentenspezifische Automatik
 

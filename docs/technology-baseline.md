@@ -30,6 +30,7 @@ Stand: 3. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Her
 | Server-SQLite | better-sqlite3 13.0.3 | [npm-Metadaten](https://registry.npmjs.org/better-sqlite3/13.0.3), [Release](https://github.com/WiseLibs/better-sqlite3/releases/tag/v13.0.3); MIT | Dokumentierte Node-Mindestversion 22; Version 13 verwendet N-API und entfernt den Installations-Compile-Schritt. |
 | Desktop-SQLite | rusqlite 0.40.2 mit gebündeltem SQLite | [Crate-Metadaten](https://crates.io/api/v1/crates/rusqlite/0.40.2); MIT, SQLite Public Domain | Rust-Brücke gemäß Architektur; konkrete Features und Lizenzkette werden bei der Cargo-Auflösung in P1.2 festgeschrieben. |
 | Tests | Vitest 5.0.2, Playwright 1.63.0 | [Vitest](https://registry.npmjs.org/vitest/5.0.2); MIT, [Playwright](https://registry.npmjs.org/playwright/1.63.0); Apache-2.0 | Vitest unterstützt Node 24, Playwright verlangt mindestens Node 20. Vitest 5.0.2 erfüllt zusätzlich die gewählte Reifezeitpolicy. |
+| Dokumentationsprüfung | markdown-it 15.0.2, yaml 2.9.1 | [markdown-it](https://registry.npmjs.org/markdown-it/15.0.2); MIT, [yaml](https://registry.npmjs.org/yaml/2.9.1); ISC | Etablierte Markdown- und YAML-Parser für `check:docs`; relative Links und Anker werden gegen die gemeinsam geparsten Dokumente geprüft. |
 
 ## Kryptografie und Kanonisierung
 
