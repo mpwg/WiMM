@@ -7,7 +7,7 @@ edition = "2024"
 license = "AGPL-3.0-or-later"
 
 [build-dependencies]
-tauri-build = { version = "=2.6.3", features = [] }
+tauri-build = { version = "=2.7.0", features = [] }
 
 [dependencies]
 tauri = { version = "=2.11.6", features = [] }
