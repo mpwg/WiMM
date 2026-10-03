@@ -34,6 +34,16 @@ Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Eintr
 | ADR-028 | Repositorylokale Agenten-Skills und gemeinsame Vorlagen, GitHub/VS Code | Nutzerauftrag plus technischer Default | Vier Skills in .agents/skills; zentrale Docs statt Regelkopien; keine globale Plugininstallation, kein Push/CI/Appstart |
 | ADR-029 | Kompakter Einstieg, P1-Teilaufgaben und portable Prüfungen; Hooks erst P1 | Nutzerauftrag D2 und bestätigter Ergänzungsplan | Zentrale Fachquellen erhalten, Beispiele synthetisch; optionaler pre-commit prüft vorgemerkte Inhalte ohne Dateiumschreiben; gemeinsame Prüfungen in CI; keine automatische Commit-/Push-/Taskabschlussfunktion |
 | ADR-030 | Serveridentitäten ausschließlich extern; Apps lokal eigenständig | Nutzerentscheidung vom 2. Oktober 2026; ersetzt ADR-011 Authentifizierungsdefault | Keine lokale Benutzer-/Passwortverwaltung oder Setupkonten; Serververbindung setzt OIDC oder gleichwertigen externen Identitätsdienst voraus; Standalone-Apps benötigen keine Anmeldung |
+| ADR-031 | Gemeinsame UI enthält den lokalen Client-Composition-Root | P4-Umsetzung | Die UI darf die lokalen Crypto-/Storage-Clients zusammensetzen; native Systemfunktionen bleiben injizierte Ports |
+
+## ADR-031 — Lokale Client-Composition in der UI
+
+- Datum: 3. Oktober 2026.
+- Status: angenommen.
+- Problem: Web und Desktop benötigen dieselbe lokale Tresor-, Bereichs- und Speicherorchestrierung; doppelte App-Composition würde Verträge auseinanderführen.
+- Entscheidung: `packages/ui` enthält den gemeinsamen Client-Composition-Root und darf dazu `crypto` und `storage` verwenden. Systemzugriffe verbleiben hinter `PlatformServices`.
+- Folgen: Fachkern und Server bleiben weiterhin frei von UI-/Speicher-/Krypto-UI-Abhängigkeiten; Paketgraph prüft diese eng begrenzte Richtung.
+- Prüfung: TypeScript, Paketgraph sowie Web-/Desktop-Build in P4.
 
 ## ADR-030 — Externe Serveridentität und eigenständige Apps
 

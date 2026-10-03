@@ -10,12 +10,12 @@
 | packages/storage | Adapter, Transaktionen, Projektionen, Migrationen | domain, contracts |
 | packages/sync | Verschlüsselte Outbox, Push/Pull, Revisionen, Konflikte | domain, contracts, crypto, Storage-Port |
 | packages/importers | Dateiparser, Normalisierung, Vorschau, Dubletten | domain, contracts |
-| packages/ui | Fachkomponenten, Plattformtokens, Eingabe- und Ansichtsmuster | domain/contract-Typen, React; injizierte Anwendungsdienste |
+| packages/ui | Client-Composition, Fachkomponenten, Plattformtokens, Eingabe- und Ansichtsmuster | domain/contract-Typen, React, crypto/storage; native Funktionen weiterhin als Plattformport |
 | apps/web | PWA, Browserrouting, Service Worker, IndexedDB-Komposition | gemeinsame Pakete |
 | apps/desktop | Tauri-Hülle, gemeinsame React-App, Rust-Speicher-/Systembrücke | gemeinsame Pakete; begrenzte Tauri-Commands |
 | apps/server | Fastify, Identitäten, öffentliche Rechte/Zertifikate, SQLite-Chiffratspeicher und PWA | öffentliche contracts, Signaturprüfung und servergeeignete Speicherteile; kein Finanzfachkern |
 
-Keine UI-Abhängigkeiten im Fachkern; Contracts importieren nicht domain. Für Anwendungsorchestrierung verwenden die Clients gemeinsame Dienste aus storage/sync/crypto; UI erhält Ports über Composition Root. Der Server kann Finanzinhalte wegen verpflichtender E2EE nicht validieren oder berechnen. Apps gelten nach Authentifizierung als vertrauenswürdige Clients; keine Codesignatur/Attestierung als Zugangsvoraussetzung. Nachrichten-/Schlüsselsignaturen sind davon getrennte Integritätsprüfungen.
+Keine UI-Abhängigkeiten im Fachkern; Contracts importieren nicht domain. Die gemeinsame UI-Schicht bildet den Client-Composition-Root und darf dafür die lokalen Crypto-/Storage-Clients verwenden; native Datei-, Menü-, Link- und Tokenfunktionen bleiben als `PlatformServices` injiziert. Der Server kann Finanzinhalte wegen verpflichtender E2EE nicht validieren oder berechnen. Apps gelten nach Authentifizierung als vertrauenswürdige Clients; keine Codesignatur/Attestierung als Zugangsvoraussetzung. Nachrichten-/Schlüsselsignaturen sind davon getrennte Integritätsprüfungen.
 
 ## Bibliotheken und Toolchain
 
