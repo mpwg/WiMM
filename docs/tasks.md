@@ -8,7 +8,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 
 ## Teilaufgaben und Bearbeitungsfolge
 
-Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. Der Nutzer hat am 3. Oktober 2026 den vollständigen Abschluss von P2 freigegeben. P2.1 bis P2.5 sind erledigt; als Nächstes folgt [P2.6](p2-domain.md#p26--projektionen-und-gesamt-abnahme).
+Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. P2 ist abgeschlossen. Der Nutzer hat am 3. Oktober 2026 den vollständigen Abschluss von P3 freigegeben.
 
 | Paket | Teilaufgaben | Ergebnis der Schrittfolge |
 | --- | --- | --- |
@@ -117,7 +117,7 @@ P2–P11 enthalten insgesamt 62 offene Teilaufgaben. Bei fehlenden Plattformen o
 
 ## P3 — Speicher und Offlinebasis
 
-- Status: offen. Voraussetzung: P2.
+- Status: in Arbeit. Voraussetzung: P2 erledigt.
 - Teilaufgaben: [P3.1–P3.6](p3-storage.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Client-Speicheradapter/Rustbatch-Brücke, Transaktionen/Projektionen/Entwürfe; lokaler verschlüsselter UserVault, unabhängige Bereichsschlüssel, Entsperrung/Rettungscode und Schlüsselports; keine persistierten Klartextkeys. Export-Snapshotport verschlüsselt. Service Worker, persistenter Browserstore und Tabkoordination.
 - Ergebnis: dauerhafte lokale Datenhaltung in beiden Clients; vorbereitete Outbox ohne Netzwerkpflicht.

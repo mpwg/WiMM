@@ -2,21 +2,21 @@
 
 ## Auftrag und Reihenfolge
 
-Diese Teilaufgaben konkretisieren [P3](tasks.md#p3--speicher-und-offlinebasis). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt ihre Planung; die Implementierungsfreigabe für P3 steht aus. P3.1 bis P3.6 werden in Reihenfolge nach abgeschlossenem [P2](p2-domain.md) bearbeitet. Maßgeblich bleiben die verlinkten Fach-, Speicher- und E2EE-Verträge.
+Diese Teilaufgaben konkretisieren [P3](tasks.md#p3--speicher-und-offlinebasis). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt den vollständigen Abschluss von P3. P3.1 bis P3.6 werden in Reihenfolge nach abgeschlossenem [P2](p2-domain.md) bearbeitet. Maßgeblich bleiben die verlinkten Fach-, Speicher- und E2EE-Verträge.
 
 Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen; nach jedem abgeschlossenen Abschnitt einen zusammengehörigen Zwischencommit und eine [Übergabe](templates/handoff.md) erstellen. P3 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P4](p4-ui.md). Für die Umsetzung wimm-workflow und wimm-e2ee verwenden. P3 liefert den verschlüsselten Snapshotport; das vollständige WIMM-Dateiformat folgt in P10, Netzwerk-Sync in P9.
 
 ## P3.1 — Speicherverträge, Schemata und Konformitätssuite
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P3 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P2 erledigt; vorhandener StorageAdapter-Port geprüft.
 - Schritte: Fachaggregate auf SQLite-/Dexie-Schemata und Pflichtindizes abbilden; lokale Revisionen, Transaktionsgrenzen und vorwärts gerichtete Migrationen konkretisieren; Vor-Migrationssicherung über den verschlüsselten Snapshotport aus P3.2 vor destruktiven Änderungen vorsehen; gemeinsame Adapterkonformitätssuite anlegen.
 - Ergebnis: ein prüfbarer Speichervertrag für beide Clients mit reproduzierbaren Ausgangsfixtures.
 - Verträge: [Speicherports](architecture.md#speicherports), [Datenmodell](data-model.md), [S01–S03/S14](testing.md).
 - Abnahme: vollständige Aggregate, Projektionen und gegebenenfalls Outbox in derselben Transaktion; Cursorcommit atomar; Versionen von Storage/Fachschema/Epoche getrennt.
 - Prüfungen: Vertragssuite mit Revisionenkonflikten, Rollback und Neuaufbau; Schemata/Indizes gegen Modell prüfen.
-- Prüfbelege: noch keine.
+- Prüfbelege: Speichervertrag, Migrationsversionsfelder, atomare Referenzimplementierung und zwei gezielte Konformitätstests ergänzt. `pnpm --filter @wimm/storage exec vitest run`, `pnpm typecheck` und `pnpm check:package-graph` bestanden.
 
 ## P3.2 — Lokaler Tresor und Schlüsselports
 
