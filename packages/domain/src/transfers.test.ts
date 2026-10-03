@@ -1,0 +1,246 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import { describe, expect, it } from 'vitest';
+import type { Money, UUID } from '@wimm/contracts';
+
+import {
+  confirmReconciliation,
+  deleteTransfer,
+  DomainValidationError,
+  saveTransfer,
+  unlockReconciliation,
+  type AccountAggregate,
+  type AggregateHead,
+  type AggregateHeadReader,
+  type DomainDependencies,
+  type ReconciliationAggregate,
+  type TransactionAggregate,
+  type TransferAggregate
+} from './index.js';
+
+const SPACE = '00000000-0000-4000-8000-000000000001' as UUID;
+const SOURCE_ACCOUNT = '00000000-0000-4000-8000-000000000011' as UUID;
+const TARGET_ACCOUNT = '00000000-0000-4000-8000-000000000012' as UUID;
+const CATEGORY = '00000000-0000-4000-8000-000000000013' as UUID;
+const TRANSFER = '00000000-0000-4000-8000-000000000014' as UUID;
+const SOURCE_TRANSACTION = '00000000-0000-4000-8000-000000000015' as UUID;
+const TARGET_TRANSACTION = '00000000-0000-4000-8000-000000000016' as UUID;
+const RECONCILIATION = '00000000-0000-4000-8000-000000000017' as UUID;
+const NORMAL_TRANSACTION = '00000000-0000-4000-8000-000000000018' as UUID;
+const SPLIT = '00000000-0000-4000-8000-000000000019' as UUID;
+const OPERATION = '00000000-0000-4000-8000-000000000101' as UUID;
+const NOW = '2026-10-03T12:00:00Z';
+
+function dependencies(): DomainDependencies {
+  return { ids: { next: () => OPERATION }, clock: { now: () => NOW } };
+}
+
+function head(id: UUID, revision: number, aggregateType: AggregateHead['aggregateType']): AggregateHead {
+  return { id, revision, aggregateType, spaceId: SPACE };
+}
+
+function reader(...heads: readonly AggregateHead[]): AggregateHeadReader {
+  const entries = new Map(heads.map((item) => [item.id, item]));
+  return { get: (id) => entries.get(id) };
+}
+
+function account(id: UUID, onBudget: boolean): AccountAggregate {
+  return {
+    id,
+    spaceId: SPACE,
+    revision: 1,
+    createdAt: NOW,
+    updatedAt: NOW,
+    aggregateType: 'account',
+    name: 'Konto',
+    type: 'checking',
+    onBudget,
+    archived: false
+  };
+}
+
+function transfer(overrides: Partial<TransferAggregate> = {}): TransferAggregate {
+  return {
+    id: TRANSFER,
+    spaceId: SPACE,
+    revision: 1,
+    createdAt: NOW,
+    updatedAt: NOW,
+    aggregateType: 'transfer',
+    date: '2026-10-03',
+    sourceAccountId: SOURCE_ACCOUNT,
+    targetAccountId: TARGET_ACCOUNT,
+    sourceTransactionId: SOURCE_TRANSACTION,
+    targetTransactionId: TARGET_TRANSACTION,
+    amount: 20_000 as Money,
+    ...overrides
+  };
+}
+
+function transferTransaction(
+  id: UUID,
+  accountId: UUID,
+  amount: Money,
+  overrides: Partial<TransactionAggregate> = {}
+): TransactionAggregate {
+  return {
+    id,
+    spaceId: SPACE,
+    revision: 1,
+    createdAt: NOW,
+    updatedAt: NOW,
+    aggregateType: 'transaction',
+    accountId,
+    date: '2026-10-03',
+    amount,
+    kind: 'transfer',
+    clearance: 'cleared',
+    transferId: TRANSFER,
+    splits: [],
+    ...overrides
+  };
+}
+
+function normalTransaction(clearance: TransactionAggregate['clearance'] = 'cleared'): TransactionAggregate {
+  return {
+    id: NORMAL_TRANSACTION,
+    spaceId: SPACE,
+    revision: clearance === 'reconciled' ? 2 : 1,
+    createdAt: NOW,
+    updatedAt: NOW,
+    aggregateType: 'transaction',
+    accountId: SOURCE_ACCOUNT,
+    date: '2026-10-03',
+    amount: -20_000 as Money,
+    kind: 'normal',
+    clearance,
+    splits: [{ id: SPLIT, categoryId: CATEGORY, amount: -20_000 as Money }]
+  };
+}
+
+function reconciliation(overrides: Partial<ReconciliationAggregate> = {}): ReconciliationAggregate {
+  return {
+    id: RECONCILIATION,
+    spaceId: SPACE,
+    revision: 1,
+    createdAt: NOW,
+    updatedAt: NOW,
+    aggregateType: 'reconciliation',
+    accountId: SOURCE_ACCOUNT,
+    statementDate: '2026-10-03',
+    statementBalance: 50_000 as Money,
+    transactionIds: [NORMAL_TRANSACTION],
+    ...overrides
+  };
+}
+
+function expectDomainError(action: () => unknown, code: DomainValidationError['code']): void {
+  try {
+    action();
+    throw new Error('Es wurde ein Fachfehler erwartet.');
+  } catch (error) {
+    expect(error).toBeInstanceOf(DomainValidationError);
+    expect(error).toMatchObject({ code });
+  }
+}
+
+describe('Umbuchungen und Kontenabgleich', () => {
+  it('speichert beide Transferseiten samt Budgetgrenzkategorie atomar', () => {
+    const result = saveTransfer(
+      {
+        spaceId: SPACE,
+        transfer: transfer({ budgetCategoryId: CATEGORY }),
+        source: transferTransaction(SOURCE_TRANSACTION, SOURCE_ACCOUNT, -20_000 as Money),
+        target: transferTransaction(TARGET_TRANSACTION, TARGET_ACCOUNT, 20_000 as Money),
+        sourceAccount: account(SOURCE_ACCOUNT, true),
+        targetAccount: account(TARGET_ACCOUNT, false)
+      },
+      reader(head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account'), head(CATEGORY, 1, 'category')),
+      dependencies()
+    );
+    expect(result.aggregates).toHaveLength(3);
+    expect(result.aggregates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: TRANSFER }),
+        expect.objectContaining({ id: SOURCE_TRANSACTION, amount: -20_000 }),
+        expect.objectContaining({ id: TARGET_TRANSACTION, amount: 20_000 })
+      ])
+    );
+  });
+
+  it('weist fehlende Budgetgrenzkategorie vollständig ab', () => {
+    expectDomainError(
+      () =>
+        saveTransfer(
+          {
+            spaceId: SPACE,
+            transfer: transfer(),
+            source: transferTransaction(SOURCE_TRANSACTION, SOURCE_ACCOUNT, -20_000 as Money),
+            target: transferTransaction(TARGET_TRANSACTION, TARGET_ACCOUNT, 20_000 as Money),
+            sourceAccount: account(SOURCE_ACCOUNT, true),
+            targetAccount: account(TARGET_ACCOUNT, false)
+          },
+          reader(head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account')),
+          dependencies()
+        ),
+      'INVALID_AGGREGATE'
+    );
+  });
+
+  it('löscht Transfer und Gegenbuchungen gemeinsam', () => {
+    const deleted = deleteTransfer(
+      {
+        spaceId: SPACE,
+        transfer: transfer({ budgetCategoryId: CATEGORY }),
+        source: transferTransaction(SOURCE_TRANSACTION, SOURCE_ACCOUNT, -20_000 as Money),
+        target: transferTransaction(TARGET_TRANSACTION, TARGET_ACCOUNT, 20_000 as Money),
+        sourceAccount: account(SOURCE_ACCOUNT, true),
+        targetAccount: account(TARGET_ACCOUNT, false)
+      },
+      reader(
+        head(TRANSFER, 1, 'transfer'),
+        head(SOURCE_TRANSACTION, 1, 'transaction'),
+        head(TARGET_TRANSACTION, 1, 'transaction'),
+        head(SOURCE_ACCOUNT, 1, 'account'),
+        head(TARGET_ACCOUNT, 1, 'account'),
+        head(CATEGORY, 1, 'category')
+      ),
+      dependencies()
+    );
+    expect(deleted.aggregates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: TRANSFER, deletedAt: NOW, revision: 2 }),
+        expect.objectContaining({ id: SOURCE_TRANSACTION, deletedAt: NOW, revision: 2 }),
+        expect.objectContaining({ id: TARGET_TRANSACTION, deletedAt: NOW, revision: 2 })
+      ])
+    );
+  });
+
+  it('liefert die Auszugsdifferenz ohne Korrekturbuchung und entsperrt atomar', () => {
+    const confirmed = confirmReconciliation(
+      { spaceId: SPACE, reconciliation: reconciliation(), transactions: [normalTransaction()] },
+      reader(head(SOURCE_ACCOUNT, 1, 'account'), head(NORMAL_TRANSACTION, 1, 'transaction')),
+      dependencies()
+    );
+    expect(confirmed.difference).toBe(70_000);
+    expect(confirmed.changeSet.aggregates).toHaveLength(2);
+    expect(confirmed.changeSet.aggregates).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: NORMAL_TRANSACTION, clearance: 'reconciled', revision: 2 })])
+    );
+
+    const unlocked = unlockReconciliation(
+      { spaceId: SPACE, reconciliation: reconciliation(), transactions: [normalTransaction('reconciled')] },
+      reader(
+        head(SOURCE_ACCOUNT, 1, 'account'),
+        head(RECONCILIATION, 1, 'reconciliation'),
+        head(NORMAL_TRANSACTION, 2, 'transaction')
+      ),
+      dependencies()
+    );
+    expect(unlocked.aggregates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: RECONCILIATION, deletedAt: NOW, revision: 2 }),
+        expect.objectContaining({ id: NORMAL_TRANSACTION, clearance: 'cleared', revision: 3 })
+      ])
+    );
+  });
+});

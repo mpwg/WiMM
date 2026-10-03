@@ -55,6 +55,17 @@ export function sumMoney(values: readonly Money[], field = 'Die Geldsumme'): Mon
   return Number(sum) as Money;
 }
 
+/** Subtrahiert Centbeträge exakt und prüft auch den Zwischenwert. */
+export function subtractMoney(
+  left: Money,
+  right: Money,
+  field = 'Die Gelddifferenz'
+): Money {
+  assertMoney(left, 'Der linke Geldbetrag');
+  assertMoney(right, 'Der rechte Geldbetrag');
+  return moneyFromBigInt(BigInt(left) - BigInt(right), field);
+}
+
 /** Multipliziert einen Centbetrag exakt mit einem sicheren ganzzahligen Faktor. */
 export function multiplyMoney(
   amount: Money,

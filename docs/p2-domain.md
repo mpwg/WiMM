@@ -56,15 +56,15 @@ Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie 
 
 ## P2.5 — Umbuchungen und Kontenabgleich
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P2 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach P2 komplett fertig. mach nach jedem zwischenschritt commits“).
 - Voraussetzungen: P2.4 erledigt.
 - Schritte: transfer.save/delete samt Gegenbuchungen und Abgleich confirm/unlock umsetzen; alle beteiligten Revisionen prüfen; Budgetgrenzübertritt mit erforderlicher Kategorie kennzeichnen; Differenzen ohne automatische Korrekturbuchung liefern.
-- Ergebnis: atomare Transfer- und Abgleichsänderungssets.
+- Ergebnis: atomare Transfer- und Abgleichsänderungssets. Eine Umbuchung enthält zwingend beide vollständigen Gegenbuchungen und kann nur als Gesamtvorgang gelöscht werden. Ein Abgleich liefert seine Differenz als Ergebnis, erzeugt aber keine automatische Korrekturbuchung.
 - Verträge: [Transfer und Abgleich](domain.md), Transfer/Reconciliation in [Datenmodell](data-model.md), F03 in [Tests](testing.md).
 - Abnahme: verschiedene Konten, Gegenbeträge und gemeinsames Datum; keine unabhängig änderbaren Transferseiten; Abgleichdifferenz sichtbar; Entsperrung aller betroffenen Buchungen atomar.
 - Prüfungen: F03, Transfererhaltung, Budgetgrenzübertritt, fehlende Revisionen, unpassender Auszugssaldo und Entsperrung.
-- Prüfbelege: noch keine.
+- Prüfbelege: `packages/domain/src/transfers.test.ts` prüft die atomaren Transferseiten samt Budgetgrenzkategorie, die vollständige Transferlöschung sowie Abgleichdifferenz und atomare Entsperrung. Mit Node 26.10.0 und pnpm 12.8.1 bestanden 47 Domänentests und `pnpm check:ci` vollständig einschließlich Typ-, Dokumentations-, Vertrags- und Paketgraphprüfung sowie Web- und Desktop-Build.
 
 ## P2.6 — Projektionen und Gesamt-Abnahme
 

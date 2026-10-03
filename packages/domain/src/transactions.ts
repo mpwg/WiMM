@@ -57,6 +57,12 @@ export function saveTransaction(
       'Abgeglichene Buchungen müssen vor einer Änderung atomar entsperrt werden.'
     );
   }
+  if (transaction.kind === 'transfer') {
+    throw new DomainValidationError(
+      'INVALID_COMMAND',
+      'Umbuchungsseiten dürfen nur zusammen mit ihrer Gegenbuchung geändert werden.'
+    );
+  }
   requireReferences(input, transaction, heads);
   return createChangeSet({ ...input, mutations: [{ aggregate: transaction }] }, heads, dependencies);
 }
@@ -71,6 +77,12 @@ export function deleteTransaction(
     throw new DomainValidationError(
       'INVALID_COMMAND',
       'Abgeglichene Buchungen müssen vor dem Löschen atomar entsperrt werden.'
+    );
+  }
+  if (transaction.kind === 'transfer') {
+    throw new DomainValidationError(
+      'INVALID_COMMAND',
+      'Umbuchungsseiten dürfen nur zusammen mit ihrer Gegenbuchung gelöscht werden.'
     );
   }
   const tombstone = reviseAggregate({ ...transaction, deletedAt: transaction.updatedAt }, dependencies);
