@@ -33,5 +33,6 @@ export type IsoDate = z.infer<typeof isoDateSchema>;
 export type Money = z.infer<typeof moneySchema>;
 export type ProtocolVersion = z.infer<typeof protocolVersionSchema>;
 export type Revision = z.infer<typeof revisionSchema>;
+export type UtcTimestamp = z.infer<typeof utcTimestampSchema>;
 export type UUID = z.infer<typeof uuidSchema>;
 export type YearMonth = z.infer<typeof yearMonthSchema>;

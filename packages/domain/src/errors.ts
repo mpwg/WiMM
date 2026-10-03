@@ -6,7 +6,15 @@ export type DomainErrorCode =
   | 'INVALID_MONEY'
   | 'INVALID_SAFE_INTEGER'
   | 'MONEY_OVERFLOW'
-  | 'INVALID_DIVISOR';
+  | 'INVALID_DIVISOR'
+  | 'INVALID_COMMAND'
+  | 'INVALID_AGGREGATE'
+  | 'DUPLICATE_REFERENCE'
+  | 'REVISION_MISSING'
+  | 'REVISION_CONFLICT'
+  | 'REVISION_OVERFLOW'
+  | 'CROSS_SPACE_REFERENCE'
+  | 'INVALID_GENERATOR';
 
 /** Ein verständlicher Validierungsfehler für einen Fachbefehl ohne Teiländerung. */
 export class DomainValidationError extends Error {

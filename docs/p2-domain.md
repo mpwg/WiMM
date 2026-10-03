@@ -20,15 +20,15 @@ Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie 
 
 ## P2.2 — Fachaggregate und atomare Befehlsverträge
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P2 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach weiter mit P2.2“).
 - Voraussetzungen: P2.1 erledigt.
 - Schritte: P2-Aggregate und vollständige Befehlseingaben typisieren/validieren; Bereichsreferenzen, erwartete Revisionen und Änderungssets definieren; Zeit-/ID-Erzeugung injizieren; Fachschemas von öffentlichen Transporthüllen trennen.
-- Ergebnis: pure Befehlsschnittstelle für vollständige Aggregate und mehrere gemeinsam betroffene Revisionen.
+- Ergebnis: pure Befehlsschnittstelle für vollständige P2-Aggregate und mehrere gemeinsam betroffene Revisionen. Die Schnittstelle erhält IDs und Zeitpunkte injiziert und erzeugt eine unveränderliche Änderungsmenge erst nach vollständiger Validierung.
 - Verträge: [Datenmodell](data-model.md), [clientinterne Fachbefehle](api.md#fachbefehle), [Paketgrenzen](architecture.md).
 - Abnahme: fehlende/veraltete Revisionen und fremde Referenzen ergeben kein Teiländerungsset; contracts importiert nicht domain; Server erhält keine Fachhandler.
 - Prüfungen: gültige/ungültige Befehle, Mehraggregatrevisionen, Determinismus und Paketgraphprüfung.
-- Prüfbelege: noch keine.
+- Prüfbelege: `packages/domain/src/commands.test.ts` prüft gültige deterministische Mehraggregatbefehle sowie fehlende, veraltete und überlaufende Revisionen, bereichsfremde Referenzen, doppelte Referenzen, unvollständige Aggregate, fehlende Teiländerungssets und fehlerhafte ID-/Zeitgeneratoren. Die Prüfung umfasst auch eine veraltete reine Leseabhängigkeit. Mit Node 26.10.0 und pnpm 12.8.1 bestanden die 34 Domänentests, TypeScript, Paketgraph und die vollständige Serie `pnpm check:ci` einschließlich Dokumentations-/Vertrag-/Crypto-/Servertests sowie Web- und Desktop-Build.
 
 ## P2.3 — Konten, Kategorien und Empfänger
 
