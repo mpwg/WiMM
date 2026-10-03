@@ -44,15 +44,15 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P3.4 — IndexedDB-Adapter und Tabkoordination
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P3 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P3.3 erledigt; gemeinsame Suite verfügbar.
 - Schritte: Dexie-Adapter mit denselben Batches und Fachreferenzprüfungen implementieren; Browserpersistenz anfragen; Web Locks/BroadcastChannel für konkurrierende Tabs integrieren; Profile getrennt halten.
 - Ergebnis: dauerhafter Browserspeicher mit koordinierten lokalen Writes.
 - Verträge: [Lokalbetrieb](architecture.md#lokaler-und-verbundener-betrieb), [Datenmodell](data-model.md), S01–S03/S14 in [Tests](testing.md).
 - Abnahme: gleiche Adapterergebnisse wie SQLite; Quota/Persistenzablehnung sichtbar; zwei Tabs verlieren keine Änderungen; ein Führungsmechanismus pro Bereich für spätere Syncläufe vorbereitet.
 - Prüfungen: gemeinsame Suite gegen echte IndexedDB, Tabkonkurrenz und Führungswechsel, Quota-Fehler und Offline-Neustart im Browser.
-- Prüfbelege: noch keine.
+- Prüfbelege: Dexie-Adapter mit profilgebundenen Aggregate-, Bestätigungs-, Entwurfs-, Projektions- und Cursorstores sowie gemeinsamen IndexedDB-Transaktionen ergänzt. Persistenzanfrage, Quota-Fehlerübersetzung und Führung über Web Locks/BroadcastChannel vorbereitet. Zwei Adaptertests mit echter `fake-indexeddb`-Implementierung prüfen Neustart, Revision und Profiltrennung; alle vier Speichertests sowie `pnpm typecheck` bestanden.
 
 ## P3.5 — Lokale Orchestrierung und getrennte Entwürfe
 

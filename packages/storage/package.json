@@ -5,8 +5,15 @@
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "exports": "./src/index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
     "@wimm/contracts": "workspace:*",
-    "@wimm/domain": "workspace:*"
+    "@wimm/domain": "workspace:*",
+    "dexie": "4.2.1"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "6.2.5"
   }
 }
