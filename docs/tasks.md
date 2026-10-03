@@ -2,9 +2,29 @@
 
 ## Auftrag und Statusführung
 
-Aktuelle Freigabe: D0, die Dokumentations-/Agentenergänzung D1 und die Einstiegsergänzung D2 sind abgeschlossen. Der Nutzer hat die Umsetzung von P1 freigegeben. P1 ist erledigt; P2–P11 benötigen weiterhin einen späteren Implementierungsauftrag.
+Aktuelle Freigabe: D0, die Dokumentations-/Agentenergänzung D1 und die Einstiegsergänzung D2 sind abgeschlossen. Der Nutzer hat die Umsetzung von P1 freigegeben. P1 ist erledigt. Der Nutzerauftrag vom 3. Oktober 2026 ergänzt mit D5 die schrittweisen Teilaufgaben für P2–P11; ihre Implementierung benötigt weiterhin einen späteren ausdrücklichen Auftrag.
 
 Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
+
+## Teilaufgaben und Bearbeitungsfolge
+
+Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Eine Freigabe für einen einzelnen Schritt erweitert sich nicht automatisch auf Folgepakete. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. Die nächste Aufgabe nach Freigabe von P2 ist [P2.1](p2-domain.md#p21--exakte-geld--und-kalenderprimitive).
+
+| Paket | Teilaufgaben | Ergebnis der Schrittfolge |
+| --- | --- | --- |
+| P1 | [P1.1–P1.6](p1-foundation.md) | Projektgrundlage; bereits erledigt |
+| P2 | [P2.1–P2.6](p2-domain.md) | Primitive → Aggregate → Stammdaten → Buchungen → Transfer/Abgleich → Projektionen/Abnahme |
+| P3 | [P3.1–P3.6](p3-storage.md) | Speicherverträge → Tresor → SQLite → IndexedDB → Orchestrierung → Offline-Abnahme |
+| P4 | [P4.1–P4.6](p4-ui.md) | Einstieg → Navigation → Buchungen → Transfer/Abgleich → native Integration → UI-Abnahme |
+| P5 | [P5.1–P5.6](p5-import.md) | Parserbasis → CSV → CAMT/OFX/QFX → Übernahme → Regeln → Dauerzahlungen/Abnahme |
+| P6 | [P6.1–P6.6](p6-budget.md) | Methodenhistorie → Plan → Umschläge → Ziele → Berichte → Budgetabnahme |
+| P7 | [P7.1–P7.7](p7-family.md) | Teilnehmer → Anteile → Zahlungen → Reserve → Refunds → Veröffentlichung → Familienabnahme |
+| P8 | [P8.1–P8.7](p8-server.md) | CiphertextStore → OIDC → Kopplung → Identitäten → Grants → Rotation → Zugriffsmatrix |
+| P9 | [P9.1–P9.6](p9-sync.md) | Transport → Push/Pull → Scheduler → Validierung/Konflikte → Onboarding → Mehrgeräteabnahme |
+| P10 | [P10.1–P10.6](p10-backup.md) | Container → Clientrestore → Backups → Serverrestore → Self-Hosting → Betriebsabnahme |
+| P11 | [P11.1–P11.6](p11-release.md) | Anleitungen → Plattformen → Signierung → Quellarchive → unabhängige Prüfung → Releaseübergabe |
+
+P2–P11 enthalten insgesamt 62 offene Teilaufgaben. Bei fehlenden Plattformen oder Signierungsgeheimnissen nur die betroffene Prüfung/Distribution blockieren und unabhängige bereits freigegebene Arbeit fortsetzen; keine Abnahme überspringen oder erledigt behaupten. P11-Abschluss erteilt keine Veröffentlichungsfreigabe.
 
 ## D0 — Dokumentationsübergabe
 
@@ -58,6 +78,19 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 - Prüfbelege: Alle aktiven Arbeitsanweisungen auf DevContainer-, Containerzugriffs- und Hosttransportvorgaben geprüft. Historische Prüfbelege zu P1.2 und P1.3 bleiben unverändert, weil sie vergangene Ausführungsumgebungen beschreiben.
 
 
+## D5 — Schrittweise Teilaufgaben für P2 bis P11
+
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag zur Anlage von Tasks analog zu docs/p1-foundation.md; Dokumentationsarbeit, keine P2–P11-Implementierung.
+- Voraussetzungen: P1 erledigt; bestehende Paket-, Fach-, E2EE- und Abnahmeverträge gelesen.
+- Schritte: P2–P11 in nummerierte, abhängige Teilaufgaben mit Ergebnis/Abnahme/Prüfungen zerlegen; Paketstatus, Index und Einstieg verlinken; Vertragsabdeckung und Reihenfolge prüfen.
+- Ergebnis: zehn Teilpläne mit 62 offenen Aufgaben; nächster Implementierungsschritt P2.1 nach ausdrücklicher Freigabe.
+- Verträge: vorhandene Pakete/Fachquellen unverändert; minimale verschlüsselte Entwurfsexportbasis bereits in P9 für dessen bestehende Abnahme, vollständiger Bereichsexport/Restore in P10; signierte Rotationssnapshotbasis in P8, Wiederverwendung in P9.
+- Abnahme: alle P2–P11-Pakete und Teilaufgaben offen, fortlaufend und verlinkt; Vorbedingungen/Abnahme/Prüfungen je Aufgabe vorhanden; keine neue Produktregel, Appimplementierung oder Veröffentlichung.
+- Prüfungen: bestehender Dokumentationsvalidator für UTF-8/LF, JSON/YAML, relative Links/Anker; Struktur-/Status-/Voraussetzungsprüfung aller Teilaufgaben; manueller Vertrags-/Abnahmekriterienabgleich; Whitespaceprüfung.
+- Prüfbelege: Dokumentationsvalidator und Whitespaceprüfung bestanden. Zehn Teilpläne mit 62 eindeutigen fortlaufenden IDs, jeweils neun vollständigen Aufgabenfeldern, offenen Statuswerten, noch leeren Implementierungsnachweisen und Vorgängervoraussetzungen geprüft; alle P2–P11-Pakete weiterhin offen und verlinkt. Manueller Abgleich mit Fach-/Speicher-/E2EE-/UI-/Betriebsverträgen und F-/S-/C-Abnahmekriterien bestanden. Veralteten Einstieg vor P1 aktualisiert. Zwischencommit `ba05fb5` legt die Teilpläne an; Abschlusscommit integriert Index/Übergabe und präzisiert früh benötigte Snapshot-/Entwurfsexportgrundlagen. Keine Anwendungstests, Builds, Installationen, Infrastruktur, Pushes oder Veröffentlichungen ausgeführt; ausschließlich Dokumentationsarbeit.
+- Nächster Schritt: [P2.1 — Exakte Geld- und Kalenderprimitive](p2-domain.md#p21--exakte-geld--und-kalenderprimitive) nach ausdrücklicher Implementierungsfreigabe übernehmen.
+
 ## P1 — Projektgrundlage
 
 - Status: erledigt (3. Oktober 2026). Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn mit P1.1. Voraussetzung: D0 erledigt.
@@ -73,6 +106,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P2 — Fachkern
 
 - Status: offen. Voraussetzung: P1.
+- Teilaufgaben: [P2.1–P2.6](p2-domain.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: exakte Geld-/Datumsparser; Aggregate/Revisionstypen; Konten/Kategorien/Empfänger; Buchungen/Splits/Opening; Transfers und Kontenabgleich; pure Befehlshandler mit Änderungssets; Projektionen für Salden und Einnahmen/Ausgaben. Reconciled-Lock und Referenzarchivierung berücksichtigen.
 - Ergebnis: plattformfreie Fachlogik ohne Datenbank/React/HTTP, die sämtliche Eingabe- und Summeninvarianten prüft.
 - Verträge: Datenmodell und Befehle account/category/payee/transaction/transfer/reconciliation.
@@ -83,6 +117,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P3 — Speicher und Offlinebasis
 
 - Status: offen. Voraussetzung: P2.
+- Teilaufgaben: [P3.1–P3.6](p3-storage.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Client-Speicheradapter/Rustbatch-Brücke, Transaktionen/Projektionen/Entwürfe; lokaler verschlüsselter UserVault, unabhängige Bereichsschlüssel, Entsperrung/Rettungscode und Schlüsselports; keine persistierten Klartextkeys. Export-Snapshotport verschlüsselt. Service Worker, persistenter Browserstore und Tabkoordination.
 - Ergebnis: dauerhafte lokale Datenhaltung in beiden Clients; vorbereitete Outbox ohne Netzwerkpflicht.
 - Verträge: StorageAdapter, lokale Revisionen, Snapshot-/Outboxzustände; Datenmodellindizes.
@@ -93,6 +128,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P4 — Oberfläche und native App
 
 - Status: offen. Voraussetzung: P3.
+- Teilaufgaben: [P4.1–P4.6](p4-ui.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Composition Root, PlatformServices, Bereichswechsel; Übersicht/Konten/Buchungslisten/Formulare; Splits/Transfer/Abgleich; virtuelle Listen; Touch-/Desktoplayout; Systemschrift/-Farbschema; native Menüs, Dialoge, Kurzbefehle und Systembrowserlinks; leer/Fehler/offline/ausstehend-Zustände.
 - Ergebnis: lokal benutzbares Haushaltsbuch auf Web/PWA und Tauri, noch ohne alle Planungsfunktionen.
 - Verträge: UI-Ansichten, Befehlseingaben, Dateidialog-/Menüports, Bildschirm-/Fokusregeln.
@@ -103,6 +139,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P5 — Import und Automatisierung
 
 - Status: offen. Voraussetzung: P4.
+- Teilaufgaben: [P5.1–P5.6](p5-import.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: etablierte CSV/XML/OFX-Parser auswählen/lizenzprüfen; normalisierte Zwischenform; Mappingvorlagen und Vorschau; Dublettenentscheidungen; gruppierte Übernahme/Wiederaufnahme; Regeln mit Priorität und Stop; Schedule/Fälligkeiten/Bestätigung und Zuordnung importierter Zahlungen.
 - Ergebnis: alltagstauglicher Import ohne Bankanbieter und deterministische wiederkehrende Vorschläge.
 - Verträge: Formate, rule/schedule-Befehle, Quellreferenzen, Importbatchstatus.
@@ -113,6 +150,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P6 — Budget, Ziele und Berichte
 
 - Status: offen. Voraussetzung: P5.
+- Teilaufgaben: [P6.1–P6.6](p6-budget.md) in Reihenfolge; Familienreserve und Veröffentlichung erweitern die Projektionen in P7.
 - Schritte: Budgetmethodenhistorie; Plan/Ist, Umschläge, Vorträge, Zuweisung und Umschichtung; off-budget Transfers; Sparziele/Monatsraten; Dauerzahlungsprognose; Monats-/Kategorie-/Vermögensberichte; Workerprojektion und Detailnavigation.
 - Ergebnis: beide vollständigen Budgetmethoden ohne doppelte Kontoführung oder Vorwegnahme künftiger Einnahmen.
 - Verträge: budget/savingsGoal-Befehle, Monatsprojektionen und Berichtsperspektiven.
@@ -123,6 +161,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P7 — Familienfinanzen lokal
 
 - Status: offen. Voraussetzung: P6.
+- Teilaufgaben: [P7.1–P7.7](p7-family.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Haushalte und fachliche Teilnehmer ohne eigene Anmeldung oder Benutzerkonto; Policies und freiwillige Einkommen; eingefrorene Anteile und Restcent; SharedExpense mit beiden Quellen/Erstattungswegen; Beiträge/Settlements/Eigenanteilsverrechnung; Reserve und kumulative Refunds; Veröffentlichungsvorschau/privater Link; Guthaben-/Ausgleichsberichte und Vorschlagszahlungen.
 - Ergebnis: vollständiger Familienalltag lokal, identische Fachregeln für den späteren verschlüsselten Mehrgerätebetrieb auf Clients.
 - Verträge: participant/allocationPolicy/sharedExpense/contribution/settlement/advanceOffset/expenseRefund; Budgetreserve; private Veröffentlichung.
@@ -133,6 +172,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P8 — Server und Identitäten
 
 - Status: offen. Voraussetzung: P7.
+- Teilaufgaben: [P8.1–P8.7](p8-server.md) in Reihenfolge; vollständige Mehrgeräte-Syncabnahme folgt in P9.
 - Schritte: Server-CiphertextStore und öffentliche Berechtigungsprüfung; externe OIDC-/gleichwertige Identitätsanbindung, Sessions/CSRF und Provider-Rollenzuordnung; keine lokalen Passwörter, Benutzerkonten oder Setupkonten; getrennte Tresorentsperrung; öffentliche Identitäten/Gerätezertifikate, KeyRosters/Grants, Fingerprintprüfung und Geräteaufnahme; pending_key_grant/Bestätigung, Widerruf und Rotation; OS-Keyring, Verwaltungs-API/Health/Meta. Keine Appcodesignatur/Attestierung als Zugriffsvoraussetzung.
 - Ergebnis: abgesicherte Zuordnung externer Identitäten, Geräte und Rollen für mehrere Familien; noch keine vollständige Multi-Client-Syncabnahme.
 - Verträge: API-Verwaltungsendpunkte, Rollenmatrix, Session-/Einladungsregeln.
@@ -143,6 +183,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P9 — Zusammenarbeit und Synchronisierung
 
 - Status: offen. Voraussetzung: P8.
+- Teilaufgaben: [P9.1–P9.6](p9-sync.md) in Reihenfolge; verschlüsselter Entwurfsexport für Rechte-/Epochenfehler bereits hier, vollständige WIMM-Sicherung in P10.
 - Schritte: verschlüsselte signierte Änderungssets/Snapshots, CAS-Handles und Receipts/Changes; Client-Fachvalidierung nach Entschlüsselung; Scheduler/Retry/abhängige Entwürfe/Konflikte; Hash-/Roster-/K-Versionprüfung und Quarantäne; atomare Mitgliedsrotation; getrennte private Veröffentlichungen; verschlüsseltes Onboarding. Keine serverseitigen Finanzfachhandler.
 - Ergebnis: mehrere Geräte arbeiten offline weiter und konvergieren ohne stilles Überschreiben; private und gemeinsame Daten bleiben getrennt.
 - Verträge: Operationsformat, Cursor/Epoche, Konflikt-/Receiptstatus, UPDATE_REQUIRED.
@@ -153,6 +194,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P10 — Sicherung und Betrieb
 
 - Status: offen. Voraussetzung: P9.
+- Teilaufgaben: [P10.1–P10.6](p10-backup.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: verschlüsselter WIMM-/Draftscontainer, clientseitige Validierung/Referenzabbildung, Schlüsselrecovery; verschlüsselte Desktop-/Chiffratserverbackups, Retention/Migration; clientbestätigter Snapshot-/Vollrestore ohne serverseitige Signatur-/Epochenfälschung; Docker/HTTPS/Updates gemäß Betriebsvertrag.
 - Ergebnis: getesteter Schutz gegen Verlust und reproduzierbarer Self-Hosting-Betrieb.
 - Verträge: Exportmanifest, Limits, Restore/Revisions-/Epochenregeln und WIMM-Konfiguration.
@@ -163,6 +205,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 ## P11 — Veröffentlichung
 
 - Status: offen. Voraussetzung: P10 und Abnahme aller vorherigen Pakete.
+- Teilaufgaben: [P11.1–P11.6](p11-release.md) in Reihenfolge; Vorbereitung und tatsächliche Veröffentlichung getrennt nachweisen.
 - Schritte: Nutzer-/Installations-/Backup-/Schlüsselrecoveryanleitungen; Plattformbuilds/native Smokechecks; Paketcodesignierung/Notarisierung für Distribution und signierter Updater, unabhängig vom Clientvertrauen; AGPL-Sourcearchive/Fremdhinweise; C01–C14 und unabhängige Protokoll-/Bindingprüfung vor öffentlichem Sicherheitsrelease.
 - Ergebnis: öffentliche reproduzierbare Distribution pro nachweislich geprüfter Plattform.
 - Verträge: Lizenz, Releaseversion/Commit, Source-URL, signierter Updatekanal, unterstützte Plattformliste.

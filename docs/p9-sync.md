@@ -6,16 +6,16 @@ Diese Teilaufgaben konkretisieren [P9](tasks.md#p9--zusammenarbeit-und-synchroni
 
 Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen; nach jedem abgeschlossenen Abschnitt einen zusammengehörigen Zwischencommit und eine [Übergabe](templates/handoff.md) erstellen. P9 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P10](p10-backup.md). Für die Umsetzung wimm-e2ee, für Konfliktdialoge wimm-ui und bei Fachvalidierung wimm-finance verwenden. S12 wird hier mit einem kontrollierten clientautorisierten Epochwechsel geprüft; der vollständige Betreiberrestore folgt in P10.
 
-## P9.1 — Verschlüsselte Operationen und Snapshots
+## P9.1 — Verschlüsselte Operationen, Snapshots und Entwurfsexport
 
 - Status: offen.
 - Freigabe: Implementierungsauftrag für P9 erforderlich.
 - Voraussetzungen: P8 erledigt; P2-Änderungssets/P3-Entwürfe vorhanden.
-- Schritte: opake Handles auf lokale Aggregate abbilden; öffentliche Header/AAD und Gerätesignatur an Fachbefehl/Änderungsset binden; Snapshotbindung aus P8.6 um Initialisierung/Pullcursor erweitern; Hülle vor erstem Sendversuch dauerhaft fixieren.
-- Ergebnis: interoperable signierte Chiffrate ohne sichtbare Fachfelder.
-- Verträge: [Transportvertrag](encryption.md#verschlüsselter-transportvertrag), [Syncformat](synchronization.md), [API](api.md), [Testvektoren](crypto-test-vectors.md).
-- Abnahme: neue Verschlüsselung frische Nonce; Retries identische Hülle; Domain-Separatoren/Kontexte korrekt; Headerrevisionen und entschlüsselte Aggregate stimmen überein; unbekannte Suites abgewiesen.
-- Prüfungen: C01/C02, feste interoperable Vektoren, Header-/Nonce-/AAD-/Signatur-/Handlemanipulation und Snapshotcursorbindung.
+- Schritte: opake Handles auf lokale Aggregate abbilden; öffentliche Header/AAD und Gerätesignatur an Fachbefehl/Änderungsset binden; Snapshotbindung aus P8.4 um Initialisierung/Pullcursor erweitern; Hülle vor erstem Sendversuch dauerhaft fixieren; verschlüsselte wimm-drafts-Containerbasis mit separater Exportpassphrase über lokale Snapshot-/Dateiports implementieren.
+- Ergebnis: interoperable signierte Chiffrate und sicherbare Originalentwürfe ohne sichtbare Fachfelder.
+- Verträge: [Transportvertrag](encryption.md#verschlüsselter-transportvertrag), [Syncformat](synchronization.md), [Entwurfscontainer](formats.md), [API](api.md), [Testvektoren](crypto-test-vectors.md).
+- Abnahme: neue Verschlüsselung frische Nonce; Retries identische Hülle; Domain-Separatoren/Kontexte korrekt; Headerrevisionen und entschlüsselte Aggregate stimmen überein; unbekannte Suites abgewiesen; Entwürfe nach WIMMENC1-Vertrag verschlüsselt exportierbar, ohne Credentials.
+- Prüfungen: C01/C02, feste interoperable Vektoren, Header-/Nonce-/AAD-/Signatur-/Handlemanipulation und Snapshotcursorbindung; Entwurfsexport mit falscher Passphrase/Manipulation sowie KDF-/Containerlimits.
 - Prüfbelege: noch keine.
 
 ## P9.2 — Server-Push/Pull, CAS und Receipts
@@ -71,7 +71,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 - Status: offen.
 - Freigabe: Implementierungsauftrag für P9 erforderlich.
 - Voraussetzungen: P9.5 erledigt.
-- Schritte: Sync-/Konflikt-/Schlüssel-/Versionszustände anbinden; verschlüsselten Entwurfsexport mit separater Exportpassphrase nach WIMMENC1/wimm-drafts-Vertrag implementieren und über Snapshot-/Dateiports anbieten; drei Clients mit privaten/gemeinsamen Bereichen betreiben; konvergierte Snapshots sowie Serverdump/Transport/Logs prüfen.
+- Schritte: Sync-/Konflikt-/Schlüssel-/Versionszustände und verschlüsselten Entwurfsexport aus P9.1 in UI anbinden; drei Clients mit privaten/gemeinsamen Bereichen betreiben; konvergierte Snapshots sowie Serverdump/Transport/Logs prüfen.
 - Ergebnis: nachgewiesene Zusammenarbeit mit Offlinefortsetzung und expliziten Konflikten.
 - Verträge: [P9](tasks.md#p9--zusammenarbeit-und-synchronisierung), [UI](ui.md), [S-/C-Matrix](testing.md).
 - Abnahme: S04–S15 und C01–C03/C05–C09/C12 bestanden; kanonische Finanzsnapshots und Revisionen nach Wiederverbindung gleich; Entwürfe erhalten/exportierbar; keine Finanzklartexte auf Server/Transport/Logs.

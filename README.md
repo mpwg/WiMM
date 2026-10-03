@@ -20,7 +20,7 @@ Die erste Version richtet sich an Erwachsene im deutschsprachigen Raum, verwende
 
 ## Einstieg für einen implementierenden Agenten
 
-Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [P1-Teilaufgaben](docs/p1-foundation.md) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md).
+Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [Teilaufgabenübersicht P1–P11](docs/tasks.md#teilaufgaben-und-bearbeitungsfolge) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md). P2–P11 sind in 62 offene Aufgaben zerlegt; nach Implementierungsfreigabe ist [P2.1](docs/p2-domain.md#p21--exakte-geld--und-kalenderprimitive) der nächste Schritt.
 
 1. [Arbeitsregeln](AGENTS.md) lesen.
 2. Im [Dokumentationsindex](docs/README.md) die Lesereihenfolge beachten.

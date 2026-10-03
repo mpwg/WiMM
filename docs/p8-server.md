@@ -47,11 +47,11 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 - Status: offen.
 - Freigabe: Implementierungsauftrag für P8 erforderlich.
 - Voraussetzungen: P8.3 erledigt; lokaler P3-Tresor vorhanden.
-- Schritte: öffentliche Identitätsschlüssel mit Besitznachweis registrieren; verschlüsselten Vault per CAS speichern; Geräteaufnahme per entsperrtem Gerät oder separater Recovery und gepinnter Identität umsetzen; Zertifikate/Widerrufe signieren und prüfen.
+- Schritte: öffentliche Identitätsschlüssel mit Besitznachweis registrieren; verschlüsselten Vault per CAS speichern; Geräteaufnahme per entsperrtem Gerät oder separater Recovery und gepinnter Identität umsetzen; Zertifikate/Widerrufe signieren und prüfen; clientseitige Snapshotheader/-hashes samt Verschlüsselungs-/Signaturbindung für initiale Haushaltsanlage und spätere Rotation kapseln.
 - Ergebnis: getrennte Serveranmeldung und kryptografisch bestätigte Geräteberechtigung.
 - Verträge: [Verschlüsselung](encryption.md), [Cryptoendpunkte](api.md), [Krypto-Testvektoren](crypto-test-vectors.md).
 - Abnahme: Zertifikat/Fingerprint/Identität geprüft; Server erhält nur verschlüsselten Vault und öffentliche Keys; kein Schlüsselaustausch allein durch Providerlogin; Appsignatur/Attestierung keine Aufnahmebedingung.
-- Prüfungen: ausgetauschte Identität, falsches Zertifikat, Vault-CAS, Gerätewiderruf, C05/C07/C10/C11 und bestehende Bindingtests.
+- Prüfungen: ausgetauschte Identität, falsches Zertifikat, Vault-CAS, Gerätewiderruf, manipulierte Snapshotheader/-hashes/-signatur, C05/C07/C10/C11 und bestehende Bindingtests.
 - Prüfbelege: noch keine.
 
 ## P8.5 — Mitgliedschaften, Einladungen und KeyGrants
@@ -71,7 +71,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 - Status: offen.
 - Freigabe: Implementierungsauftrag für P8 erforderlich.
 - Voraussetzungen: P8.5 erledigt.
-- Schritte: admin-Client erzeugt neue K-Version, signiertes Roster, aktuellen verschlüsselten Snapshot und Grants für verbleibende Mitglieder; kanonische Snapshotheader/-hashes samt Signaturbindung kapseln, damit P9 sie wiederverwenden kann; Server aktiviert Manifest/Widerruf/Snapshot atomar per CAS; member→viewer und Gerätewiderruf unterscheiden.
+- Schritte: admin-Client erzeugt neue K-Version, signiertes Roster, aktuellen verschlüsselten Snapshot mit der Bindung aus P8.4 und Grants für verbleibende Mitglieder; Server aktiviert Manifest/Widerruf/Snapshot atomar per CAS; member→viewer und Gerätewiderruf unterscheiden.
 - Ergebnis: geprüfter Rotationsvertrag mit unmittelbaren öffentlichen Rechteänderungen.
 - Verträge: [Rotation](encryption.md#entfernen-rollenwechsel-und-rotation), [API](api.md), [Sync-Epochen](synchronization.md#snapshotersatz-und-epochen).
 - Abnahme: neue Daten mit alten Keys nicht entschlüsselbar; keine Teilaktivierung; stale Roster Konflikt; letzter kryptografischer admin bleibt; alte lokale Kopien nicht als fernwiderrufbar bezeichnet.

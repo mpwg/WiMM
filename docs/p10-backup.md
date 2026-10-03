@@ -10,7 +10,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 - Status: offen.
 - Freigabe: Implementierungsauftrag für P10 erforderlich.
-- Voraussetzungen: P9 erledigt; verschlüsselter Entwurfsexport aus P9.6 vorhanden.
+- Voraussetzungen: P9 erledigt; verschlüsselte Containerbasis aus P9.1 und UI-Entwurfsexport aus P9.6 vorhanden.
 - Schritte: vorhandene Containerbasis zum vollständigen WIMM-Export mit etabliertem ZIP-Werkzeug ausbauen; konsistenten sichtbaren Bereichsstand, Manifest, Arrays/Referenzen und SHA-256-Dateiangaben erzeugen; separate Exportpassphrase und Limits durchgehend anwenden.
 - Ergebnis: eigenständig verschlüsselte .wimm-/wimm-drafts-Dateien ohne Credentials oder private Identitäts-/Geräteschlüssel.
 - Verträge: [WIMM-Export](formats.md#wimm-export-v1), [Verschlüsselung](encryption.md), [Datenmodell](data-model.md).
