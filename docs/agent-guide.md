@@ -4,13 +4,13 @@
 
 [AGENTS.md](../AGENTS.md) enthält globale Regeln. [Dokumentationsindex](README.md) führt zur Fachspezifikation; [Aufgaben](tasks.md) enthalten Paketstatus; [Entscheidungen](decisions.md) begründen Defaults. Diese Quellen werden gemeinsam gepflegt. Issues und Skills sind Arbeitsmittel, keine abweichenden Fachspezifikationen.
 
-Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlagen. Mit Nutzerauftrag vom 2. Oktober 2026 sind zusätzlich P1.1 bis P1.3 abgeschlossen; P1.4–P11 bleiben offen. Zwischencommits nach abgeschlossenen Abschnitten benötigen eine ausdrückliche Autorisierung; der laufende Auftrag autorisiert sie. Pushes und Veröffentlichungen bleiben ausgeschlossen.
+Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlagen. Mit Nutzerauftrag vom 2. Oktober 2026 sind zusätzlich P1.1 bis P1.3 abgeschlossen; P1.4–P11 bleiben offen. Nach jedem abgeschlossenen Abschnitt ist ein Zwischencommit mit zusammengehörigen Änderungen verpflichtend. Pushes und Veröffentlichungen bleiben ausgeschlossen.
 
 Für neue Mitwirkende: [kompakter Einstieg](getting-started.md), [P1-Teilaufgaben](p1-foundation.md) und [Referenzhaushalt mit durchgängigem Ablauf](reference-household.md). Die [Klärungsmatrix](getting-started.md#entscheidung-oder-rückfrage) unterscheidet verbindliche Festlegungen, technische Ermittlungen und Nutzerentscheidungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
 
 ## Arbeitsumgebung
 
-Alle Projektarbeiten erfolgen ausschließlich im aktiven VS-Code-DevContainer dieses Repositorys. Dateisuche, Lesen, Bearbeiten, Git-Befehle, Builds, Tests, Linter, Typechecks und sonstige Prüfungen laufen dort. Hostbefehle dürfen nur den Container ansprechen und keine lokale Arbeitskopie bearbeiten. Wenn der Container nicht verfügbar ist, halte vor Änderungen an und fordere den Zugriff an. Die verbindliche Regel steht in [AGENTS.md](../AGENTS.md).
+Alle Projektarbeiten erfolgen in der aktiven Arbeitskopie dieses Repositorys. Dateisuche, Lesen, Bearbeiten, Git-Befehle, Builds, Tests, Linter, Typechecks und sonstige Prüfungen laufen dort. Bearbeite keine andere lokale Kopie oder externe Arbeitsumgebung. Der frühere VS-Code-DevContainer wird nicht mehr verwendet. Die verbindliche Regel steht in [AGENTS.md](../AGENTS.md).
 
 ## Lesematrix nach Aufgabe
 
@@ -55,7 +55,7 @@ Externe Skills sind derzeit nicht erforderlich: Das Projekt hat kein aktives CI,
 
 Projekt wird auf GitHub gehostet, Entwicklung in VS Code. Remoteadresse/Owner nicht erfinden; vor jedem Push echte `git remote`-Konfiguration prüfen. Ein Remote ist eingerichtet, verleiht aber keine Push- oder Veröffentlichungsfreigabe. Templates liegen bereits lokal und funktionieren nach Veröffentlichung; sie veröffentlichen selbst keine Issues/PRs.
 
-Neue Arbeitsbranches heißen `codex/<paket>-<thema>`, z. B. `codex/p3-speicheradapter`. Bestehende Branches nicht ungefragt wechseln; vorhandenen Arbeitsstand erhalten. Bei bestehender ausdrücklicher Autorisierung Zwischenschritte als zusammenhängende Commits, keine mechanisch leeren Commits und keine fremden Dateien.
+Neue Arbeitsbranches heißen `codex/<paket>-<thema>`, z. B. `codex/p3-speicheradapter`. Bestehende Branches nicht ungefragt wechseln; vorhandenen Arbeitsstand erhalten. Nach jedem abgeschlossenen Abschnitt einen zusammenhängenden Zwischencommit erstellen; keine mechanisch leeren Commits und keine fremden Dateien.
 
 Neue Commitnachrichten folgen Conventional Commits mit deutschem Inhalt: `docs(agents): Ergänze projektspezifische Leitfäden`, `feat(budget): Ergänze monatliche Umschlagzuweisung`, `fix(sync): Erhalte Entwürfe bei Schlüsselrotation`, `test(finance): Prüfe Restcent bei Erstattungen`. Vorhandene ältere Commitnachrichten werden nicht umgeschrieben. Scopes möglichst aus domain/crypto/storage/sync/import/ui/server/docs/agents/ci wählen.
 

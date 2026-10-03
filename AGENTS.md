@@ -2,9 +2,8 @@
 
 ## Arbeitsumgebung
 
-- Sämtliche Projektarbeit findet ausschließlich im aktiven VS-Code-DevContainer dieses Repositorys statt. Dateisuche, Lesen, Bearbeiten, Git-Befehle, Installationen, Builds, Tests, Linter, Typechecks und sonstige Prüfungen laufen im Container.
-- Lokale Arbeitskopien werden nicht gelesen oder verändert. Hostbefehle sind nur als Transport zum Container zulässig (zum Beispiel über `docker exec`) und dürfen Projektdateien ausschließlich dort bearbeiten.
-- Ist der DevContainer nicht verfügbar, halte vor Änderungen an und fordere den Containerzugriff an; weiche nicht auf lokale Ausführung aus.
+- Sämtliche Projektarbeit findet in der aktiven Arbeitskopie dieses Repositorys statt. Dateisuche, Lesen, Bearbeiten, Git-Befehle, Installationen, Builds, Tests, Linter, Typechecks und sonstige Prüfungen laufen dort.
+- Bearbeite keine andere lokale Kopie oder externe Arbeitsumgebung. Der frühere VS-Code-DevContainer wird nicht mehr verwendet.
 
 ## Auftrag und Sprache
 
@@ -32,7 +31,7 @@
 - Schließe ein Paket erst ab, wenn seine Abnahmekriterien erfüllt sind. Dokumentiere verbleibende Einschränkungen konkret.
 - Führe risikogerechte Prüfungen gemäß `docs/testing.md` aus. Bestehende Fach-, Adapter- und Zugriffsinvarianten sind verbindlich.
 - Dokumentiere nötige Architekturänderungen in `docs/decisions.md` und passe betroffene Verträge gleichzeitig an. Bei Widersprüchen zwischen verbindlichen Quellen benenne den Widerspruch und korrigiere betroffene Quellen gemeinsam vor abhängiger Implementierung; bei unklarer Produktabsicht rückfragen.
-- Verwende konsistente Task-/ADR-/Übergabevorlagen aus `docs/templates`; GitHub-PR-Vorlage und Editorformatregeln gelten ebenfalls. Nach abgeschlossenen Abschnitten Zwischencommits nur bei bestehender ausdrücklicher Autorisierung; keine ungefragten Pushes/Merges. Neue Commitnachrichten nach Conventional Commits mit deutschem Inhalt.
+- Verwende konsistente Task-/ADR-/Übergabevorlagen aus `docs/templates`; GitHub-PR-Vorlage und Editorformatregeln gelten ebenfalls. Erstelle nach jedem abgeschlossenen Abschnitt einen Zwischencommit mit zusammengehörigen Änderungen; keine fremden Dateien einschließen und keine ungefragten Pushes oder Merges ausführen. Neue Commitnachrichten nach Conventional Commits mit deutschem Inhalt.
 - Übernimm Actual-Code nur nach Herkunfts- und Lizenzprüfung. Halte Herkunftscommit, lokale Änderungen und ursprüngliche Hinweise fest.
 - Projektlizenz ist AGPL-3.0-or-later. Verwende diesen SPDX-Bezeichner für eigene Pakete und Quelldateien; erhalte Fremdlizenzen. Releases und Serveroberflächen müssen den zugehörigen Quellcode anbieten. Keine Umstellung auf MIT.
 - Verwende etablierte Parser und Standards; keine eigene Kryptografie, XML- oder CSV-Parser.

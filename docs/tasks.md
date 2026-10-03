@@ -49,6 +49,14 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 - Verträge: ADR-030; Produkt, Architektur, Sicherheit, API, Betrieb, Datenmodell, Verschlüsselung und Tests.
 - Prüfbelege: Dokumentationskonsistenz sowie lokale Linkziele, Markdownstruktur und Whitespace geprüft; PR dient als Nachweis. Keine Anwendungstests oder Infrastruktur gestartet.
 
+## D4 — Arbeitsumgebung ohne DevContainer
+
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag zur Anpassung der Dokumentation nach Abschaffung des VS-Code-DevContainers.
+- Ergebnis: Die verbindlichen Arbeitsregeln, der Agentenleitfaden, der Copilot-Hinweis und der Workflow-Skill verwenden die aktive Arbeitskopie als Arbeitsumgebung. Andere lokale Kopien und externe Arbeitsumgebungen bleiben ausgeschlossen. Nach jedem abgeschlossenen Abschnitt ist ein Zwischencommit verpflichtend.
+- Verträge: `AGENTS.md`, [Agentenleitfaden](agent-guide.md), `.github/copilot-instructions.md` und [wimm-workflow](../.agents/skills/wimm-workflow/SKILL.md).
+- Prüfbelege: Alle aktiven Arbeitsanweisungen auf DevContainer-, Containerzugriffs- und Hosttransportvorgaben geprüft. Historische Prüfbelege zu P1.2 und P1.3 bleiben unverändert, weil sie vergangene Ausführungsumgebungen beschreiben.
+
 
 ## P1 — Projektgrundlage
 
@@ -164,4 +172,4 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 
 ## Übergabe nach einem Paket
 
-Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen ausführen und nur bei bestehender ausdrücklicher Autorisierung einen Zwischencommit erstellen. Der Commit enthält zusammengehörige Änderungen und keine fremden/unverwandten Dateien. Für den nächsten Agenten verbleibende Einschränkungen und erstes nächstes Paket nennen. Keine automatische Veröffentlichung durch Abschluss von P11 ohne entsprechenden Auftrag.
+Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen ausführen und nach jedem abgeschlossenen Abschnitt einen Zwischencommit erstellen. Der Commit enthält zusammengehörige Änderungen und keine fremden/unverwandten Dateien. Für den nächsten Agenten verbleibende Einschränkungen und erstes nächstes Paket nennen. Keine automatische Veröffentlichung durch Abschluss von P11 ohne entsprechenden Auftrag.

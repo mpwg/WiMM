@@ -57,4 +57,4 @@ Umfangreiche Builds, E2E-Tests und Plattformsmokechecks werden nicht bei jedem C
 
 ### Agentenspezifische Automatik
 
-Agenten verwenden dieselben Projektprüfungen wie menschliche Mitwirkende. Laufzeitspezifische Hooks erst bei einem konkreten Bedarf und nach Prüfung der unterstützten Umgebung ergänzen. Keine automatische Commit-, Push-, Veröffentlichungs- oder Taskabschlussfunktion; Hookerfolg entscheidet nicht über fachliche Abnahme oder Autorisierung. Auch spätere Automatik erhält die zentrale Spezifikation und ersetzt sie nicht durch pro Agent kopierte Regeln.
+Agenten verwenden dieselben Projektprüfungen wie menschliche Mitwirkende. Laufzeitspezifische Hooks erst bei einem konkreten Bedarf und nach Prüfung der unterstützten Umgebung ergänzen. Hooks erstellen keine Commits, Pushes, Veröffentlichungen oder Taskabschlüsse automatisch; nach jedem abgeschlossenen Abschnitt ist der verpflichtende Zwischencommit gemäß [AGENTS.md](../AGENTS.md) manuell zu erstellen. Hookerfolg entscheidet nicht über fachliche Abnahme. Auch spätere Automatik erhält die zentrale Spezifikation und ersetzt sie nicht durch pro Agent kopierte Regeln.

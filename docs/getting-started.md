@@ -34,8 +34,9 @@ Finanzbefehle in der API-Dokumentation sind clientinterne Verträge, keine Klart
 | Widerspruch zwischen verbindlichen Quellen | Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen |
 | Änderung von Produktumfang, Fachregeln oder Vertrauensmodell | Konkrete Änderung und Folgen vorlegen, Nutzerentscheidung einholen und ADR sowie Verträge gemeinsam aktualisieren |
 | Fehlende Plattform oder Signierungsgeheimnisse | Tatsächlich mögliche Arbeit fortsetzen; nur betroffene Prüfung/Distribution als ausstehend ausweisen |
-| Commit, Push oder Veröffentlichung | Bestehende ausdrückliche Autorisierung prüfen; ein Paketabschluss allein erteilt keine Freigabe |
+| Zwischencommit | Nach jedem abgeschlossenen Abschnitt mit zusammengehörigen Änderungen erstellen; keine fremden Dateien einschließen |
+| Push oder Veröffentlichung | Bestehende ausdrückliche Autorisierung prüfen; ein Paketabschluss allein erteilt keine Freigabe |
 
 ## Abschluss und Übergabe
 
-Ein Arbeitsschritt ist abgeschlossen, wenn sein Ergebnis überprüfbar vorliegt, relevante Verträge konsistent sind und die Abnahme nachgewiesen ist. In [tasks.md](tasks.md) Ergebnis, ausgeführte Prüfungen, Plattform und Einschränkungen eintragen. Für die Übergabe die [vorhandene Vorlage](templates/handoff.md) verwenden und den nächsten konkreten freigegebenen Schritt nennen. Zwischencommits nur bei bestehender ausdrücklicher Autorisierung; niemals fremde Änderungen einschließen. Dieser Dokumentationsauftrag autorisiert keine Commits, Pushes oder Veröffentlichungen.
+Ein Arbeitsschritt ist abgeschlossen, wenn sein Ergebnis überprüfbar vorliegt, relevante Verträge konsistent sind und die Abnahme nachgewiesen ist. In [tasks.md](tasks.md) Ergebnis, ausgeführte Prüfungen, Plattform und Einschränkungen eintragen. Für die Übergabe die [vorhandene Vorlage](templates/handoff.md) verwenden und den nächsten konkreten freigegebenen Schritt nennen. Nach jedem abgeschlossenen Abschnitt einen Zwischencommit mit zusammengehörigen Änderungen erstellen und niemals fremde Änderungen einschließen. Pushes und Veröffentlichungen benötigen weiterhin eine ausdrückliche Autorisierung.
