@@ -56,7 +56,7 @@ export interface AggregateMetadata {
  */
 export type P2Aggregate<
   TType extends P2AggregateType = P2AggregateType,
-  TFields extends object = Record<string, never>
+  TFields extends object = object
 > = AggregateMetadata &
   TFields & {
     readonly aggregateType: TType;
@@ -137,6 +137,33 @@ export function createAggregateMetadata(
     createdAt: now,
     updatedAt: now
   });
+}
+
+/** Erhöht ein vollständiges Aggregat mit einem injizierten UTC-Zeitpunkt um genau eine Revision. */
+export function reviseAggregate<TAggregate extends P2Aggregate>(
+  aggregate: TAggregate,
+  dependencies: DomainDependencies
+): TAggregate {
+  assertAggregate(aggregate);
+  if (aggregate.revision === Number.MAX_SAFE_INTEGER) {
+    throw new DomainValidationError(
+      'REVISION_OVERFLOW',
+      'Die Aggregatrevision kann nicht mehr sicher erhöht werden.'
+    );
+  }
+  const updatedAt = generatedTime(dependencies, 'Der erzeugte Änderungszeitpunkt');
+  if (updatedAt < aggregate.createdAt) {
+    throw new DomainValidationError(
+      'INVALID_GENERATOR',
+      'Der erzeugte Änderungszeitpunkt liegt vor dem Erstellungszeitpunkt.'
+    );
+  }
+
+  return Object.freeze({
+    ...aggregate,
+    revision: (aggregate.revision + 1) as Revision,
+    updatedAt
+  }) as TAggregate;
 }
 
 /**

@@ -8,7 +8,7 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 
 ## Teilaufgaben und Bearbeitungsfolge
 
-Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Eine Freigabe für einen einzelnen Schritt erweitert sich nicht automatisch auf Folgepakete. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. P2.1 und P2.2 sind erledigt; der nächste Schritt ist [P2.3](p2-domain.md#p23--konten-kategorien-und-empfänger) nach ausdrücklicher Freigabe.
+Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Eine Freigabe für einen einzelnen Schritt erweitert sich nicht automatisch auf Folgepakete. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. P2.1 bis P2.3 sind erledigt; der nächste Schritt ist [P2.4](p2-domain.md#p24--buchungen-splits-und-anfangsbestand) nach ausdrücklicher Freigabe.
 
 | Paket | Teilaufgaben | Ergebnis der Schrittfolge |
 | --- | --- | --- |
@@ -106,14 +106,14 @@ P2–P11 enthalten insgesamt 62 offene Teilaufgaben. Bei fehlenden Plattformen o
 ## P2 — Fachkern
 
 - Status: in Arbeit. Voraussetzung: P1.
-- Fortschritt: P2.1 und P2.2 sind erledigt; P2.3 bis P2.6 sind offen und benötigen jeweils eine ausdrückliche Implementierungsfreigabe.
+- Fortschritt: P2.1 bis P2.3 sind erledigt; P2.4 bis P2.6 sind offen und benötigen jeweils eine ausdrückliche Implementierungsfreigabe.
 - Teilaufgaben: [P2.1–P2.6](p2-domain.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: exakte Geld-/Datumsparser; Aggregate/Revisionstypen; Konten/Kategorien/Empfänger; Buchungen/Splits/Opening; Transfers und Kontenabgleich; pure Befehlshandler mit Änderungssets; Projektionen für Salden und Einnahmen/Ausgaben. Reconciled-Lock und Referenzarchivierung berücksichtigen.
 - Ergebnis: plattformfreie Fachlogik ohne Datenbank/React/HTTP, die sämtliche Eingabe- und Summeninvarianten prüft.
 - Verträge: Datenmodell und Befehle account/category/payee/transaction/transfer/reconciliation.
 - Abnahme: Referenzfälle F01–F03 und Geld-/Datums-/Abgleichfehlfälle bestehen; Updates ohne alle erwarteten Revisionen abgewiesen; keine Teiländerungssets.
 - Prüfungen: deterministische Vitest-Fachtests sowie Eigenschaften für Summen, Transfererhaltung und Ganzzahlüberlauf.
-- Prüfbelege: P2.1: Dezimalgeld-, sichere Summen-/Zwischenwert- und Kalenderprimitive im plattformfreien Paket `@wimm/domain` umgesetzt. 26 neue Fachtests sowie die vier vorhandenen Vitest-Suiten mit insgesamt 39 Tests bestanden; TypeScript, Paketgraph und positive/negative Dokumentationsprüfung bestanden. Nach Aktualisierung auf Node 26.10.0 und pnpm 12.8.1 bestanden außerdem die gesperrte Installation und `pnpm check:ci`. P2.2: vollständige Aggregate, Revisionskopfstände, atomare Änderungsmengen und injizierte ID-/Zeitgeber ergänzt; die Fachtests decken Mehraggregat- und Fehlpfade ab. Die Details stehen bei [P2.1](p2-domain.md#p21--exakte-geld--und-kalenderprimitive) und [P2.2](p2-domain.md#p22--fachaggregate-und-atomare-befehlsverträge). P2-Gesamtprüfung folgt erst nach P2.6.
+- Prüfbelege: P2.1: Dezimalgeld-, sichere Summen-/Zwischenwert- und Kalenderprimitive im plattformfreien Paket `@wimm/domain` umgesetzt. 26 neue Fachtests sowie die vier vorhandenen Vitest-Suiten mit insgesamt 39 Tests bestanden; TypeScript, Paketgraph und positive/negative Dokumentationsprüfung bestanden. Nach Aktualisierung auf Node 26.10.0 und pnpm 12.8.1 bestanden außerdem die gesperrte Installation und `pnpm check:ci`. P2.2: vollständige Aggregate, Revisionskopfstände, atomare Änderungsmengen und injizierte ID-/Zeitgeber ergänzt; die Fachtests decken Mehraggregat- und Fehlpfade ab. P2.3: Konten, Kategorien und Empfänger einschließlich atomarer Empfänger-Merges ergänzt. Die Details stehen bei [P2.1](p2-domain.md#p21--exakte-geld--und-kalenderprimitive), [P2.2](p2-domain.md#p22--fachaggregate-und-atomare-befehlsverträge) und [P2.3](p2-domain.md#p23--konten-kategorien-und-empfänger). P2-Gesamtprüfung folgt erst nach P2.6.
 
 ## P3 — Speicher und Offlinebasis
 

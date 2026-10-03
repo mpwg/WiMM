@@ -32,15 +32,15 @@ Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie 
 
 ## P2.3 — Konten, Kategorien und Empfänger
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P2 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach weiter“).
 - Voraussetzungen: P2.2 erledigt.
 - Schritte: Konto-/Kategoriegruppen-/Kategorie-/Empfängerbefehle umsetzen; Systemkategorie unzugeordnet anlegen; Referenzarchivierung und Empfängerzusammenführung als vollständiges Änderungsset behandeln.
-- Ergebnis: konsistente Stammdaten ohne gespeicherte mutable Kontosalden.
+- Ergebnis: vollständige, validierte Stammdatenbefehle für Konten, Kategoriegruppen, Kategorien und Empfänger ohne gespeicherte mutable Kontosalden. Empfänger-Merges archivieren Quellen und aktualisieren alle übergebenen Transaktionsreferenzen in einer Änderungsmenge.
 - Verträge: [Stammdaten](data-model.md), [Konten und Löschung](domain.md), account/category/payee-Befehle in [API](api.md).
 - Abnahme: Kreditkonten bleiben off-budget; Systemkategorie nicht löschbar; referenzierte Daten archiviert; Merge prüft und ändert alle betroffenen Referenzen atomar.
 - Prüfungen: Kontenarten, archivierte/fremde Referenzen, Systemschutz und Merge mit veralteter Buchungsrevision.
-- Prüfbelege: noch keine.
+- Prüfbelege: `packages/domain/src/master-data.test.ts` prüft Kontonormalisierung ohne Saldo, Kreditkonten außerhalb des Budgets, vollständige Archivierung, Kategoriegruppenrevisionen, die geschützte Systemkategorie, Aliasnormalisierung sowie erfolgreiche und veraltete beziehungsweise bereichsfremde Empfänger-Merges. Mit Node 26.10.0 und pnpm 12.8.1 bestanden die 40 Domänentests und die vollständige Serie `pnpm check:ci` einschließlich Dokumentations-/Vertrag-/Crypto-/Servertests sowie Web- und Desktop-Build.
 
 ## P2.4 — Buchungen, Splits und Anfangsbestand
 
