@@ -8,15 +8,15 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P4 erforderlich.
+- Status: erledigt (3. Oktober 2026).
+- Freigabe: Nutzerauftrag zum vollständigen Abschluss von P4.
 - Voraussetzungen: P3 erledigt.
 - Schritte: gemeinsame Clientdienste und PlatformServices in Web/Desktop injizieren; lokalen Profil-/Bereichseinstieg, Tresorentsperrung und Rettungscodesicherung anbinden; Routing und flüchtigen UI-Zustand von Fachdaten trennen.
 - Ergebnis: lokal startfähige App mit explizitem aktivem Bereich und injizierten Plattformdiensten.
 - Verträge: [Architektur](architecture.md), [Produktabläufe](product.md), [Schlüsselbedienung](ui.md#schlüsselbedienung).
 - Abnahme: Standalone ohne Anmeldung/Serverkonfiguration nutzbar; gesperrter Tresor zeigt keine Finanzansicht; Bereichswechsel übernimmt keine privaten Daten in andere Bereiche.
 - Prüfungen: lokale Erstnutzung, Entsperren/Sperren und Offline-Neustart auf beiden Clients; Dienst-/Bereichswechsel mit synthetischen Profilen.
-- Prüfbelege: noch keine.
+- Prüfbelege: `packages/ui` stellt für Web und Desktop denselben Composition Root mit injiziertem Profilport bereit. Ein neuer Tresor wird mit einer lokalen Passphrase angelegt; der Rettungscode wird ausschließlich einmalig angezeigt und muss vor dem lokalen Start bestätigt werden. PWA und Desktop persistieren nur die verschlüsselte Tresorhülle und Bereichsmetadaten im jeweiligen lokalen Profil; Entsperrpassphrase, Rettungscode und entschlüsselte Schlüssel bleiben flüchtig. `lockUserVault` entfernt geladene private Schlüssel und zeigt wieder nur den Sperrbildschirm. Zwei UI-Unit-Tests prüfen profilgebundene Bereichswahl und defensive Profilkopien. Mit Node 26.10.0 und pnpm 12.8.1 bestanden TypeScript, UI-Tests sowie Web- und Desktop-Frontend-Build. Eine interaktive Browser-/native Erstnutzung bleibt Teil der P4.6-Abnahme und wird dort getrennt belegt.
 
 ## P4.2 — Navigation, Übersicht und Stammdaten
 

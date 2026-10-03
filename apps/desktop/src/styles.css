@@ -11,7 +11,9 @@ body {
   margin: 0;
 }
 
-main {
+.auth,
+.workspace,
+.startup {
   margin: 0 auto;
   max-width: 42rem;
   padding: 4rem 1.5rem;
@@ -32,3 +34,12 @@ h1 {
 a {
   color: #0066cc;
 }
+
+form { display: grid; gap: 1rem; margin-top: 1.5rem; }
+label { display: grid; font-weight: 600; gap: 0.35rem; }
+input, button { font: inherit; min-height: 2.25rem; }
+input[type='checkbox'] { min-height: auto; width: 1.2rem; }
+button { background: #0066cc; border: 0; border-radius: 0.35rem; color: white; cursor: pointer; font-weight: 700; padding: 0 1rem; }
+button:disabled { cursor: wait; opacity: 0.65; }
+.recovery-code { background: #fff; border: 1px solid #86868b; display: block; font-family: ui-monospace, monospace; overflow-wrap: anywhere; padding: 1rem; }
+.workspace nav { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
