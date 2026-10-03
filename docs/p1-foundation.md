@@ -42,7 +42,7 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 
 ## P1.4 — Crypto-Binding und Testgrundlage
 
-- Status: offen.
+- Status: erledigt (3. Oktober 2026).
 - Freigabe: Implementierungsauftrag für P1.
 - Voraussetzungen: P1.3 erledigt.
 - Schritte: gewähltes libsodium-Binding und RFC-8785-Bibliothek kapseln; dokumentierte Primitive und Kontexte anbinden; feste synthetische Testvektoren mit Herkunft, Eingabebytes und erwarteten Ausgabebytes anlegen.
@@ -50,7 +50,7 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 - Verträge: [Verschlüsselung](encryption.md); reine Rechenbeispiele aus dem Referenzhaushalt sind keine Crypto-Testvektoren.
 - Abnahme: Bibliotheksinitialisierung funktioniert in Web- und Desktoplaufzeit; kanonische Bytes, Verschlüsselung/Entschlüsselung und Signaturen stimmen mit festen Vektoren überein; Manipulation von Chiffrat, AAD und Signatur wird erkannt. Fixierte Nonces ausschließlich in isolierten Tests, frische Nonces bei neuer produktiver Verschlüsselung.
 - Prüfungen: Bindingsmokechecks, Vektor- und Manipulationstests als Grundlage für C01/C02; kein behauptetes Bestehen der vollständigen C01–C14 oder unabhängiges Audit.
-- Prüfbelege: noch keine.
+- Prüfbelege: `@wimm/crypto` kapselt `libsodium-wrappers-sumo` 0.8.4 und `canonicalize` 5.1.0. Die produktive XChaCha20-Poly1305-Funktion erzeugt die Nonce ausschließlich mit `randombytes_buf`; feste Nonces kommen nur in den synthetischen Vektortests vor. Sieben Crypto-Tests prüfen WASM-Initialisierung, RFC-8785-Bytes, AEAD-Ver- und Entschlüsselung, Chiffrat-/AAD-Manipulation, frische Nonces sowie Ed25519-Signatur-/Manipulation. Zusätzlich bestanden die vier Vertragstests, TypeScript und der Paketgraph. Der Binding-Smokecheck lief mit Node 24.21.0; die Web- und Tauri-Hüllen existieren noch nicht und prüfen dieselbe Initialisierung in P1.5 erneut.
 
 ## P1.5 — Minimale Apphüllen
 

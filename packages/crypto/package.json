@@ -4,7 +4,12 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
   "dependencies": {
-    "@wimm/contracts": "workspace:*"
+    "@wimm/contracts": "workspace:*",
+    "canonicalize": "5.1.0",
+    "libsodium-wrappers-sumo": "0.8.4"
   }
 }

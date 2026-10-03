@@ -13,6 +13,7 @@
   "scripts": {
     "check:package-graph": "node scripts/check-package-graph.mjs",
     "test:contracts": "pnpm --filter @wimm/contracts test",
+    "test:crypto": "pnpm --filter @wimm/crypto test",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "devDependencies": {

@@ -15,7 +15,7 @@ Für den ersten Überblick: [Einstieg](getting-started.md). Für den laufenden I
 | 3 | [Datenmodell](data-model.md) | Entitäten, Beziehungen, Aggregate und Indizes |
 | 4 | [Architektur](architecture.md), [Entscheidungen](decisions.md) | Komponenten, Grenzen und verbindliche Defaults |
 | 5 | [Synchronisierung](synchronization.md), [API](api.md) | Operationen, Revisionen, Identitäten und Fehler |
-| 5a | [Ende-zu-Ende-Verschlüsselung](encryption.md) | Pflichtschutz, Geräte-/Familienschlüssel, Rotation und Recovery |
+| 5a | [Ende-zu-Ende-Verschlüsselung](encryption.md), [Krypto-Testvektoren](crypto-test-vectors.md) | Pflichtschutz, Geräte-/Familienschlüssel, Rotation, Recovery und feste Binding-Vektoren |
 | 6 | [Dateiformate](formats.md) | Import, Dubletten und vollständiger Export |
 | 7 | [Oberfläche](ui.md), [Sicherheit](security.md) | Plattformbedienung, private Daten und Sitzungen |
 | 8 | [Betrieb](operations.md), [Tests](testing.md) | Installation, Sicherung, Migration und Abnahme |

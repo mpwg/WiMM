@@ -57,6 +57,8 @@ Eine `EncryptedOperation` besitzt öffentlichen Header: protocolVersion, operati
 
 Header wird als standardisiertes kanonisches JSON (RFC 8785 über etablierte Bibliothek) zusammen mit Protokoll-Domain-Separator als AEAD-AAD verwendet. Gerätesignatur bindet Domain-Separator, Header, Nonce und Chiffrat. Separate Domain-Separatoren für Operation, Snapshot, Grant, Zertifikat und Roster verhindern Protokollverwechslung. Schlüsselkontext, Epoche, Empfänger und Manifesthash werden auch in den jeweiligen geschützten Inhalten geprüft. Bytes base64url ohne Padding; unbekannte Suite ablehnen.
 
+Die Domain-Separatoren sind UTF-8-Bytes der festen Werte `wimm/v1/operation`, `wimm/v1/snapshot`, `wimm/v1/grant`, `wimm/v1/certificate` und `wimm/v1/roster`. `packages/crypto` liefert diese Werte, die Kanonisierung sowie die libsodium-Primitiven; die spätere Transportimplementierung bindet sie ausschließlich an die im Vertrag genannten Header, Nonces und Chiffrate.
+
 Server prüft Header, Sitzung, bekannte Zertifikate/signiertes Manifest, Größen, Receipt, CAS-Revisionen und Signatur. Er kann weder Fachpayload lesen noch Geld-/Referenzinvarianten berechnen. Empfänger prüfen Manifestkette, Signatur, AAD, AEAD, Änderungs-/Hashkette, Payloadschema, deklarierte Handles und Fachinvarianten. Ungültige Inhalte werden quarantänisiert und nicht als bestätigte Fachdaten angewandt; Cursor darf nicht still daran vorbeirücken. Reparatur benötigt ausdrücklich bestätigten vertrauenswürdigen Snapshot/Entwurf. Ein böswilliger berechtigter Schreiber kann Verfügbarkeit beeinträchtigen.
 
 ## Snapshot, Wiederherstellung und Exporte
