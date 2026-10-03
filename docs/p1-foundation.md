@@ -19,14 +19,14 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 ## P1.2 — Workspace und Paketgraph
 
 - Status: erledigt (2. Oktober 2026).
-- Freigabe: Nutzerauftrag vom 2. Oktober 2026, ergänzt um OrbStack-/VS-Code-Integration.
+- Freigabe: Nutzerauftrag vom 2. Oktober 2026.
 - Voraussetzungen: P1.1 erledigt.
 - Schritte: pnpm-Workspace mit den Architekturpaketen und Appverzeichnissen anlegen; Versionen/Lockfile sperren, TypeScript strict/ESM und AGPL-Metadaten konfigurieren; erlaubte Importgrenzen automatisch prüfbar machen.
 - Ergebnis: installierbare Paketstruktur mit minimalen Modulen; noch keine Finanzfunktionen.
 - Verträge: Paketgraph der Architektur; domain bleibt plattformfrei, contracts importiert nicht domain, Server erhält keine Finanzfachlogik.
 - Abnahme: Installation mit unverändertem Lockfile und Typprüfung funktionieren; Grenze zwischen öffentlichen Serververträgen und clientseitigen Fachverträgen ist explizit.
 - Prüfungen: frischer Checkout, Typprüfung und Paketgraphprüfung; absichtlich verbotenen Import in temporärem Prüfstand als negativen Kontrollfall erkennen und anschließend entfernen.
-- Prüfbelege: pnpm-Workspace mit zehn Architekturpaketen/-apps, striktem TypeScript/ESM und AGPL-Metadaten angelegt. `pnpm-lock.yaml` mit pnpm 12.8.1 erstellt und unverändert im OrbStack-Dev-Container installiert. Dort Node 24.21.0, pnpm 12.8.1, Rust/Cargo 1.98.1, `pnpm typecheck` und `pnpm check:package-graph` erfolgreich. Temporärer verbotener Import `@wimm/contracts` → `@wimm/domain` wurde erwartungsgemäß abgewiesen und danach entfernt. Docker-Kontext auf OrbStack gesetzt. Die installierte VS-Code-Dev-Containers-Erweiterung 0.469.0 hat die Konfiguration gelesen sowie den Container mit `outcome: success` und erfolgreichem `postCreateCommand` gestartet. Keine App, Finanzfunktion, Server-API oder Tauri-App gestartet.
+- Prüfbelege: pnpm-Workspace mit zehn Architekturpaketen/-apps, striktem TypeScript/ESM und AGPL-Metadaten angelegt. `pnpm-lock.yaml` mit pnpm 12.8.1 erstellt und unverändert im damaligen OrbStack-Dev-Container installiert. Dort Node 24.21.0, pnpm 12.8.1, Rust/Cargo 1.98.1, `pnpm typecheck` und `pnpm check:package-graph` erfolgreich. Temporärer verbotener Import `@wimm/contracts` → `@wimm/domain` wurde erwartungsgemäß abgewiesen und danach entfernt. Die Containerkonfiguration wurde damals erfolgreich gestartet; die Umgebung ist inzwischen entfernt. Keine App, Finanzfunktion, Server-API oder Tauri-App gestartet.
 
 ## P1.3 — Gemeinsame Verträge und Ports
 
@@ -38,7 +38,7 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 - Verträge: [Datenmodell](data-model.md), [API](api.md), Architektur und E2EE; vollständige Fachhandler entstehen in P2.
 - Abnahme: bekannte gültige Eingaben akzeptiert, unsichere Zahlen und unbekannte Versionen abgewiesen; öffentliche Hüllen deklarieren keine Finanzklartextfelder; Apps können Ports ohne Plattformabhängigkeit im Fachkern referenzieren.
 - Prüfungen: gezielte positive/negative Schematests und Typ-/Importgrenzenprüfung; neue Vertragsschemas mit den Dokumenten abgleichen.
-- Prüfbelege: `@wimm/contracts` enthält Zod-Schemas für gemeinsame Primitive, Fehler, öffentliche `EncryptedOperation`- und signierte `KeyRoster`-Hüllen sowie typisierte `StorageAdapter`-/`PlatformServices`-Ports. Die Hüllen sind strikt und enthalten keinen Finanzpayload. Im OrbStack-Dev-Container bestanden `pnpm test:contracts` mit vier gezielten Positiv-/Negativfällen (gültige Hüllen, unsichere Zahlen, unbekannte Protokollversion, Finanzklartext, Revisions- und Rosterfolgefehler), `pnpm typecheck` und `pnpm check:package-graph`. Ein temporärer verbotener Import `@wimm/contracts` → `@wimm/domain` wurde abgewiesen und danach entfernt. Keine Crypto-Bindung, Verschlüsselung, Speicher-, Sync- oder Appimplementierung ausgeführt.
+- Prüfbelege: `@wimm/contracts` enthält Zod-Schemas für gemeinsame Primitive, Fehler, öffentliche `EncryptedOperation`- und signierte `KeyRoster`-Hüllen sowie typisierte `StorageAdapter`-/`PlatformServices`-Ports. Die Hüllen sind strikt und enthalten keinen Finanzpayload. Im damaligen OrbStack-Dev-Container bestanden `pnpm test:contracts` mit vier gezielten Positiv-/Negativfällen (gültige Hüllen, unsichere Zahlen, unbekannte Protokollversion, Finanzklartext, Revisions- und Rosterfolgefehler), `pnpm typecheck` und `pnpm check:package-graph`. Ein temporärer verbotener Import `@wimm/contracts` → `@wimm/domain` wurde abgewiesen und danach entfernt. Die Containerumgebung ist inzwischen entfernt. Keine Crypto-Bindung, Verschlüsselung, Speicher-, Sync- oder Appimplementierung ausgeführt.
 
 ## P1.4 — Crypto-Binding und Testgrundlage
 
