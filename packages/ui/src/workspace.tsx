@@ -7,6 +7,7 @@ import {
   projectAccountBalances,
   parseMoney,
   subtractMoney,
+  saveTransfer,
   saveTransaction,
   saveAccount,
   saveCategory,
@@ -20,6 +21,7 @@ import {
   type PayeeAggregate,
   type P2Aggregate,
   type TransactionAggregate
+  , type TransferAggregate
 } from '@wimm/domain';
 import { IndexedDbStorageAdapter, LocalAreaService, type StoredAggregate } from '@wimm/storage';
 
@@ -112,6 +114,15 @@ class FinanceModel {
     };
     const expected = [{ id: aggregate.id, expectedRevision: 0 }, { id: input.accountId, expectedRevision: this.heads.get(input.accountId)!.revision }, ...[...new Set(splits.map((split) => split.categoryId))].map((id) => ({ id, expectedRevision: this.heads.get(id)!.revision })), ...(input.payeeId === undefined ? [] : [{ id: input.payeeId, expectedRevision: this.heads.get(input.payeeId)!.revision }])];
     await this.execute(saveTransaction({ commandType: 'transaction.save', spaceId: this.spaceId, expectedRevisions: expected, mutations: [{ aggregate }] }, this, this.dependencies));
+  }
+  async addTransfer(sourceAccountId: UUID, targetAccountId: UUID, value: string, date: string) {
+    const amount = parseMoney(value, 'Der Umbuchungsbetrag');
+    const sourceAccount = this.accounts.find((account) => account.id === sourceAccountId); const targetAccount = this.accounts.find((account) => account.id === targetAccountId);
+    if (sourceAccount === undefined || targetAccount === undefined) throw new TypeError('Quell- und Zielkonto müssen ausgewählt werden.');
+    const transfer: TransferAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), aggregateType: 'transfer', date: date as never, sourceAccountId, targetAccountId, sourceTransactionId: this.dependencies.ids.next(), targetTransactionId: this.dependencies.ids.next(), amount };
+    const source: TransactionAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), id: transfer.sourceTransactionId, aggregateType: 'transaction', accountId: sourceAccountId, date: transfer.date, amount: subtractMoney(0 as never, amount), kind: 'transfer', clearance: 'uncleared', transferId: transfer.id, splits: [] };
+    const target: TransactionAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), id: transfer.targetTransactionId, aggregateType: 'transaction', accountId: targetAccountId, date: transfer.date, amount, kind: 'transfer', clearance: 'uncleared', transferId: transfer.id, splits: [] };
+    await this.execute(saveTransfer({ spaceId: this.spaceId, transfer, source, target, sourceAccount, targetAccount }, this, this.dependencies));
   }
   get(id: UUID) { const aggregate = this.heads.get(id); return aggregate === undefined ? undefined : { id: aggregate.id, spaceId: aggregate.spaceId, revision: aggregate.revision, aggregateType: aggregate.aggregateType }; }
 }
