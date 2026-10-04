@@ -106,16 +106,16 @@ Nächster konkreter Arbeitsauftrag: **P4.1.4 — Rettungscode-Entsperrung separa
 
 ### P4.1.6 — Profil- und Bereichstrennung prüfen
 
-- Status: offen.
-- Freigabe: vorhandener Nutzerauftrag zum Abschluss von P4; aktueller Auftrag fordert Aufteilung und erneute Abnahmeplanung, keine Umsetzung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „setze P4.1.6 um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.1.5 abgenommen.
 - Schritte: Zwei synthetische Profile sowie private/gemeinsame Bereiche mit unterschiedlichen Daten und UI-Entwürfen wechseln.
 - Ergebnis: Profil- und Bereichstrennung prüfen mit erneuter Einzelabnahme.
 - Verträge: [Architektur](architecture.md), [Schlüsselbedienung](ui.md#schlüsselbedienung), [Verschlüsselung](encryption.md), [P3-Speicherbasis](p3-storage.md).
 - Abnahme: Nur aktiver Bereich lesbar; keine privaten Daten oder Entwürfe gelangen in andere Bereiche/Profile; gesperrte Bereiche zeigen keine Finanzdaten.
 - Prüfungen: Integration der Profil-/Bereichsdienste und Chromium-Wechsel mit unterscheidbaren Fixtures; kein bloßer Wechsel der Überschrift.
-- Prüfbelege: erneute Einzelabnahme noch offen; historische Belege bei P4.1 und in der [Übergabe](handoffs/p4-1.md) gezielt nachprüfen.
-- Einschränkungen: historischer Tauri-Nachweis reicht bisher nur bis zum Tresorformular; kein vollständiger nativer Wiedereinstieg belegt.
+- Prüfbelege: Kriterienmatrix: (1) Nur aktiver Bereich lesbar **erfüllt** — der Chromium-Ablauf legt ein privates Konto und ein Haushaltskonto mit eindeutig verschiedenen Namen an und zeigt beim jeweiligen Wechsel ausschließlich das Konto des aktiven Bereichs. (2) Keine privaten Daten oder Entwürfe gelangen in andere Bereiche/Profile **erfüllt** — ein ungespeicherter privater Kontonamenentwurf wird beim Wechsel in den Haushalt verworfen; ein zweites synthetisches Profil sieht weder private noch gemeinsame Daten des ersten, und das wiederhergestellte erste Profil sieht keine Daten des zweiten. (3) Gesperrte Bereiche zeigen keine Finanzdaten **erfüllt** — nach `Tresor sperren` ist nur das Entsperrformular sichtbar; Übersicht und Kontoname des aktiven Bereichs fehlen. Der Ablauf bestand am 4. Oktober 2026 mit `pnpm exec playwright test tests/ui/p4-1-6.spec.ts` im Chromium-Webclient und mit `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-1-6.spec.ts --config tests/ui/desktop.config.ts` im Chromium-Desktop-Frontend. Zusätzlich bestanden `pnpm --filter @wimm/ui test` (5 Tests) und `pnpm typecheck`.
+- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; der vollständige native Wiedereinstieg bleibt P4.1.8 zugeordnet.
 
 ### P4.1.7 — PWA-Einstieg nach Offline-Neustart prüfen
 
