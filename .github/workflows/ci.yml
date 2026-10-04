@@ -53,11 +53,27 @@ jobs:
           rustup toolchain install 1.99.0 --profile minimal
           rustup default 1.99.0
 
+      - name: Rust-Abhängigkeiten und Buildartefakte cachen
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      - name: Playwright-Browsercache wiederherstellen
+        id: playwright-cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
       - name: Abhängigkeiten gesperrt installieren
         run: pnpm install --frozen-lockfile
 
+      - name: Playwright-Systemabhängigkeiten einrichten
+        run: pnpm exec playwright install-deps chromium
+
       - name: Playwright-Browser einrichten
-        run: pnpm exec playwright install --with-deps chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install chromium
 
       - name: Projekt prüfen
         run: pnpm check:ci
