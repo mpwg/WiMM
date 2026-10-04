@@ -25,7 +25,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.2.2 — Übersicht und Kontostart prüfen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.2.2 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.2.3 — Kontoarchivierung mit Referenzen abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.2.3 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -168,20 +168,20 @@ Nächster konkreter Arbeitsauftrag: **P4.2.2 — Übersicht und Kontostart prüf
 - Abnahme: Übersicht, Konten, Buchungen und Stammdaten sind erreichbar; aktiver Bereich ist erkennbar; Wechsel zeigt ausschließlich dessen Daten.
 - Prüfungen: Chromium-Ablauf auf Web und Desktop-Frontend mit verschieden benannten privaten und gemeinsamen Konten.
 - Prüfbelege: Kriterienmatrix: (1) Übersicht, Konten, Buchungen und Stammdaten **erfüllt** — der fokussierte Chromium-Ablauf öffnet Übersicht, Buchungen, Kategorien, Empfänger und Konten in einem privaten und einem gemeinsamen lokalen Bereich. (2) Aktiver Bereich erkennbar **erfüllt** — die Bereichsauswahl und die Kennzeichnung „Privatbereich“ beziehungsweise „Gemeinsamer Bereich“ wechseln gemeinsam. (3) Ausschließlich Daten des aktiven Bereichs **erfüllt** — der Ablauf legt ein „Privatkonto Navigationstest“ und ein „Haushaltskonto Navigationstest“ an; beim jeweiligen Wechsel ist ausschließlich das Konto des ausgewählten Bereichs vorhanden. Aktuell bestanden: `pnpm exec playwright test tests/ui/p4-2-1.spec.ts` (1 Chromium-Webablauf), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-1.spec.ts --config tests/ui/desktop.config.ts` (1 Chromium-Desktop-Frontendablauf), UI-Unit-Tests, TypeScript sowie Web- und Desktop-Produktionsbuild.
-- Einschränkungen: Die Desktop-Frontend-Prüfung läuft ohne native Tauri-Laufzeit; die getrennte native Desktopabnahme bleibt P4.6 zugeordnet. Die noch offenen P4.2.2–P4.2.7 werden durch diese Einzelabnahme nicht vorgezogen.
+- Einschränkungen: Die Desktop-Frontend-Prüfung läuft ohne native Tauri-Laufzeit; die getrennte native Desktopabnahme bleibt P4.6 zugeordnet. Die noch offenen P4.2.3–P4.2.7 werden durch diese Einzelabnahme nicht vorgezogen.
 
 ### P4.2.2 — Übersicht und Kontostart prüfen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.2; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.2.2 um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.2.1 abgenommen.
 - Schritte: Leeren Bereich und Kontoanlage mit Anfangsbestand an vorhandene Projektionen anbinden beziehungsweise nachprüfen.
 - Ergebnis: Übersicht und Kontostart prüfen mit dokumentierter Einzelabnahme.
 - Verträge: [UI](ui.md), [Produkt](product.md), P2-Stammdatenbefehle in [API](api.md).
 - Abnahme: Leerer Bereich zeigt einen Leerzustand; Anfang 1.000 EUR ergibt 1.000 EUR Saldo und keine Konsumeinnahme, auch nach erneutem Laden.
 - Prüfungen: Chromium: leerer Bereich → Konto mit Anfangsbestand → Übersicht und Konto prüfen; Web und Desktop-Frontend.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.2 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Kriterienmatrix: (1) leerer Bereich **erfüllt** — ein neuer lokaler Privatbereich zeigt „Noch keine Konten“ und den Hinweis, dass die Übersicht kein erfundenes Guthaben ausweist. (2) Anfangsbestand **erfüllt** — derselbe Ablauf legt „Girokonto Kontostart“ an, speichert den Anfangsbestand 1.000,00 EUR und prüft auf Übersicht und Kontoseite den Saldo von 1.000,00 EUR. Die Monatsausgaben bleiben 0,00 EUR; der Anfangsbestand wird also nicht als Konsumeinnahme oder -ausgabe projiziert. (3) erneutes Laden **erfüllt** — nach einem echten Seitenneuladen und erneuter Passphrase-Entsperrung zeigen Übersicht und Konto unverändert 1.000,00 EUR beziehungsweise 0,00 EUR Monatsausgaben. Aktuell bestanden: `pnpm exec playwright test tests/ui/p4-2-2.spec.ts` (Chromium-Webclient), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-2.spec.ts --config tests/ui/desktop.config.ts` (Chromium-Desktop-Frontend), `pnpm --filter @wimm/ui test` (5 Tests), `pnpm typecheck` sowie Web- und Desktop-Produktionsbuild.
+- Einschränkungen: Der Desktop-Frontend-Ablauf verwendet den dokumentierten IndexedDB-Testadapter und ist kein nativer Tauri-Nachweis. Die getrennte native Desktopabnahme bleibt P4.6 zugeordnet; spätere Paketfunktionen sind nicht Gegenstand dieses Auftrags.
 
 ### P4.2.3 — Kontoarchivierung mit Referenzen abnehmen
 
