@@ -2,7 +2,7 @@
 
 WhereIsMyMoney ist ein geplanter Open-Source-Finanzmanager für Familien. Gemeinsame Haushaltsfinanzen, persönliche Finanzbereiche, Budgetplanung und ein nachvollziehbarer Ausgleich zwischen Erwachsenen stehen im Mittelpunkt.
 
-**Projektstatus: P1 abgeschlossen.** D0 und D1 enthalten Spezifikation sowie Agenten-/Editor-/GitHubhilfen; D2 ergänzt Einstieg, Beispiele und P1-Teilaufgaben. P1.1 bis P1.6 sind abgeschlossen. Web-, Desktop- und Serverhülle starten, enthalten aber noch keine Finanzfunktionen. Als Nächstes folgt P2, der plattformunabhängige Fachkern.
+**Projektstatus: P1 bis P3 abgeschlossen, P4 in Arbeit.** Der lokale Einstieg und P4.2.1 bis P4.2.6 sind einzeln abgenommen. Navigation und Stammdaten sind bei 320, 768, 900 und 1024 CSS-Pixeln geprüft; „System / Hell / Dunkel“ ist lokal wählbar. P4.2.7 zur Tastaturbedienung ist der nächste begrenzte Schritt. Weitere Finanzfunktionen, Synchronisierung und die vollständige Plattformabnahme bleiben offen.
 
 ## Geplantes Produkt
 
@@ -20,7 +20,7 @@ Die erste Version richtet sich an Erwachsene im deutschsprachigen Raum, verwende
 
 ## Einstieg für einen implementierenden Agenten
 
-Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [Teilaufgabenübersicht P1–P11](docs/tasks.md#teilaufgaben-und-bearbeitungsfolge) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md). P4–P11 besitzen einzeln abnehmbare Teilaufgaben; nach Implementierungsfreigabe ist [P4.2.6](docs/p4-ui.md#p426--layout-und-farbschema-stabilisieren) der nächste Schritt.
+Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [Teilaufgabenübersicht P1–P11](docs/tasks.md#teilaufgaben-und-bearbeitungsfolge) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md). P4–P11 besitzen einzeln abnehmbare Teilaufgaben; nach Implementierungsfreigabe ist [P4.2.7](docs/p4-ui.md#p427--tastaturfokus-für-navigation-und-stammdaten-abnehmen) der nächste Schritt.
 
 1. [Arbeitsregeln](AGENTS.md) lesen.
 2. Im [Dokumentationsindex](docs/README.md) die Lesereihenfolge beachten.

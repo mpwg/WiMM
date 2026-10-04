@@ -25,7 +25,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.2.6 — Layout und Farbschema stabilisieren**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.2.6 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.2.7 — Tastaturfokus für Navigation und Stammdaten abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.2.7 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -155,7 +155,7 @@ Nächster konkreter Arbeitsauftrag: **P4.2.6 — Layout und Farbschema stabilisi
 - Prüfungen: Playwright für Einstieg/Bereichswechsel/Stammdaten, Hell/Dunkel, lange deutsche Namen, Fokus und 200 % Zoom.
 - Prüfbelege: Gemeinsame Web-/Desktopansicht mit Bereichskennzeichnung, Übersicht sowie Konto-, Kategoriegruppen-, Kategorie- und Empfängerverwaltung liegt in `packages/ui/src/workspace.tsx` vor. Lokale Salden entstehen aus `projectAccountBalances`; leere Bereiche zeigen keinen erfundenen Saldo. Konten und Kategorien werden über die P2-Fachbefehle archiviert und bleiben damit an historischen Referenzen erhalten; ein Empfänger-Merge erfasst alle lokal vorhandenen Quellreferenzen in einer atomaren Änderungsmenge und archiviert die Quelle. Systemschrift, Hell-/Dunkelmodus, sichtbare Fokusregel und ein Touchlayout unter 768 CSS-Pixeln sind vorhanden. `pnpm test:ui` bestand am 3. Oktober 2026 in Chromium; TypeScript, die UI-Unit-Tests sowie Web- und Desktop-Frontend-Build bestanden ebenfalls.
 
-  Offen nach Nachprüfung: Der Chromium-Ablauf prüft Kategoriearchivierung nicht und führt den Empfänger-Merge ohne referenzierte Buchung aus. Die Tastaturprüfung stellt nur die Existenz einer `:focus-visible`-CSS-Regel fest, nicht die reale Fokusreihenfolge oder den sichtbaren Fokus nach Tastaturnavigation. Bei CSS-Zoom 200 % wird nur die Sichtbarkeit einer Überschrift geprüft; ein Seitenüberlauf- oder Erreichbarkeitsnachweis fehlt. Browser-Zoom, Firefox/WebKit, echter Screenreader und native Desktop-Prüfungen bleiben als getrennte Nachweise offen. Die vollständige Übergabe steht in [P4.2-Übergabe](handoffs/p4-2.md).
+  Historischer Nachprüfstand vom 3. Oktober 2026: Der damalige Chromium-Ablauf prüfte Kategoriearchivierung nicht und führte den Empfänger-Merge ohne referenzierte Buchung aus. Diese beiden Lücken sind inzwischen durch P4.2.4/P4.2.5 geschlossen; Layout, Touchmaße und wählbares Farbschema sind in P4.2.6 abgenommen. Offen bleibt P4.2.7. Die Tastaturprüfung stellt nur die Existenz einer `:focus-visible`-CSS-Regel fest, nicht die reale Fokusreihenfolge oder den sichtbaren Fokus nach Tastaturnavigation. Bei CSS-Zoom 200 % wird nur die Sichtbarkeit einer Überschrift geprüft; ein Seitenüberlauf- oder Erreichbarkeitsnachweis fehlt. Browser-Zoom, Firefox/WebKit, echter Screenreader und native Desktop-Prüfungen bleiben als getrennte Nachweise offen. Die vollständige Übergabe steht in [P4.2-Übergabe](handoffs/p4-2.md).
 
 ### P4.2.1 — Navigation und Bereichstrennung prüfen
 
@@ -224,16 +224,16 @@ Nächster konkreter Arbeitsauftrag: **P4.2.6 — Layout und Farbschema stabilisi
 
 ### P4.2.6 — Layout und Farbschema stabilisieren
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.2; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.2.6 um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.2.5 abgenommen.
 - Schritte: Navigation und Stammdaten bei 320, 768, 900 und 1024 CSS-Pixeln mit langen deutschen Namen prüfen; Systemschrift und Hell/Dunkel kontrollieren.
-- Ergebnis: Layout und Farbschema stabilisieren mit dokumentierter Einzelabnahme.
+- Ergebnis: gemeinsame responsive Layout-/Farbregeln für beide Frontends, Systemschrift und lokal gespeicherte Auswahl „System / Hell / Dunkel“ mit dokumentierter Einzelabnahme.
 - Verträge: [UI](ui.md), [Produkt](product.md), P2-Stammdatenbefehle in [API](api.md).
 - Abnahme: Kein horizontaler Seitenüberlauf oder abgeschnittener Betrag; Touchziele mindestens 44 × 44; Hell/Dunkel folgt System und lässt sich überschreiben.
 - Prüfungen: Gezielte Chromium-Screenshots und Überlauf-/Touchzielprüfung für Navigation und Stammdaten; gesamte Matrix folgt P4.6.2.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.2 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Kriterienmatrix und aktuelle Einzelbelege stehen in der [P4.2.6-Übergabe](handoffs/p4-2-6.md). Acht neue Chromium-Abläufe pro Frontend bei 320, 768, 900 und 1024 CSS-Pixeln in Hell/Dunkel prüfen lange Konto-, Gruppen-, Kategorie- und Empfängernamen, 1.234.567,89 EUR, Seitenüberlauf, 44 × 44-Touchziele, Systemschrift, laufenden Systemfarbwechsel und gespeicherte manuelle Überschreibung. 64 Screenshots erstellt; visuelle Stichproben aller Breiten ohne überlappende Texte oder abgeschnittene Beträge. Aktuelle Produktionsbuilds: 23 Web- und 20 Desktop-Frontendtests bestanden, außerdem fünf UI-Pakettests, Typprüfung, Linter, Dokumentations- und Whitespaceprüfung.
+- Einschränkungen: Chromium prüft das Desktop-Frontend mit IndexedDB-Testadapter, keine native Tauri-Laufzeit. Die vollständige Browser-/Zoom-/Plattformmatrix bleibt P4.6, die Tastaturabnahme P4.2.7 zugeordnet.
 
 ### P4.2.7 — Tastaturfokus für Navigation und Stammdaten abnehmen
 
