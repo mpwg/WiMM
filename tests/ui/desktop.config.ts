@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: '.',
-  testMatch: 'p4-1.spec.ts',
+  testMatch: 'p4-1*.spec.ts',
   timeout: 45_000,
   use: {
     baseURL: 'http://127.0.0.1:1420',

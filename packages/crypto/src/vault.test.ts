@@ -33,6 +33,24 @@ describe('lokaler UserVault', () => {
     await expect(unlockUserVaultWithPassphrase(tampered, passphrase)).rejects.toBeInstanceOf(VaultUnlockError);
   });
 
+  it('entfernt beim Sperren die flüchtigen privaten Schlüssel und verlangt danach eine neue Entsperrung', async () => {
+    const created = await createUserVault(passphrase);
+    const vault = await unlockUserVaultWithPassphrase(created.record, passphrase);
+    const withSpace = await addIndependentSpaceKey(vault, '00000000-0000-4000-8000-000000000019');
+    const identityPublicKey = withSpace.identityPublicKey.slice();
+
+    await lockUserVault(withSpace);
+
+    expect([...withSpace.identityPrivateKey]).toEqual(Array(withSpace.identityPrivateKey.length).fill(0));
+    expect([...withSpace.encryptionPrivateKey]).toEqual(Array(withSpace.encryptionPrivateKey.length).fill(0));
+    expect([...withSpace.spaces[0]!.key]).toEqual(Array(withSpace.spaces[0]!.key.length).fill(0));
+    await expect(persistUnlockedUserVault(withSpace, created.record)).rejects.toBeInstanceOf(VaultUnlockError);
+
+    const reopened = await unlockUserVaultWithPassphrase(created.record, passphrase);
+    expect(reopened.identityPublicKey).toEqual(identityPublicKey);
+    await lockUserVault(reopened);
+  });
+
   it('erzeugt unabhängige Bereichsschlüssel mit frischen Verpackungen', async () => {
     const first = await createUserVault(passphrase);
     const second = await createUserVault(passphrase);
