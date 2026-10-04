@@ -31,9 +31,11 @@ Projektordner direkt in VS Code oder einem anderen Editor öffnen. Die benötigt
 
 Die versionierten `.vscode/settings.json`-Einstellungen verwenden UTF-8, LF, zwei Leerzeichen und Markdown-Softwrap; Rust verwendet vier Leerzeichen. `.editorconfig` hält dieselben Formatregeln für andere Editoren fest. Autoformat beim Speichern bleibt zunächst aus, damit bestehende Absätze nicht ungefragt umgeschrieben werden; explizite Formatierung wird später über die Projekttoolchain vereinheitlicht.
 
+Unter **Terminal → Task ausführen** stehen die Tasks **WiMM: Web starten**, **WiMM: Server starten** und **WiMM: Desktop starten** bereit. Sie rufen die gleichnamigen `dev:*`-Skripte aus `package.json` auf und lassen den jeweiligen Entwicklungsprozess in einem eigenen Terminal weiterlaufen. Voraussetzung ist die installierte Projekttoolchain; für Tauri gelten zusätzlich die Desktopvoraussetzungen oben.
+
 [Erweiterungsempfehlungen](../.vscode/extensions.json): EditorConfig, markdownlint, YAML, GitHub Pull Requests, Tauri, Oxlint, Rust Analyzer und TypeScript 7. Sie sind Empfehlungen im Workspace und werden nicht global installiert. GitHubintegration verwendet das echte Repositorykonto. Die Projektkonfiguration aktiviert die lokale TypeScript-7-Sprachunterstützung, typgestütztes Oxlint und Clippy mit Warnungen als Fehlern; die verbindliche vollständige Prüfung bleibt `pnpm check:ci`.
 
-Keine VS-Code-Task/Debugkonfiguration mit nicht existierenden Appbefehlen. Keine globale Änderung von Benutzerprefs, Authkonten oder Workspace-Trust. [Workspace-Einstellungen](https://code.visualstudio.com/docs/configure/settings), [Erweiterungsempfehlungen](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace).
+Die Starttasks sind in [`.vscode/tasks.json`](../.vscode/tasks.json) versioniert und verwenden ausschließlich vorhandene Appbefehle. Es gibt keine Debugkonfiguration; keine globale Änderung von Benutzerprefs, Authkonten oder Workspace-Trust. [Workspace-Einstellungen](https://code.visualstudio.com/docs/configure/settings), [Tasks](https://code.visualstudio.com/docs/debugtest/tasks), [Erweiterungsempfehlungen](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace).
 
 ## Agenten im Editor
 
