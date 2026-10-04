@@ -20,7 +20,7 @@ Die erste Version richtet sich an Erwachsene im deutschsprachigen Raum, verwende
 
 ## Einstieg für einen implementierenden Agenten
 
-Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [Teilaufgabenübersicht P1–P11](docs/tasks.md#teilaufgaben-und-bearbeitungsfolge) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md). P4–P11 besitzen einzeln abnehmbare Teilaufgaben; nach Implementierungsfreigabe ist [P4.3.1](docs/p4-ui.md#p431--einzelbuchung-und-f01-abnehmen) der nächste Schritt.
+Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [Teilaufgabenübersicht P1–P11](docs/tasks.md#teilaufgaben-und-bearbeitungsfolge) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md). P4–P11 besitzen einzeln abnehmbare Teilaufgaben; nach Implementierungsfreigabe ist [P4.3.2](docs/p4-ui.md#p432--spliterfassung-und-f02-abnehmen) der nächste Schritt.
 
 1. [Arbeitsregeln](AGENTS.md) lesen.
 2. Im [Dokumentationsindex](docs/README.md) die Lesereihenfolge beachten.

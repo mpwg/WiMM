@@ -16,12 +16,18 @@ Die Auswahl „Farbschema“ in der Seitenleiste bietet „System“, „Hell“
 
 Navigation, Bereichswechsel sowie das Anlegen von Konten, Kategorien und Empfängern sind vollständig per Tabulator, Umschalt+Tabulator, Enter und Escape erreichbar. Der sichtbare Fokus bleibt auf jedem fokussierten Bedienelement erhalten. Das Zusammenführen von Empfängern verlangt eine bestätigende Rückfrage; Escape oder „Abbrechen“ schließen sie ohne Änderung und geben den Fokus an „Zusammenführen und archivieren“ zurück.
 
+Einzelbuchungen erfassen Konto, Kalenderdatum, Kategorie sowie optional Empfänger und Notiz. Negative Beträge sind Ausgaben, positive Beträge Einnahmen; Punkt oder Komma sind als Dezimaltrennzeichen erlaubt, höchstens zwei Nachkommastellen und keine Tausendertrennzeichen. Die native Datumsauswahl bleibt erhalten. Ungültige beziehungsweise fehlende Beträge und unvollständige Kalenderwerte zeigen direkt am Feld einen zugänglich zugeordneten Fehler; sämtliche übrigen Eingaben bleiben erhalten. Erst nach dem dauerhaften lokalen Commit wird das Formular geleert.
+
+Die Übersicht zeigt Monatsausgaben und Monatseinnahmen aus der gemeinsamen Fachprojektion für den aktuellen Kalendermonat in `Europe/Vienna`. Anfangsbestände und Umbuchungen zählen nicht als Konsum. F01 mit Anfangsbestand 1.000 EUR, Ausgabe 100 EUR und Einnahme 200 EUR ergibt 1.100 EUR Guthaben, 100 EUR Monatsausgaben und 200 EUR Monatseinnahmen.
+
 ## Prüfung
 
 Im Repository ausführen:
 
 ```sh
 pnpm --filter @wimm/ui test
+pnpm exec playwright test tests/ui/p4-3-1.spec.ts
+WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-3-1.spec.ts --config tests/ui/desktop.config.ts
 pnpm exec playwright test tests/ui/p4-2-6.spec.ts
 WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-6.spec.ts --config tests/ui/desktop.config.ts
 pnpm exec playwright test tests/ui/p4-2-7.spec.ts
@@ -41,3 +47,5 @@ Der Merge-Test beendet Chromium vollständig und startet es mit demselben dauerh
 Der Desktop-Frontend-Test verwendet absichtlich den dokumentierten IndexedDB-Testadapter. Er ersetzt keinen nativen Tauri-Nachweis.
 
 Die Layoutprüfung erstellt je Client 32 Screenshots unter `test-results/`: Konten, Kategorien, Empfänger einschließlich Merge-Auswahl und Übersicht bei 320, 768, 900 und 1024 CSS-Pixeln, jeweils in Hell und Dunkel. Die Testdaten sind synthetisch und enthalten lange deutsche Namen sowie einen siebenstelligen EUR-Betrag. Sie prüft Seitenüberlauf, Mindestmaße, ungekürzte Beträge, Systemschrift und den gespeicherten Farbschemawechsel.
+
+P4.3.1 prüft F01 und Feldfehler jeweils mit Tastatur und Touch (390 × 844) in Chromium auf beiden Frontends. Der Kalendertest löscht ein Kalendersegment im nativen Datumsfeld; unmögliche vollständige Datumsstrings prüft ergänzend der Fachkern. Die Screenshots `f01-übersicht.png` und `datumsfeldfehler.png` entstehen unter `test-results/`. Touch ist Browseremulation und kein echter Gerätenachweis.

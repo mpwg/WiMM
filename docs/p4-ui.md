@@ -25,7 +25,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.3.1 — Einzelbuchung und F01 abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.3.1 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.3.2 — Spliterfassung und F02 abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.3.2 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -258,20 +258,20 @@ Nächster konkreter Arbeitsauftrag: **P4.3.1 — Einzelbuchung und F01 abnehmen*
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Oberflächenmatrix](testing.md#oberflächenmatrix-und-leistung).
 - Abnahme: Tastatur-/Toucherfassung und Bearbeitung möglich; falsche Splitsumme abgewiesen; keine Erfolgsmeldung vor Commit; Quota/Disk-full erhält Eingaben.
 - Prüfungen: F01/F02 über UI, Fehler-/Offlinezustände, virtuelle Liste mit Leistungsdatensatz und dokumentierter Messumgebung.
-- Prüfbelege: Einzelbuchung, Anfangsbestand, Suche und ein zweizeiliger Split sind an `saveTransaction` gebunden. Betragstexte werden nur durch `parseMoney` im Fachkern verarbeitet; der zweite Split entsteht mit `subtractMoney`. Speichererfolg wird erst nach `LocalAreaService.applyChangeSet` angezeigt; Fachfehler bleiben im Formular sichtbar. Offen: Bearbeiten/Löschen, echte Virtualisierung, UI-Referenzfälle F01/F02, Quota-/Offline- und Leistungsnachweise.
+- Prüfbelege: Einzelbuchung, Anfangsbestand, Suche und ein zweizeiliger Split sind an `saveTransaction` gebunden. Betragstexte werden nur durch `parseMoney` im Fachkern verarbeitet; der zweite Split entsteht mit `subtractMoney`. Speichererfolg wird erst nach `LocalAreaService.applyChangeSet` angezeigt; Fachfehler bleiben im Formular sichtbar. P4.3.1 belegt Einzelbuchungen/F01 sowie Betrag-/Datumsfeldfehler auf beiden Frontends. Offen: Bearbeiten/Löschen, echte Virtualisierung, UI-Referenzfall F02, Quota-/Offline- und Leistungsnachweise.
 
 ### P4.3.1 — Einzelbuchung und F01 abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.3; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag vom 4. Oktober 2026 zur Umsetzung und Abnahme von P4.3.1.
 - Voraussetzungen: P4.2 einschließlich P4.2.1–P4.2.7 abgenommen.
 - Schritte: Vorhandene Erfassung von Ausgabe und Einnahme einschließlich Datum, Empfänger und Notiz prüfen; Feldfehler gezielt schließen.
-- Ergebnis: Einzelbuchung und F01 abnehmen mit dokumentierter Einzelabnahme.
+- Ergebnis: Einzelbuchungen mit Datum, Empfänger und Notiz; zugängliche Betrag-/Datumsfeldfehler und echte Monatsprojektionen aus dem Fachkern.
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Tests](testing.md).
 - Abnahme: F01 ergibt Saldo 1.100 EUR, Ausgabe 100 EUR, Einnahme 200 EUR; ungültiger Betrag oder Kalenderwert bleibt mit Feldfehler im Formular.
 - Prüfungen: F01 per Chromium auf Web und Desktop-Frontend; eine Erfassung mit Tastatur und eine mit Touch sowie ungültige Eingaben.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.3 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: `tests/ui/p4-3-1.spec.ts` besteht mit Tastatur und Touch in Chromium auf Web und Desktop-Frontend. F01 zeigt 1.100 EUR Saldo, 100 EUR Monatsausgaben und 200 EUR Monatseinnahmen. Drei ungültige Betragstexte einschließlich Centüberlauf sowie ein unvollständiger Kalenderwert bleiben mit Feldfehler und erhaltenen Eingaben ohne zusätzliche Buchung; nach Korrektur ist der Entwurf speicherbar. 26 Web- und 23 Desktop-Frontendabläufe, 50 Fachtests, fünf UI-Pakettests, TypeScript, Lint, Paketgraph und beide Produktionsbuilds bestanden. README und [Kriterienmatrix/Übergabe](handoffs/p4-3-1.md) aktualisiert.
+- Einschränkungen: Desktop-Frontend verwendet den IndexedDB-Testadapter; Touch ist Chromiumemulation. Native Tauri-Interaktion, echte Geräte und weitere Browser gehören zu späteren Einzelabnahmen. Chromium akzeptiert keine unmöglichen Datumsstrings über `fill`; der UI-Fehlfall löscht ein Kalendersegment, unmögliche vollständige Daten belegen ergänzend die Fachtests.
 
 ### P4.3.2 — Spliterfassung und F02 abnehmen
 
