@@ -25,7 +25,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.1.1 — Gemeinsame Dienste und Plattformports prüfen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.1.1 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.1.2 — Tresor-Erstnutzung und Rettungscodebestätigung prüfen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.1.2 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -41,16 +41,16 @@ Nächster konkreter Arbeitsauftrag: **P4.1.1 — Gemeinsame Dienste und Plattfor
 
 ### P4.1.1 — Gemeinsame Dienste und Plattformports prüfen
 
-- Status: offen.
-- Freigabe: vorhandener Nutzerauftrag zum Abschluss von P4; aktueller Auftrag fordert Aufteilung und erneute Abnahmeplanung, keine Umsetzung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „mach P4.1.1 fertig“ vom 4. Oktober 2026.
 - Voraussetzungen: P3 erledigt; reale Plattformnachweise sind weiterhin offen und in den Abschlussregeln zugeordnet.
 - Schritte: Composition Root und injizierte Dienste in Web/Desktop nachverfolgen; nur Verdrahtungslücken schließen.
-- Ergebnis: Gemeinsame Dienste und Plattformports prüfen mit erneuter Einzelabnahme.
+- Ergebnis: Die gemeinsame Fachansicht erhält ihren lokalen Speicher ausschließlich vom Composition Root. Web injiziert `IndexedDbStorageAdapter`; die Tauri-App injiziert eine begrenzte SQLite-Brücke für Bereichsabfrage und atomare Schreibmengen. Der Desktop erhält außerdem einen eigenen `PlatformServices`-Port; noch nicht freigegebene Systemfunktionen fallen nicht auf Browserverhalten zurück.
 - Verträge: [Architektur](architecture.md), [Schlüsselbedienung](ui.md#schlüsselbedienung), [Verschlüsselung](encryption.md), [P3-Speicherbasis](p3-storage.md).
 - Abnahme: Beide Clients verwenden gemeinsame lokale Dienste und den jeweils richtigen Speicher-/Plattformadapter; UI-Zustand ist von gespeicherten Fachdaten getrennt; lokale Nutzung benötigt keine Outbox oder Serverbestätigung.
 - Prüfungen: Gezielte UI-Integration für beide Clientkompositionen, TypeScript und Paketgraph; tatsächlichen Adapter benennen.
-- Prüfbelege: erneute Einzelabnahme noch offen; historische Belege bei P4.1 und in der [Übergabe](handoffs/p4-1.md) gezielt nachprüfen.
-- Einschränkungen: historischer Tauri-Nachweis reicht bisher nur bis zum Tresorformular; kein vollständiger nativer Wiedereinstieg belegt.
+- Prüfbelege: Kriterienmatrix: (1) gemeinsame lokale Dienste und richtige Adapter **erfüllt** — `FinanceWorkspace` ist adapterneutral; Web verwendet Dexie/IndexedDB, Desktop die katalogisierten Tauri-Befehle `storage_query_aggregates` und `storage_apply_batch`; der neue Brückentest prüft die Bereichsabfrage. (2) UI-Zustand getrennt von Fachdaten **erfüllt** — Ansichtszustand bleibt in React, dauerhaftes Lesen/Schreiben läuft nur über den injizierten Speicherport. (3) Standalone ohne Outbox/Serverbestätigung **erfüllt** — lokale Änderungsmengen enthalten eine leere Outbox; `pnpm test:ui` bestätigt den lokalen Ablauf in Chromium für Web und Desktop-Frontend. Aktuell bestanden: `pnpm typecheck`, `pnpm check:package-graph`, `pnpm --filter @wimm/storage test` (9 Tests), `pnpm --filter @wimm/ui test` (4 Tests), `cargo test` im Tauri-Projekt, Web-/Desktop-Frontendbuild und `pnpm test:ui` (3 Web- plus 1 Desktop-Frontend-Test).
+- Einschränkungen: Die Desktop-Frontend-Prüfung läuft ohne Tauri-Laufzeit mit einem ausdrücklich gekennzeichneten IndexedDB-Fallback und ist kein nativer Nachweis. Der native Tauri-Speicherport ist durch Rust-Test und Produktionsbuild geprüft; ein vollständiger nativer Wiedereinstieg bleibt korrekt P4.1.8 vorbehalten.
 
 ### P4.1.2 — Tresor-Erstnutzung und Rettungscodebestätigung prüfen
 

@@ -14,11 +14,12 @@ export interface DesktopStorageBridge {
     readonly projections: readonly StoredProjection[];
   }): Promise<void>;
   readAggregate(profileId: UUID, handle: UUID): Promise<StoredAggregate | undefined>;
+  queryAggregates(profileId: UUID, spaceId: UUID): Promise<readonly StoredAggregate[]>;
 }
 
 /** Adapter für Tauri invoke; die Aufrufer sehen nur den katalogisierten Speicherumfang. */
 export function createTauriStorageBridge(
-  invoke: <T>(command: 'storage_apply_batch' | 'storage_read_aggregate', arguments_: Record<string, unknown>) => Promise<T>
+  invoke: <T>(command: 'storage_apply_batch' | 'storage_read_aggregate' | 'storage_query_aggregates', arguments_: Record<string, unknown>) => Promise<T>
 ): DesktopStorageBridge {
   return {
     async applyBatch(input) {
@@ -26,6 +27,9 @@ export function createTauriStorageBridge(
     },
     async readAggregate(profileId, handle) {
       return invoke<StoredAggregate | undefined>('storage_read_aggregate', { profileId, handle });
+    },
+    async queryAggregates(profileId, spaceId) {
+      return invoke<readonly StoredAggregate[]>('storage_query_aggregates', { profileId, spaceId });
     }
   };
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
-import type { UUID } from '@wimm/contracts';
+import type { AtomicBatch, UUID } from '@wimm/contracts';
 import {
   createAggregateMetadata,
   projectAccountBalances,
@@ -29,39 +29,56 @@ import {
   , type TransferAggregate
   , type ReconciliationAggregate
 } from '@wimm/domain';
-import { IndexedDbStorageAdapter, LocalAreaService, type StoredAggregate } from '@wimm/storage';
+import { toStoredAggregate, type PendingOperation, type StoredAggregate, type StoredProjection } from '@wimm/storage';
 
 import type { UnlockedAppContext } from './app.js';
 
 type View = 'overview' | 'accounts' | 'categories' | 'payees' | 'transactions';
 
-export function FinanceWorkspace({ context, desktop = false }: { readonly context: UnlockedAppContext; readonly desktop?: boolean }) {
+/**
+ * Der Composition Root wählt den dauerhaften Speicher. Die Fachansicht kennt
+ * weder IndexedDB noch Tauri und hält lediglich ihren Navigationszustand selbst.
+ */
+export interface WorkspaceStorage {
+  query(query: { readonly spaceId: UUID }): Promise<readonly StoredAggregate[]>;
+  applyAtomicBatch(batch: AtomicBatch<StoredAggregate, PendingOperation, StoredProjection>): Promise<void>;
+  close?(): Promise<void>;
+}
+
+export type WorkspaceStorageFactory = (profileId: UUID) => WorkspaceStorage;
+
+export function FinanceWorkspace({ context, storageForProfile, desktop = false }: { readonly context: UnlockedAppContext; readonly storageForProfile: WorkspaceStorageFactory; readonly desktop?: boolean }) {
   const [view, setView] = useState<View>('overview');
   const [aggregates, setAggregates] = useState<readonly StoredAggregate[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [message, setMessage] = useState<string>();
-  const adapter = useMemo(() => new IndexedDbStorageAdapter(context.profile.profileId as UUID, `wimm-ui-${context.profile.profileId}`), [context.profile.profileId]);
+  const storage = useMemo(() => storageForProfile(context.profile.profileId as UUID), [storageForProfile, context.profile.profileId]);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const reload = useCallback(async () => {
-    try { setState('loading'); setAggregates(await adapter.query({ spaceId: context.activeArea.id as UUID })); setState('ready'); }
+    try { setState('loading'); setAggregates(await storage.query({ spaceId: context.activeArea.id as UUID })); setState('ready'); }
     catch { setMessage('Die lokalen Daten konnten nicht gelesen werden.'); setState('error'); }
-  }, [adapter, context.activeArea.id]);
+  }, [storage, context.activeArea.id]);
   useEffect(() => {
     if (closeTimer.current !== undefined) clearTimeout(closeTimer.current);
     void reload();
     return () => {
       // React Strict Mode startet Effekte im Entwicklungslauf absichtlich erneut.
       // Der folgende Durchlauf hebt den aufgeschobenen Schluss wieder auf.
-      closeTimer.current = setTimeout(() => { void adapter.close(); }, 0);
+      closeTimer.current = setTimeout(() => { void storage.close?.(); }, 0);
     };
-  }, [adapter, reload]);
+  }, [storage, reload]);
 
   const execute = useCallback(async (changeSet: DomainChangeSet) => {
     try {
-      await new LocalAreaService(adapter, context.activeArea.id as UUID, { connected: false }).applyChangeSet(changeSet);
+      await storage.applyAtomicBatch({
+        expectedRevisions: changeSet.expectedRevisions.map((entry) => ({ handle: entry.id, expectedRevision: entry.expectedRevision })),
+        aggregates: changeSet.aggregates.map((aggregate) => toStoredAggregate(aggregate)),
+        outbox: [],
+        projections: []
+      });
       await reload(); setMessage('Lokal gespeichert.');
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Die Eingaben wurden nicht gespeichert.'); throw error; }
-  }, [adapter, context.activeArea.id, reload]);
+  }, [storage, reload]);
   const model = useMemo(() => new FinanceModel(context.activeArea.id as UUID, aggregates, execute), [aggregates, context.activeArea.id, execute]);
 
   return <div className={`app-shell${desktop ? ' desktop-shell' : ''}`}>

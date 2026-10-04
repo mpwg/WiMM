@@ -142,6 +142,19 @@ fn storage_read_aggregate(state: tauri::State<'_, StorageState>, profile_id: Str
         .transpose()
 }
 
+#[tauri::command]
+fn storage_query_aggregates(state: tauri::State<'_, StorageState>, profile_id: String, space_id: String) -> Result<Vec<Value>, String> {
+    let connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
+    let mut statement = connection
+        .prepare("SELECT payload FROM aggregates WHERE profile_id = ?1 AND space_id = ?2")
+        .map_err(storage_error)?;
+    let rows = statement
+        .query_map(params![profile_id, space_id], |row| row.get::<_, String>(0))
+        .map_err(storage_error)?;
+    rows.map(|row| row.map_err(storage_error).and_then(|payload| serde_json::from_str(&payload).map_err(storage_error)))
+        .collect()
+}
+
 fn main() {
     tauri::Builder::default()
         .menu(|handle| {
@@ -159,7 +172,7 @@ fn main() {
             app.manage(StorageState(Mutex::new(connection)));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![storage_apply_batch, storage_read_aggregate])
+        .invoke_handler(tauri::generate_handler![storage_apply_batch, storage_read_aggregate, storage_query_aggregates])
         .run(tauri::generate_context!())
         .expect("Die Desktop-Anwendung konnte nicht gestartet werden.");
 }
