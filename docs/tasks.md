@@ -2,7 +2,7 @@
 
 ## Auftrag und Statusführung
 
-Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1 sowie P4.2.1 bis P4.2.4 sind erneut vollständig abgenommen; als nächster begrenzter Folgeauftrag steht P4.2.5 an. Zusätzlich ist T1 zur Toolkonfigurationsmodernisierung ausdrücklich freigegeben.
+Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1 sowie P4.2.1 bis P4.2.5 sind erneut vollständig abgenommen; als nächster begrenzter Folgeauftrag steht P4.2.6 an. Zusätzlich ist T1 zur Toolkonfigurationsmodernisierung ausdrücklich freigegeben.
 
 Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
 
@@ -15,7 +15,7 @@ Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.
 | P1 | [P1.1–P1.6](p1-foundation.md) | Projektgrundlage; bereits erledigt |
 | P2 | [P2.1–P2.6](p2-domain.md) | Primitive → Aggregate → Stammdaten → Buchungen → Transfer/Abgleich → Projektionen/Abnahme |
 | P3 | [P3.1–P3.6](p3-storage.md) | Speicherverträge → Tresor → SQLite → IndexedDB → Orchestrierung → Offline-Abnahme |
-| P4 | [44 kleine Unteraufgaben in P4.1–P4.6](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln) | jede Funktion und jeder Nachweis einzeln; Fortsetzung mit P4.2.5 |
+| P4 | [44 kleine Unteraufgaben in P4.1–P4.6](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln) | jede Funktion und jeder Nachweis einzeln; Fortsetzung mit P4.2.6 |
 | P5 | [P5.1–P5.6](p5-import.md) | Parserbasis → CSV → CAMT/OFX/QFX → Übernahme → Regeln → Dauerzahlungen/Abnahme |
 | P6 | [P6.1–P6.6](p6-budget.md) | Methodenhistorie → Plan → Umschläge → Ziele → Berichte → Budgetabnahme |
 | P7 | [P7.1–P7.7](p7-family.md) | Teilnehmer → Anteile → Zahlungen → Reserve → Refunds → Veröffentlichung → Familienabnahme |
@@ -24,7 +24,7 @@ Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.
 | P10 | [P10.1–P10.6](p10-backup.md) | Container → Clientrestore → Backups → Serverrestore → Self-Hosting → Betriebsabnahme |
 | P11 | [P11.1–P11.6](p11-release.md) | Anleitungen → Plattformen → Signierung → Quellarchive → unabhängige Prüfung → Releaseübergabe |
 
-P4 enthält sechs Sammelaufgaben mit 34 noch offenen Unterabnahmen; P5–P11 behalten ihre bisherigen Teilpläne. Bei fehlenden Plattformen oder Signierungsgeheimnissen nur die betroffene Prüfung/Distribution blockieren und unabhängige bereits freigegebene Arbeit fortsetzen; keine Abnahme überspringen oder erledigt behaupten. P11-Abschluss erteilt keine Veröffentlichungsfreigabe.
+P4 enthält sechs Sammelaufgaben mit 31 noch offenen Unterabnahmen; P5–P11 behalten ihre bisherigen Teilpläne. Bei fehlenden Plattformen oder Signierungsgeheimnissen nur die betroffene Prüfung/Distribution blockieren und unabhängige bereits freigegebene Arbeit fortsetzen; keine Abnahme überspringen oder erledigt behaupten. P11-Abschluss erteilt keine Veröffentlichungsfreigabe.
 
 ## T1 — Toolkonfigurationen und verbindliche Warnungsprüfung
 
@@ -159,7 +159,7 @@ P4 enthält sechs Sammelaufgaben mit 34 noch offenen Unterabnahmen; P5–P11 beh
 ## P4 — Oberfläche und native App
 
 - Status: in Arbeit. Voraussetzung: P3. P4.1 ist erneut vollständig abgenommen; P4.2–P4.5 besitzen Teilimplementierungen, erfüllen nach Nachprüfung ihre Abnahmen aber noch nicht; P4.6 ist offen.
-- Teilaufgaben: [P4.1–P4.6 mit 44 kleinen Unteraufgaben](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln); pro Auftrag nur eine Unteraufgabe einschließlich konkretem Nachweis. Nächster Schritt: [P4.2.5](p4-ui.md#p425--empfänger-merge-mit-buchungsreferenz-abnehmen). Gesamtabschluss erst nach allen Teilabnahmen.
+- Teilaufgaben: [P4.1–P4.6 mit 44 kleinen Unteraufgaben](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln); pro Auftrag nur eine Unteraufgabe einschließlich konkretem Nachweis. Nächster Schritt: [P4.2.6](p4-ui.md#p426--layout-und-farbschema-stabilisieren). Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Composition Root, PlatformServices, Bereichswechsel; Übersicht/Konten/Buchungslisten/Formulare; Splits/Transfer/Abgleich; virtuelle Listen; Touch-/Desktoplayout; Systemschrift/-Farbschema; native Menüs, Dialoge, Kurzbefehle und Systembrowserlinks; leer/Fehler/offline/ausstehend-Zustände.
 - Ergebnis: lokal benutzbares Haushaltsbuch auf Web/PWA und Tauri, noch ohne alle Planungsfunktionen.
 - Verträge: UI-Ansichten, Befehlseingaben, Dateidialog-/Menüports, Bildschirm-/Fokusregeln.
@@ -167,7 +167,7 @@ P4 enthält sechs Sammelaufgaben mit 34 noch offenen Unterabnahmen; P5–P11 beh
 - Prüfungen: Playwright für Kernabläufe und Viewports; echte Tauri-Prüfung nach [UI](ui.md), Screenreader-/Zoomsmokecheck.
 - Prüfbelege: Aktueller Stand: lokaler Tresor-/Bereichseinstieg mit Rettungscode und drei UI-Tests; lokale Navigation und Stammdaten; einfache Buchungen, Anfangsbestände und exakte Zweiweg-Splits; Formulare für atomare Umbuchung und Abgleich; natives Tauri-Datei-/Bearbeiten-Menü. P4.2 ergänzt Archivierung von Konten/Kategorien und atomaren Empfänger-Merge über die bestehenden Fachbefehle sowie zwei Chromium-Playwright-Abläufe. `pnpm check:ci` bestand am 3. Oktober 2026 mit Dokumentation, Paketgraph, TypeScript, Vertrags-, Domain-, Krypto-, Speicher-, Offline-, Server- und Chromium-UI-Tests sowie Web- und Desktop-Produktionsbuild.
 
-  P4.1 ist am 4. Oktober 2026 erneut vollständig abgenommen: Neue Haushaltsschlüssel bleiben nach Sperren/Neustart per Passphrase oder Rettungscode verfügbar. Chromium prüft Erstnutzung, Sperren/Entsperren und einen Offline-Neustart für Web und Desktop-Frontend. Zusätzlich prüft P4.1.8 die gebündelte Tauri-Anwendung auf macOS arm64 mit echter nativer Interaktion: Tresor und Haushalt anlegen, sperren, Laufzeit neu starten und beide Entsperrwege erreichen wieder den Haushalt. Details stehen in der [P4.1.8-Übergabe](handoffs/p4-1-8.md). P4.2 ist nicht abnahmefähig, weil Kategoriearchivierung und ein Merge mit tatsächlich referenzierter Buchung nicht über die Oberfläche geprüft sind, Tastaturfokus nur als CSS-Regel und CSS-Zoom 200 % nur über Überschriftensichtbarkeit geprüft wurden. Browser-Zoom, Firefox/WebKit, Screenreader und native Desktop-Prüfungen fehlen ebenfalls. P4.3-Bearbeitung, Virtualisierung, F01/F02 und Fehlerpfade; P4.4-Entsperren/Undo und F03; P4.5-Dateidialoge/Systembrowser/Smokecheck; P4.6-weitere Browser, Screenshot-/Barrierefreiheits-/Leistungs- und Plattformmatrix bleiben offen.
+  P4.1 ist am 4. Oktober 2026 erneut vollständig abgenommen: Neue Haushaltsschlüssel bleiben nach Sperren/Neustart per Passphrase oder Rettungscode verfügbar. Chromium prüft Erstnutzung, Sperren/Entsperren und einen Offline-Neustart für Web und Desktop-Frontend. Zusätzlich prüft P4.1.8 die gebündelte Tauri-Anwendung auf macOS arm64 mit echter nativer Interaktion: Tresor und Haushalt anlegen, sperren, Laufzeit neu starten und beide Entsperrwege erreichen wieder den Haushalt. Details stehen in der [P4.1.8-Übergabe](handoffs/p4-1-8.md). P4.2.3–P4.2.5 sind inzwischen einzeln abgenommen: Konto- und Kategoriearchivierung mit Referenzen sowie Empfänger-Merge mit gespeicherter Buchung und echtem Chromium-Neustart auf Web und Desktop-Frontend. P4.2 bleibt offen, weil Layout und Tastaturfokus noch nicht einzeln abgenommen sind; bislang wurden Tastaturfokus nur als CSS-Regel und CSS-Zoom 200 % nur über Überschriftensichtbarkeit geprüft wurden. Browser-Zoom, Firefox/WebKit, Screenreader und native Desktop-Prüfungen fehlen ebenfalls. P4.3-Bearbeitung, Virtualisierung, F01/F02 und Fehlerpfade; P4.4-Entsperren/Undo und F03; P4.5-Dateidialoge/Systembrowser/Smokecheck; P4.6-weitere Browser, Screenshot-/Barrierefreiheits-/Leistungs- und Plattformmatrix bleiben offen.
 
   Planungsänderung vom 4. Oktober 2026: Alle P4.x-Aufgaben einschließlich P4.1 sind in einzeln abnehmbare Unteraufgaben aufgeteilt. Bisherige Code-/Testbelege bleiben historische Nachweise; keine neue Unterabnahme ist durch die Aufteilung bereits erfüllt. Die neue Reihenfolge, Voraussetzungen und Nachweislücken stehen im [P4-Teilplan](p4-ui.md). Prüfung der Planungsänderung: Dokumentationsvalidator, Validator-Kontrolltests, Struktur-/ID-/Voraussetzungsabgleich und Whitespaceprüfung; Details in der [Planungsübergabe](handoffs/p4-planung.md). Keine Anwendung implementiert oder neu abgenommen.
 

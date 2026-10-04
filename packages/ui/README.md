@@ -8,6 +8,8 @@ Archivierte Konten bleiben mit ihrem fortgeschriebenen Saldo in einem eigenen hi
 
 Archivierte Kategorien bleiben in der Kategorienreferenz vorhandener Buchungen lesbar. Sie werden weder in der Kategorie- noch in der Split-Kategorieauswahl für neue Buchungen angeboten.
 
+Beim Zusammenführen von Empfängern werden die gespeicherten Buchungsreferenzen atomar auf den Ziel-Empfänger umgestellt. Die Quelle bleibt archiviert erhalten und wird für neue Buchungen nicht mehr angeboten. Konto, Betrag, Datum und Kategorie bleiben gleich; der zusammengeführte Stand bleibt nach einem vollständigen Chromium-Neustart erhalten.
+
 ## Prüfung
 
 Im Repository ausführen:
@@ -20,6 +22,10 @@ pnpm exec playwright test tests/ui/p4-2-3.spec.ts
 WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-3.spec.ts --config tests/ui/desktop.config.ts
 pnpm exec playwright test tests/ui/p4-2-4.spec.ts
 WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-4.spec.ts --config tests/ui/desktop.config.ts
+pnpm exec playwright test tests/ui/p4-2-5.spec.ts
+WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-5.spec.ts --config tests/ui/desktop.config.ts
 ```
+
+Der Merge-Test beendet Chromium vollständig und startet es mit demselben dauerhaften Profil erneut; er verwendet keinen kopierten Speicherzustand.
 
 Der Desktop-Frontend-Test verwendet absichtlich den dokumentierten IndexedDB-Testadapter. Er ersetzt keinen nativen Tauri-Nachweis.

@@ -25,7 +25,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.2.5 — Empfänger-Merge mit Buchungsreferenz abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.2.5 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.2.6 — Layout und Farbschema stabilisieren**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.2.6 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -168,7 +168,7 @@ Nächster konkreter Arbeitsauftrag: **P4.2.5 — Empfänger-Merge mit Buchungsre
 - Abnahme: Übersicht, Konten, Buchungen und Stammdaten sind erreichbar; aktiver Bereich ist erkennbar; Wechsel zeigt ausschließlich dessen Daten.
 - Prüfungen: Chromium-Ablauf auf Web und Desktop-Frontend mit verschieden benannten privaten und gemeinsamen Konten.
 - Prüfbelege: Kriterienmatrix: (1) Übersicht, Konten, Buchungen und Stammdaten **erfüllt** — der fokussierte Chromium-Ablauf öffnet Übersicht, Buchungen, Kategorien, Empfänger und Konten in einem privaten und einem gemeinsamen lokalen Bereich. (2) Aktiver Bereich erkennbar **erfüllt** — die Bereichsauswahl und die Kennzeichnung „Privatbereich“ beziehungsweise „Gemeinsamer Bereich“ wechseln gemeinsam. (3) Ausschließlich Daten des aktiven Bereichs **erfüllt** — der Ablauf legt ein „Privatkonto Navigationstest“ und ein „Haushaltskonto Navigationstest“ an; beim jeweiligen Wechsel ist ausschließlich das Konto des ausgewählten Bereichs vorhanden. Aktuell bestanden: `pnpm exec playwright test tests/ui/p4-2-1.spec.ts` (1 Chromium-Webablauf), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-1.spec.ts --config tests/ui/desktop.config.ts` (1 Chromium-Desktop-Frontendablauf), UI-Unit-Tests, TypeScript sowie Web- und Desktop-Produktionsbuild.
-- Einschränkungen: Die Desktop-Frontend-Prüfung läuft ohne native Tauri-Laufzeit; die getrennte native Desktopabnahme bleibt P4.6 zugeordnet. Die noch offenen P4.2.5–P4.2.7 werden durch diese Einzelabnahme nicht vorgezogen.
+- Einschränkungen: Die Desktop-Frontend-Prüfung läuft ohne native Tauri-Laufzeit; die getrennte native Desktopabnahme bleibt P4.6 zugeordnet. Die noch offenen P4.2.6–P4.2.7 werden durch diese Einzelabnahme nicht vorgezogen.
 
 ### P4.2.2 — Übersicht und Kontostart prüfen
 
@@ -211,16 +211,16 @@ Nächster konkreter Arbeitsauftrag: **P4.2.5 — Empfänger-Merge mit Buchungsre
 
 ### P4.2.5 — Empfänger-Merge mit Buchungsreferenz abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.2; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.2.5 um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.2.4 abgenommen; bestehende Buchungserfassung für die Referenzfixture vorhanden.
 - Schritte: Zwei Empfänger anlegen und eine gespeicherte Buchung mit der Quelle zusammenführen; bestehende Merge-Anbindung gezielt korrigieren.
 - Ergebnis: Empfänger-Merge mit Buchungsreferenz abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [UI](ui.md), [Produkt](product.md), P2-Stammdatenbefehle in [API](api.md).
 - Abnahme: Buchung referenziert das Ziel, Quelle ist archiviert; Betrag und Konto bleiben gleich; nach Neustart derselbe Stand.
 - Prüfungen: Chromium-Merge mit referenzierter Buchung und Neustart; keine Prüfung nur mit unbenutzten Empfängern.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.2 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Kriterienmatrix und aktuelle Einzelbelege stehen in der [P4.2.5-Übergabe](handoffs/p4-2-5.md). Der neue Chromium-Ablauf speichert eine Ausgabe von 40,00 EUR mit der Quelle „Bäckerei am Hauptplatz“, führt diese mit „Bäckerei Hauptplatz“ zusammen und prüft Zielreferenz, unverändertes Konto, Betrag, Datum und Kategorie sowie den Ausschluss der Quelle aus aktiven Listen. Nach vollständigem Beenden und erneutem Starten von Chromium mit demselben dauerhaften Profil sind dieselben Daten nach Passphrase-Entsperrung vorhanden. Beide Clients bestanden; die vorhandenen Fachtests belegen archivierte Quellaggregate und die atomare Ablehnung veralteter beziehungsweise bereichsfremder Referenzen. Keine Korrektur am Anwendungscode nötig.
+- Einschränkungen: Desktop-Frontend mit IndexedDB-Testadapter, keine native Tauri-Laufzeit. Native Plattformprüfung bleibt P4.6 zugeordnet; spätere Paketfunktionen bleiben außerhalb des Auftrags.
 
 ### P4.2.6 — Layout und Farbschema stabilisieren
 
