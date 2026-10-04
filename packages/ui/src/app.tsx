@@ -112,13 +112,18 @@ export async function createLocalHousehold(
 ): Promise<CreatedHouseholdArea> {
   const id = crypto.randomUUID();
   const updatedVault = await addIndependentSpaceKey(vault, id);
-  const updatedProfile: LocalProfile = {
-    ...profile,
-    areas: [...profile.areas, { id, kind: 'household', label: `Haushalt ${profile.areas.filter((area) => area.kind === 'household').length + 1}` }],
-    selectedAreaId: id,
-    vault: await persistUnlockedUserVault(updatedVault, profile.vault)
-  };
-  return { profile: updatedProfile, vault: updatedVault };
+  try {
+    const updatedProfile: LocalProfile = {
+      ...profile,
+      areas: [...profile.areas, { id, kind: 'household', label: `Haushalt ${profile.areas.filter((area) => area.kind === 'household').length + 1}` }],
+      selectedAreaId: id,
+      vault: await persistUnlockedUserVault(updatedVault, profile.vault)
+    };
+    return { profile: updatedProfile, vault: updatedVault };
+  } catch (error) {
+    await lockUserVault(updatedVault);
+    throw error;
+  }
 }
 
 /** Erzeugt den verschlüsselten lokalen Anfangszustand ohne eine Serveranmeldung. */

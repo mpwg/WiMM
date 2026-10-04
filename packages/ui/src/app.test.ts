@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createLocalHousehold, createLocalProfile, createMemoryProfileStore, selectLocalArea, type LocalProfile } from './app.js';
-import { unlockUserVaultWithPassphrase, unlockUserVaultWithRecoveryCode } from '@wimm/crypto';
+import { lockUserVault, unlockUserVaultWithPassphrase, unlockUserVaultWithRecoveryCode } from '@wimm/crypto';
 
 const profile = {
   profileId: '00000000-0000-4000-8000-000000000001',
@@ -53,5 +53,18 @@ describe('lokale Profilkomposition', () => {
       .toContain(restarted.areas[1]!.id);
     expect((await unlockUserVaultWithRecoveryCode(restarted.vault, created.recoveryCode)).spaces.map((space) => space.spaceId))
       .toContain(restarted.areas[1]!.id);
+  }, 30_000);
+
+  it('behält bei einem Fehler vor dem Tresor-Commit das bestehende Profil unverändert', async () => {
+    const passphrase = 'fehler-vor-tresor-commit-2026';
+    const created = await createLocalProfile(passphrase);
+    const vault = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
+    const originalProfile = structuredClone(created.profile);
+    await lockUserVault(vault);
+
+    await expect(createLocalHousehold(created.profile, vault)).rejects.toThrow('Tresor');
+    expect(created.profile).toEqual(originalProfile);
+    expect((await unlockUserVaultWithPassphrase(created.profile.vault, passphrase)).spaces)
+      .toHaveLength(1);
   }, 30_000);
 });
