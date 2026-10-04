@@ -20,7 +20,7 @@ Die erste Version richtet sich an Erwachsene im deutschsprachigen Raum, verwende
 
 ## Einstieg für einen implementierenden Agenten
 
-Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [Teilaufgabenübersicht P1–P11](docs/tasks.md#teilaufgaben-und-bearbeitungsfolge) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md). P4–P11 sind in 50 offene Aufgaben zerlegt; nach Implementierungsfreigabe ist [P4.1](docs/p4-ui.md#p41--composition-root-und-lokaler-einstieg) der nächste Schritt.
+Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [Teilaufgabenübersicht P1–P11](docs/tasks.md#teilaufgaben-und-bearbeitungsfolge) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md). P4–P11 sind in 50 offene Aufgaben zerlegt; nach Implementierungsfreigabe ist [P4.2.5](docs/p4-ui.md#p425--empfänger-merge-mit-buchungsreferenz-abnehmen) der nächste Schritt.
 
 1. [Arbeitsregeln](AGENTS.md) lesen.
 2. Im [Dokumentationsindex](docs/README.md) die Lesereihenfolge beachten.

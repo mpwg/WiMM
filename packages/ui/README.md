@@ -6,6 +6,8 @@ Die Oberfläche zeigt zunächst einen leeren Bereich ohne erfundene Guthaben. Na
 
 Archivierte Konten bleiben mit ihrem fortgeschriebenen Saldo in einem eigenen historischen Abschnitt sichtbar. Ihre Buchungen bleiben lesbar; in neuen Buchungen, Umbuchungen und Abgleichen werden sie nicht mehr angeboten.
 
+Archivierte Kategorien bleiben in der Kategorienreferenz vorhandener Buchungen lesbar. Sie werden weder in der Kategorie- noch in der Split-Kategorieauswahl für neue Buchungen angeboten.
+
 ## Prüfung
 
 Im Repository ausführen:
@@ -16,6 +18,8 @@ pnpm exec playwright test tests/ui/p4-2-2.spec.ts
 WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-2.spec.ts --config tests/ui/desktop.config.ts
 pnpm exec playwright test tests/ui/p4-2-3.spec.ts
 WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-3.spec.ts --config tests/ui/desktop.config.ts
+pnpm exec playwright test tests/ui/p4-2-4.spec.ts
+WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-4.spec.ts --config tests/ui/desktop.config.ts
 ```
 
 Der Desktop-Frontend-Test verwendet absichtlich den dokumentierten IndexedDB-Testadapter. Er ersetzt keinen nativen Tauri-Nachweis.
