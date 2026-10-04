@@ -6,7 +6,7 @@
 
 Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlagen. P1 bis P3 sind abgeschlossen; P4–P11 bleiben offen. Nach jedem abgeschlossenen Abschnitt ist ein Zwischencommit mit zusammengehörigen Änderungen verpflichtend. Pushes und Veröffentlichungen bleiben ausgeschlossen.
 
-Für neue Mitwirkende: [kompakter Einstieg](getting-started.md), [Teilaufgabenübersicht P1–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) und [Referenzhaushalt mit durchgängigem Ablauf](reference-household.md). P4.1 ist nach Freigabe der nächste Implementierungsschritt. Die [Klärungsmatrix](getting-started.md#entscheidung-oder-rückfrage) unterscheidet verbindliche Festlegungen, technische Ermittlungen und Nutzerentscheidungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
+Für neue Mitwirkende: [kompakter Einstieg](getting-started.md), [Teilaufgabenübersicht P1–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) und [Referenzhaushalt mit durchgängigem Ablauf](reference-household.md). Die erneute Einzelabnahme [P4.1.1](p4-ui.md#p411--gemeinsame-dienste-und-plattformports-prüfen) ist der nächste begrenzte Schritt; vorhandene Implementierungen nur bei festgestellter Lücke ändern. Die [Klärungsmatrix](getting-started.md#entscheidung-oder-rückfrage) unterscheidet verbindliche Festlegungen, technische Ermittlungen und Nutzerentscheidungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
 
 ## Arbeitsumgebung
 
