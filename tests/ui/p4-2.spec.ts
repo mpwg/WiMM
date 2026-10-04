@@ -62,15 +62,16 @@ test('wechselt Bereiche, führt Empfänger atomar zusammen und erhält zugängli
   await expect(page.getByText('Privatbereich')).toBeVisible();
 
   await page.getByRole('button', { name: 'Empfänger' }).click();
-  await page.getByLabel('Empfänger').fill('Bäckerei am Hauptplatz');
+  await page.getByLabel('Empfänger', { exact: true }).fill('Bäckerei am Hauptplatz');
   await page.getByRole('button', { name: 'Empfänger anlegen' }).click();
   await expect(page.getByRole('list').getByText('Bäckerei am Hauptplatz', { exact: true })).toBeVisible();
-  await page.getByLabel('Empfänger').fill('Bäckerei Hauptplatz');
+  await page.getByLabel('Empfänger', { exact: true }).fill('Bäckerei Hauptplatz');
   await page.getByRole('button', { name: 'Empfänger anlegen' }).click();
   await expect(page.getByRole('list').getByText('Bäckerei Hauptplatz', { exact: true })).toBeVisible();
   await page.getByLabel('Quell-Empfänger').selectOption({ label: 'Bäckerei am Hauptplatz' });
   await page.getByLabel('Ziel-Empfänger').selectOption({ label: 'Bäckerei Hauptplatz' });
   await page.getByRole('button', { name: 'Zusammenführen und archivieren' }).click();
+  await page.getByRole('dialog', { name: 'Empfänger zusammenführen?' }).getByRole('button', { name: 'Zusammenführen', exact: true }).click();
   await expect(page.getByText('Bäckerei am Hauptplatz', { exact: true })).toHaveCount(0);
   await expect(page.getByRole('list').getByText('Bäckerei Hauptplatz', { exact: true })).toBeVisible();
 });

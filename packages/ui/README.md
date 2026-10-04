@@ -14,6 +14,8 @@ Navigation und Stammdaten verwenden gemeinsame Layout- und Farbregeln für Web u
 
 Die Auswahl „Farbschema“ in der Seitenleiste bietet „System“, „Hell“ und „Dunkel“. „System“ folgt auch laufenden Änderungen des Betriebssystemfarbschemas. Eine manuelle Auswahl überschreibt das System in den Finanzansichten und bleibt lokal über ein erneutes Laden und Entsperren hinweg erhalten. Bei nicht verfügbarem Browserspeicher gilt sie für die aktuelle Sitzung.
 
+Navigation, Bereichswechsel sowie das Anlegen von Konten, Kategorien und Empfängern sind vollständig per Tabulator, Umschalt+Tabulator, Enter und Escape erreichbar. Der sichtbare Fokus bleibt auf jedem fokussierten Bedienelement erhalten. Das Zusammenführen von Empfängern verlangt eine bestätigende Rückfrage; Escape oder „Abbrechen“ schließen sie ohne Änderung und geben den Fokus an „Zusammenführen und archivieren“ zurück.
+
 ## Prüfung
 
 Im Repository ausführen:
@@ -22,6 +24,8 @@ Im Repository ausführen:
 pnpm --filter @wimm/ui test
 pnpm exec playwright test tests/ui/p4-2-6.spec.ts
 WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-6.spec.ts --config tests/ui/desktop.config.ts
+pnpm exec playwright test tests/ui/p4-2-7.spec.ts
+WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-7.spec.ts --config tests/ui/desktop.config.ts
 pnpm exec playwright test tests/ui/p4-2-2.spec.ts
 WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-2.spec.ts --config tests/ui/desktop.config.ts
 pnpm exec playwright test tests/ui/p4-2-3.spec.ts

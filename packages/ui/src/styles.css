@@ -42,6 +42,11 @@ button:disabled { cursor: wait; opacity: 0.65; }
 .finance-main header { align-items: start; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; }
 .local-status { color: var(--status); font-size: 0.875rem; }
 .notice { background: var(--notice); padding: 0.75rem; }
+.confirmation-dialog { background: var(--surface); border: 1px solid var(--border); border-radius: 0.65rem; color: var(--text); max-width: min(32rem, calc(100% - 2rem)); padding: 1.5rem; }
+.confirmation-dialog::backdrop { background: rgb(0 0 0 / 0.45); }
+.confirmation-dialog h2 { margin-top: 0; }
+.dialog-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: end; margin-top: 1.5rem; }
+.dialog-actions button:first-child { background: transparent; border: 1px solid var(--border); color: var(--text); }
 .overview-grid { display: grid; gap: 1rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 1rem 0; }
 .overview-grid article { background: var(--surface); min-width: 0; padding: 1rem; }
 .overview-grid p { margin-top: 0; }
@@ -66,7 +71,9 @@ button:disabled { cursor: wait; opacity: 0.65; }
 .small-action { flex-shrink: 0; white-space: nowrap; }
 .help-text { color: var(--muted); font-size: 0.875rem; }
 .visually-hidden { height: 1px; margin: -1px; overflow: hidden; position: absolute; width: 1px; clip: rect(0 0 0 0); }
-button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.app-shell :focus { outline: 3px solid var(--accent) !important; outline-offset: 3px; }
+button:focus, input:focus, select:focus, a:focus { outline: 3px solid var(--accent) !important; outline-offset: 3px; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid var(--accent) !important; outline-offset: 3px; }
 @media (min-width: 768px) {
   .app-shell { display: grid; grid-template-columns: 12rem minmax(0, 1fr); }
   .sidebar { align-self: start; min-height: 100vh; position: sticky; top: 0; }

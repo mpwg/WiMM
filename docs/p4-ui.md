@@ -25,7 +25,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.2.7 — Tastaturfokus für Navigation und Stammdaten abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.2.7 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.3.1 — Einzelbuchung und F01 abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.3.1 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -145,7 +145,7 @@ Nächster konkreter Arbeitsauftrag: **P4.2.7 — Tastaturfokus für Navigation u
 
 ## P4.2 — Navigation, Übersicht und Stammdaten
 
-- Status: in Arbeit — Nachprüfung vom 3. Oktober 2026 hat offene Abnahmelücken ergeben.
+- Status: erledigt (4. Oktober 2026) — P4.2.1 bis P4.2.7 sind einzeln abgenommen.
 - Freigabe: expliziter Nutzerauftrag „setze P4.2 vollständig um“.
 - Voraussetzungen: P4.1 einschließlich P4.1.1–P4.1.8 erneut abgenommen.
 - Schritte: Desktop-/Tablet-/Mobilnavigation, Bereichskennzeichnung, Übersicht und Konto-/Kategorie-/Empfängerverwaltung umsetzen; Systemtypografie, Hell/Dunkel und zugängliche Zustände aufbauen.
@@ -155,7 +155,7 @@ Nächster konkreter Arbeitsauftrag: **P4.2.7 — Tastaturfokus für Navigation u
 - Prüfungen: Playwright für Einstieg/Bereichswechsel/Stammdaten, Hell/Dunkel, lange deutsche Namen, Fokus und 200 % Zoom.
 - Prüfbelege: Gemeinsame Web-/Desktopansicht mit Bereichskennzeichnung, Übersicht sowie Konto-, Kategoriegruppen-, Kategorie- und Empfängerverwaltung liegt in `packages/ui/src/workspace.tsx` vor. Lokale Salden entstehen aus `projectAccountBalances`; leere Bereiche zeigen keinen erfundenen Saldo. Konten und Kategorien werden über die P2-Fachbefehle archiviert und bleiben damit an historischen Referenzen erhalten; ein Empfänger-Merge erfasst alle lokal vorhandenen Quellreferenzen in einer atomaren Änderungsmenge und archiviert die Quelle. Systemschrift, Hell-/Dunkelmodus, sichtbare Fokusregel und ein Touchlayout unter 768 CSS-Pixeln sind vorhanden. `pnpm test:ui` bestand am 3. Oktober 2026 in Chromium; TypeScript, die UI-Unit-Tests sowie Web- und Desktop-Frontend-Build bestanden ebenfalls.
 
-  Historischer Nachprüfstand vom 3. Oktober 2026: Der damalige Chromium-Ablauf prüfte Kategoriearchivierung nicht und führte den Empfänger-Merge ohne referenzierte Buchung aus. Diese beiden Lücken sind inzwischen durch P4.2.4/P4.2.5 geschlossen; Layout, Touchmaße und wählbares Farbschema sind in P4.2.6 abgenommen. Offen bleibt P4.2.7. Die Tastaturprüfung stellt nur die Existenz einer `:focus-visible`-CSS-Regel fest, nicht die reale Fokusreihenfolge oder den sichtbaren Fokus nach Tastaturnavigation. Bei CSS-Zoom 200 % wird nur die Sichtbarkeit einer Überschrift geprüft; ein Seitenüberlauf- oder Erreichbarkeitsnachweis fehlt. Browser-Zoom, Firefox/WebKit, echter Screenreader und native Desktop-Prüfungen bleiben als getrennte Nachweise offen. Die vollständige Übergabe steht in [P4.2-Übergabe](handoffs/p4-2.md).
+  Historischer Nachprüfstand vom 3. Oktober 2026: Der damalige Chromium-Ablauf prüfte Kategoriearchivierung nicht und führte den Empfänger-Merge ohne referenzierte Buchung aus. Diese beiden Lücken sind durch P4.2.4/P4.2.5 geschlossen; Layout, Touchmaße und wählbares Farbschema sind in P4.2.6 abgenommen. P4.2.7 prüft die reale Tab-Folge, sichtbaren Fokus und Rückkehrfokus nach Escape mit einem nativen HTML-Dialog. Browser-Zoom, Firefox/WebKit, echter Screenreader und native Desktop-Prüfungen bleiben als getrennte Nachweise offen. Die vollständigen Einzelbelege stehen in [P4.2.7-Übergabe](handoffs/p4-2-7.md).
 
 ### P4.2.1 — Navigation und Bereichstrennung prüfen
 
@@ -237,16 +237,16 @@ Nächster konkreter Arbeitsauftrag: **P4.2.7 — Tastaturfokus für Navigation u
 
 ### P4.2.7 — Tastaturfokus für Navigation und Stammdaten abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.2; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.2.7 um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.2.6 abgenommen.
 - Schritte: Fokusfolge und sichtbaren Fokus durch reale Tastaturnavigation prüfen und gezielt verbessern.
 - Ergebnis: Tastaturfokus für Navigation und Stammdaten abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [UI](ui.md), [Produkt](product.md), P2-Stammdatenbefehle in [API](api.md).
 - Abnahme: Bereichswechsel, Konto-/Kategorieanlage und Merge sind per Tastatur erreichbar; Fokus sichtbar; Dialogfokus kehrt zum Auslöser zurück.
 - Prüfungen: Chromium mit Tab/Shift+Tab/Enter/Escape und Prüfung des tatsächlich fokussierten Elements auf Web und Desktop-Frontend; reine CSS-Regel zählt nicht.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.2 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Kriterienmatrix und aktuelle Einzelbelege stehen in der [P4.2.7-Übergabe](handoffs/p4-2-7.md). Der Chromium-Ablauf benutzt nur Tabulator, Umschalt+Tabulator, Enter, Buchstabenauswahl und Escape für Bereichswechsel, Navigation, Konto-/Kategorie-/Empfängeranlage und Merge auf Web und Desktop-Frontend. Jede erreichte Steuerung hat einen tatsächlichen Fokus sowie eine sichtbare 3-Pixel-Fokuslinie. Der bestätigende native HTML-Dialog fängt den Fokus; Escape bricht ohne Änderung ab und setzt ihn auf „Zusammenführen und archivieren“ zurück. Die bestätigte atomare Archivierung der Quelle bleibt durch P4.2.5 belegt.
+- Einschränkungen: Der Desktop-Frontend-Ablauf verwendet den dokumentierten IndexedDB-Testadapter und ist kein nativer Tauri-Nachweis. Browser-Zoom, Firefox/WebKit, Screenreader und die vollständige Plattformmatrix bleiben P4.6 zugeordnet; spätere Paketfunktionen bleiben außerhalb des Auftrags.
 
 ## P4.3 — Buchungslisten und Erfassungsformulare
 

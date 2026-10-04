@@ -79,6 +79,8 @@ test('führt einen referenzierten Empfänger zusammen und erhält Buchung und Ar
     await page.getByLabel('Quell-Empfänger').selectOption({ label: source });
     await page.getByLabel('Ziel-Empfänger').selectOption({ label: target });
     await page.getByRole('button', { name: 'Zusammenführen und archivieren' }).click();
+    await expect(page.getByRole('dialog', { name: 'Empfänger zusammenführen?' })).toBeVisible();
+    await page.getByRole('dialog', { name: 'Empfänger zusammenführen?' }).getByRole('button', { name: 'Zusammenführen', exact: true }).click();
     await expectMergedBooking(page);
 
     await context.close();
