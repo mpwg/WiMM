@@ -58,22 +58,11 @@ jobs:
         with:
           workspaces: apps/desktop/src-tauri -> target
 
-      - name: Playwright-Browsercache wiederherstellen
-        id: playwright-cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-
       - name: Abhängigkeiten gesperrt installieren
         run: pnpm install --frozen-lockfile
 
-      - name: Playwright-Systemabhängigkeiten einrichten
-        run: pnpm exec playwright install-deps chromium
-
-      - name: Playwright-Browser einrichten
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm exec playwright install chromium
+      - name: Playwright-Browser und Systemabhängigkeiten einrichten
+        run: pnpm exec playwright install --with-deps --only-shell chromium
 
       - name: Projekt prüfen
         run: pnpm check:ci
