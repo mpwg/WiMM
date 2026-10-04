@@ -93,16 +93,16 @@ Nächster konkreter Arbeitsauftrag: **P4.1.4 — Rettungscode-Entsperrung separa
 
 ### P4.1.5 — Haushaltsschlüssel dauerhaft sichern
 
-- Status: offen.
-- Freigabe: vorhandener Nutzerauftrag zum Abschluss von P4; aktueller Auftrag fordert Aufteilung und erneute Abnahmeplanung, keine Umsetzung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „setze p4.1.5 um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.1.4 abgenommen.
 - Schritte: Haushaltanlage und persistUnlockedUserVault einschließlich Fehler vor Commit und erneuter Entsperrung prüfen.
 - Ergebnis: Haushaltsschlüssel dauerhaft sichern mit erneuter Einzelabnahme.
 - Verträge: [Architektur](architecture.md), [Schlüsselbedienung](ui.md#schlüsselbedienung), [Verschlüsselung](encryption.md), [P3-Speicherbasis](p3-storage.md).
 - Abnahme: Neuer Haushalt bleibt nach Neustart über Passphrase und Code verfügbar; frische Nonce; Fehler meldet keinen erfolgreichen dauerhaft angelegten Haushalt.
 - Prüfungen: Gezielte Crypto-/UI-Integration für beide Entsperrwege und Speicherfehler; UI-Neustartablauf je Client.
-- Prüfbelege: erneute Einzelabnahme noch offen; historische Belege bei P4.1 und in der [Übergabe](handoffs/p4-1.md) gezielt nachprüfen.
-- Einschränkungen: historischer Tauri-Nachweis reicht bisher nur bis zum Tresorformular; kein vollständiger nativer Wiedereinstieg belegt.
+- Prüfbelege: Kriterienmatrix: (1) Neuer Haushalt bleibt nach Neustart über beide Entsperrwege verfügbar **erfüllt** — der gezielte Chromium-Ablauf legt einen Haushalt an, übergibt ausschließlich den dauerhaften Clientzustand an zwei frische Clientinstanzen und erreicht den Haushalt jeweils mit Passphrase beziehungsweise Rettungscode. Der Ablauf bestand für Web und Desktop-Frontend. (2) Frische Nonce **erfüllt** — derselbe Ablauf vergleicht die persistierte Tresornonce vor und nach der Haushaltanlage; sie ist verschieden. (3) Fehler vor Commit meldet keinen dauerhaft angelegten Haushalt **erfüllt** — der UI-Integrationstest sperrt den Tresor vor der Anlage, erwartet die Ablehnung und prüft das unveränderte Profil mit genau einem weiter entsperrbaren Bereich; der Fehlerpfad löscht den nur flüchtig erzeugten Bereichsschlüssel. Aktuell bestanden: `pnpm --filter @wimm/crypto test` (14 Tests), `pnpm --filter @wimm/ui test` (5 Tests), `pnpm exec playwright test tests/ui/p4-1-5.spec.ts` (1 Chromium-Webablauf), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-1-5.spec.ts --config tests/ui/desktop.config.ts` (1 Chromium-Desktop-Frontendablauf) und `pnpm typecheck`.
+- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; dieser bleibt P4.1.8 zugeordnet.
 
 ### P4.1.6 — Profil- und Bereichstrennung prüfen
 

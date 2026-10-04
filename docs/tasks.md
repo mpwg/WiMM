@@ -2,7 +2,7 @@
 
 ## Auftrag und Statusführung
 
-Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1.1 bis P4.1.3 sind erneut abgenommen; als nächster begrenzter Folgeauftrag steht P4.1.4 an.
+Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1.1 bis P4.1.5 sind erneut abgenommen; als nächster begrenzter Folgeauftrag steht P4.1.6 an.
 
 Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
 
@@ -15,7 +15,7 @@ Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.
 | P1 | [P1.1–P1.6](p1-foundation.md) | Projektgrundlage; bereits erledigt |
 | P2 | [P2.1–P2.6](p2-domain.md) | Primitive → Aggregate → Stammdaten → Buchungen → Transfer/Abgleich → Projektionen/Abnahme |
 | P3 | [P3.1–P3.6](p3-storage.md) | Speicherverträge → Tresor → SQLite → IndexedDB → Orchestrierung → Offline-Abnahme |
-| P4 | [44 kleine Unteraufgaben in P4.1–P4.6](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln) | jede Funktion und jeder Nachweis einzeln; Fortsetzung mit erneuter Abnahme P4.1.4 |
+| P4 | [44 kleine Unteraufgaben in P4.1–P4.6](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln) | jede Funktion und jeder Nachweis einzeln; Fortsetzung mit erneuter Abnahme P4.1.6 |
 | P5 | [P5.1–P5.6](p5-import.md) | Parserbasis → CSV → CAMT/OFX/QFX → Übernahme → Regeln → Dauerzahlungen/Abnahme |
 | P6 | [P6.1–P6.6](p6-budget.md) | Methodenhistorie → Plan → Umschläge → Ziele → Berichte → Budgetabnahme |
 | P7 | [P7.1–P7.7](p7-family.md) | Teilnehmer → Anteile → Zahlungen → Reserve → Refunds → Veröffentlichung → Familienabnahme |
@@ -129,7 +129,7 @@ P4 enthält sechs Sammelaufgaben mit 42 noch offenen Unterabnahmen; P5–P11 beh
 ## P4 — Oberfläche und native App
 
 - Status: in Arbeit. Voraussetzung: P3. P4.1 wird auf Nutzerwunsch erneut abgenommen; P4.2–P4.5 besitzen Teilimplementierungen, erfüllen nach Nachprüfung ihre Abnahmen aber noch nicht; P4.6 ist offen.
-- Teilaufgaben: [P4.1–P4.6 mit 44 kleinen Unteraufgaben](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln); pro Auftrag nur eine Unteraufgabe einschließlich konkretem Nachweis. Nächster Schritt: [P4.1.4](p4-ui.md#p414--rettungscode-entsperrung-separat-prüfen). Gesamtabschluss erst nach allen Teilabnahmen.
+- Teilaufgaben: [P4.1–P4.6 mit 44 kleinen Unteraufgaben](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln); pro Auftrag nur eine Unteraufgabe einschließlich konkretem Nachweis. Nächster Schritt: [P4.1.6](p4-ui.md#p416--profil--und-bereichstrennung-prüfen). Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Composition Root, PlatformServices, Bereichswechsel; Übersicht/Konten/Buchungslisten/Formulare; Splits/Transfer/Abgleich; virtuelle Listen; Touch-/Desktoplayout; Systemschrift/-Farbschema; native Menüs, Dialoge, Kurzbefehle und Systembrowserlinks; leer/Fehler/offline/ausstehend-Zustände.
 - Ergebnis: lokal benutzbares Haushaltsbuch auf Web/PWA und Tauri, noch ohne alle Planungsfunktionen.
 - Verträge: UI-Ansichten, Befehlseingaben, Dateidialog-/Menüports, Bildschirm-/Fokusregeln.
