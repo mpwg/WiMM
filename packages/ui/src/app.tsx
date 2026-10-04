@@ -7,6 +7,7 @@ import {
   createUserVault,
   initializeCrypto,
   lockUserVault,
+  persistUnlockedUserVault,
   reencryptUserVault,
   unlockUserVaultWithPassphrase,
   unlockUserVaultWithRecoveryCode,
@@ -55,6 +56,11 @@ export interface CreatedLocalProfile {
   readonly recoveryCode: string;
 }
 
+export interface CreatedHouseholdArea {
+  readonly profile: LocalProfile;
+  readonly vault: UnlockedUserVault;
+}
+
 type Screen =
   | { readonly kind: 'loading' }
   | { readonly kind: 'create'; readonly recoveryCode?: string; readonly vault?: UnlockedUserVault }
@@ -97,6 +103,22 @@ export function createMemoryProfileStore(initial?: LocalProfile): ProfileStore {
 export function selectLocalArea(profile: LocalProfile, areaId: string): LocalProfile {
   if (!profile.areas.some((area) => area.id === areaId)) throw new TypeError('Der Bereich gehört nicht zum lokalen Profil.');
   return { ...profile, selectedAreaId: areaId };
+}
+
+/** Ergänzt Bereich und Schlüssel zusammen, bevor das Profil dauerhaft ersetzt wird. */
+export async function createLocalHousehold(
+  profile: LocalProfile,
+  vault: UnlockedUserVault
+): Promise<CreatedHouseholdArea> {
+  const id = crypto.randomUUID();
+  const updatedVault = await addIndependentSpaceKey(vault, id);
+  const updatedProfile: LocalProfile = {
+    ...profile,
+    areas: [...profile.areas, { id, kind: 'household', label: `Haushalt ${profile.areas.filter((area) => area.kind === 'household').length + 1}` }],
+    selectedAreaId: id,
+    vault: await persistUnlockedUserVault(updatedVault, profile.vault)
+  };
+  return { profile: updatedProfile, vault: updatedVault };
 }
 
 /** Erzeugt den verschlüsselten lokalen Anfangszustand ohne eine Serveranmeldung. */
@@ -150,14 +172,12 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
       updateProfile(selectLocalArea(screen.profile, areaId));
     },
     async createHousehold() {
-      const id = crypto.randomUUID();
-      const vault = await addIndependentSpaceKey(screen.vault, id);
-      const profile: LocalProfile = {
-        ...screen.profile,
-        areas: [...screen.profile.areas, { id, kind: 'household', label: `Haushalt ${screen.profile.areas.filter((area) => area.kind === 'household').length + 1}` }],
-        selectedAreaId: id
-      };
-      updateProfile(profile, vault);
+      try {
+        const created = await createLocalHousehold(screen.profile, screen.vault);
+        updateProfile(created.profile, created.vault);
+      } catch {
+        setNotice('Der Haushalt konnte nicht dauerhaft angelegt werden. Der bestehende Bereich bleibt unverändert.');
+      }
     },
     async lock() {
       await lockUserVault(screen.vault);

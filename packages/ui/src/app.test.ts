@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 
-import { createLocalProfile, createMemoryProfileStore, selectLocalArea, type LocalProfile } from './app.js';
+import { createLocalHousehold, createLocalProfile, createMemoryProfileStore, selectLocalArea, type LocalProfile } from './app.js';
 import { unlockUserVaultWithPassphrase, unlockUserVaultWithRecoveryCode } from '@wimm/crypto';
 
 const profile = {
@@ -37,5 +37,21 @@ describe('lokale Profilkomposition', () => {
       .toBe(created.profile.selectedAreaId);
     expect((await unlockUserVaultWithRecoveryCode(created.profile.vault, created.recoveryCode)).spaces[0]!.spaceId)
       .toBe(created.profile.selectedAreaId);
+  }, 30_000);
+
+  it('bewahrt einen neuen Haushalt nach Sperren und lokalem Neustart verschlüsselt auf', async () => {
+    const passphrase = 'noch-eine-lange-lokale-passphrase';
+    const created = await createLocalProfile(passphrase);
+    const unlocked = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
+    const household = await createLocalHousehold(created.profile, unlocked);
+    const store = createMemoryProfileStore(household.profile);
+    const restarted = store.load()!;
+
+    expect(restarted.areas).toHaveLength(2);
+    expect(restarted.areas[1]!.kind).toBe('household');
+    expect((await unlockUserVaultWithPassphrase(restarted.vault, passphrase)).spaces.map((space) => space.spaceId))
+      .toContain(restarted.areas[1]!.id);
+    expect((await unlockUserVaultWithRecoveryCode(restarted.vault, created.recoveryCode)).spaces.map((space) => space.spaceId))
+      .toContain(restarted.areas[1]!.id);
   }, 30_000);
 });

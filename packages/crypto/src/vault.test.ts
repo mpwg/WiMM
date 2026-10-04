@@ -5,6 +5,7 @@ import {
   addIndependentSpaceKey,
   createUserVault,
   lockUserVault,
+  persistUnlockedUserVault,
   createEncryptedJsonSnapshotProtector,
   unlockUserVaultWithPassphrase,
   unlockUserVaultWithRecoveryCode,
@@ -43,6 +44,21 @@ describe('lokaler UserVault', () => {
     const withSecondSpace = await addIndependentSpaceKey(withFirstSpace, '00000000-0000-4000-8000-000000000011');
     expect(withSecondSpace.spaces[0]?.key).not.toEqual(withSecondSpace.spaces[1]?.key);
     await lockUserVault(withSecondSpace);
+  });
+
+  it('erhält nach einer Bereichsergänzung Passphrase und Rettungscode als Entsperrwege', async () => {
+    const created = await createUserVault(passphrase);
+    const vault = await unlockUserVaultWithPassphrase(created.record, passphrase);
+    const updatedVault = await addIndependentSpaceKey(vault, '00000000-0000-4000-8000-000000000012');
+    const updated = await persistUnlockedUserVault(updatedVault, created.record);
+
+    expect(updated.vault.nonce).not.toBe(created.record.vault.nonce);
+    expect((await unlockUserVaultWithPassphrase(updated, passphrase)).spaces.map((space) => space.spaceId))
+      .toContain('00000000-0000-4000-8000-000000000012');
+    expect((await unlockUserVaultWithRecoveryCode(updated, created.recoveryCode)).spaces.map((space) => space.spaceId))
+      .toContain('00000000-0000-4000-8000-000000000012');
+    await lockUserVault(updatedVault);
+    await expect(persistUnlockedUserVault(updatedVault, updated)).rejects.toBeInstanceOf(VaultUnlockError);
   });
 
   it('schützt Snapshots gegen Manipulation', async () => {

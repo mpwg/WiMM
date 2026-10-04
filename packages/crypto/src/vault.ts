@@ -7,6 +7,12 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 const vaultVersion = 1 as const;
 const vaultAad = encoder.encode('wimm/v1/snapshot');
+/** Schlüssel bleiben ausschließlich für die Lebensdauer des entsperrten Objekts im Speicher. */
+interface UnlockedVaultKeyState {
+  readonly key: Uint8Array;
+  locked: boolean;
+}
+const unlockedVaultKeys = new WeakMap<UnlockedUserVault, UnlockedVaultKeyState>();
 
 export interface VaultSpaceKey {
   readonly spaceId: string;
@@ -139,7 +145,10 @@ export async function unlockUserVaultWithPassphrase(
     assertRecordVersion(record);
     derivedKey = derivePassphraseKey(passphrase, fromBase64Url(record.passphraseWrap.salt));
     vaultKey = await unwrapVaultKey(record.passphraseWrap, derivedKey);
-    return await decryptVault(record.vault, vaultKey);
+    const vault = await decryptVault(record.vault, vaultKey);
+    unlockedVaultKeys.set(vault, { key: vaultKey, locked: false });
+    vaultKey = undefined;
+    return vault;
   } catch {
     throw new VaultUnlockError();
   } finally {
@@ -160,7 +169,10 @@ export async function unlockUserVaultWithRecoveryCode(
     recoveryKey = fromBase64Url(recoveryCode);
     if (recoveryKey.length !== 32) throw new VaultUnlockError();
     vaultKey = await unwrapVaultKey(record.recoveryWrap, recoveryKey);
-    return await decryptVault(record.vault, vaultKey);
+    const vault = await decryptVault(record.vault, vaultKey);
+    unlockedVaultKeys.set(vault, { key: vaultKey, locked: false });
+    vaultKey = undefined;
+    return vault;
   } catch {
     throw new VaultUnlockError();
   } finally {
@@ -179,10 +191,13 @@ export async function addIndependentSpaceKey(
   if (vault.spaces.some((space) => space.spaceId === spaceId && space.keyVersion === keyVersion)) {
     throw new TypeError('Der Bereichsschlüssel ist bereits vorhanden.');
   }
-  return {
+  const updatedVault = {
     ...vault,
     spaces: [...vault.spaces, { spaceId, keyVersion, key: sodium.randombytes_buf(32) }]
   };
+  const vaultKey = unlockedVaultKeys.get(vault);
+  if (vaultKey !== undefined) unlockedVaultKeys.set(updatedVault, vaultKey);
+  return updatedVault;
 }
 
 export async function reencryptUserVault(
@@ -209,12 +224,35 @@ export async function reencryptUserVault(
   }
 }
 
+/**
+ * Schreibt einen bereits entsperrten Tresor mit seinem weiterhin nur flüchtig
+ * gehaltenen Tresorschlüssel zurück. Die Passphrase- und Rettungscodehüllen
+ * bleiben dabei unverändert; nur die authentifizierte Tresorhülle erhält eine
+ * frische Nonce. Dies ist für lokale Änderungen wie einen neuen Bereich nötig.
+ */
+export async function persistUnlockedUserVault(
+  vault: UnlockedUserVault,
+  record: EncryptedUserVault
+): Promise<EncryptedUserVault> {
+  await initializeCrypto();
+  assertRecordVersion(record);
+  const vaultKey = unlockedVaultKeys.get(vault);
+  if (vaultKey === undefined || vaultKey.locked) throw new VaultUnlockError();
+  return { ...record, vault: await encryptVault(vault, vaultKey.key) };
+}
+
 /** Löscht geladene Schlüssel so weit JavaScript/WASM dies zulässt. */
 export async function lockUserVault(vault: UnlockedUserVault): Promise<void> {
   await initializeCrypto();
   sodium.memzero(vault.identityPrivateKey);
   sodium.memzero(vault.encryptionPrivateKey);
   for (const space of vault.spaces) sodium.memzero(space.key);
+  const vaultKey = unlockedVaultKeys.get(vault);
+  if (vaultKey !== undefined && !vaultKey.locked) {
+    sodium.memzero(vaultKey.key);
+    vaultKey.locked = true;
+    unlockedVaultKeys.delete(vault);
+  }
 }
 
 async function encryptVault(vault: UnlockedUserVault, vaultKey: Uint8Array): Promise<EncryptedVaultEnvelope> {

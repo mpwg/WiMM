@@ -24,7 +24,7 @@
     "test:domain": "pnpm --filter @wimm/domain test",
     "test:offline": "node --test scripts/service-worker.test.mjs",
     "test:storage": "pnpm --filter @wimm/storage test",
-    "test:ui": "playwright test",
+    "test:ui": "playwright test && WIMM_CLIENT=desktop playwright test --config tests/ui/desktop.config.ts",
     "test:docs": "node --test scripts/check-documentation.test.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },

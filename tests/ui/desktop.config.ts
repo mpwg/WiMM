@@ -1,0 +1,18 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import { defineConfig, devices } from '@playwright/test';
+
+export default defineConfig({
+  testDir: '.',
+  testMatch: 'p4-1.spec.ts',
+  timeout: 45_000,
+  use: {
+    baseURL: 'http://127.0.0.1:1420',
+    trace: 'retain-on-failure'
+  },
+  projects: [{ name: 'Chromium-Desktop-Frontend', use: { ...devices['Desktop Chrome'] } }],
+  webServer: {
+    command: 'pnpm --filter @wimm/desktop exec vite --host 127.0.0.1 --port 1420',
+    url: 'http://127.0.0.1:1420',
+    reuseExistingServer: !process.env.CI
+  }
+});
