@@ -25,7 +25,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.1.2 — Tresor-Erstnutzung und Rettungscodebestätigung prüfen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.1.2 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.1.4 — Rettungscode-Entsperrung separat prüfen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.1.4 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -67,16 +67,16 @@ Nächster konkreter Arbeitsauftrag: **P4.1.2 — Tresor-Erstnutzung und Rettungs
 
 ### P4.1.3 — Sperren und Passphrase-Entsperrung prüfen
 
-- Status: offen.
-- Freigabe: vorhandener Nutzerauftrag zum Abschluss von P4; aktueller Auftrag fordert Aufteilung und erneute Abnahmeplanung, keine Umsetzung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „setz das um: P4.1.3 (Sperren und Passphrase-Entsperrung)“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.1.2 abgenommen.
 - Schritte: Sperren, falsche und richtige Passphrase sowie erneutes Öffnen der App prüfen.
 - Ergebnis: Sperren und Passphrase-Entsperrung prüfen mit erneuter Einzelabnahme.
 - Verträge: [Architektur](architecture.md), [Schlüsselbedienung](ui.md#schlüsselbedienung), [Verschlüsselung](encryption.md), [P3-Speicherbasis](p3-storage.md).
 - Abnahme: Sperren entfernt flüchtige private Schlüssel und Finanzansicht; falsche Passphrase gibt keine Daten frei; richtige stellt denselben Bereich her.
 - Prüfungen: Crypto-/UI-Integration für Schlüsselentfernung plus Chromium-Sperrablauf auf beiden Frontends; Prüfung nach Neustart.
-- Prüfbelege: erneute Einzelabnahme noch offen; historische Belege bei P4.1 und in der [Übergabe](handoffs/p4-1.md) gezielt nachprüfen.
-- Einschränkungen: historischer Tauri-Nachweis reicht bisher nur bis zum Tresorformular; kein vollständiger nativer Wiedereinstieg belegt.
+- Prüfbelege: Kriterienmatrix: (1) Sperren entfernt flüchtige private Schlüssel und Finanzansicht **erfüllt** — der Crypto-Test prüft das Überschreiben von Identitäts-, Verschlüsselungs- und Bereichsschlüsselmaterial und verhindert danach jede Tresorpersistenz; je ein Chromium-Ablauf für Web und Desktop-Frontend prüft zusätzlich, dass nach „Tresor sperren“ weder Übersicht noch Privatbereich im DOM bleiben. (2) falsche Passphrase gibt keine Daten frei **erfüllt** — beide Frontends zeigen die zuordenbare Fehlermeldung und öffnen keine Finanzansicht. (3) richtige Passphrase stellt denselben Bereich nach Neustart her **erfüllt** — beide Abläufe laden nach einem echten Seitenneustart wieder den lokalen Tresor, entsperren ihn mit der korrekten Passphrase und zeigen wieder „Privater Bereich“. Aktuell bestanden: `pnpm --filter @wimm/crypto test` (13 Tests), `pnpm exec playwright test tests/ui/p4-1-3.spec.ts` (1 Chromium-Webablauf), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-1-3.spec.ts --config tests/ui/desktop.config.ts` (1 Chromium-Desktop-Frontendablauf), `pnpm test:ui` (6 Web- und 4 Desktop-Frontendabläufe), `pnpm --filter @wimm/ui test` (4 Tests) und `pnpm typecheck`.
+- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; dieser bleibt P4.1.8 zugeordnet.
 
 ### P4.1.4 — Rettungscode-Entsperrung separat prüfen
 
