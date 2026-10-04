@@ -150,14 +150,17 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
     );
   }, [store]);
 
-  if (screen.kind === 'loading') return <main className="startup"><p>WhereIsMyMoney wird vorbereitet …</p></main>;
-  if (notice !== undefined && screen.kind !== 'unlocked') return <Problem title="Start nicht möglich" message={notice} />;
+  if (screen.kind === 'loading') {
+    return notice === undefined
+      ? <main className="startup"><p>WhereIsMyMoney wird vorbereitet …</p></main>
+      : <Problem title="Start nicht möglich" message={notice} />;
+  }
 
   if (screen.kind === 'create') {
-    return <CreateVault title={title} screen={screen} store={store} onScreen={setScreen} onNotice={setNotice} />;
+    return <CreateVault notice={notice} title={title} screen={screen} store={store} onScreen={setScreen} onNotice={setNotice} />;
   }
   if (screen.kind === 'unlock') {
-    return <UnlockVault title={title} profile={screen.profile} onUnlocked={(vault) => setScreen({ ...screen, kind: 'unlocked', vault })} onNotice={setNotice} />;
+    return <UnlockVault notice={notice} title={title} profile={screen.profile} onUnlocked={(vault) => setScreen({ ...screen, kind: 'unlocked', vault })} onNotice={setNotice} />;
   }
 
   const activeArea = screen.profile.areas.find((area) => area.id === screen.profile.selectedAreaId) ?? screen.profile.areas[0]!;
@@ -200,7 +203,8 @@ function LocalStart({ context, title }: { readonly context: UnlockedAppContext; 
   </main>;
 }
 
-function CreateVault({ title, screen, store, onScreen, onNotice }: {
+function CreateVault({ notice, title, screen, store, onScreen, onNotice }: {
+  readonly notice?: string | undefined;
   readonly title: string;
   readonly screen: Extract<Screen, { kind: 'create' }>;
   readonly store: ProfileStore;
@@ -256,19 +260,22 @@ function CreateVault({ title, screen, store, onScreen, onNotice }: {
     return <main className="auth"><p className="eyebrow">{title}</p><h1>Rettungscode sichern</h1>
       <p>Dieser Code ist der zweite Weg zu Ihren Finanzschlüsseln. Er wird nicht erneut angezeigt und nie an einen Server gesendet.</p>
       <output className="recovery-code" aria-label="Rettungscode">{screen.recoveryCode}</output>
+      {notice === undefined ? undefined : <p role="alert">{notice}</p>}
       <form onSubmit={finish}><label><input type="checkbox" checked={recoveryConfirmed} onChange={(event) => setRecoveryConfirmed(event.target.checked)} /> Ich habe den Rettungscode sicher abgelegt.</label>
         <button disabled={!recoveryConfirmed || busy} type="submit">Lokalen Bereich eröffnen</button></form>
     </main>;
   }
   return <main className="auth"><p className="eyebrow">{title}</p><h1>Lokalen Tresor anlegen</h1>
     <p>Die App funktioniert ohne Konto und Server. Die Entsperrpassphrase bleibt auf diesem Gerät.</p>
+    {notice === undefined ? undefined : <p role="alert">{notice}</p>}
     <form onSubmit={submit}><label>Entsperrpassphrase<input autoComplete="new-password" minLength={12} onChange={(event) => setPassphrase(event.target.value)} required type="password" value={passphrase} /></label>
       <label>Passphrase wiederholen<input autoComplete="new-password" minLength={12} onChange={(event) => setConfirmation(event.target.value)} required type="password" value={confirmation} /></label>
       <button disabled={busy} type="submit">Tresor anlegen</button></form>
   </main>;
 }
 
-function UnlockVault({ title, profile, onUnlocked, onNotice }: {
+function UnlockVault({ notice, title, profile, onUnlocked, onNotice }: {
+  readonly notice?: string | undefined;
   readonly title: string;
   readonly profile: LocalProfile;
   readonly onUnlocked: (vault: UnlockedUserVault) => void;
@@ -290,6 +297,7 @@ function UnlockVault({ title, profile, onUnlocked, onNotice }: {
     } finally { setBusy(false); }
   }
   return <main className="auth"><p className="eyebrow">{title}</p><h1>Tresor entsperren</h1><p>Eine Serveranmeldung ist hierfür nicht erforderlich.</p>
+    {notice === undefined ? undefined : <p role="alert">{notice}</p>}
     <form onSubmit={submit}><label>{recovery ? 'Rettungscode' : 'Entsperrpassphrase'}<input autoComplete="current-password" onChange={(event) => setSecret(event.target.value)} required type="password" value={secret} /></label>
       <label><input checked={recovery} onChange={(event) => setRecovery(event.target.checked)} type="checkbox" /> Rettungscode verwenden</label>
       <button disabled={busy} type="submit">Entsperren</button></form>

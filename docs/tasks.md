@@ -2,7 +2,7 @@
 
 ## Auftrag und Statusführung
 
-Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1.1 ist erneut abgenommen; als nächster begrenzter Folgeauftrag steht P4.1.2 an.
+Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1.1 und P4.1.2 sind erneut abgenommen; als nächster begrenzter Folgeauftrag steht P4.1.3 an.
 
 Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
 
@@ -129,7 +129,7 @@ P4 enthält sechs Sammelaufgaben mit 43 noch offenen Unterabnahmen; P5–P11 beh
 ## P4 — Oberfläche und native App
 
 - Status: in Arbeit. Voraussetzung: P3. P4.1 wird auf Nutzerwunsch erneut abgenommen; P4.2–P4.5 besitzen Teilimplementierungen, erfüllen nach Nachprüfung ihre Abnahmen aber noch nicht; P4.6 ist offen.
-- Teilaufgaben: [P4.1–P4.6 mit 44 kleinen Unteraufgaben](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln); pro Auftrag nur eine Unteraufgabe einschließlich konkretem Nachweis. Nächster Schritt: [P4.1.2](p4-ui.md#p412--tresor-erstnutzung-und-rettungscodebestätigung-prüfen). Gesamtabschluss erst nach allen Teilabnahmen.
+- Teilaufgaben: [P4.1–P4.6 mit 44 kleinen Unteraufgaben](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln); pro Auftrag nur eine Unteraufgabe einschließlich konkretem Nachweis. Nächster Schritt: [P4.1.3](p4-ui.md#p413--sperren-und-passphrase-entsperrung-prüfen). Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Composition Root, PlatformServices, Bereichswechsel; Übersicht/Konten/Buchungslisten/Formulare; Splits/Transfer/Abgleich; virtuelle Listen; Touch-/Desktoplayout; Systemschrift/-Farbschema; native Menüs, Dialoge, Kurzbefehle und Systembrowserlinks; leer/Fehler/offline/ausstehend-Zustände.
 - Ergebnis: lokal benutzbares Haushaltsbuch auf Web/PWA und Tauri, noch ohne alle Planungsfunktionen.
 - Verträge: UI-Ansichten, Befehlseingaben, Dateidialog-/Menüports, Bildschirm-/Fokusregeln.

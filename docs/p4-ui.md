@@ -54,16 +54,16 @@ Nächster konkreter Arbeitsauftrag: **P4.1.2 — Tresor-Erstnutzung und Rettungs
 
 ### P4.1.2 — Tresor-Erstnutzung und Rettungscodebestätigung prüfen
 
-- Status: offen.
-- Freigabe: vorhandener Nutzerauftrag zum Abschluss von P4; aktueller Auftrag fordert Aufteilung und erneute Abnahmeplanung, keine Umsetzung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „setze P4.1.2 um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.1.1 abgenommen.
 - Schritte: Vorhandene lokale Anlage mit Passphrase, einmaliger Codeanzeige und Sicherungsbestätigung erneut prüfen.
 - Ergebnis: Tresor-Erstnutzung und Rettungscodebestätigung prüfen mit erneuter Einzelabnahme.
 - Verträge: [Architektur](architecture.md), [Schlüsselbedienung](ui.md#schlüsselbedienung), [Verschlüsselung](encryption.md), [P3-Speicherbasis](p3-storage.md).
 - Abnahme: Ohne Server/Anmeldung anlegbar; vor Codebestätigung keine Finanzansicht; Code nicht in Logs oder dauerhaftem UI-Zustand abgelegt.
 - Prüfungen: Chromium auf Web und Desktop-Frontend: Anlage → unbestätigt → bestätigt; Fehleingaben und abgebrochene Anlage.
-- Prüfbelege: erneute Einzelabnahme noch offen; historische Belege bei P4.1 und in der [Übergabe](handoffs/p4-1.md) gezielt nachprüfen.
-- Einschränkungen: historischer Tauri-Nachweis reicht bisher nur bis zum Tresorformular; kein vollständiger nativer Wiedereinstieg belegt.
+- Prüfbelege: Kriterienmatrix: (1) lokale Anlage ohne Server oder Anmeldung **erfüllt** — je drei Chromium-Playwright-Abläufe gegen Web und Desktop-Frontend erstellen den Tresor bis zur Rettungscodeansicht und öffnen den Bereich nach Bestätigung. (2) keine Finanzansicht vor der Bestätigung **erfüllt** — der Bestätigungsbefehl bleibt deaktiviert, bis die Sicherung bestätigt ist; die Übersicht ist vorher nicht im DOM. (3) kein Rettungscode in Logs oder dauerhaftem UI-Zustand **erfüllt** — der Ablauf prüft `localStorage` und Browser-Konsolenmeldungen auf den angezeigten synthetischen Code; ein Reload vor der Bestätigung führt ohne gespeichertes Profil wieder zur Anlage. Fehleingaben bleiben als zuordenbare Meldung am Formular, damit die Passphrase korrigiert werden kann. Aktuell bestanden: `pnpm exec playwright test tests/ui/p4-1.spec.ts` (3 Chromium-Webtests), `WIMM_CLIENT=desktop pnpm exec playwright test --config tests/ui/desktop.config.ts` (3 Chromium-Desktop-Frontendtests), `pnpm --filter @wimm/ui test` (4 Tests) und `pnpm typecheck`.
+- Einschränkungen: Die Desktop-Frontend-Prüfung ist bewusst kein nativer Tauri-Nachweis; der vollständige native Wiedereinstieg bleibt P4.1.8.
 
 ### P4.1.3 — Sperren und Passphrase-Entsperrung prüfen
 
