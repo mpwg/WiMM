@@ -8,7 +8,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
-- Status: in Arbeit — Nachprüfung vom 3. Oktober 2026 hat offene Abnahmelücken ergeben.
+- Status: erledigt am 4. Oktober 2026.
 - Freigabe: Nutzerauftrag zum vollständigen Abschluss von P4.
 - Voraussetzungen: P3 erledigt.
 - Schritte: gemeinsame Clientdienste und PlatformServices in Web/Desktop injizieren; lokalen Profil-/Bereichseinstieg, Tresorentsperrung und Rettungscodesicherung anbinden; Routing und flüchtigen UI-Zustand von Fachdaten trennen.
@@ -16,9 +16,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 - Verträge: [Architektur](architecture.md), [Produktabläufe](product.md), [Schlüsselbedienung](ui.md#schlüsselbedienung).
 - Abnahme: Standalone ohne Anmeldung/Serverkonfiguration nutzbar; gesperrter Tresor zeigt keine Finanzansicht; Bereichswechsel übernimmt keine privaten Daten in andere Bereiche.
 - Prüfungen: lokale Erstnutzung, Entsperren/Sperren und Offline-Neustart auf beiden Clients; Dienst-/Bereichswechsel mit synthetischen Profilen.
-- Prüfbelege: `packages/ui` stellt für Web und Desktop denselben Composition Root mit injiziertem Profil- und `PlatformServices`-Port bereit. Ein neuer Tresor wird mit einer lokalen Passphrase angelegt; der Rettungscode wird ausschließlich einmalig angezeigt und muss vor dem lokalen Start bestätigt werden. `lockUserVault` entfernt geladene private Schlüssel und zeigt wieder nur den Sperrbildschirm. Drei UI-Unit-Tests prüfen profilgebundene Bereichswahl, defensive Profilkopien sowie die Standalone-Erstanlage. TypeScript, UI-Tests sowie Web- und Desktop-Frontend-Build bestanden.
-
-  Offen nach Nachprüfung: `createHousehold` ergänzt den Bereichsschlüssel nur im flüchtigen Tresor, speichert aber weiterhin die vorherige verschlüsselte Tresorhülle im Profil. Nach Sperren oder Neustart ist der neue Haushaltsschlüssel daher nicht wiederherstellbar. Der Ablauf Haushalt anlegen → sperren → per Passphrase/Rettungscode entsperren → Bereich öffnen benötigt einen Regressionstest und eine persistente, verschlüsselte Aktualisierung der Tresorhülle. Ebenso fehlen die geforderten tatsächlichen Offline-Neustarts auf Web und Desktop sowie ein Interaktionsnachweis für Sperren/Entsperren.
+- Prüfbelege: `packages/ui` stellt für Web und Desktop denselben Composition Root mit injiziertem Profil- und `PlatformServices`-Port bereit. Ein neuer Tresor wird mit einer lokalen Passphrase angelegt; der Rettungscode wird ausschließlich einmalig angezeigt und muss vor dem lokalen Start bestätigt werden. `lockUserVault` entfernt geladene private Schlüssel und zeigt wieder nur den Sperrbildschirm. Der neue Schlüssel eines Haushalts wird über `persistUnlockedUserVault` mit frischer Nonce in die bestehende, verschlüsselte Tresorhülle geschrieben; die Passphrase- und Rettungscodehüllen bleiben erhalten. Die Crypto- und UI-Unit-Tests prüfen den Haushalt nach Sperren und lokalem Neustart über beide Entsperrwege. `tests/ui/p4-1.spec.ts` prüft im Chromium die vollständige Interaktion Tresor anlegen → Rettungscode bestätigen → Haushalt anlegen → sperren → entsperren → Offline-Neustart. Der gleiche Ablauf läuft gegen das Desktop-Frontend. `pnpm test:ui`, TypeScript sowie der Web- und Desktop-Produktionsbuild bestanden am 4. Oktober 2026. Der gebündelte Tauri-Start wurde auf macOS arm64 ohne Serverkonfiguration visuell bis zum Formular „Lokalen Tresor anlegen“ geprüft; die CSP erlaubt dafür ausschließlich zusätzlich `wasm-unsafe-eval` für die verwendete libsodium-WASM-Bindung.
 
 ## P4.2 — Navigation, Übersicht und Stammdaten
 
