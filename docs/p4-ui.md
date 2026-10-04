@@ -6,9 +6,11 @@ Diese Teilaufgaben konkretisieren [P4](tasks.md#p4--oberfläche-und-native-app).
 
 Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen; nach jedem abgeschlossenen Abschnitt einen zusammengehörigen Zwischencommit und eine [Übergabe](templates/handoff.md) erstellen. P4 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P5](p5-import.md). Für die Umsetzung wimm-ui verwenden, bei Schlüsselbedienung zusätzlich wimm-e2ee. Native Prüfungen und Browseremulation getrennt belegen.
 
+Ergänzung vom 4. Oktober 2026: Der nachfolgende ausdrückliche Nutzerauftrag zum vollständigen Abschluss von P4.3.1–P4.3.8 ist umgesetzt und einzeln abgenommen; die aktuelle [Kriterienmatrix](handoffs/p4-3.md) ergänzt die historische Planungsänderung.
+
 ## Kleine Arbeitsaufträge und Abschlussregeln
 
-Ein Auftrag umfasst genau eine Unteraufgabe, einen beobachtbaren Ablauf und dessen unmittelbare Prüfungen. Richtgröße ist ein zusammenhängender Abschnitt in einer Agentensitzung, kein vollständiges P4.x-Paket. Falls währenddessen weitere unabhängige Funktionen nötig werden, diese vor der Umsetzung als eigene Unteraufgabe dokumentieren. Eine garantierte Umsetzung lässt sich nicht aus der Größe ableiten; die Abnahme entscheidet anhand des tatsächlichen Verhaltens.
+Ein begrenzter Standardauftrag umfasst genau eine Unteraufgabe, einen beobachtbaren Ablauf und dessen unmittelbare Prüfungen. Richtgröße ist ein zusammenhängender Abschnitt in einer Agentensitzung, kein vollständiges P4.x-Paket. Der ausdrückliche Nutzerauftrag vom 4. Oktober 2026 „P.4.3.* komplett, alle Subtasks“ umfasst ausnahmsweise P4.3.1–P4.3.8; deren Kriterien werden weiterhin einzeln geprüft. Falls währenddessen weitere unabhängige Funktionen nötig werden, diese vor der Umsetzung als eigene Unteraufgabe dokumentieren. Eine garantierte Umsetzung lässt sich nicht aus der Größe ableiten; die Abnahme entscheidet anhand des tatsächlichen Verhaltens.
 
 Vorhandenen Code und historische Prüfbelege weiterverwenden, zunächst gegen die konkrete Unterabnahme prüfen und nur die verbleibende Lücke schließen. Alle neuen Unteraufgaben starten als `offen`, weil ihre vollständige Einzelabnahme noch nicht dokumentiert ist; das setzt keine vorhandene Implementierung zurück. Auch P4.1 wird erneut einzeln abgenommen; vorhandene Funktionen werden nur bei festgestellter Lücke geändert. Die bisherigen P4.x-Anker und Nachweise bleiben bestehen. Eine historische Abnahme gilt nicht automatisch als neue Einzelabnahme.
 
@@ -25,7 +27,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.3.2 — Spliterfassung und F02 abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.3.2 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.4.1 — Transferdialog und F03 abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.4.1 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -250,7 +252,7 @@ Nächster konkreter Arbeitsauftrag: **P4.3.2 — Spliterfassung und F02 abnehmen
 
 ## P4.3 — Buchungslisten und Erfassungsformulare
 
-- Status: in Arbeit.
+- Status: erledigt (4. Oktober 2026) — P4.3.1–P4.3.8 einzeln belegt.
 - Freigabe: Nutzerauftrag zum Abschluss von P4.
 - Voraussetzungen: P4.2 einschließlich Unteraufgaben abgenommen.
 - Schritte: virtualisierte Buchungslisten, Suche/Filter, Einzelbuchung und Splits anbinden; exakte Betragseingabe, Datum, Feldfehler und Speicherstatus umsetzen; mobile Details statt gequetschter Tabelle gestalten.
@@ -258,7 +260,7 @@ Nächster konkreter Arbeitsauftrag: **P4.3.2 — Spliterfassung und F02 abnehmen
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Oberflächenmatrix](testing.md#oberflächenmatrix-und-leistung).
 - Abnahme: Tastatur-/Toucherfassung und Bearbeitung möglich; falsche Splitsumme abgewiesen; keine Erfolgsmeldung vor Commit; Quota/Disk-full erhält Eingaben.
 - Prüfungen: F01/F02 über UI, Fehler-/Offlinezustände, virtuelle Liste mit Leistungsdatensatz und dokumentierter Messumgebung.
-- Prüfbelege: Einzelbuchung, Anfangsbestand, Suche und ein zweizeiliger Split sind an `saveTransaction` gebunden. Betragstexte werden nur durch `parseMoney` im Fachkern verarbeitet; der zweite Split entsteht mit `subtractMoney`. Speichererfolg wird erst nach `LocalAreaService.applyChangeSet` angezeigt; Fachfehler bleiben im Formular sichtbar. P4.3.1 belegt Einzelbuchungen/F01 sowie Betrag-/Datumsfeldfehler auf beiden Frontends. Offen: Bearbeiten/Löschen, echte Virtualisierung, UI-Referenzfall F02, Quota-/Offline- und Leistungsnachweise.
+- Prüfbelege: F01/F02, normale und Splitbearbeitung, Löschbestätigung/-abbruch, kombinierte Filter, mobile Details bei 320 Pixeln, 50.000-Buchungen-Virtualisierung, Quota/Disk-full/Commitverzögerung und vollständiger Offline-Chromium-Neustart bestehen. 30 Web- und 27 Desktop-Frontendabläufe sowie sechs separate Speicherintegrationen bestanden. Die [P4.3-Kriterienmatrix](handoffs/p4-3.md) belegt jede Unterabnahme und die aktualisierte README; native Wiederholung und Zeitziele bleiben ausdrücklich P4.6.5/P4.6.6.
 
 ### P4.3.1 — Einzelbuchung und F01 abnehmen
 
@@ -275,94 +277,94 @@ Nächster konkreter Arbeitsauftrag: **P4.3.2 — Spliterfassung und F02 abnehmen
 
 ### P4.3.2 — Spliterfassung und F02 abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.3; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag vom 4. Oktober 2026 zum vollständigen Abschluss aller P4.3-Unteraufgaben.
 - Voraussetzungen: P4.3.1 abgenommen.
 - Schritte: Splitzeilen ergänzbar und entfernbar machen; Beträge ausschließlich über Fachkern validieren.
 - Ergebnis: Spliterfassung und F02 abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Tests](testing.md).
 - Abnahme: F02 -60/-40 zu -100 EUR speichert vollständig; -60/-39 wird vollständig abgewiesen; mindestens drei Zeilen sind erfassbar.
 - Prüfungen: Chromium: gültiger und ungültiger F02-Fall sowie Hinzufügen/Entfernen einer dritten Splitzeile; Saldo unverändert im Fehlfall.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.3 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete aktuelle Abläufe, Testdaten und Prüfgrenzen stehen in der [P4.3-Kriterienmatrix](handoffs/p4-3.md).
+- Einschränkungen: Desktop-Frontend mit IndexedDB-Testadapter, Touch mit Chromiumemulation; native Wiederholung und vollständige Browser-/Leistungsmatrix bleiben P4.6. Details in der [Übergabe](handoffs/p4-3.md).
 
 ### P4.3.3 — Bestehende Buchung bearbeiten
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.3; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag vom 4. Oktober 2026 zum vollständigen Abschluss aller P4.3-Unteraufgaben.
 - Voraussetzungen: P4.3.2 abgenommen.
 - Schritte: Detail-/Bearbeitungsansicht an bestehenden Speicherbefehl mit aktueller Revision anbinden.
 - Ergebnis: Bestehende Buchung bearbeiten mit dokumentierter Einzelabnahme.
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Tests](testing.md).
 - Abnahme: Normale und Splitbuchung lassen sich ändern; kein Duplikat; ungültige Änderung erhält Eingaben und bisherigen gespeicherten Stand.
 - Prüfungen: Chromium: normale und Splitbuchung öffnen → ändern → erneut öffnen; Fehlfall und veraltete Revision gezielt prüfen.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.3 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete aktuelle Abläufe, Testdaten und Prüfgrenzen stehen in der [P4.3-Kriterienmatrix](handoffs/p4-3.md).
+- Einschränkungen: Desktop-Frontend mit IndexedDB-Testadapter, Touch mit Chromiumemulation; native Wiederholung und vollständige Browser-/Leistungsmatrix bleiben P4.6. Details in der [Übergabe](handoffs/p4-3.md).
 
 ### P4.3.4 — Buchung bestätigt löschen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.3; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag vom 4. Oktober 2026 zum vollständigen Abschluss aller P4.3-Unteraufgaben.
 - Voraussetzungen: P4.3.3 abgenommen.
 - Schritte: Löschbestätigung und Tombstone-Befehl für nicht abgeglichene Buchungen anbinden.
 - Ergebnis: Buchung bestätigt löschen mit dokumentierter Einzelabnahme.
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Tests](testing.md).
 - Abnahme: Abbruch verändert nichts; Bestätigung entfernt die Buchung aus aktiver Liste und Saldo; Tombstone bleibt; gesperrte Buchung wird abgewiesen.
 - Prüfungen: Chromium: abbrechen/bestätigen und Neustart; gezielte Prüfung des gesperrten Fehlfalls.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.3 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete aktuelle Abläufe, Testdaten und Prüfgrenzen stehen in der [P4.3-Kriterienmatrix](handoffs/p4-3.md).
+- Einschränkungen: Desktop-Frontend mit IndexedDB-Testadapter, Touch mit Chromiumemulation; native Wiederholung und vollständige Browser-/Leistungsmatrix bleiben P4.6. Details in der [Übergabe](handoffs/p4-3.md).
 
 ### P4.3.5 — Suche, Filter und mobile Details abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.3; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag vom 4. Oktober 2026 zum vollständigen Abschluss aller P4.3-Unteraufgaben.
 - Voraussetzungen: P4.3.4 abgenommen.
 - Schritte: Suche und Konto-/Zeitraumfilter prüfen; mobile Buchungsdetails mit identischen Daten anbinden.
 - Ergebnis: Suche, Filter und mobile Details abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Tests](testing.md).
 - Abnahme: Leere Liste und Suche ohne Treffer haben verständliche Leerzustände; Filterkombinationen liefern passende Buchungen; zurücksetzen zeigt alle; 320-Pixel-Details enthalten vollständigen Betrag und Aktionen.
 - Prüfungen: Chromium mit unterscheidbaren Fixtures: Suche/Filter/zurücksetzen, keine Treffer und mobile Detailansicht.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.3 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete aktuelle Abläufe, Testdaten und Prüfgrenzen stehen in der [P4.3-Kriterienmatrix](handoffs/p4-3.md).
+- Einschränkungen: Desktop-Frontend mit IndexedDB-Testadapter, Touch mit Chromiumemulation; native Wiederholung und vollständige Browser-/Leistungsmatrix bleiben P4.6. Details in der [Übergabe](handoffs/p4-3.md).
 
 ### P4.3.6 — Buchungsliste virtualisieren
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.3; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag vom 4. Oktober 2026 zum vollständigen Abschluss aller P4.3-Unteraufgaben.
 - Voraussetzungen: P4.3.5 abgenommen.
 - Schritte: Nur sichtbare Zeilen plus begrenzten Puffer rendern; stabile IDs, Auswahl und Rückkehrfokus erhalten.
 - Ergebnis: Buchungsliste virtualisieren mit dokumentierter Einzelabnahme.
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Tests](testing.md).
 - Abnahme: 50.000 synthetische Buchungen erzeugen keine 50.000 DOM-Zeilen; erste, mittlere und letzte Buchung sind erreichbar und bearbeitbar.
 - Prüfungen: Chromium mit 50.000 Buchungen: DOM-Zeilenanzahl, Scrollen und Detailrückkehr prüfen; Zeitmessung separat P4.6.5.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.3 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete aktuelle Abläufe, Testdaten und Prüfgrenzen stehen in der [P4.3-Kriterienmatrix](handoffs/p4-3.md).
+- Einschränkungen: Desktop-Frontend mit IndexedDB-Testadapter, Touch mit Chromiumemulation; native Wiederholung und vollständige Browser-/Leistungsmatrix bleiben P4.6. Details in der [Übergabe](handoffs/p4-3.md).
 
 ### P4.3.7 — Commit- und Speicherfehler sichtbar behandeln
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.3; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag vom 4. Oktober 2026 zum vollständigen Abschluss aller P4.3-Unteraufgaben.
 - Voraussetzungen: P4.3.6 abgenommen.
 - Schritte: Verzögerten Commit und Quota-/Disk-full-Fehler über kontrollierte Speicherfehler prüfen; Lade-, Fehler- und lokal ausstehende Speicherzustände sowie Entwurfserhalt korrigieren.
 - Ergebnis: Commit- und Speicherfehler sichtbar behandeln mit dokumentierter Einzelabnahme.
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Tests](testing.md).
 - Abnahme: Vor Commit kein Erfolg; bei Fehler sämtliche Formularwerte erhalten, keine Teilbuchung und unveränderter Saldo; erneuter Versuch speichert einmal.
 - Prüfungen: UI-Integration mit verzögertem Adapter, Quota und Disk-full; Fehlereinspritzung getrennt vom echten nativen Nachweis in P4.6.6 bezeichnen.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.3 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete aktuelle Abläufe, Testdaten und Prüfgrenzen stehen in der [P4.3-Kriterienmatrix](handoffs/p4-3.md).
+- Einschränkungen: Desktop-Frontend mit IndexedDB-Testadapter, Touch mit Chromiumemulation; native Wiederholung und vollständige Browser-/Leistungsmatrix bleiben P4.6. Details in der [Übergabe](handoffs/p4-3.md).
 
 ### P4.3.8 — Offline-Neustart der Buchungsabläufe abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.3; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag vom 4. Oktober 2026 zum vollständigen Abschluss aller P4.3-Unteraufgaben.
 - Voraussetzungen: P4.3.7 abgenommen.
 - Schritte: Erfasste, bearbeitete, gesplittete und gelöschte Daten nach Offline-Neustart vergleichen.
 - Ergebnis: Offline-Neustart der Buchungsabläufe abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [Formulare](ui.md#formulare-und-wichtige-dialoge), [Fachmodell](domain.md), [Tests](testing.md).
 - Abnahme: Echte Network-off-PWA startet nach Erstladen offline; gespeicherter Stand und Salden bleiben; Desktop-Frontend erhält denselben Datensatz.
 - Prüfungen: Chromium mit abgeschaltetem Netzwerk und Neustart, nicht nur Offline-Banner; Web/PWA und Desktop-Frontend getrennt belegen, native Wiederholung in P4.6.6.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.3 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete aktuelle Abläufe, Testdaten und Prüfgrenzen stehen in der [P4.3-Kriterienmatrix](handoffs/p4-3.md).
+- Einschränkungen: Desktop-Frontend mit IndexedDB-Testadapter, Touch mit Chromiumemulation; native Wiederholung und vollständige Browser-/Leistungsmatrix bleiben P4.6. Details in der [Übergabe](handoffs/p4-3.md).
 
 ## P4.4 — Transfer, Abgleich und Rückgängig
 
