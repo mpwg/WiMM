@@ -29,7 +29,12 @@ describe('lokaler UserVault', () => {
   it('lehnt falsche Passphrasen und manipulierte Verpackungen ab', async () => {
     const created = await createUserVault(passphrase);
     await expect(unlockUserVaultWithPassphrase(created.record, 'Falsche lokale Passphrase 2026')).rejects.toBeInstanceOf(VaultUnlockError);
-    const tampered = { ...created.record, vault: { ...created.record.vault, ciphertext: `${created.record.vault.ciphertext.slice(0, -1)}A` } };
+    // Das erste Base64-Zeichen verändert Nutzbits; das letzte kann identisch
+    // sein oder nur ungenutzte Füllbits verändern.
+    const ciphertext = created.record.vault.ciphertext;
+    const changedCiphertext = `${ciphertext[0] === 'A' ? 'B' : 'A'}${ciphertext.slice(1)}`;
+    const tampered = { ...created.record, vault: { ...created.record.vault, ciphertext: changedCiphertext } };
+    expect(tampered.vault.ciphertext).not.toBe(ciphertext);
     await expect(unlockUserVaultWithPassphrase(tampered, passphrase)).rejects.toBeInstanceOf(VaultUnlockError);
   });
 
