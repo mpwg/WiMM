@@ -25,11 +25,11 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.1.8 — Nativen lokalen Einstieg nach Neustart prüfen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.1.8 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.2.1 — Navigation und Bereichstrennung prüfen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.2.1 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
-- Status: in Arbeit — historische Abnahme vom 4. Oktober 2026 auf Nutzerwunsch wieder geöffnet; erneute Einzelabnahmen erforderlich.
+- Status: erledigt (4. Oktober 2026) — P4.1.1 bis P4.1.8 sind erneut einzeln abgenommen.
 - Freigabe: Nutzerauftrag zum vollständigen Abschluss von P4.
 - Voraussetzungen: P3 erledigt.
 - Schritte: gemeinsame Clientdienste und PlatformServices in Web/Desktop injizieren; lokalen Profil-/Bereichseinstieg, Tresorentsperrung und Rettungscodesicherung anbinden; Routing und flüchtigen UI-Zustand von Fachdaten trennen.
@@ -50,7 +50,7 @@ Nächster konkreter Arbeitsauftrag: **P4.1.8 — Nativen lokalen Einstieg nach N
 - Abnahme: Beide Clients verwenden gemeinsame lokale Dienste und den jeweils richtigen Speicher-/Plattformadapter; UI-Zustand ist von gespeicherten Fachdaten getrennt; lokale Nutzung benötigt keine Outbox oder Serverbestätigung.
 - Prüfungen: Gezielte UI-Integration für beide Clientkompositionen, TypeScript und Paketgraph; tatsächlichen Adapter benennen.
 - Prüfbelege: Kriterienmatrix: (1) gemeinsame lokale Dienste und richtige Adapter **erfüllt** — `FinanceWorkspace` ist adapterneutral; Web verwendet Dexie/IndexedDB, Desktop die katalogisierten Tauri-Befehle `storage_query_aggregates` und `storage_apply_batch`; der neue Brückentest prüft die Bereichsabfrage. (2) UI-Zustand getrennt von Fachdaten **erfüllt** — Ansichtszustand bleibt in React, dauerhaftes Lesen/Schreiben läuft nur über den injizierten Speicherport. (3) Standalone ohne Outbox/Serverbestätigung **erfüllt** — lokale Änderungsmengen enthalten eine leere Outbox; `pnpm test:ui` bestätigt den lokalen Ablauf in Chromium für Web und Desktop-Frontend. Aktuell bestanden: `pnpm typecheck`, `pnpm check:package-graph`, `pnpm --filter @wimm/storage test` (9 Tests), `pnpm --filter @wimm/ui test` (4 Tests), `cargo test` im Tauri-Projekt, Web-/Desktop-Frontendbuild und `pnpm test:ui` (3 Web- plus 1 Desktop-Frontend-Test).
-- Einschränkungen: Die Desktop-Frontend-Prüfung läuft ohne Tauri-Laufzeit mit einem ausdrücklich gekennzeichneten IndexedDB-Fallback und ist kein nativer Nachweis. Der native Tauri-Speicherport ist durch Rust-Test und Produktionsbuild geprüft; ein vollständiger nativer Wiedereinstieg bleibt korrekt P4.1.8 vorbehalten.
+- Einschränkungen: Die Desktop-Frontend-Prüfung läuft ohne Tauri-Laufzeit mit einem ausdrücklich gekennzeichneten IndexedDB-Fallback und ist kein nativer Nachweis. Der native Tauri-Speicherport ist durch Rust-Test und Produktionsbuild geprüft; der vollständige native Wiedereinstieg ist in P4.1.8 separat belegt.
 
 ### P4.1.2 — Tresor-Erstnutzung und Rettungscodebestätigung prüfen
 
@@ -63,7 +63,7 @@ Nächster konkreter Arbeitsauftrag: **P4.1.8 — Nativen lokalen Einstieg nach N
 - Abnahme: Ohne Server/Anmeldung anlegbar; vor Codebestätigung keine Finanzansicht; Code nicht in Logs oder dauerhaftem UI-Zustand abgelegt.
 - Prüfungen: Chromium auf Web und Desktop-Frontend: Anlage → unbestätigt → bestätigt; Fehleingaben und abgebrochene Anlage.
 - Prüfbelege: Kriterienmatrix: (1) lokale Anlage ohne Server oder Anmeldung **erfüllt** — je drei Chromium-Playwright-Abläufe gegen Web und Desktop-Frontend erstellen den Tresor bis zur Rettungscodeansicht und öffnen den Bereich nach Bestätigung. (2) keine Finanzansicht vor der Bestätigung **erfüllt** — der Bestätigungsbefehl bleibt deaktiviert, bis die Sicherung bestätigt ist; die Übersicht ist vorher nicht im DOM. (3) kein Rettungscode in Logs oder dauerhaftem UI-Zustand **erfüllt** — der Ablauf prüft `localStorage` und Browser-Konsolenmeldungen auf den angezeigten synthetischen Code; ein Reload vor der Bestätigung führt ohne gespeichertes Profil wieder zur Anlage. Fehleingaben bleiben als zuordenbare Meldung am Formular, damit die Passphrase korrigiert werden kann. Aktuell bestanden: `pnpm exec playwright test tests/ui/p4-1.spec.ts` (3 Chromium-Webtests), `WIMM_CLIENT=desktop pnpm exec playwright test --config tests/ui/desktop.config.ts` (3 Chromium-Desktop-Frontendtests), `pnpm --filter @wimm/ui test` (4 Tests) und `pnpm typecheck`.
-- Einschränkungen: Die Desktop-Frontend-Prüfung ist bewusst kein nativer Tauri-Nachweis; der vollständige native Wiedereinstieg bleibt P4.1.8.
+- Einschränkungen: Die Desktop-Frontend-Prüfung ist bewusst kein nativer Tauri-Nachweis; den vollständigen nativen Wiedereinstieg belegt P4.1.8 separat.
 
 ### P4.1.3 — Sperren und Passphrase-Entsperrung prüfen
 
@@ -76,7 +76,7 @@ Nächster konkreter Arbeitsauftrag: **P4.1.8 — Nativen lokalen Einstieg nach N
 - Abnahme: Sperren entfernt flüchtige private Schlüssel und Finanzansicht; falsche Passphrase gibt keine Daten frei; richtige stellt denselben Bereich her.
 - Prüfungen: Crypto-/UI-Integration für Schlüsselentfernung plus Chromium-Sperrablauf auf beiden Frontends; Prüfung nach Neustart.
 - Prüfbelege: Kriterienmatrix: (1) Sperren entfernt flüchtige private Schlüssel und Finanzansicht **erfüllt** — der Crypto-Test prüft das Überschreiben von Identitäts-, Verschlüsselungs- und Bereichsschlüsselmaterial und verhindert danach jede Tresorpersistenz; je ein Chromium-Ablauf für Web und Desktop-Frontend prüft zusätzlich, dass nach „Tresor sperren“ weder Übersicht noch Privatbereich im DOM bleiben. (2) falsche Passphrase gibt keine Daten frei **erfüllt** — beide Frontends zeigen die zuordenbare Fehlermeldung und öffnen keine Finanzansicht. (3) richtige Passphrase stellt denselben Bereich nach Neustart her **erfüllt** — beide Abläufe laden nach einem echten Seitenneustart wieder den lokalen Tresor, entsperren ihn mit der korrekten Passphrase und zeigen wieder „Privater Bereich“. Aktuell bestanden: `pnpm --filter @wimm/crypto test` (13 Tests), `pnpm exec playwright test tests/ui/p4-1-3.spec.ts` (1 Chromium-Webablauf), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-1-3.spec.ts --config tests/ui/desktop.config.ts` (1 Chromium-Desktop-Frontendablauf), `pnpm test:ui` (6 Web- und 4 Desktop-Frontendabläufe), `pnpm --filter @wimm/ui test` (4 Tests) und `pnpm typecheck`.
-- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; dieser bleibt P4.1.8 zugeordnet.
+- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; diesen belegt P4.1.8 separat.
 
 ### P4.1.4 — Rettungscode-Entsperrung separat prüfen
 
@@ -89,7 +89,7 @@ Nächster konkreter Arbeitsauftrag: **P4.1.8 — Nativen lokalen Einstieg nach N
 - Abnahme: Richtiger Code stellt vorhandene Bereiche wieder her; falscher Code verändert keinen Speicher und gibt keine Daten frei.
 - Prüfungen: Crypto-/UI-Integration und Chromium mit frischer Clientinstanz auf Web und Desktop-Frontend; kein unverschlüsselter Recoveryfallback.
 - Prüfbelege: Kriterienmatrix: (1) Richtiger Code stellt vorhandene Bereiche wieder her **erfüllt** — der Crypto-Integrationstest entsperrt den gespeicherten Tresor über den Rettungscode; je ein Chromium-Ablauf für Web und Desktop-Frontend überträgt ausschließlich den verschlüsselten lokalen Profilstand in eine frische Clientinstanz und öffnet damit den gespeicherten „Privater Bereich“. (2) Falscher Code verändert keinen Speicher und gibt keine Daten frei **erfüllt** — der Crypto-Test vergleicht die Tresorhülle vor und nach der Ablehnung; beide Frontend-Abläufe behalten den Sperrbildschirm bei und vergleichen den `localStorage`-Profildatensatz bytegleich. (3) Kein unverschlüsselter Recoveryfallback **erfüllt** — die Frontend-Abläufe prüfen, dass der einmalig angezeigte synthetische Rettungscode nicht im lokalen Speicher liegt; der erfolgreiche Wiedereinstieg verwendet nur die verschlüsselte Tresorhülle. Aktuell bestanden: `pnpm --filter @wimm/crypto test` (14 Tests), `pnpm exec playwright test tests/ui/p4-1-4.spec.ts` (1 Chromium-Webablauf), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-1-4.spec.ts --config tests/ui/desktop.config.ts` (1 Chromium-Desktop-Frontendablauf), `pnpm --filter @wimm/ui test` (4 Tests) und `pnpm typecheck`.
-- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; dieser bleibt P4.1.8 zugeordnet.
+- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; diesen belegt P4.1.8 separat.
 
 ### P4.1.5 — Haushaltsschlüssel dauerhaft sichern
 
@@ -102,7 +102,7 @@ Nächster konkreter Arbeitsauftrag: **P4.1.8 — Nativen lokalen Einstieg nach N
 - Abnahme: Neuer Haushalt bleibt nach Neustart über Passphrase und Code verfügbar; frische Nonce; Fehler meldet keinen erfolgreichen dauerhaft angelegten Haushalt.
 - Prüfungen: Gezielte Crypto-/UI-Integration für beide Entsperrwege und Speicherfehler; UI-Neustartablauf je Client.
 - Prüfbelege: Kriterienmatrix: (1) Neuer Haushalt bleibt nach Neustart über beide Entsperrwege verfügbar **erfüllt** — der gezielte Chromium-Ablauf legt einen Haushalt an, übergibt ausschließlich den dauerhaften Clientzustand an zwei frische Clientinstanzen und erreicht den Haushalt jeweils mit Passphrase beziehungsweise Rettungscode. Der Ablauf bestand für Web und Desktop-Frontend. (2) Frische Nonce **erfüllt** — derselbe Ablauf vergleicht die persistierte Tresornonce vor und nach der Haushaltanlage; sie ist verschieden. (3) Fehler vor Commit meldet keinen dauerhaft angelegten Haushalt **erfüllt** — der UI-Integrationstest sperrt den Tresor vor der Anlage, erwartet die Ablehnung und prüft das unveränderte Profil mit genau einem weiter entsperrbaren Bereich; der Fehlerpfad löscht den nur flüchtig erzeugten Bereichsschlüssel. Aktuell bestanden: `pnpm --filter @wimm/crypto test` (14 Tests), `pnpm --filter @wimm/ui test` (5 Tests), `pnpm exec playwright test tests/ui/p4-1-5.spec.ts` (1 Chromium-Webablauf), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-1-5.spec.ts --config tests/ui/desktop.config.ts` (1 Chromium-Desktop-Frontendablauf) und `pnpm typecheck`.
-- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; dieser bleibt P4.1.8 zugeordnet.
+- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; diesen belegt P4.1.8 separat.
 
 ### P4.1.6 — Profil- und Bereichstrennung prüfen
 
@@ -115,7 +115,7 @@ Nächster konkreter Arbeitsauftrag: **P4.1.8 — Nativen lokalen Einstieg nach N
 - Abnahme: Nur aktiver Bereich lesbar; keine privaten Daten oder Entwürfe gelangen in andere Bereiche/Profile; gesperrte Bereiche zeigen keine Finanzdaten.
 - Prüfungen: Integration der Profil-/Bereichsdienste und Chromium-Wechsel mit unterscheidbaren Fixtures; kein bloßer Wechsel der Überschrift.
 - Prüfbelege: Kriterienmatrix: (1) Nur aktiver Bereich lesbar **erfüllt** — der Chromium-Ablauf legt ein privates Konto und ein Haushaltskonto mit eindeutig verschiedenen Namen an und zeigt beim jeweiligen Wechsel ausschließlich das Konto des aktiven Bereichs. (2) Keine privaten Daten oder Entwürfe gelangen in andere Bereiche/Profile **erfüllt** — ein ungespeicherter privater Kontonamenentwurf wird beim Wechsel in den Haushalt verworfen; ein zweites synthetisches Profil sieht weder private noch gemeinsame Daten des ersten, und das wiederhergestellte erste Profil sieht keine Daten des zweiten. (3) Gesperrte Bereiche zeigen keine Finanzdaten **erfüllt** — nach `Tresor sperren` ist nur das Entsperrformular sichtbar; Übersicht und Kontoname des aktiven Bereichs fehlen. Der Ablauf bestand am 4. Oktober 2026 mit `pnpm exec playwright test tests/ui/p4-1-6.spec.ts` im Chromium-Webclient und mit `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-1-6.spec.ts --config tests/ui/desktop.config.ts` im Chromium-Desktop-Frontend. Zusätzlich bestanden `pnpm --filter @wimm/ui test` (5 Tests) und `pnpm typecheck`.
-- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; der vollständige native Wiedereinstieg bleibt P4.1.8 zugeordnet.
+- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; den vollständigen nativen Wiedereinstieg belegt P4.1.8 separat.
 
 ### P4.1.7 — PWA-Einstieg nach Offline-Neustart prüfen
 
@@ -128,20 +128,20 @@ Nächster konkreter Arbeitsauftrag: **P4.1.8 — Nativen lokalen Einstieg nach N
 - Abnahme: App-Assets starten ohne Netz; Passphrase und Rettungscode erreichen den gespeicherten Haushalt; keine Anmeldung/Serverkonfiguration nötig.
 - Prüfungen: Echter Network-off-Chromium-Ablauf mit dokumentierter PWA-/Service-Worker-Version; native Prüfung separat P4.1.8.
 - Prüfbelege: Kriterienmatrix: (1) App-Assets starten ohne Netz **erfüllt** — der Chromium-Webablauf installiert zuerst die PWA, wartet auf die Service-Worker-Kontrolle und bestätigt den Cache `wimm-app-assets-v1`; nach dem Schließen der Seite lädt eine neue Seite bei deaktiviertem Netzwerk `/` mit Status 200. (2) Passphrase und Rettungscode erreichen den gespeicherten Haushalt **erfüllt** — vor dem Offline-Neustart wird ein Tresor samt „Haushalt 1“ angelegt; zwei getrennte Offline-Neustarts entsperren ihn jeweils mit Passphrase beziehungsweise Rettungscode und zeigen den Bereich an. (3) Keine Anmeldung oder Serverkonfiguration nötig **erfüllt** — der Ablauf verwendet ausschließlich lokalen Browserzustand, deaktiviert vor beiden Neustarts das Netzwerk und erreicht keine Serveranmeldung. Aktuell bestanden am 4. Oktober 2026: `pnpm exec playwright test tests/ui/p4-1-7.spec.ts` (1 echter Network-off-Chromium-PWA-Ablauf), `pnpm test:offline` (Service-Worker-Regeln), `pnpm --filter @wimm/ui test` (5 Tests), `pnpm typecheck` sowie `pnpm test:ui` (10 Web- und 8 Desktop-Frontend-Abläufe).
-- Einschränkungen: Die Abnahme belegt die PWA im Chromium-Webclient mit Service Worker `wimm-app-assets-v1`; ein vollständiger nativer Tauri-Wiedereinstieg bleibt getrennt in P4.1.8 offen.
+- Einschränkungen: Die Abnahme belegt die PWA im Chromium-Webclient mit Service Worker `wimm-app-assets-v1`; den vollständigen nativen Tauri-Wiedereinstieg belegt P4.1.8 separat.
 
 ### P4.1.8 — Nativen lokalen Einstieg nach Neustart prüfen
 
-- Status: offen.
-- Freigabe: vorhandener Nutzerauftrag zum Abschluss von P4; aktueller Auftrag fordert Aufteilung und erneute Abnahmeplanung, keine Umsetzung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.1.8 um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.1.7 abgenommen.
 - Schritte: Gebündelte Tauri-App auf verfügbarer Plattform ohne Server starten; Tresor/Haushalt anlegen, sperren, beenden und offline neu öffnen.
 - Ergebnis: Nativen lokalen Einstieg nach Neustart prüfen mit erneuter Einzelabnahme.
 - Verträge: [Architektur](architecture.md), [Schlüsselbedienung](ui.md#schlüsselbedienung), [Verschlüsselung](encryption.md), [P3-Speicherbasis](p3-storage.md).
 - Abnahme: Vollständiger nativer Ablauf erreicht wieder den Haushalt über beide Entsperrwege; bloß sichtbares Tresorformular genügt nicht.
 - Prüfungen: Echter Tauri-Smokecheck mit OS/Architektur/Build und synthetischen Daten; fehlende Zielsysteme separat offen halten, Menüs/Dialoge bleiben P4.5.
-- Prüfbelege: erneute Einzelabnahme noch offen; historische Belege bei P4.1 und in der [Übergabe](handoffs/p4-1.md) gezielt nachprüfen.
-- Einschränkungen: historischer Tauri-Nachweis reicht bisher nur bis zum Tresorformular; kein vollständiger nativer Wiedereinstieg belegt.
+- Prüfbelege: Kriterienmatrix: (1) vollständiger nativer Ablauf über beide Entsperrwege **erfüllt** — die gebündelte Tauri-Anwendung wurde auf macOS 27.0.1 arm64 ohne Server oder Anmeldung gestartet. Über die native Oberfläche wurden ein synthetischer Tresor und „Haushalt 1“ angelegt, der Rettungscode bestätigt und der Tresor per Passphrase entsperrt. Nach Sperren und Beenden der Laufzeit öffnete ein neuer nativer Prozess wieder den Sperrbildschirm; Passphrase und anschließend, nach erneutem Sperren und Neustart, Rettungscode öffneten jeweils wieder den ausgewählten Haushalt. (2) sichtbarer gesperrter Zustand vor dem Entsperren **erfüllt** — nach jedem Neustart war ausschließlich „Tresor entsperren“ sichtbar, keine Finanzansicht. (3) Standalone ohne Serverkonfiguration **erfüllt** — der Ablauf verwendete nur den lokalen Clientzustand; die native Oberfläche zeigte keine Anmelde- oder Serverkonfiguration. `pnpm --filter @wimm/desktop build` bestand zuvor mit dem Release-Binary `wimm-desktop`; die native Interaktion erfolgte anschließend gegen genau dieses Binary. Der synthetische Profildatensatz wurde nach der Prüfung entfernt.
+- Einschränkungen: Nur macOS 27.0.1 arm64 ist als nativer Zielclient geprüft. Windows, Linux und macOS x64 bleiben in der Plattformmatrix offen; native Menüs und Dialoge sind weiterhin P4.5 zugeordnet.
 
 ## P4.2 — Navigation, Übersicht und Stammdaten
 

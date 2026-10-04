@@ -7,7 +7,7 @@ WhereIsMyMoney besitzt die abgeschlossenen Pakete P1 bis P3 mit Workspace, Fachk
 1. [Arbeitsregeln](../AGENTS.md) und [Dokumentationsindex](README.md) lesen, danach die dort vorgeschriebenen Grundlagen: Fachmodell, Architektur, Entscheidungen und Aufgaben.
 2. Den tatsächlichen Nutzerauftrag mit dem [Paketstatus](tasks.md) abgleichen. Vorhandene Änderungen prüfen und bewahren; keinen Branch ungefragt wechseln.
 3. Über die [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) die aufgabenspezifischen Abschnitte und den passenden Projektskill wählen.
-4. Das konkrete Ergebnis, betroffene Verträge und Abnahmekriterien benennen. Nach Implementierungsfreigabe für P4 folgt auf die abgeschlossene P4.1.1 [P4.1.2](p4-ui.md#p412--tresor-erstnutzung-und-rettungscodebestätigung-prüfen); die weiteren Pakete besitzen eigene verlinkte Teilpläne in der Aufgabenübersicht.
+4. Das konkrete Ergebnis, betroffene Verträge und Abnahmekriterien benennen. P4.1 ist abgeschlossen; nach Implementierungsfreigabe für P4 folgt [P4.2.1](p4-ui.md#p421--navigation-und-bereichstrennung-prüfen). Die weiteren Pakete besitzen eigene verlinkte Teilpläne in der Aufgabenübersicht.
 5. Erst den begrenzten Arbeitsschritt bearbeiten, dann passende Prüfungen ausführen und die Nachweise im Paket festhalten. Nicht ausgeführte Prüfungen ausdrücklich nennen.
 
 Für den Zusammenhang der Komponenten anschließend das [durchgängige Buchungsbeispiel](reference-household.md#durchgängiger-ablauf-einer-buchung) lesen. Für die vollständige Lesereihenfolge bleibt der Dokumentationsindex maßgeblich.
