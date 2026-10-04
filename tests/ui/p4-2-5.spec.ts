@@ -69,7 +69,7 @@ test('führt einen referenzierten Empfänger zusammen und erhält Buchung und Ar
     await page.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: account });
     await page.getByRole('combobox', { name: 'Kategorie', exact: true }).selectOption({ label: category });
     await page.getByRole('combobox', { name: 'Empfänger', exact: true }).selectOption({ label: source });
-    await page.getByLabel('Datum').fill('2026-10-04');
+    await page.getByLabel('Datum', { exact: true }).fill('2026-10-04');
     await page.getByLabel('Betrag', { exact: true }).fill('-40,00');
     await page.getByRole('button', { name: 'Lokal speichern' }).click();
     await expect(page.locator('tbody tr')).toHaveCount(1);

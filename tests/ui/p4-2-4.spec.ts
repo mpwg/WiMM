@@ -37,7 +37,7 @@ test('erhält die Kategorienreferenz einer archivierten Kategorie und bietet sie
   await expect(categoryItem).toBeVisible();
 
   await page.getByRole('button', { name: 'Buchungen' }).click();
-  await page.getByLabel('Konto').selectOption({ label: account });
+  await page.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: account });
   await page.getByRole('combobox', { name: 'Kategorie', exact: true }).selectOption({ label: category });
   await page.getByLabel('Betrag').fill('-40,00');
   await page.getByRole('button', { name: 'Lokal speichern' }).click();

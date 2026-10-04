@@ -17,6 +17,7 @@ import {
   saveTransfer,
   confirmReconciliation,
   saveTransaction,
+  deleteTransaction,
   saveAccount,
   saveCategory,
   saveCategoryGroup,
@@ -35,6 +36,7 @@ import {
 import { toStoredAggregate, type PendingOperation, type StoredAggregate, type StoredProjection } from '@wimm/storage';
 
 import type { UnlockedAppContext } from './app.js';
+import { Transactions } from './transactions.js';
 
 type ColorScheme = 'system' | 'light' | 'dark';
 
@@ -43,6 +45,11 @@ function storedColorScheme(): ColorScheme {
     const value = localStorage.getItem('wimm:color-scheme');
     return value === 'light' || value === 'dark' ? value : 'system';
   } catch { return 'system'; }
+}
+
+export interface TransactionInput {
+  readonly accountId: UUID; readonly payeeId?: UUID; readonly amount: string; readonly date: string; readonly note: string; readonly opening: boolean;
+  readonly splits: readonly { readonly id?: UUID; readonly categoryId: UUID; readonly amount: string }[];
 }
 
 type View = 'overview' | 'accounts' | 'categories' | 'payees' | 'transactions';
@@ -68,6 +75,7 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
   const [view, setView] = useState<View>('overview');
   const [aggregates, setAggregates] = useState<readonly StoredAggregate[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string>();
   const storage = useMemo(() => storageForProfile(context.profile.profileId as UUID), [storageForProfile, context.profile.profileId]);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -88,6 +96,7 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
   }, [storage, reload]);
 
   const execute = useCallback(async (changeSet: DomainChangeSet) => {
+    setSaving(true); setMessage(undefined);
     try {
       await storage.applyAtomicBatch({
         expectedRevisions: changeSet.expectedRevisions.map((entry) => ({ handle: entry.id, expectedRevision: entry.expectedRevision })),
@@ -95,9 +104,23 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
         outbox: [],
         projections: []
       });
-      await reload(); setMessage('Lokal gespeichert.');
-    } catch (error) { setMessage(error instanceof Error ? error.message : 'Die Eingaben wurden nicht gespeichert.'); throw error; }
-  }, [storage, reload]);
+      // Den bestätigten Batch direkt übernehmen: ein nachgelagerter Lesefehler
+      // darf keinen erneuten Schreibversuch derselben Neuanlage auslösen.
+      setAggregates((current) => {
+        const changed = new Map(changeSet.aggregates.map((entry) => [entry.id, toStoredAggregate(entry)]));
+        return [...current.filter((entry) => !changed.has(entry.id)), ...changed.values()];
+      });
+      setMessage('Lokal gespeichert.');
+    } catch (error) {
+      setMessage('Die Eingaben wurden nicht gespeichert.');
+      if (error instanceof Error && /revision|stale/i.test(error.message)) {
+        try { setAggregates(await storage.query({ spaceId: context.activeArea.id as UUID })); }
+        catch { /* Der ursprüngliche Schreibfehler und der Entwurf bleiben erhalten. */ }
+      }
+      throw error;
+    }
+    finally { setSaving(false); }
+  }, [storage, context.activeArea.id]);
   const model = useMemo(() => new FinanceModel(context.activeArea.id as UUID, aggregates, execute), [aggregates, context.activeArea.id, execute]);
 
   return <div className={`app-shell${desktop ? ' desktop-shell' : ''}`} data-color-scheme={colorScheme}>
@@ -107,7 +130,7 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
       )}</nav><button className="quiet" onClick={() => void context.createHousehold()} type="button">+ Haushalt anlegen</button><button className="quiet" onClick={() => void context.lock()} type="button">Tresor sperren</button>
       <label className="area-picker">Farbschema<select value={colorScheme} onChange={(event) => changeColorScheme(event.target.value as ColorScheme)}><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
     </aside>
-    <main className="finance-main" key={context.activeArea.id}><header><div><p className="eyebrow">{context.activeArea.kind === 'private' ? 'Privatbereich' : 'Gemeinsamer Bereich'}</p><h1>{titleFor(view)}</h1></div><span className="local-status">● Lokal gespeichert</span></header>
+    <main className="finance-main" key={context.activeArea.id}><header><div><p className="eyebrow">{context.activeArea.kind === 'private' ? 'Privatbereich' : 'Gemeinsamer Bereich'}</p><h1>{titleFor(view)}</h1></div><span aria-live="polite" className="local-status">{saving ? "Wird lokal gespeichert …" : "● Lokaler Stand"}</span></header>
       {message === undefined ? null : <p aria-live="polite" className="notice">{message}</p>}
       {state === 'loading' ? <p aria-live="polite">Lokale Daten werden geladen …</p> : null}
       {state === 'error' ? <p role="alert">Die Daten bleiben unverändert. Bitte entsperren Sie den Tresor erneut oder starten Sie die App neu.</p> : null}
@@ -120,7 +143,7 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
   </div>;
 }
 
-class FinanceModel {
+export class FinanceModel {
   readonly allAccounts: readonly AccountAggregate[];
   readonly accounts: readonly AccountAggregate[];
   readonly allCategories: readonly CategoryAggregate[];
@@ -199,18 +222,32 @@ class FinanceModel {
       transactions: this.transactions.filter((transaction) => transaction.payeeId === source.id)
     }, this, this.dependencies));
   }
-  async addTransaction(input: { readonly accountId: UUID; readonly categoryId?: UUID; readonly secondCategoryId?: UUID; readonly firstSplitAmount?: string; readonly payeeId?: UUID; readonly amount: string; readonly date: string; readonly note: string; readonly opening: boolean }) {
+  async storeTransaction(input: TransactionInput, previous?: TransactionAggregate) {
     const amount = parseMoney(input.amount, 'Der Betrag');
-    const first = input.firstSplitAmount === undefined ? amount : parseMoney(input.firstSplitAmount, 'Der erste Splitbetrag');
-    const splits = input.opening ? [] : input.secondCategoryId === undefined ? [{ id: this.dependencies.ids.next(), categoryId: input.categoryId!, amount }] : [{ id: this.dependencies.ids.next(), categoryId: input.categoryId!, amount: first }, { id: this.dependencies.ids.next(), categoryId: input.secondCategoryId, amount: subtractMoney(amount, first, 'Der zweite Splitbetrag') }];
+    const splits = input.opening ? [] : input.splits.map((split, index) => ({
+      id: split.id ?? this.dependencies.ids.next(), categoryId: split.categoryId,
+      amount: parseMoney(split.amount, `Der Splitbetrag ${index + 1}`)
+    }));
+    // Die geöffnete Revision bleibt erhalten, auch wenn sich der Listenstand ändert.
+    const metadata = previous === undefined ? createAggregateMetadata(this.spaceId, this.dependencies) : reviseAggregate(previous, this.dependencies);
+    const { payeeId: _oldPayee, note: _oldNote, ...base } = metadata as TransactionAggregate;
     const aggregate: TransactionAggregate = {
-      ...createAggregateMetadata(this.spaceId, this.dependencies), aggregateType: 'transaction', accountId: input.accountId, date: input.date as never, amount,
-      kind: input.opening ? 'opening' : 'normal', clearance: 'uncleared',
-      ...(input.payeeId === undefined ? {} : { payeeId: input.payeeId }), ...(input.note.trim() === '' ? {} : { note: input.note.trim() }),
-      splits
+      ...base, aggregateType: 'transaction', accountId: input.accountId, date: parseFinanceDate(input.date), amount,
+      kind: input.opening ? 'opening' : 'normal', clearance: previous?.clearance ?? 'uncleared',
+      ...(input.payeeId === undefined ? {} : { payeeId: input.payeeId }),
+      ...(input.note.trim() === '' ? {} : { note: input.note.trim() }), splits
     };
-    const expected = [{ id: aggregate.id, expectedRevision: 0 }, { id: input.accountId, expectedRevision: this.heads.get(input.accountId)!.revision }, ...[...new Set(splits.map((split) => split.categoryId))].map((id) => ({ id, expectedRevision: this.heads.get(id)!.revision })), ...(input.payeeId === undefined ? [] : [{ id: input.payeeId, expectedRevision: this.heads.get(input.payeeId)!.revision }])];
-    await this.execute(saveTransaction({ commandType: 'transaction.save', spaceId: this.spaceId, expectedRevisions: expected, mutations: [{ aggregate }] }, this, this.dependencies));
+    await this.execute(saveTransaction({ commandType: 'transaction.save', spaceId: this.spaceId,
+      expectedRevisions: this.transactionRevisions(aggregate, previous?.revision ?? 0), mutations: [{ aggregate }] }, this, this.dependencies));
+  }
+  async removeTransaction(transaction: TransactionAggregate) {
+    await this.execute(deleteTransaction({ commandType: 'transaction.delete', spaceId: this.spaceId,
+      expectedRevisions: this.transactionRevisions(transaction, transaction.revision), mutations: [{ aggregate: transaction }] }, this, this.dependencies));
+  }
+  private transactionRevisions(transaction: TransactionAggregate, revision: number) {
+    return [{ id: transaction.id, expectedRevision: revision },
+      ...[...new Set([transaction.accountId, ...transaction.splits.map((split) => split.categoryId), ...(transaction.payeeId === undefined ? [] : [transaction.payeeId])])]
+        .map((id) => { const head = this.heads.get(id); if (head === undefined) throw new TypeError('Eine Buchungsreferenz ist nicht mehr verfügbar.'); return { id, expectedRevision: head.revision }; })];
   }
   async addTransfer(sourceAccountId: UUID, targetAccountId: UUID, value: string, date: string) {
     const amount = parseMoney(value, 'Der Umbuchungsbetrag');
@@ -271,20 +308,6 @@ function Payees({ model }: { readonly model: FinanceModel }) {
   }
   return <section><form className="inline-form" onSubmit={(e) => void submit(e)}><label>Empfänger<input onChange={(e) => setName(e.target.value)} required value={name} /></label><button type="submit">Empfänger anlegen</button></form>{error === undefined ? null : <p className="field-error" role="alert">{error}</p>}{model.payees.length === 0 ? <Empty title="Noch keine Empfänger" text="Empfänger sind optional und können später beim Erfassen ergänzt werden." /> : <><ul className="plain-list">{model.payees.map((payee) => <li key={payee.id}>{payee.name}</li>)}</ul>{model.payees.length < 2 ? null : <form className="inline-form merge-form" onSubmit={openMergeDialog}><h2>Empfänger zusammenführen</h2><p>Alle lokalen Buchungen des Quell-Empfängers werden atomar dem Ziel zugeordnet. Der Quell-Empfänger bleibt archiviert erhalten.</p><label>Quell-Empfänger<select onChange={(e) => setSource(e.target.value)} required value={source}><option value="">Auswählen</option>{model.payees.map((payee) => <option key={payee.id} value={payee.id}>{payee.name}</option>)}</select></label><label>Ziel-Empfänger<select onChange={(e) => setTarget(e.target.value)} required value={target}><option value="">Auswählen</option>{model.payees.filter((payee) => payee.id !== source).map((payee) => <option key={payee.id} value={payee.id}>{payee.name}</option>)}</select></label><button ref={mergeTrigger} type="submit">Zusammenführen und archivieren</button></form>}{dialogOpen ? <dialog aria-labelledby="merge-confirmation-title" className="confirmation-dialog" onClose={restoreMergeFocus} ref={mergeDialog}><h2 id="merge-confirmation-title">Empfänger zusammenführen?</h2><p>Die lokalen Buchungsreferenzen werden atomar auf den Ziel-Empfänger übertragen. Der Quell-Empfänger bleibt archiviert erhalten.</p><form className="dialog-actions" method="dialog"><button type="submit">Abbrechen</button><button onClick={() => void merge()} type="button">Zusammenführen</button></form></dialog> : null}</>}</section>;
 }
-function Transactions({ model }: { readonly model: FinanceModel }) {
-  const [accountId, setAccountId] = useState(''); const [categoryId, setCategoryId] = useState(''); const [secondCategoryId, setSecondCategoryId] = useState(''); const [splitAmount, setSplitAmount] = useState(''); const [payeeId, setPayeeId] = useState(''); const [amount, setAmount] = useState(''); const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); const [note, setNote] = useState(''); const [opening, setOpening] = useState(false); const [error, setError] = useState<string>(); const [amountError, setAmountError] = useState<string>(); const [dateError, setDateError] = useState<string>();
-  const amountField = useRef<HTMLInputElement>(null); const dateField = useRef<HTMLInputElement>(null);
-  async function submit(event: FormEvent) { event.preventDefault(); setError(undefined); setAmountError(undefined); setDateError(undefined);
-    let invalid = false;
-    try { parseMoney(amount, 'Der Betrag'); } catch (reason) { setAmountError(messageFor(reason, 'Bitte geben Sie einen gültigen Betrag ein.')); amountField.current?.focus(); invalid = true; }
-    try { parseFinanceDate(date, 'Das Datum'); } catch (reason) { setDateError(messageFor(reason, 'Bitte wählen Sie einen gültigen Kalendertag.')); if (!invalid) dateField.current?.focus(); invalid = true; }
-    if (invalid) return;
-    try { await model.addTransaction({ accountId: accountId as UUID, ...(opening ? {} : { categoryId: categoryId as UUID }), ...(secondCategoryId === '' ? {} : { secondCategoryId: secondCategoryId as UUID, firstSplitAmount: splitAmount }), ...(payeeId === '' ? {} : { payeeId: payeeId as UUID }), amount, date, note, opening }); setAmount(''); setNote(''); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Die Buchung konnte nicht gespeichert werden.'); } }
-  if (model.accounts.length === 0) return <Empty title="Noch kein Konto" text="Legen Sie zuerst ein Konto an. Dann können Sie auch dessen Anfangsbestand erfassen." />;
-  if (model.categories.length === 0 && !opening) return <section><p>Für normale Buchungen wird eine Kategorie benötigt.</p><label><input checked={opening} onChange={(e) => setOpening(e.target.checked)} type="checkbox" /> Anfangsbestand erfassen</label><TransactionList model={model} /></section>;
-  return <section><form className="transaction-form" onSubmit={(event) => void submit(event)}><label className="amount-field"><span>Betrag</span><input aria-label="Betrag" aria-describedby={amountError === undefined ? "transaction-amount-help" : "transaction-amount-help transaction-amount-error"} aria-invalid={amountError !== undefined} ref={amountField} inputMode="decimal" onInvalid={(event) => { event.preventDefault(); setAmountError("Bitte geben Sie einen gültigen Betrag ein."); amountField.current?.focus(); }} onChange={(e) => { setAmount(e.target.value); setAmountError(undefined); }} placeholder="z. B. -12,50" required value={amount} /><small id="transaction-amount-help">Ausgabe mit Minus, Einnahme mit Plus oder ohne Vorzeichen.</small>{amountError === undefined ? null : <span className="field-error" id="transaction-amount-error" role="alert">{amountError}</span>}</label><label>Datum<input aria-label="Datum" aria-describedby={dateError === undefined ? undefined : "transaction-date-error"} aria-invalid={dateError !== undefined} ref={dateField} onInvalid={(event) => { event.preventDefault(); setDateError("Bitte wählen Sie einen gültigen Kalendertag."); dateField.current?.focus(); }} onChange={(e) => { setDate(e.target.value); setDateError(undefined); }} required type="date" value={date} />{dateError === undefined ? null : <span className="field-error" id="transaction-date-error" role="alert">{dateError}</span>}</label><label>Konto<select onChange={(e) => setAccountId(e.target.value)} required value={accountId}><option value="">Auswählen</option>{model.accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label><label><input checked={opening} onChange={(e) => setOpening(e.target.checked)} type="checkbox" /> Anfangsbestand</label>{opening ? null : <><label>Kategorie<select onChange={(e) => setCategoryId(e.target.value)} required value={categoryId}><option value="">Auswählen</option>{model.categories.filter((category) => !category.archived).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><label>Split-Kategorie (optional)<select onChange={(e) => setSecondCategoryId(e.target.value)} value={secondCategoryId}><option value="">Kein Split</option>{model.categories.filter((category) => !category.archived).map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>{secondCategoryId === '' ? null : <label>Erster Splitbetrag<input inputMode="decimal" onChange={(e) => setSplitAmount(e.target.value)} required value={splitAmount} /></label>}</>}<label>Empfänger<select onChange={(e) => setPayeeId(e.target.value)} value={payeeId}><option value="">Ohne Empfänger</option>{model.payees.map((payee) => <option key={payee.id} value={payee.id}>{payee.name}</option>)}</select></label><label>Notiz<input onChange={(e) => setNote(e.target.value)} value={note} /></label><button type="submit">Lokal speichern</button></form>{error === undefined ? null : <p className="field-error" role="alert">{error}</p>}<TransactionList model={model} /></section>;
-}
-function TransactionList({ model }: { readonly model: FinanceModel }) { const [filter, setFilter] = useState(''); const visible = model.transactions.filter((transaction) => `${transaction.note ?? ''} ${model.allPayees.find((payee) => payee.id === transaction.payeeId)?.name ?? ''}`.toLocaleLowerCase('de').includes(filter.toLocaleLowerCase('de'))).sort((left, right) => right.date.localeCompare(left.date)); return <section><label>Durchsuchen<input onChange={(event) => setFilter(event.target.value)} placeholder="Empfänger oder Notiz" value={filter} /></label>{visible.length === 0 ? <Empty title="Noch keine Buchungen" text="Ihre Buchungen werden lokal gespeichert und bleiben offline verfügbar." /> : <div className="table-wrap" role="region" aria-label="Buchungsliste" tabIndex={0}><table><thead><tr><th>Datum</th><th>Empfänger</th><th>Konto</th><th>Kategorie</th><th className="money">Betrag</th></tr></thead><tbody>{visible.slice(0, 200).map((transaction) => <tr key={transaction.id}><td>{transaction.date}</td><td>{model.allPayees.find((payee) => payee.id === transaction.payeeId)?.name ?? transaction.note ?? '—'}</td><td>{model.allAccounts.find((account) => account.id === transaction.accountId)?.name}</td><td>{transaction.splits.map((split) => model.allCategories.find((category) => category.id === split.categoryId)?.name ?? 'Unbekannte Kategorie').join(', ') || '—'}</td><td className="money">{formatMoney(transaction.amount)}</td></tr>)}</tbody></table>{visible.length > 200 ? <p>Es werden die ersten 200 Treffer angezeigt. Bitte verfeinern Sie die Suche.</p> : null}</div>}</section>; }
 function AccountTable({ accounts, balances, onArchive, archived = false }: { readonly accounts: readonly AccountAggregate[]; readonly balances: readonly { readonly accountId: UUID; readonly balance: number }[]; readonly onArchive?: (id: UUID) => Promise<void>; readonly archived?: boolean }) { return <div className="table-wrap" role="region" aria-label={archived ? 'Archivierte Konten' : 'Kontoliste'} tabIndex={0}><table className="account-table"><thead><tr><th>Konto</th><th>Art</th><th className="money">Guthaben</th>{archived ? <th>Status</th> : null}{onArchive === undefined ? null : <th><span className="visually-hidden">Aktion</span></th>}</tr></thead><tbody>{accounts.map((account) => <tr key={account.id}><td>{account.name}</td><td>{account.type}</td><td className="money">{formatMoney(balances.find((balance) => balance.accountId === account.id)?.balance ?? 0)}</td>{archived ? <td>Archiviert</td> : null}{onArchive === undefined ? null : <td><button className="quiet small-action" onClick={() => void onArchive(account.id)} type="button">Archivieren</button></td>}</tr>)}</tbody></table></div>; }
 function Empty({ title, text }: { readonly title: string; readonly text: string }) { return <section className="empty"><h2>{title}</h2><p>{text}</p></section>; }
 function titleFor(view: View) { return ({ overview: 'Übersicht', accounts: 'Konten', categories: 'Kategorien', payees: 'Empfänger', transactions: 'Buchungen' })[view]; }

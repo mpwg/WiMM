@@ -55,7 +55,7 @@ for (const width of [320, 768, 900, 1024]) {
       await expect(page.getByRole('cell', { name: account })).toBeVisible();
       await checkLayout(page);
       await page.getByRole('button', { name: 'Buchungen' }).click();
-      await page.getByLabel('Anfangsbestand erfassen').click();
+      await page.getByLabel('Anfangsbestand', { exact: true }).click();
       await page.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: account });
       await page.getByLabel('Betrag', { exact: true }).fill('1234567,89');
       await page.getByRole('button', { name: 'Lokal speichern' }).click();

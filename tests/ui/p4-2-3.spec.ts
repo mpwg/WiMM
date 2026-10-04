@@ -40,12 +40,12 @@ test('erhält Buchungsreferenzen und Saldo eines archivierten Kontos, bietet es 
 
   await page.getByRole('button', { name: 'Buchungen' }).click();
   await page.getByLabel('Anfangsbestand').check();
-  await page.getByLabel('Konto').selectOption({ label: archivedAccount });
+  await page.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: archivedAccount });
   await page.getByLabel('Betrag').fill('100,00');
   await page.getByRole('button', { name: 'Lokal speichern' }).click();
   await expect(page.getByText('Lokal gespeichert.')).toBeVisible();
   await page.getByLabel('Anfangsbestand').uncheck();
-  await page.getByLabel('Konto').selectOption({ label: archivedAccount });
+  await page.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: archivedAccount });
   await page.getByRole('combobox', { name: 'Kategorie', exact: true }).selectOption({ label: 'Lebensmittel' });
   await page.getByLabel('Betrag').fill('-40,00');
   await page.getByRole('button', { name: 'Lokal speichern' }).click();
@@ -59,6 +59,6 @@ test('erhält Buchungsreferenzen und Saldo eines archivierten Kontos, bietet es 
   await page.getByRole('button', { name: 'Buchungen' }).click();
   await expect(page.getByRole('row', { name: new RegExp(`${archivedAccount}.*100,00`) })).toBeVisible();
   await expect(page.getByRole('row', { name: new RegExp(`${archivedAccount}.*-€\\s*40,00`) })).toBeVisible();
-  await expect(page.getByLabel('Konto').getByRole('option', { name: archivedAccount })).toHaveCount(0);
-  await expect(page.getByLabel('Konto').getByRole('option', { name: activeAccount })).toHaveCount(1);
+  await expect(page.getByRole('combobox', { name: 'Konto', exact: true }).getByRole('option', { name: archivedAccount })).toHaveCount(0);
+  await expect(page.getByRole('combobox', { name: 'Konto', exact: true }).getByRole('option', { name: activeAccount })).toHaveCount(1);
 });

@@ -2,7 +2,7 @@
   "name": "where-is-my-money",
   "version": "0.0.0",
   "private": true,
-  "description": "Gemeinsame Grundlage f\u00fcr WhereIsMyMoney.",
+  "description": "Gemeinsame Grundlage für WhereIsMyMoney.",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "packageManager": "pnpm@12.8.1",
@@ -35,8 +35,9 @@
     "test:rust": "node scripts/check-rust.mjs test",
     "test:ui-unit": "pnpm --filter @wimm/ui test",
     "test:toolchain": "node --test scripts/check-toolchain.test.mjs",
-    "check:all": "pnpm check:docs && pnpm test:docs && pnpm check:package-graph && pnpm typecheck && pnpm lint && pnpm check:rust && pnpm test:toolchain && pnpm test && pnpm test:ui && pnpm build",
-    "test:ui:build": "node scripts/test-ui.mjs --build"
+    "check:all": "pnpm check:docs && pnpm test:docs && pnpm check:package-graph && pnpm typecheck && pnpm lint && pnpm check:rust && pnpm test:toolchain && pnpm test && pnpm test:ui && pnpm test:ui:integration && pnpm build",
+    "test:ui:build": "node scripts/test-ui.mjs --build",
+    "test:ui:integration": "pnpm exec playwright test --config tests/workspace/config.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

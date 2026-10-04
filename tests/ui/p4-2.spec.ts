@@ -29,7 +29,7 @@ test('erfasst einen ersten Kontostart und bleibt bei 320 Pixeln ohne Seitenüber
 
   await page.getByRole('button', { name: 'Buchungen' }).click();
   await page.getByLabel('Anfangsbestand').check();
-  await page.getByLabel('Konto').selectOption({ label: longName });
+  await page.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: longName });
   await page.getByLabel('Betrag').fill('1234,56');
   await page.getByRole('button', { name: 'Lokal speichern' }).click();
   await expect(page.getByText('Lokal gespeichert.')).toBeVisible();
