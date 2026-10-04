@@ -2,7 +2,7 @@
 
 ## Auftrag und Reihenfolge
 
-Diese Teilaufgaben konkretisieren [P4](tasks.md#p4--oberfläche-und-native-app). P4.1 und P4.2 besitzen Teilimplementierungen aus ausdrücklichen Nutzeraufträgen vom 3. Oktober 2026, erfüllen nach der Nachprüfung ihre Abnahmen jedoch noch nicht; weitere Teilaufgaben benötigen jeweils ihre eigene Freigabe. P4.1 bis P4.6 werden in Reihenfolge nach abgeschlossenem [P3](p3-storage.md) bearbeitet. Die verbindliche Gestaltung steht in [ui.md](ui.md); spätere Budget-, Import-, Familien- und Syncflächen entstehen in ihren Paketen.
+Diese Teilaufgaben konkretisieren [P4](tasks.md#p4--oberfläche-und-native-app). P4.1 ist abgenommen; P4.2 besitzt eine Teilimplementierung aus einem ausdrücklichen Nutzerauftrag vom 3. Oktober 2026, erfüllt nach der Nachprüfung ihre Abnahmen jedoch noch nicht. Weitere Teilaufgaben benötigen jeweils ihre eigene Freigabe. P4.1 bis P4.6 werden in Reihenfolge nach abgeschlossenem [P3](p3-storage.md) bearbeitet. Die verbindliche Gestaltung steht in [ui.md](ui.md); spätere Budget-, Import-, Familien- und Syncflächen entstehen in ihren Paketen.
 
 Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen; nach jedem abgeschlossenen Abschnitt einen zusammengehörigen Zwischencommit und eine [Übergabe](templates/handoff.md) erstellen. P4 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P5](p5-import.md). Für die Umsetzung wimm-ui verwenden, bei Schlüsselbedienung zusätzlich wimm-e2ee. Native Prüfungen und Browseremulation getrennt belegen.
 

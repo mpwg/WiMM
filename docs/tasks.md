@@ -128,7 +128,7 @@ P4–P11 enthalten 50 offene Teilaufgaben. Bei fehlenden Plattformen oder Signie
 
 ## P4 — Oberfläche und native App
 
-- Status: in Arbeit. Voraussetzung: P3. P4.1 und P4.2 besitzen Teilimplementierungen, erfüllen nach Nachprüfung ihre Abnahmen aber noch nicht; P4.3–P4.5 besitzen ebenfalls Teilimplementierungen, P4.6 ist offen.
+- Status: in Arbeit. Voraussetzung: P3. P4.1 ist abgenommen; P4.2–P4.5 besitzen Teilimplementierungen, erfüllen nach Nachprüfung ihre Abnahmen aber noch nicht; P4.6 ist offen.
 - Teilaufgaben: [P4.1–P4.6](p4-ui.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Composition Root, PlatformServices, Bereichswechsel; Übersicht/Konten/Buchungslisten/Formulare; Splits/Transfer/Abgleich; virtuelle Listen; Touch-/Desktoplayout; Systemschrift/-Farbschema; native Menüs, Dialoge, Kurzbefehle und Systembrowserlinks; leer/Fehler/offline/ausstehend-Zustände.
 - Ergebnis: lokal benutzbares Haushaltsbuch auf Web/PWA und Tauri, noch ohne alle Planungsfunktionen.
