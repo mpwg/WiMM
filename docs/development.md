@@ -2,9 +2,9 @@
 
 ## Stand
 
-Dieses Repository enthält die abgeschlossenen P1.1–P1.6: Workspace, öffentliche Verträge, Crypto-Binding, minimale Web-, Desktop- und Serverhüllen sowie reproduzierbare Prüfungen. Es gibt noch keine Finanzfunktion, Speicher- oder Sync-Implementierung. P2 ergänzt den plattformunabhängigen Fachkern.
+Dieses Repository enthält die abgeschlossenen Grundlagen P1–P3, den plattformunabhängigen Fachkern, verschlüsselte lokale Speicheradapter und bereits implementierte P4-Oberflächen. Die Serverhülle besitzt öffentliche Health-/Metadatenendpunkte; vollständige Synchronisierung folgt in P9. T1 modernisiert die Toolkonfigurationen und verbindlichen Prüfungen.
 
-Die installierte lokale Toolchain benötigt Node `>=26.10.0 <28`, pnpm `>=12.8.1 <14` sowie für die Desktop-Hülle Rust und Xcode. Der entwickelte macOS-arm64-Rechner verwendet Node 26.10.0, pnpm 12.8.1 und Rust 1.99.0 aus Homebrew. Für reproduzierbare Installationen bleibt pnpm 12.8.1 in `packageManager` festgelegt. Vor der ersten Installation `pnpm install --frozen-lockfile` ausführen. Verfügbare Befehle:
+Die installierte lokale Toolchain benötigt Node `>=26.10.0 <28`, pnpm `>=12.8.1 <14` sowie für die Desktop-Hülle Rust und Xcode. Der entwickelte macOS-arm64-Rechner verwendet Node 26.10.0, pnpm 12.8.1 und Rust 1.99.0; die versionierte rustup-Toolchain enthält Clippy und rustfmt. Für reproduzierbare Installationen bleibt pnpm 12.8.1 in `packageManager` festgelegt. Vor der ersten Installation `pnpm install --frozen-lockfile` ausführen. Verfügbare Befehle:
 
 | Zweck | Befehl |
 | --- | --- |
@@ -13,7 +13,12 @@ Die installierte lokale Toolchain benötigt Node `>=26.10.0 <28`, pnpm `>=12.8.1
 | Tauri-Entwicklung starten | `pnpm dev:desktop` |
 | Alle vorhandenen Pakete bauen | `pnpm build` |
 | Typen und Paketgrenzen prüfen | `pnpm typecheck` / `pnpm check:package-graph` |
-| Vertrags-, Crypto- und Servertests | `pnpm test` |
+| Alle vorhandenen Pakettests einschließlich Fachkern, Speicher und UI | `pnpm test` |
+| JavaScript-/TypeScript-Linting | `pnpm lint` |
+| Rust-Format, Clippy und Rust-Tests | `pnpm check:rust` |
+| Toolchain-Fehlerproben | `pnpm test:toolchain` |
+| Oberflächen im Entwicklungsmodus | `pnpm test:ui` |
+| Gebaute Oberflächen nach Frontendbuilds | `pnpm test:ui:build` |
 | Dokumentation prüfen | `pnpm check:docs` |
 | Validator mit fehlerhaften Testdaten prüfen | `pnpm test:docs` |
 | Lokale CI-Prüfserie | `pnpm check:ci` |
@@ -26,7 +31,7 @@ Projektordner direkt in VS Code oder einem anderen Editor öffnen. Die benötigt
 
 Die versionierten `.vscode/settings.json`-Einstellungen verwenden UTF-8, LF, zwei Leerzeichen und Markdown-Softwrap; Rust verwendet vier Leerzeichen. `.editorconfig` hält dieselben Formatregeln für andere Editoren fest. Autoformat beim Speichern bleibt zunächst aus, damit bestehende Absätze nicht ungefragt umgeschrieben werden; explizite Formatierung wird später über die Projekttoolchain vereinheitlicht.
 
-[Erweiterungsempfehlungen](../.vscode/extensions.json): EditorConfig, markdownlint, YAML, GitHub Pull Requests und Tauri. Sie sind Empfehlungen im Workspace und nicht heimlich global installiert. GitHubintegration wird mit dem echten Repositorykonto nutzbar. TypeScript/JSON/Markdown-Unterstützung liefert VS Code selbst. Rust-analyzer, ESLint und Formatter können passend zur lokalen Toolchain eingerichtet werden; Playwrightintegration folgt passend zu P4.
+[Erweiterungsempfehlungen](../.vscode/extensions.json): EditorConfig, markdownlint, YAML, GitHub Pull Requests, Tauri, Oxlint, Rust Analyzer und TypeScript 7. Sie sind Empfehlungen im Workspace und werden nicht global installiert. GitHubintegration verwendet das echte Repositorykonto. Die Projektkonfiguration aktiviert die lokale TypeScript-7-Sprachunterstützung, typgestütztes Oxlint und Clippy mit Warnungen als Fehlern; die verbindliche vollständige Prüfung bleibt `pnpm check:ci`.
 
 Keine VS-Code-Task/Debugkonfiguration mit nicht existierenden Appbefehlen. Keine globale Änderung von Benutzerprefs, Authkonten oder Workspace-Trust. [Workspace-Einstellungen](https://code.visualstudio.com/docs/configure/settings), [Erweiterungsempfehlungen](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace).
 

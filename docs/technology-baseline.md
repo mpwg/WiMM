@@ -1,6 +1,6 @@
 # Versions- und Lizenzbasis
 
-Stand: 4. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Herkunftsregistergrundlage für P1.2. Es legt noch keine Paketdatei, kein Lockfile und keine transitive Abhängigkeitsauflösung an. P1.2 übernimmt die gewählten Versionen exakt und ergänzt dann die vollständigen, aus dem Lockfile ermittelten Fremdhinweise.
+Stand: 4. Oktober 2026. Dieses Dokument hält den Auswahlstand aus P1.1 und die aktuellen Abweichungen der tatsächlichen Manifeste fest. Paketmanifeste und Lockfiles sperren die installierten Versionen; vollständige Fremdhinweise bleiben vor einer Distribution erforderlich. Die Auswahlübersichten nach dem T1-Abschnitt sind historische P1.1-Belege.
 
 ## Tatsächlicher Manifeststand und Toolmodernisierung T1
 

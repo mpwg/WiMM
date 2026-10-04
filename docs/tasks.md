@@ -28,16 +28,33 @@ P4 enthält sechs Sammelaufgaben mit 37 noch offenen Unterabnahmen; P5–P11 beh
 
 ## T1 — Toolkonfigurationen und verbindliche Warnungsprüfung
 
-- Status: in Arbeit (4. Oktober 2026).
+- Status: erledigt (4. Oktober 2026).
 - Freigabe: ausdrücklicher Nutzerauftrag zur Umsetzung des Modernisierungsplans; kein allgemeines Bibliotheksupdate und keine Erweiterung von P4–P11.
 - Voraussetzungen: vorhandene Projektgrundlage P1–P3 und aktuelle Toolchain in der aktiven Arbeitskopie.
 - Schritte: ES2025 und vollständige Typprüfung; Oxlint mit Typinformationen; strenge Build-/Rust-/Node-Prüfungen; vollständige Pakettestserie; Editor-/CI-Integration und isolierte Fehlerproben.
-- Ergebnis: Compiler und Oxlint bestehen; Warnungsregeln und zehn reproduzierbare Toolchainprüfungen vorhanden. Getrennte Anwendungs-/libsodium-Bundles bleiben ohne Anhebung unter Vites 500-kB-Grenze.
+- Ergebnis: ES2025, vollständige Typprüfung, Oxlint, strenge Build-/Rust-/Node-Prüfungen und zehn reproduzierbare Toolchainprüfungen verbindlich integriert. Getrennte Anwendungs-/libsodium-Bundles bleiben ohne Anhebung unter Vites 500-kB-Grenze. Tauri-CLI 2.12.0 beseitigt die veraltete STATIC_VCRUNTIME-Übergabe; sonst keine bestehenden Bibliotheksversionen aktualisiert.
 - Verträge: Entwicklungs-/Prüfanleitung und Versionsbasis; keine Fach-API, Speicherformate oder Finanzregeln geändert.
 - Abnahme: zentrale Prüfserie einschließlich UI-Pakettests, Rust und Web-/Desktopbuild erfolgreich; Fehlerproben brechen zuverlässig ab; Prüfeingaben vollständig; Plattformgrenzen dokumentiert.
-- Prüfungen: `pnpm typecheck`, `pnpm lint`, `pnpm check:rust`, `pnpm test`, `pnpm test:toolchain`, Web-/Desktop-Frontendbuild; vollständige Schlussprüfung folgt.
-- Prüfbelege: macOS arm64, Node 26.10.0, pnpm 12.8.1, TypeScript 7.0.2, Rust 1.99.0; 84 Vitest-Tests, ein Service-Worker-Test, ein Rust-SQLite-Test und zehn Toolchainprüfungen bestanden. `pnpm install --frozen-lockfile` bestanden.
+- Prüfungen: `pnpm install --frozen-lockfile`, vollständiges `pnpm check:ci`, zusätzlich `pnpm test:ui:build` gegen beide gebauten Frontends und abschließende Dokumentations-/Whitespaceprüfung.
+- Prüfbelege: macOS arm64, Node 26.10.0, pnpm 12.8.1, TypeScript 7.0.2, Rust 1.99.0. Die vollständige zentrale Serie bestand am 4. Oktober 2026: zwei Dokumentationsvalidator-Tests, 84 Vitest-Tests, ein Service-Worker-Test, ein Rust-SQLite-Test, zehn Toolchainprüfungen und 17 Chromium-UI-Tests (zehn Web, sieben Desktopfrontend). Webbuild und nativer macOS-Releasebuild bestanden ohne Warnungen. Zusätzlich bestanden dieselben 17 UI-Tests über Vite Preview gegen die gebauten Frontends, einschließlich PWA-Offline-Neustart, Passphrase-/Recovery-Entsperren und Haushaltserhalt. Größte Anwendungsdatei: 465,78 kB; libsodium-WASM: 413,40 kB; Bindings: 120,53 kB. Gesperrte Installation bestanden.
 - Einschränkungen: `skipLibCheck` wegen Dexie-4.2.1-/thread-stream-4.2.0-Deklarationen weiterhin erforderlich. Linux-Remote-CI, Windows und macOS x64 nicht ausgeführt. Die Desktop-Frontendmatrix enthält keinen PWA-Service-Worker-Test; dieser bleibt verpflichtend im Webclient und ersetzt keine native Desktopabnahme.
+
+### T1 — Abnahmematrix und Übergabe
+
+| Kriterium | Status | Beleg |
+| --- | --- | --- |
+| ES2025, strengere Regeln und vollständige Prüfeingaben | erfüllt | TypeScript und Dateiliste in `test:toolchain`, einschließlich React, Vite, Vitest und UI-Tests |
+| Warnungen und exklusive Tests führen zu Fehlerstatus | erfüllt | Zehn isolierte Toolchainprüfungen; Vite-Logger, Rolldown und nativer Reporter für beide Apps; Cargo-Buildskript-/Compiler- und Node-Warnungen |
+| Vollständige lokale Tests und Builds | erfüllt | `check:ci` einschließlich UI-Pakettests, Rust und nativem macOS-Releasebuild; zusätzlich 17 Tests der gebauten Frontends |
+| Reproduzierbare Toolchain, Editor-/CI-Integration | erfüllt | Gesperrte Installation, versionierte Rust-Toolchain, JSON/YAML-/Dokumentationsprüfung und gemeinsame Projektbefehle |
+| Einschränkungen und Versionsabweichungen ausgewiesen | erfüllt | Entwicklungsanleitung und Versionsbasis; konkrete skipLibCheck-Ursachen sowie ungeprüfte Remote-/Plattformläufe benannt |
+
+- Ergebnis: T1 lokal vollständig abgenommen; keine Fachverträge oder Datenformate verändert.
+- Geprüft: zentrale Serie und gebaute Oberflächen auf macOS arm64; Belege siehe oben.
+- Nicht geprüft: Linux-Remote-CI, Windows, macOS x64 und interaktive native Tauri-Bedienung; T1 erteilt keine P4-Gesamtabnahme.
+- Commits: Implementierungsstand `3075147`; Abschlusscommit ergänzt die aktuellen Prüfbelege und diese Übergabe. Kein Push oder Merge.
+- Einschränkungen: Fremddeklarationsprüfung bleibt vorläufig eingeschränkt; keine fiktiven Remote-CI-Belege.
+- Nächster Schritt: P4.1.8 bleibt der nächste begrenzte Produktauftrag; T1 erweitert dessen Freigabe nicht.
 
 ## D0 — Dokumentationsübergabe
 
