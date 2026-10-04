@@ -87,7 +87,7 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
         <button aria-current={view === id ? 'page' : undefined} key={id} onClick={() => setView(id)} type="button">{label}</button>
       )}</nav><button className="quiet" onClick={() => void context.createHousehold()} type="button">+ Haushalt anlegen</button><button className="quiet" onClick={() => void context.lock()} type="button">Tresor sperren</button>
     </aside>
-    <main className="finance-main"><header><div><p className="eyebrow">{context.activeArea.kind === 'private' ? 'Privatbereich' : 'Gemeinsamer Bereich'}</p><h1>{titleFor(view)}</h1></div><span className="local-status">● Lokal gespeichert</span></header>
+    <main className="finance-main" key={context.activeArea.id}><header><div><p className="eyebrow">{context.activeArea.kind === 'private' ? 'Privatbereich' : 'Gemeinsamer Bereich'}</p><h1>{titleFor(view)}</h1></div><span className="local-status">● Lokal gespeichert</span></header>
       {message === undefined ? null : <p aria-live="polite" className="notice">{message}</p>}
       {state === 'loading' ? <p aria-live="polite">Lokale Daten werden geladen …</p> : null}
       {state === 'error' ? <p role="alert">Die Daten bleiben unverändert. Bitte entsperren Sie den Tresor erneut oder starten Sie die App neu.</p> : null}
