@@ -80,16 +80,16 @@ Nächster konkreter Arbeitsauftrag: **P4.1.4 — Rettungscode-Entsperrung separa
 
 ### P4.1.4 — Rettungscode-Entsperrung separat prüfen
 
-- Status: offen.
-- Freigabe: vorhandener Nutzerauftrag zum Abschluss von P4; aktueller Auftrag fordert Aufteilung und erneute Abnahmeplanung, keine Umsetzung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.1.4 um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.1.3 abgenommen.
 - Schritte: Entsperrung mit gespeichertem Tresor und Rettungscode ohne vorhandene flüchtige Schlüssel prüfen.
 - Ergebnis: Rettungscode-Entsperrung separat prüfen mit erneuter Einzelabnahme.
 - Verträge: [Architektur](architecture.md), [Schlüsselbedienung](ui.md#schlüsselbedienung), [Verschlüsselung](encryption.md), [P3-Speicherbasis](p3-storage.md).
 - Abnahme: Richtiger Code stellt vorhandene Bereiche wieder her; falscher Code verändert keinen Speicher und gibt keine Daten frei.
 - Prüfungen: Crypto-/UI-Integration und Chromium mit frischer Clientinstanz auf Web und Desktop-Frontend; kein unverschlüsselter Recoveryfallback.
-- Prüfbelege: erneute Einzelabnahme noch offen; historische Belege bei P4.1 und in der [Übergabe](handoffs/p4-1.md) gezielt nachprüfen.
-- Einschränkungen: historischer Tauri-Nachweis reicht bisher nur bis zum Tresorformular; kein vollständiger nativer Wiedereinstieg belegt.
+- Prüfbelege: Kriterienmatrix: (1) Richtiger Code stellt vorhandene Bereiche wieder her **erfüllt** — der Crypto-Integrationstest entsperrt den gespeicherten Tresor über den Rettungscode; je ein Chromium-Ablauf für Web und Desktop-Frontend überträgt ausschließlich den verschlüsselten lokalen Profilstand in eine frische Clientinstanz und öffnet damit den gespeicherten „Privater Bereich“. (2) Falscher Code verändert keinen Speicher und gibt keine Daten frei **erfüllt** — der Crypto-Test vergleicht die Tresorhülle vor und nach der Ablehnung; beide Frontend-Abläufe behalten den Sperrbildschirm bei und vergleichen den `localStorage`-Profildatensatz bytegleich. (3) Kein unverschlüsselter Recoveryfallback **erfüllt** — die Frontend-Abläufe prüfen, dass der einmalig angezeigte synthetische Rettungscode nicht im lokalen Speicher liegt; der erfolgreiche Wiedereinstieg verwendet nur die verschlüsselte Tresorhülle. Aktuell bestanden: `pnpm --filter @wimm/crypto test` (14 Tests), `pnpm exec playwright test tests/ui/p4-1-4.spec.ts` (1 Chromium-Webablauf), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-1-4.spec.ts --config tests/ui/desktop.config.ts` (1 Chromium-Desktop-Frontendablauf), `pnpm --filter @wimm/ui test` (4 Tests) und `pnpm typecheck`.
+- Einschränkungen: Die Desktop-Frontend-Prüfung ist kein vollständiger nativer Tauri-Nachweis; dieser bleibt P4.1.8 zugeordnet.
 
 ### P4.1.5 — Haushaltsschlüssel dauerhaft sichern
 
