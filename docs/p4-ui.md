@@ -25,7 +25,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.2.3 — Kontoarchivierung mit Referenzen abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.2.3 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.2.4 — Kategoriearchivierung mit Referenzen abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.2.4 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -168,7 +168,7 @@ Nächster konkreter Arbeitsauftrag: **P4.2.3 — Kontoarchivierung mit Referenze
 - Abnahme: Übersicht, Konten, Buchungen und Stammdaten sind erreichbar; aktiver Bereich ist erkennbar; Wechsel zeigt ausschließlich dessen Daten.
 - Prüfungen: Chromium-Ablauf auf Web und Desktop-Frontend mit verschieden benannten privaten und gemeinsamen Konten.
 - Prüfbelege: Kriterienmatrix: (1) Übersicht, Konten, Buchungen und Stammdaten **erfüllt** — der fokussierte Chromium-Ablauf öffnet Übersicht, Buchungen, Kategorien, Empfänger und Konten in einem privaten und einem gemeinsamen lokalen Bereich. (2) Aktiver Bereich erkennbar **erfüllt** — die Bereichsauswahl und die Kennzeichnung „Privatbereich“ beziehungsweise „Gemeinsamer Bereich“ wechseln gemeinsam. (3) Ausschließlich Daten des aktiven Bereichs **erfüllt** — der Ablauf legt ein „Privatkonto Navigationstest“ und ein „Haushaltskonto Navigationstest“ an; beim jeweiligen Wechsel ist ausschließlich das Konto des ausgewählten Bereichs vorhanden. Aktuell bestanden: `pnpm exec playwright test tests/ui/p4-2-1.spec.ts` (1 Chromium-Webablauf), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-1.spec.ts --config tests/ui/desktop.config.ts` (1 Chromium-Desktop-Frontendablauf), UI-Unit-Tests, TypeScript sowie Web- und Desktop-Produktionsbuild.
-- Einschränkungen: Die Desktop-Frontend-Prüfung läuft ohne native Tauri-Laufzeit; die getrennte native Desktopabnahme bleibt P4.6 zugeordnet. Die noch offenen P4.2.3–P4.2.7 werden durch diese Einzelabnahme nicht vorgezogen.
+- Einschränkungen: Die Desktop-Frontend-Prüfung läuft ohne native Tauri-Laufzeit; die getrennte native Desktopabnahme bleibt P4.6 zugeordnet. Die noch offenen P4.2.4–P4.2.7 werden durch diese Einzelabnahme nicht vorgezogen.
 
 ### P4.2.2 — Übersicht und Kontostart prüfen
 
@@ -185,16 +185,16 @@ Nächster konkreter Arbeitsauftrag: **P4.2.3 — Kontoarchivierung mit Referenze
 
 ### P4.2.3 — Kontoarchivierung mit Referenzen abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.2; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.2.3. um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.2.2 abgenommen.
 - Schritte: Archivierung eines bereits bebuchten Kontos prüfen; Auswahl und historische Anzeige bei Bedarf korrigieren.
 - Ergebnis: Kontoarchivierung mit Referenzen abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [UI](ui.md), [Produkt](product.md), P2-Stammdatenbefehle in [API](api.md).
 - Abnahme: Historische Buchung und Saldo bleiben erhalten; archiviertes Konto wird für neue Buchungen nicht vorausgewählt.
 - Prüfungen: Chromium: Konto bebuchen → archivieren → Historie und neue Buchungsmaske prüfen.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.2 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Kriterienmatrix: (1) historische Buchungen und Saldo **erfüllt** — der Chromium-Ablauf legt mit „Girokonto Archivtest“ einen Anfangsbestand von 100,00 EUR und eine kategorisierte Ausgabe von 40,00 EUR an. Nach der Archivierung zeigt der getrennte Abschnitt „Archivierte Konten“ weiterhin den Saldo von 60,00 EUR und Status „Archiviert“; beide Buchungen bleiben mit Kontoreferenz in der Historie sichtbar. (2) keine Auswahl für neue Buchungen **erfüllt** — die neue Buchungsmaske enthält das weiterhin aktive „Bargeldkasse Archivtest“, aber nicht „Girokonto Archivtest“. Aktuell bestanden: `pnpm exec playwright test tests/ui/p4-2-3.spec.ts` (1 Chromium-Webablauf), `WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-2-3.spec.ts --config tests/ui/desktop.config.ts` (1 Chromium-Desktop-Frontendablauf), `pnpm --filter @wimm/ui test` (5 Tests), `pnpm typecheck` sowie Web- und Desktop-Produktionsbuild.
+- Einschränkungen: Der Desktop-Frontend-Ablauf verwendet den dokumentierten IndexedDB-Testadapter und ist kein nativer Tauri-Nachweis. Die getrennte native Desktopabnahme bleibt P4.6 zugeordnet; spätere Paketfunktionen sind nicht Gegenstand dieses Auftrags.
 
 ### P4.2.4 — Kategoriearchivierung mit Referenzen abnehmen
 
