@@ -2,7 +2,7 @@
 
 ## Auftrag und Statusführung
 
-Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1.1 bis P4.1.7 sind erneut abgenommen; als nächster begrenzter Folgeauftrag steht P4.1.8 an.
+Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1.1 bis P4.1.7 sind erneut abgenommen; als nächster begrenzter Folgeauftrag steht P4.1.8 an. Zusätzlich ist T1 zur Toolkonfigurationsmodernisierung ausdrücklich freigegeben.
 
 Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
 
@@ -25,6 +25,19 @@ Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.
 | P11 | [P11.1–P11.6](p11-release.md) | Anleitungen → Plattformen → Signierung → Quellarchive → unabhängige Prüfung → Releaseübergabe |
 
 P4 enthält sechs Sammelaufgaben mit 37 noch offenen Unterabnahmen; P5–P11 behalten ihre bisherigen Teilpläne. Bei fehlenden Plattformen oder Signierungsgeheimnissen nur die betroffene Prüfung/Distribution blockieren und unabhängige bereits freigegebene Arbeit fortsetzen; keine Abnahme überspringen oder erledigt behaupten. P11-Abschluss erteilt keine Veröffentlichungsfreigabe.
+
+## T1 — Toolkonfigurationen und verbindliche Warnungsprüfung
+
+- Status: in Arbeit (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag zur Umsetzung des Modernisierungsplans; kein allgemeines Bibliotheksupdate und keine Erweiterung von P4–P11.
+- Voraussetzungen: vorhandene Projektgrundlage P1–P3 und aktuelle Toolchain in der aktiven Arbeitskopie.
+- Schritte: ES2025 und vollständige Typprüfung; Oxlint mit Typinformationen; strenge Build-/Rust-/Node-Prüfungen; vollständige Pakettestserie; Editor-/CI-Integration und isolierte Fehlerproben.
+- Ergebnis: Compiler und Oxlint bestehen; Warnungsregeln und zehn reproduzierbare Toolchainprüfungen vorhanden. Getrennte Anwendungs-/libsodium-Bundles bleiben ohne Anhebung unter Vites 500-kB-Grenze.
+- Verträge: Entwicklungs-/Prüfanleitung und Versionsbasis; keine Fach-API, Speicherformate oder Finanzregeln geändert.
+- Abnahme: zentrale Prüfserie einschließlich UI-Pakettests, Rust und Web-/Desktopbuild erfolgreich; Fehlerproben brechen zuverlässig ab; Prüfeingaben vollständig; Plattformgrenzen dokumentiert.
+- Prüfungen: `pnpm typecheck`, `pnpm lint`, `pnpm check:rust`, `pnpm test`, `pnpm test:toolchain`, Web-/Desktop-Frontendbuild; vollständige Schlussprüfung folgt.
+- Prüfbelege: macOS arm64, Node 26.10.0, pnpm 12.8.1, TypeScript 7.0.2, Rust 1.99.0; 84 Vitest-Tests, ein Service-Worker-Test, ein Rust-SQLite-Test und zehn Toolchainprüfungen bestanden. `pnpm install --frozen-lockfile` bestanden.
+- Einschränkungen: `skipLibCheck` wegen Dexie-4.2.1-/thread-stream-4.2.0-Deklarationen weiterhin erforderlich. Linux-Remote-CI, Windows und macOS x64 nicht ausgeführt. Die Desktop-Frontendmatrix enthält keinen PWA-Service-Worker-Test; dieser bleibt verpflichtend im Webclient und ersetzt keine native Desktopabnahme.
 
 ## D0 — Dokumentationsübergabe
 

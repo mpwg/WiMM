@@ -1,6 +1,22 @@
 # Versions- und Lizenzbasis
 
-Stand: 3. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Herkunftsregistergrundlage für P1.2. Es legt noch keine Paketdatei, kein Lockfile und keine transitive Abhängigkeitsauflösung an. P1.2 übernimmt die gewählten Versionen exakt und ergänzt dann die vollständigen, aus dem Lockfile ermittelten Fremdhinweise.
+Stand: 4. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Herkunftsregistergrundlage für P1.2. Es legt noch keine Paketdatei, kein Lockfile und keine transitive Abhängigkeitsauflösung an. P1.2 übernimmt die gewählten Versionen exakt und ergänzt dann die vollständigen, aus dem Lockfile ermittelten Fremdhinweise.
+
+## Tatsächlicher Manifeststand und Toolmodernisierung T1
+
+Die Auswahlübersichten unten dokumentieren P1.1; die tatsächlichen Installationen werden durch Paketmanifeste und Lockfiles festgelegt. Folgende Abweichungen wurden bei T1 festgestellt und mit Ausnahme der notwendigen CLI-Kompatibilitätskorrektur dokumentiert:
+
+| Bestandteil | Auswahlübersicht P1.1 | Tatsächlich gesperrt |
+| --- | --- | --- |
+| Tauri-CLI | 2.11.5 | 2.12.0; notwendige Korrektur der veralteten STATIC_VCRUNTIME-Übergabe |
+| tauri-build | 2.6.3 | 2.7.0 |
+| Dexie | 4.4.6 | 4.2.1 |
+| rusqlite | 0.40.2 | 0.37.0 |
+| better-sqlite3 | 13.0.3 für den späteren Server | Noch keine Abhängigkeit des aktuellen Servers |
+
+T1 ergänzt [Oxlint 1.85.0](https://registry.npmjs.org/oxlint/1.85.0) und [oxlint-tsgolint 7.0.2003](https://registry.npmjs.org/oxlint-tsgolint/7.0.2003), beide MIT. Registry-Veröffentlichungen: 21. beziehungsweise 24. September 2026; beide erfüllen am 4. Oktober die sieben Tage Reifezeit. Oxlint verlangt Node `^20.19.0 || >=22.12.0` und oxlint-tsgolint mindestens 7.0.2001; die gewählten Versionen erfüllen dies. Tauri-CLI [2.12.0](https://registry.npmjs.org/@tauri-apps%2fcli/2.12.0) erschien am 26. September 2026 und erfüllt ebenfalls die Reifezeit; Rust-Core und JS-API bleiben unverändert. Neue plattformspezifische Pakete sind einschließlich Integrität im pnpm-Lockfile gesperrt. TypeScript bleibt 7.0.2, das Sprachziel wird ES2025. Rust bleibt 1.99.0 und ist nun einschließlich Clippy/rustfmt versioniert festgelegt.
+
+`skipLibCheck` bleibt wegen TS1540 in Dexie 4.2.1 und TS2694 in thread-stream 4.2.0 nötig. Das ist eine dokumentierte Fremddeklarationsgrenze, keine Abschaltung eigener Typprüfungen. Die [Entwicklungsanleitung](development.md#aktuelle-toolprüfungen) beschreibt die verbindlichen Warnungsregeln. Die vorhandenen pnpm-Regeln für Installationsskripte, exakte Versionen, Peers und Reifezeit bleiben erhalten.
 
 ## Auswahlregeln
 
@@ -22,7 +38,7 @@ Stand: 3. Oktober 2026. Dieses Dokument ist der Prüfbeleg für P1.1 und die Her
 
 | Bereich | Gewählte Versionen | Offizielle Quelle und Lizenz | Kompatibilitätsgrund |
 | --- | --- | --- | --- |
-| Sprache | TypeScript 7.0.2 | [npm-Metadaten](https://registry.npmjs.org/typescript/7.0.2); Apache-2.0 | TypeScript strict/ESM gemäß Architektur; Node-Mindestversion 16.20.0. Die Projektquellen bleiben strikt; `skipLibCheck` übergeht ausschließlich eine inkompatible Fremddeklaration von `thread-stream` mit aktuellen Node-26-Typen. |
+| Sprache | TypeScript 7.0.2 | [npm-Metadaten](https://registry.npmjs.org/typescript/7.0.2); Apache-2.0 | TypeScript strict/ESM gemäß Architektur; Node-Mindestversion 16.20.0. Die Projektquellen bleiben strikt; `skipLibCheck` übergeht ausschließlich die oben dokumentierten inkompatiblen Fremddeklarationen von Dexie und `thread-stream`. |
 | Weboberfläche | React und React DOM 19.3.0, Vite 8.3.1, `@vitejs/plugin-react` 6.1.1 | [React](https://registry.npmjs.org/react/19.3.0), [Vite](https://registry.npmjs.org/vite/8.3.1), [Plugin](https://registry.npmjs.org/@vitejs/plugin-react/6.1.1); jeweils MIT | Vite und Plugin verlangen Node 20.19.0 oder mindestens 22.12.0; Node 26 erfüllt beides. Vite 8.3.1 erfüllt zusätzlich die gewählte Reifezeitpolicy. |
 | Server | Fastify 5.12.5 | [npm-Metadaten](https://registry.npmjs.org/fastify/5.12.5); MIT | Stabile Fastify-Hauptlinie für die später isolierte öffentliche Serverhülle. |
 | Browserdatenbank | Dexie 4.4.6 | [npm-Metadaten](https://registry.npmjs.org/dexie/4.4.6); Apache-2.0 | Entspricht dem vorgesehenen IndexedDB-Adapter; Browserintegration erst ab P3. |

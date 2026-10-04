@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 const passphrase = 'p4-1-4-lokale-passphrase-2026';
 const wrongRecoveryCode = 'ungueltiger-rettungscode';
@@ -27,7 +27,7 @@ test('entsperrt einen gespeicherten Tresor in einer frischen Clientinstanz aussc
     await recoveryPage.goto('/');
     await expect(recoveryPage.getByRole('heading', { name: 'Tresor entsperren' })).toBeVisible();
     await expect(recoveryPage.getByRole('heading', { name: 'Übersicht' })).toHaveCount(0);
-    await expect.poll(() => recoveryPage.evaluate(() => Object.values(localStorage))).not.toContain(recoveryCode);
+    await expect.poll(() => recoveryPage.evaluate(() => Object.keys(localStorage).map((key) => localStorage.getItem(key)))).not.toContain(recoveryCode);
 
     await recoveryPage.getByLabel('Rettungscode verwenden').check();
     await recoveryPage.getByRole('textbox', { name: 'Rettungscode' }).fill(wrongRecoveryCode);

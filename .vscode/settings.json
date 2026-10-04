@@ -7,10 +7,28 @@
   "editor.insertSpaces": true,
   "editor.detectIndentation": false,
   "editor.formatOnSave": false,
-  "[markdown]": { "editor.wordWrap": "on" },
-  "[rust]": { "editor.tabSize": 4 },
+  "[markdown]": {
+    "editor.wordWrap": "on"
+  },
+  "[rust]": {
+    "editor.tabSize": 4
+  },
   "markdown.validate.enabled": true,
   "markdown.validate.fileLinks.enabled": true,
   "markdown.validate.fragmentLinks.enabled": true,
-  "markdown.validate.referenceLinks.enabled": true
+  "markdown.validate.referenceLinks.enabled": true,
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.check.extraArgs": [
+    "--locked",
+    "--all-targets",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "oxc.typeAware": true,
+  "rust-analyzer.linkedProjects": [
+    "apps/desktop/src-tauri/Cargo.toml"
+  ],
+  "js/ts.experimental.useTsgo": true,
+  "js/ts.tsdk.path": "./node_modules/typescript"
 }

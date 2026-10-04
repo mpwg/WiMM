@@ -13,12 +13,14 @@ import {
 } from './index.js';
 
 function expectDomainError(action: () => unknown, code: DomainValidationError['code']): void {
-  expect(action).toThrow(DomainValidationError);
+  let caught: unknown;
   try {
     action();
   } catch (error) {
-    expect(error).toMatchObject({ code });
+    caught = error;
   }
+  expect(caught).toBeInstanceOf(DomainValidationError);
+  expect(caught).toMatchObject({ code });
 }
 
 describe('Geldprimitive', () => {

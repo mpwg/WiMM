@@ -181,7 +181,7 @@ function normalizeSplits(splits: readonly TransactionSplit[]): readonly Transact
   }
   const ids = new Set<UUID>();
   return Object.freeze(
-    splits.map((split) => {
+    splits.map((split: TransactionSplit) => {
       assertUuid(split.id, 'Die Split-ID');
       assertUuid(split.categoryId, 'Die Splitkategorie-ID');
       assertMoney(split.amount, 'Der Splitbetrag');

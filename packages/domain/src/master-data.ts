@@ -185,7 +185,7 @@ export function mergePayees(
   }
 
   const sourceIds = new Set<UUID>();
-  const sources = input.sources.map((source) => {
+  const sources = input.sources.map((source: PayeeAggregate) => {
     const normalized = normalizePayee(source);
     if (normalized.spaceId !== input.spaceId || normalized.id === target.id || normalized.archived) {
       throw new DomainValidationError(
@@ -204,7 +204,7 @@ export function mergePayees(
   });
 
   const transactionIds = new Set<UUID>();
-  const transactions = input.transactions.map((transaction) => {
+  const transactions = input.transactions.map((transaction: PayeeTransactionReference) => {
     assertPayeeTransactionReference(transaction);
     if (transaction.spaceId !== input.spaceId || transaction.payeeId === undefined || !sourceIds.has(transaction.payeeId)) {
       throw new DomainValidationError(

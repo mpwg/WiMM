@@ -102,13 +102,14 @@ function payee(
 }
 
 function expectDomainError(action: () => unknown, code: DomainValidationError['code']): void {
+  let caught: unknown;
   try {
     action();
-    throw new Error('Es wurde ein Fachfehler erwartet.');
   } catch (error) {
-    expect(error).toBeInstanceOf(DomainValidationError);
-    expect(error).toMatchObject({ code });
+    caught = error;
   }
+  expect(caught).toBeInstanceOf(DomainValidationError);
+  expect(caught).toMatchObject({ code });
 }
 
 describe('Konten und Kategorien', () => {

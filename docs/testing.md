@@ -2,7 +2,7 @@
 
 ## Aktueller Stand
 
-D0 umfasst Dokumentationsprüfung. P1.3 ergänzt vier ausgeführte Vertragstests für öffentliche Hüllen und gemeinsame Primitive. P1.4 ergänzt sieben Crypto-Binding-/Manipulationstests mit synthetischen Daten. P1.5 ergänzt zwei Serverhüllentests für Health- und Metadaten sowie Start- und Buildsmokechecks für Web und Tauri. P1.6 ergänzt zwei Tests der Dokumentationsprüfung mit gültigen und absichtlich defekten Links, JSON und YAML. P2 ergänzt 50 Fachtests. P3 ergänzt acht Speicher-, vier zusätzliche Kryptotests, einen Service-Worker- und einen Rust-SQLite-Test. Sync- und vollständige E2E-Tests folgen in P9 beziehungsweise P4. Die folgenden Datensätze und Prüfungen bleiben verbindliche Spezifikation für P4–P11.
+D0 umfasst Dokumentationsprüfung. P1.3 ergänzt vier ausgeführte Vertragstests für öffentliche Hüllen und gemeinsame Primitive. P1.4 ergänzt sieben Crypto-Binding-/Manipulationstests mit synthetischen Daten. P1.5 ergänzt zwei Serverhüllentests für Health- und Metadaten sowie Start- und Buildsmokechecks für Web und Tauri. P1.6 ergänzt zwei Tests der Dokumentationsprüfung mit gültigen und absichtlich defekten Links, JSON und YAML. P2 ergänzt 50 Fachtests. P3 ergänzt acht Speicher-, vier zusätzliche Kryptotests, einen Service-Worker- und einen Rust-SQLite-Test. Die vorhandenen P4-Playwright-Suites prüfen Web und Desktopfrontend in Chromium; Synchronisierungsprüfungen folgen in P9. T1 ergänzt zehn isolierte Toolchainprüfungen und integriert die vorhandenen UI-Pakettests sowie Rust-Format/Clippy/Tests in die zentrale Serie. Die folgenden Datensätze und Prüfungen bleiben verbindliche Spezifikation für P4–P11.
 
 ## Testebenen und Werkzeuge
 

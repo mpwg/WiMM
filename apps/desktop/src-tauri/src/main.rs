@@ -2,11 +2,11 @@
 use std::fs;
 use std::sync::Mutex;
 
-use rusqlite::{params, Connection, OptionalExtension, Transaction};
+use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use serde::Deserialize;
 use serde_json::Value;
-use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::Manager;
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 
 struct StorageState(Mutex<Connection>);
 
@@ -74,7 +74,10 @@ fn initialize_storage(connection: &Connection) -> rusqlite::Result<()> {
     Ok(())
 }
 
-fn assert_expected_revisions(transaction: &Transaction<'_>, batch: &StorageBatch) -> Result<(), String> {
+fn assert_expected_revisions(
+    transaction: &Transaction<'_>,
+    batch: &StorageBatch,
+) -> Result<(), String> {
     for expected in &batch.expected_revisions {
         let current: Option<i64> = transaction
             .query_row(
@@ -92,8 +95,14 @@ fn assert_expected_revisions(transaction: &Transaction<'_>, batch: &StorageBatch
 }
 
 #[tauri::command]
-fn storage_apply_batch(state: tauri::State<'_, StorageState>, batch: StorageBatch) -> Result<(), String> {
-    let mut connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
+fn storage_apply_batch(
+    state: tauri::State<'_, StorageState>,
+    batch: StorageBatch,
+) -> Result<(), String> {
+    let mut connection = state
+        .0
+        .lock()
+        .map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
     let transaction = connection.transaction().map_err(storage_error)?;
     assert_expected_revisions(&transaction, &batch)?;
     for aggregate in &batch.aggregates {
@@ -105,9 +114,18 @@ fn storage_apply_batch(state: tauri::State<'_, StorageState>, batch: StorageBatc
         ).map_err(storage_error)?;
     }
     for operation in &batch.outbox {
-        let operation_id = operation.get("operationId").and_then(Value::as_str).ok_or("Die Operations-ID fehlt.")?;
-        let space_id = operation.get("spaceId").and_then(Value::as_str).ok_or("Die Bereichs-ID fehlt.")?;
-        let operation_state = operation.get("state").and_then(Value::as_str).ok_or("Der Operationsstatus fehlt.")?;
+        let operation_id = operation
+            .get("operationId")
+            .and_then(Value::as_str)
+            .ok_or("Die Operations-ID fehlt.")?;
+        let space_id = operation
+            .get("spaceId")
+            .and_then(Value::as_str)
+            .ok_or("Die Bereichs-ID fehlt.")?;
+        let operation_state = operation
+            .get("state")
+            .and_then(Value::as_str)
+            .ok_or("Der Operationsstatus fehlt.")?;
         transaction.execute(
             "INSERT INTO outbox(profile_id, operation_id, space_id, state, payload) VALUES (?1, ?2, ?3, ?4, ?5)
              ON CONFLICT(profile_id, operation_id) DO UPDATE SET state = excluded.state, payload = excluded.payload",
@@ -115,9 +133,18 @@ fn storage_apply_batch(state: tauri::State<'_, StorageState>, batch: StorageBatc
         ).map_err(storage_error)?;
     }
     for projection in &batch.projections {
-        let space_id = projection.get("spaceId").and_then(Value::as_str).ok_or("Die Projektionsbereichs-ID fehlt.")?;
-        let kind = projection.get("kind").and_then(Value::as_str).ok_or("Die Projektionsart fehlt.")?;
-        let key = projection.get("key").and_then(Value::as_str).ok_or("Der Projektionsschlüssel fehlt.")?;
+        let space_id = projection
+            .get("spaceId")
+            .and_then(Value::as_str)
+            .ok_or("Die Projektionsbereichs-ID fehlt.")?;
+        let kind = projection
+            .get("kind")
+            .and_then(Value::as_str)
+            .ok_or("Die Projektionsart fehlt.")?;
+        let key = projection
+            .get("key")
+            .and_then(Value::as_str)
+            .ok_or("Der Projektionsschlüssel fehlt.")?;
         transaction.execute(
             "INSERT INTO projections(profile_id, space_id, projection_kind, projection_key, payload) VALUES (?1, ?2, ?3, ?4, ?5)
              ON CONFLICT(profile_id, space_id, projection_kind, projection_key) DO UPDATE SET payload = excluded.payload",
@@ -128,8 +155,15 @@ fn storage_apply_batch(state: tauri::State<'_, StorageState>, batch: StorageBatc
 }
 
 #[tauri::command]
-fn storage_read_aggregate(state: tauri::State<'_, StorageState>, profile_id: String, handle: String) -> Result<Option<Value>, String> {
-    let connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
+fn storage_read_aggregate(
+    state: tauri::State<'_, StorageState>,
+    profile_id: String,
+    handle: String,
+) -> Result<Option<Value>, String> {
+    let connection = state
+        .0
+        .lock()
+        .map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
     connection
         .query_row(
             "SELECT payload FROM aggregates WHERE profile_id = ?1 AND handle = ?2",
@@ -143,25 +177,64 @@ fn storage_read_aggregate(state: tauri::State<'_, StorageState>, profile_id: Str
 }
 
 #[tauri::command]
-fn storage_query_aggregates(state: tauri::State<'_, StorageState>, profile_id: String, space_id: String) -> Result<Vec<Value>, String> {
-    let connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
+fn storage_query_aggregates(
+    state: tauri::State<'_, StorageState>,
+    profile_id: String,
+    space_id: String,
+) -> Result<Vec<Value>, String> {
+    let connection = state
+        .0
+        .lock()
+        .map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
     let mut statement = connection
         .prepare("SELECT payload FROM aggregates WHERE profile_id = ?1 AND space_id = ?2")
         .map_err(storage_error)?;
     let rows = statement
         .query_map(params![profile_id, space_id], |row| row.get::<_, String>(0))
         .map_err(storage_error)?;
-    rows.map(|row| row.map_err(storage_error).and_then(|payload| serde_json::from_str(&payload).map_err(storage_error)))
-        .collect()
+    rows.map(|row| {
+        row.map_err(storage_error)
+            .and_then(|payload| serde_json::from_str(&payload).map_err(storage_error))
+    })
+    .collect()
 }
 
 fn main() {
     tauri::Builder::default()
         .menu(|handle| {
-            let new_transaction = MenuItem::with_id(handle, "new-transaction", "Neue Buchung", true, Some("CmdOrCtrl+N"))?;
-            let settings = MenuItem::with_id(handle, "settings", "Einstellungen", true, None::<&str>)?;
-            let file = Submenu::with_items(handle, "Datei", true, &[&new_transaction, &settings, &PredefinedMenuItem::close_window(handle, None)?])?;
-            let edit = Submenu::with_items(handle, "Bearbeiten", true, &[&PredefinedMenuItem::undo(handle, None)?, &PredefinedMenuItem::redo(handle, None)?, &PredefinedMenuItem::separator(handle)?, &PredefinedMenuItem::cut(handle, None)?, &PredefinedMenuItem::copy(handle, None)?, &PredefinedMenuItem::paste(handle, None)?, &PredefinedMenuItem::select_all(handle, None)?])?;
+            let new_transaction = MenuItem::with_id(
+                handle,
+                "new-transaction",
+                "Neue Buchung",
+                true,
+                Some("CmdOrCtrl+N"),
+            )?;
+            let settings =
+                MenuItem::with_id(handle, "settings", "Einstellungen", true, None::<&str>)?;
+            let file = Submenu::with_items(
+                handle,
+                "Datei",
+                true,
+                &[
+                    &new_transaction,
+                    &settings,
+                    &PredefinedMenuItem::close_window(handle, None)?,
+                ],
+            )?;
+            let edit = Submenu::with_items(
+                handle,
+                "Bearbeiten",
+                true,
+                &[
+                    &PredefinedMenuItem::undo(handle, None)?,
+                    &PredefinedMenuItem::redo(handle, None)?,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::cut(handle, None)?,
+                    &PredefinedMenuItem::copy(handle, None)?,
+                    &PredefinedMenuItem::paste(handle, None)?,
+                    &PredefinedMenuItem::select_all(handle, None)?,
+                ],
+            )?;
             Menu::with_items(handle, &[&file, &edit])
         })
         .setup(|app| {
@@ -172,7 +245,11 @@ fn main() {
             app.manage(StorageState(Mutex::new(connection)));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![storage_apply_batch, storage_read_aggregate, storage_query_aggregates])
+        .invoke_handler(tauri::generate_handler![
+            storage_apply_batch,
+            storage_read_aggregate,
+            storage_query_aggregates
+        ])
         .run(tauri::generate_context!())
         .expect("Die Desktop-Anwendung konnte nicht gestartet werden.");
 }
@@ -185,7 +262,9 @@ mod tests {
     fn sqlite_aktiviert_fremdschluessel_und_rollt_abbruch_zurueck() {
         let mut connection = Connection::open_in_memory().expect("In-Memory-SQLite verfügbar");
         initialize_storage(&connection).expect("Schema wird angelegt");
-        let foreign_keys: i64 = connection.query_row("PRAGMA foreign_keys", [], |row| row.get(0)).expect("Pragma lesbar");
+        let foreign_keys: i64 = connection
+            .query_row("PRAGMA foreign_keys", [], |row| row.get(0))
+            .expect("Pragma lesbar");
         assert_eq!(foreign_keys, 1);
         let transaction = connection.transaction().expect("Transaktion beginnt");
         transaction.execute(
@@ -193,7 +272,9 @@ mod tests {
             [],
         ).expect("Testdatensatz einfügbar");
         transaction.rollback().expect("Rollback gelingt");
-        let count: i64 = connection.query_row("SELECT count(*) FROM aggregates", [], |row| row.get(0)).expect("Anzahl lesbar");
+        let count: i64 = connection
+            .query_row("SELECT count(*) FROM aggregates", [], |row| row.get(0))
+            .expect("Anzahl lesbar");
         assert_eq!(count, 0);
     }
 }

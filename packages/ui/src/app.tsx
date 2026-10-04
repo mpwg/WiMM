@@ -266,14 +266,14 @@ function CreateVault({ notice, title, screen, store, onScreen, onNotice }: {
       <p>Dieser Code ist der zweite Weg zu Ihren Finanzschlüsseln. Er wird nicht erneut angezeigt und nie an einen Server gesendet.</p>
       <output className="recovery-code" aria-label="Rettungscode">{screen.recoveryCode}</output>
       {notice === undefined ? undefined : <p role="alert">{notice}</p>}
-      <form onSubmit={finish}><label><input type="checkbox" checked={recoveryConfirmed} onChange={(event) => setRecoveryConfirmed(event.target.checked)} /> Ich habe den Rettungscode sicher abgelegt.</label>
+      <form onSubmit={(event) => { void finish(event); }}><label><input type="checkbox" checked={recoveryConfirmed} onChange={(event) => setRecoveryConfirmed(event.target.checked)} /> Ich habe den Rettungscode sicher abgelegt.</label>
         <button disabled={!recoveryConfirmed || busy} type="submit">Lokalen Bereich eröffnen</button></form>
     </main>;
   }
   return <main className="auth"><p className="eyebrow">{title}</p><h1>Lokalen Tresor anlegen</h1>
     <p>Die App funktioniert ohne Konto und Server. Die Entsperrpassphrase bleibt auf diesem Gerät.</p>
     {notice === undefined ? undefined : <p role="alert">{notice}</p>}
-    <form onSubmit={submit}><label>Entsperrpassphrase<input autoComplete="new-password" minLength={12} onChange={(event) => setPassphrase(event.target.value)} required type="password" value={passphrase} /></label>
+    <form onSubmit={(event) => { void submit(event); }}><label>Entsperrpassphrase<input autoComplete="new-password" minLength={12} onChange={(event) => setPassphrase(event.target.value)} required type="password" value={passphrase} /></label>
       <label>Passphrase wiederholen<input autoComplete="new-password" minLength={12} onChange={(event) => setConfirmation(event.target.value)} required type="password" value={confirmation} /></label>
       <button disabled={busy} type="submit">Tresor anlegen</button></form>
   </main>;
@@ -303,7 +303,7 @@ function UnlockVault({ notice, title, profile, onUnlocked, onNotice }: {
   }
   return <main className="auth"><p className="eyebrow">{title}</p><h1>Tresor entsperren</h1><p>Eine Serveranmeldung ist hierfür nicht erforderlich.</p>
     {notice === undefined ? undefined : <p role="alert">{notice}</p>}
-    <form onSubmit={submit}><label>{recovery ? 'Rettungscode' : 'Entsperrpassphrase'}<input autoComplete="current-password" onChange={(event) => setSecret(event.target.value)} required type="password" value={secret} /></label>
+    <form onSubmit={(event) => { void submit(event); }}><label>{recovery ? 'Rettungscode' : 'Entsperrpassphrase'}<input autoComplete="current-password" onChange={(event) => setSecret(event.target.value)} required type="password" value={secret} /></label>
       <label><input checked={recovery} onChange={(event) => setRecovery(event.target.checked)} type="checkbox" /> Rettungscode verwenden</label>
       <button disabled={busy} type="submit">Entsperren</button></form>
   </main>;

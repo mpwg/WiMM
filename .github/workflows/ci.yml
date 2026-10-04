@@ -50,8 +50,8 @@ jobs:
 
       - name: Rust einrichten
         run: |
-          rustup toolchain install 1.99.0 --profile minimal
-          rustup default 1.99.0
+          rustup show active-toolchain
+          pnpm check:rust-toolchain
 
       - name: Rust-Abhängigkeiten und Buildartefakte cachen
         uses: Swatinem/rust-cache@v2

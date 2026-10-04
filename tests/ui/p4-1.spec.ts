@@ -35,7 +35,7 @@ test('öffnet vor bestätigtem Rettungscode keinen Bereich und persistiert weder
   expect(recoveryCode).toBeTruthy();
   await expect(page.getByRole('button', { name: 'Lokalen Bereich eröffnen' })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Übersicht' })).toHaveCount(0);
-  await expect.poll(() => page.evaluate(() => Object.values(localStorage))).not.toContain(recoveryCode);
+  await expect.poll(() => page.evaluate(() => Object.keys(localStorage).map((key) => localStorage.getItem(key)))).not.toContain(recoveryCode);
   expect(consoleMessages).not.toContain(recoveryCode);
 });
 

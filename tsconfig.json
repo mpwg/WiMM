@@ -2,6 +2,19 @@
   "extends": "./tsconfig.base.json",
   "include": [
     "apps/*/src/**/*.ts",
-    "packages/*/src/**/*.ts"
+    "apps/*/src/**/*.tsx",
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "apps/*/vite.config.ts",
+    "playwright.config.ts",
+    "vitest.config.ts",
+    "tests/ui/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/dist",
+    "**/target",
+    "**/gen",
+    "test-results"
   ]
 }

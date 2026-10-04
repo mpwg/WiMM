@@ -18,7 +18,7 @@ export type DomainErrorCode =
 
 /** Ein verständlicher Validierungsfehler für einen Fachbefehl ohne Teiländerung. */
 export class DomainValidationError extends Error {
-  readonly name = 'DomainValidationError';
+  override readonly name = 'DomainValidationError';
 
   constructor(
     readonly code: DomainErrorCode,

@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { expect, test, type Browser, type Page, type StorageState } from '@playwright/test';
+import { expect, test, type Browser, type Page } from '@playwright/test';
+import type { LocalProfile } from '../../packages/ui/src/app.js';
+
+type StorageState = Awaited<ReturnType<ReturnType<Page['context']>['storageState']>>;
 
 const passphrase = 'p4-1-5-lokale-passphrase-2026';
 const profileStorageKey = process.env.WIMM_CLIENT === 'desktop' ? 'wimm/desktop-profile/v1' : 'wimm/local-profile/v1';
@@ -16,10 +19,10 @@ async function createHousehold(page: Page): Promise<{ readonly recoveryCode: str
   await page.getByLabel('Entsperrpassphrase').fill(passphrase);
   await page.getByRole('button', { name: 'Entsperren' }).click();
 
-  const nonceBefore = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).vault.vault.nonce as string, profileStorageKey);
+  const nonceBefore = await page.evaluate((key) => (JSON.parse(localStorage.getItem(key)!) as LocalProfile).vault.vault.nonce, profileStorageKey);
   await page.getByRole('button', { name: '+ Haushalt anlegen' }).click();
   await expect(page.getByLabel('Bereich')).toHaveText(/Haushalt 1/);
-  const householdId = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!).selectedAreaId as string, profileStorageKey);
+  const householdId = await page.evaluate((key) => (JSON.parse(localStorage.getItem(key)!) as LocalProfile).selectedAreaId, profileStorageKey);
   return { recoveryCode: recoveryCode!, nonceBefore, householdId };
 }
 
@@ -41,7 +44,7 @@ async function expectHouseholdAfterRestart(browser: Browser, state: StorageState
 
 test('sichert einen neuen Haushalt mit frischer Nonce und stellt ihn nach Neustart über beide Entsperrwege wieder her', async ({ browser, page }) => {
   const { recoveryCode, nonceBefore, householdId } = await createHousehold(page);
-  const storedRecord = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!), profileStorageKey);
+  const storedRecord = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)!) as LocalProfile, profileStorageKey);
   expect(storedRecord.vault.vault.nonce).not.toBe(nonceBefore);
   expect(JSON.stringify(storedRecord)).not.toContain(recoveryCode);
   const state = await page.context().storageState();

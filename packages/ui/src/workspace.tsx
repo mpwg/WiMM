@@ -60,6 +60,8 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
   }, [storage, context.activeArea.id]);
   useEffect(() => {
     if (closeTimer.current !== undefined) clearTimeout(closeTimer.current);
+    // Der Effekt synchronisiert den ausgewählten Bereich mit dem externen Speicher.
+    // oxlint-disable-next-line react/set-state-in-effect
     void reload();
     return () => {
       // React Strict Mode startet Effekte im Entwicklungslauf absichtlich erneut.

@@ -50,7 +50,7 @@ test('wechselt Bereiche, führt Empfänger atomar zusammen und erhält zugängli
   const overview = page.getByRole('button', { name: 'Übersicht' });
   await page.keyboard.press('Tab');
   await expect(overview).toBeVisible();
-  await expect(page.locator('style, link[rel="stylesheet"]').evaluateAll((styles) =>
+  await expect(page.locator('style, link[rel="stylesheet"]').evaluateAll(() =>
     [...document.styleSheets].some((sheet) => {
       try { return [...sheet.cssRules].some((rule) => rule.cssText.includes(':focus-visible') && rule.cssText.includes('outline')); }
       catch { return false; }

@@ -87,10 +87,10 @@ describe('Kryptografiegrundlage', () => {
     const manipulatedCiphertext = Uint8Array.from(input.ciphertext);
     manipulatedCiphertext[0] = (manipulatedCiphertext[0] ?? 0) ^ 1;
 
-    await expect(decryptXChaCha20Poly1305({ ...input, ciphertext: manipulatedCiphertext })).rejects.toThrow();
+    await expect(decryptXChaCha20Poly1305({ ...input, ciphertext: manipulatedCiphertext })).rejects.toThrow(Error);
     await expect(
       decryptXChaCha20Poly1305({ ...input, associatedData: textEncoder.encode('wimm/v1/snapshot') })
-    ).rejects.toThrow();
+    ).rejects.toThrow(Error);
   });
 
   it('erzeugt für neue Verschlüsselungen frische Nonces und entschlüsselt sie', async () => {
