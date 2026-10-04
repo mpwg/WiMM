@@ -124,21 +124,23 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
   const model = useMemo(() => new FinanceModel(context.activeArea.id as UUID, aggregates, execute), [aggregates, context.activeArea.id, execute]);
 
   return <div className={`app-shell${desktop ? ' desktop-shell' : ''}`} data-color-scheme={colorScheme}>
-    <aside className="sidebar"><p className="product">WhereIsMyMoney</p><AreaPicker context={context} />
+    <aside className="sidebar"><p className="product">WhereIsMyMoney</p><AreaPicker context={context} disabled={saving} />
       <nav aria-label="Hauptnavigation">{([['overview', 'Übersicht'], ['transactions', 'Buchungen'], ['accounts', 'Konten'], ['categories', 'Kategorien'], ['payees', 'Empfänger']] as const).map(([id, label]) =>
-        <button aria-current={view === id ? 'page' : undefined} key={id} onClick={() => setView(id)} type="button">{label}</button>
-      )}</nav><button className="quiet" onClick={() => void context.createHousehold()} type="button">+ Haushalt anlegen</button><button className="quiet" onClick={() => void context.lock()} type="button">Tresor sperren</button>
+        <button disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => setView(id)} type="button">{label}</button>
+      )}</nav><button disabled={saving} className="quiet" onClick={() => void context.createHousehold()} type="button">+ Haushalt anlegen</button><button className="quiet" onClick={() => void context.lock()} type="button">Tresor sperren</button>
       <label className="area-picker">Farbschema<select value={colorScheme} onChange={(event) => changeColorScheme(event.target.value as ColorScheme)}><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
     </aside>
     <main className="finance-main" key={context.activeArea.id}><header><div><p className="eyebrow">{context.activeArea.kind === 'private' ? 'Privatbereich' : 'Gemeinsamer Bereich'}</p><h1>{titleFor(view)}</h1></div><span aria-live="polite" className="local-status">{saving ? "Wird lokal gespeichert …" : "● Lokaler Stand"}</span></header>
       {message === undefined ? null : <p aria-live="polite" className="notice">{message}</p>}
       {state === 'loading' ? <p aria-live="polite">Lokale Daten werden geladen …</p> : null}
       {state === 'error' ? <p role="alert">Die Daten bleiben unverändert. Bitte entsperren Sie den Tresor erneut oder starten Sie die App neu.</p> : null}
+      <fieldset className="workspace-content" disabled={saving}>
       {state === 'ready' && view === 'overview' ? <Overview model={model} onNew={() => setView('transactions')} /> : null}
       {state === 'ready' && view === 'accounts' ? <Accounts model={model} /> : null}
       {state === 'ready' && view === 'categories' ? <Categories model={model} /> : null}
       {state === 'ready' && view === 'payees' ? <Payees model={model} /> : null}
       {state === 'ready' && view === 'transactions' ? <Transactions model={model} /> : null}
+      </fieldset>
     </main>
   </div>;
 }
@@ -268,7 +270,7 @@ export class FinanceModel {
   get(id: UUID) { const aggregate = this.heads.get(id); return aggregate === undefined ? undefined : { id: aggregate.id, spaceId: aggregate.spaceId, revision: aggregate.revision, aggregateType: aggregate.aggregateType }; }
 }
 
-function AreaPicker({ context }: { readonly context: UnlockedAppContext }) { return <label className="area-picker">Bereich<select onChange={(event) => context.selectArea(event.target.value)} value={context.activeArea.id}>{context.profile.areas.map((area) => <option key={area.id} value={area.id}>{area.label}</option>)}</select></label>; }
+function AreaPicker({ context, disabled = false }: { readonly context: UnlockedAppContext; readonly disabled?: boolean }) { return <label className="area-picker">Bereich<select disabled={disabled} onChange={(event) => context.selectArea(event.target.value)} value={context.activeArea.id}>{context.profile.areas.map((area) => <option key={area.id} value={area.id}>{area.label}</option>)}</select></label>; }
 function Overview({ model, onNew }: { readonly model: FinanceModel; readonly onNew: () => void }) {
   const balances = projectAccountBalances(model.transactions);
   const total = sumMoney(balances.map((item) => item.balance), 'Das Gesamtguthaben');

@@ -30,7 +30,7 @@ Die Liste kombiniert Notiz-/Empfängersuche mit Konto- und inklusiven Datumsfilt
 
 Die scrollbare Liste rendert höchstens 16 Buchungszeilen plus zwei unsichtbare Abstandshalter. Auch bei 50.000 Buchungen sind Anfang, Mitte und Ende erreichbar; IDs und Rückkehrfokus bleiben beim Bearbeiten erhalten. Das ist ein Funktionsnachweis für P4.3.6; die gesonderten Zeitziele und der vollständige Leistungsdatensatz bleiben P4.6.5.
 
-Während eines Speicherbefehls sind die Formularfelder gesperrt und ein Wartezustand sichtbar. Ein Fehler erhält sämtliche Werte; ein Wiederholversuch speichert genau einmal. Nach dem Commit wird der bestätigte Batch direkt in die Ansicht übernommen, damit ein nachgelagerter Lesefehler keine zweite Neuanlage auslöst. Die Tests injizieren Verzögerung, Quota und Disk-full ausschließlich über eine separate Testseite mit echtem IndexedDB-Adapter; die Produktionsapp enthält keine Fehlersteuerung. Native Disk-full-Prüfung folgt in P4.6.6.
+Während eines Speicherbefehls sind Formularfelder, Navigation und Bereichswechsel gesperrt und ein Wartezustand sichtbar. Dadurch kann der ausstehende Commit nicht seine Daten in einen inzwischen gewechselten Bereich einblenden. Ein Fehler erhält sämtliche Werte; ein Wiederholversuch speichert genau einmal. Nach dem Commit wird der bestätigte Batch direkt in die Ansicht übernommen, damit ein nachgelagerter Lesefehler keine zweite Neuanlage auslöst. Die Tests injizieren Verzögerung, Quota und Disk-full ausschließlich über eine separate Testseite mit echtem IndexedDB-Adapter; die Produktionsapp enthält keine Fehlersteuerung. Native Disk-full-Prüfung folgt in P4.6.6.
 
 ## Prüfung
 

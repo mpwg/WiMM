@@ -3,6 +3,7 @@ import type { TransactionAggregate } from '../../packages/domain/src/index.js';
 import { expect, test, type Page } from '@playwright/test';
 
 async function open(page: Page, desktop: boolean, count = 3) {
+  await page.clock.setFixedTime(new Date('2026-10-04T13:00:00Z'));
   await page.goto(`/tests/workspace.html?desktop=${desktop}&count=${count}`);
   await page.getByRole('button', { name: 'Buchungen', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Buchungsliste' })).toBeVisible();
@@ -32,12 +33,21 @@ test('verzögerter Commit sowie Quota und Disk-full erhalten alle Splitwerte und
     await expect(page.getByLabel('Zweiter Splitbetrag')).toHaveValue('-30');
     await expect(page.getByLabel('Splitbetrag 3', { exact: true })).toHaveValue('-10');
     await expect(page.getByLabel('Notiz')).toHaveValue('Vollständiger Entwurf');
+    await expect(page.getByLabel('Datum', { exact: true })).toHaveValue('2026-10-04');
+    await expect(page.getByRole('combobox', { name: 'Konto', exact: true })).toHaveValue('00000000-0000-4000-8000-000000000003');
+    for (const name of ['Kategorie', 'Split-Kategorie (optional)', 'Split-Kategorie 3']) {
+      await expect(page.getByRole('combobox', { name, exact: true })).toHaveValue('00000000-0000-4000-8000-000000000005');
+    }
+    await expect(page.getByRole('combobox', { name: 'Empfänger', exact: true })).toHaveValue('');
+    await expect(page.getByLabel('Anfangsbestand', { exact: true })).not.toBeChecked();
     expect(await read(page)).toEqual(before);
     await expect(page.getByText('Lokal gespeichert.', { exact: true })).toHaveCount(0);
   }
   await page.evaluate(() => window.workspaceTest.mode('delay'));
   await page.getByRole('button', { name: 'Lokal speichern' }).click();
   await expect(page.getByRole('button', { name: 'Wird gespeichert …' })).toBeDisabled();
+  await expect(page.getByLabel('Bereich')).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Konten', exact: true })).toBeDisabled();
   await expect(page.getByText('Lokal gespeichert.', { exact: true })).toHaveCount(0);
   expect(await read(page)).toEqual(before);
   await page.evaluate(() => { window.workspaceTest.mode('normal'); window.workspaceTest.release(); });

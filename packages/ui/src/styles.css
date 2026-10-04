@@ -156,3 +156,5 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .virtual-spacer, .virtual-spacer td { display: block; }
 }
 .transaction-scroll { overflow-anchor: none; }
+
+.workspace-content { border: 0; margin: 0; min-width: 0; padding: 0; }

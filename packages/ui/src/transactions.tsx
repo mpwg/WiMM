@@ -91,12 +91,19 @@ export function TransactionList({ model }: { readonly model: FinanceModel }) {
     (account === '' || transaction.accountId === account) && (from === '' || transaction.date >= from) && (to === '' || transaction.date <= to)
   ).sort((left, right) => right.date.localeCompare(left.date) || left.id.localeCompare(right.id)), [model, filter, account, from, to, payeeNames]);
   useEffect(() => { const query = matchMedia('(max-width: 767px)'); const update = () => setMobile(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update); }, []);
-  useEffect(() => { if (selected !== undefined) dialog.current?.showModal(); }, [selected]);
+  useEffect(() => {
+    if (selected !== undefined) dialog.current?.showModal();
+    else if (trigger.current !== null) {
+      // Erst nach dem Render sind die Bedienelemente nach dem Commit wieder aktiv.
+      if (trigger.current.isConnected) trigger.current.focus();
+      else scroller.current?.focus();
+    }
+  }, [selected]);
   const height = mobile ? 176 : 80; const windowSize = 16;
   const start = Math.min(Math.max(0, Math.floor(scrollTop / height) - 4), Math.max(0, visible.length - windowSize));
   const end = Math.min(start + windowSize, visible.length);
   function resetScroll() { setScrollTop(0); if (scroller.current !== null) scroller.current.scrollTop = 0; }
-  function close() { if (deleteBusy.current) return; setSelected(undefined); setError(undefined); queueMicrotask(() => { if (trigger.current?.isConnected) trigger.current.focus(); else scroller.current?.focus(); }); }
+  function close() { if (deleteBusy.current) return; setSelected(undefined); setError(undefined); }
   function open(transaction: TransactionAggregate, element: HTMLButtonElement) { trigger.current = element; setAction('details'); setError(undefined); setSelected(transaction); }
   async function remove() {
     if (selected === undefined || deleteBusy.current) return;

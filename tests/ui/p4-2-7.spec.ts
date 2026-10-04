@@ -88,6 +88,8 @@ test('bedient Bereich, Navigation und Stammdaten per Tastatur und gibt den Dialo
     await typeAtFocused(page, page.getByLabel('Empfänger', { exact: true }), name);
     await tabUntil(page, page.getByRole('button', { name: 'Empfänger anlegen' }));
     await page.keyboard.press('Enter');
+    await expect(page.getByRole('listitem').filter({ hasText: name })).toBeVisible();
+    await expect(page.getByLabel('Empfänger', { exact: true })).toBeEnabled();
   }
   await tabUntil(page, page.getByLabel('Quell-Empfänger'));
   await page.keyboard.press('b');
