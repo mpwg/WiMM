@@ -4,7 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   forbidOnly: true,
   testDir: '.',
-  testMatch: 'p4-1*.spec.ts',
+  testMatch: ['p4-1*.spec.ts', 'p4-2-1.spec.ts'],
   // PWA-Service-Worker sind ausschließlich Bestandteil des Webclients.
   testIgnore: 'p4-1-7.spec.ts',
   timeout: 45_000,
