@@ -33,6 +33,19 @@ describe('lokaler UserVault', () => {
     await expect(unlockUserVaultWithPassphrase(tampered, passphrase)).rejects.toBeInstanceOf(VaultUnlockError);
   });
 
+  it('lehnt einen falschen Rettungscode ohne Änderung der verschlüsselten Tresorhülle ab', async () => {
+    const created = await createUserVault(passphrase);
+    const originalRecord = structuredClone(created.record);
+
+    await expect(unlockUserVaultWithRecoveryCode(created.record, 'ungültiger-rettungscode'))
+      .rejects.toBeInstanceOf(VaultUnlockError);
+    expect(created.record).toEqual(originalRecord);
+
+    const reopened = await unlockUserVaultWithRecoveryCode(created.record, created.recoveryCode);
+    expect(reopened.identityPublicKey).toHaveLength(32);
+    await lockUserVault(reopened);
+  });
+
   it('entfernt beim Sperren die flüchtigen privaten Schlüssel und verlangt danach eine neue Entsperrung', async () => {
     const created = await createUserVault(passphrase);
     const vault = await unlockUserVaultWithPassphrase(created.record, passphrase);
