@@ -25,7 +25,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.1.4 — Rettungscode-Entsperrung separat prüfen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.1.4 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.1.8 — Nativen lokalen Einstieg nach Neustart prüfen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.1.8 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -119,16 +119,16 @@ Nächster konkreter Arbeitsauftrag: **P4.1.4 — Rettungscode-Entsperrung separa
 
 ### P4.1.7 — PWA-Einstieg nach Offline-Neustart prüfen
 
-- Status: offen.
-- Freigabe: vorhandener Nutzerauftrag zum Abschluss von P4; aktueller Auftrag fordert Aufteilung und erneute Abnahmeplanung, keine Umsetzung.
+- Status: erledigt (4. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.1.7 um“ vom 4. Oktober 2026.
 - Voraussetzungen: P4.1.6 abgenommen.
 - Schritte: Nach Erstladen Tresor und Haushalt anlegen; Netzwerk ausschalten, App neu starten und lokal entsperren.
 - Ergebnis: PWA-Einstieg nach Offline-Neustart prüfen mit erneuter Einzelabnahme.
 - Verträge: [Architektur](architecture.md), [Schlüsselbedienung](ui.md#schlüsselbedienung), [Verschlüsselung](encryption.md), [P3-Speicherbasis](p3-storage.md).
 - Abnahme: App-Assets starten ohne Netz; Passphrase und Rettungscode erreichen den gespeicherten Haushalt; keine Anmeldung/Serverkonfiguration nötig.
 - Prüfungen: Echter Network-off-Chromium-Ablauf mit dokumentierter PWA-/Service-Worker-Version; native Prüfung separat P4.1.8.
-- Prüfbelege: erneute Einzelabnahme noch offen; historische Belege bei P4.1 und in der [Übergabe](handoffs/p4-1.md) gezielt nachprüfen.
-- Einschränkungen: historischer Tauri-Nachweis reicht bisher nur bis zum Tresorformular; kein vollständiger nativer Wiedereinstieg belegt.
+- Prüfbelege: Kriterienmatrix: (1) App-Assets starten ohne Netz **erfüllt** — der Chromium-Webablauf installiert zuerst die PWA, wartet auf die Service-Worker-Kontrolle und bestätigt den Cache `wimm-app-assets-v1`; nach dem Schließen der Seite lädt eine neue Seite bei deaktiviertem Netzwerk `/` mit Status 200. (2) Passphrase und Rettungscode erreichen den gespeicherten Haushalt **erfüllt** — vor dem Offline-Neustart wird ein Tresor samt „Haushalt 1“ angelegt; zwei getrennte Offline-Neustarts entsperren ihn jeweils mit Passphrase beziehungsweise Rettungscode und zeigen den Bereich an. (3) Keine Anmeldung oder Serverkonfiguration nötig **erfüllt** — der Ablauf verwendet ausschließlich lokalen Browserzustand, deaktiviert vor beiden Neustarts das Netzwerk und erreicht keine Serveranmeldung. Aktuell bestanden am 4. Oktober 2026: `pnpm exec playwright test tests/ui/p4-1-7.spec.ts` (1 echter Network-off-Chromium-PWA-Ablauf), `pnpm test:offline` (Service-Worker-Regeln), `pnpm --filter @wimm/ui test` (5 Tests), `pnpm typecheck` sowie `pnpm test:ui` (10 Web- und 8 Desktop-Frontend-Abläufe).
+- Einschränkungen: Die Abnahme belegt die PWA im Chromium-Webclient mit Service Worker `wimm-app-assets-v1`; ein vollständiger nativer Tauri-Wiedereinstieg bleibt getrennt in P4.1.8 offen.
 
 ### P4.1.8 — Nativen lokalen Einstieg nach Neustart prüfen
 
