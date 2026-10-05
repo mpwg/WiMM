@@ -22,7 +22,7 @@ const allowedDependencies = new Map([
   ['@wimm/storage', ['@wimm/contracts', '@wimm/domain']],
   ['@wimm/sync', ['@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/storage']],
   ['@wimm/importers', ['@wimm/contracts', '@wimm/domain']],
-  ['@wimm/ui', ['@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/storage']],
+  ['@wimm/ui', ['@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/storage', '@wimm/importers']],
   ['@wimm/web', ['@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/importers', '@wimm/storage', '@wimm/sync', '@wimm/ui']],
   ['@wimm/desktop', ['@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/importers', '@wimm/storage', '@wimm/sync', '@wimm/ui']],
   ['@wimm/server', ['@wimm/contracts']]

@@ -24,7 +24,7 @@ async function waitForPwaControl(page: Page): Promise<void> {
   await page.evaluate(async () => { await navigator.serviceWorker.ready; });
   await page.reload();
   await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
-  await expect.poll(() => page.evaluate(() => caches.keys())).toContain('wimm-app-assets-v1');
+  await expect.poll(() => page.evaluate(async () => (await caches.keys()).some(name => name.startsWith('wimm-app-assets-')))).toBe(true);
 }
 
 test('startet die PWA nach einem Offline-Neustart und öffnet den Haushalt über Passphrase und Rettungscode', async ({ page }) => {

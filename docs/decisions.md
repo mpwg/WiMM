@@ -36,6 +36,7 @@ Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Eintr
 | ADR-030 | Serveridentitäten ausschließlich extern; Apps lokal eigenständig | Nutzerentscheidung vom 2. Oktober 2026; ersetzt ADR-011 Authentifizierungsdefault | Keine lokale Benutzer-/Passwortverwaltung oder Setupkonten; Serververbindung setzt OIDC oder gleichwertigen externen Identitätsdienst voraus; Standalone-Apps benötigen keine Anmeldung |
 | ADR-032 | Abgleich nur ohne Differenz, Budgeteintritt mit Geldfreigabe und gezielte Gegenbefehle | P4.4-Vertragsabgleich mit verbindlichem Fachmodell | Auswahl, Ausgangssaldo und CAS explizit; keine Snapshotrücksetzung |
 | ADR-031 | Gemeinsame UI enthält den lokalen Client-Composition-Root | P4-Umsetzung | Die UI darf die lokalen Crypto-/Storage-Clients zusammensetzen; native Systemfunktionen bleiben injizierte Ports |
+| ADR-034 | Änderungen werden ausschließlich über Pull Requests integriert | Nutzerentscheidung vom 5. Oktober 2026 | Direkte Commits und Pushes auf `main` sind verboten; Themenbranch-Pushes dienen dem zugehörigen Pull Request |
 
 ## ADR-032 — Abgleich und lokale Gegenbefehle
 
@@ -99,3 +100,38 @@ Keine Grundsatzentscheidung zu Fork, Lizenz, Mehrbenutzerstruktur, Rollen, Platt
 ## Änderungsformat
 
 Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidung, Alternativen, Folgen und betroffene Aufgaben. Nutzerwünsche haben Vorrang vor technischen Defaults. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen. Schema-/Syncänderungen nennen außerdem Migrations- und Kompatibilitätspfad. Bei Änderung bestehender Fachregeln Referenzrechnungen und Tests gleichzeitig aktualisieren.
+
+## ADR-033 — Lokale Importgruppen und Automatisierung
+
+- Datum: 5. Oktober 2026.
+- Status: angenommen.
+- Herkunft: ausdrücklicher Nutzerauftrag „Setze P5.* um“.
+- Problem: Rohparser allein ermöglichen keine bestätigte Übernahme; getrennte Fortschrittswrites und parallele Fälligkeitsbestätigungen könnten Doppelbuchungen erzeugen.
+- Entscheidung: Die gemeinsame Clientkomposition darf zusätzlich `importers` verwenden. Parser und vollständige Importgruppenvorbereitung laufen in lokal gebündelten Workern; die Clientaktion injiziert ihren Zeitpunkt. Mappingvorlagen, bestätigte Zeilenentscheidungen, Quellreferenzen und Fortschritt liegen ausschließlich im jeweiligen lokalen Bereich. Der Fachkern erzeugt je Gruppe höchstens 100 Buchungen zusammen mit Fingerprints und Fortschritt. Eine Kontorevision serialisiert konkurrierende Importgruppen; eine Schedulerevision serialisiert Fälligkeitsbestätigungen. Fachberechnungen bleiben plattformfrei.
+- Alternativen: Ein globaler Importrollback, automatische Dublettenentscheidung und ausführbare Regelskripte widersprechen den Verträgen.
+- Folgen: Abbruch beendet die Vorbereitung beziehungsweise pausiert zwischen bestätigten Gruppen. Bereits gespeicherte Gruppen bleiben erhalten. Reine Vorschläge ändern keine Salden. Bestätigung und ausdrückliche Importzuordnung schreiben Occurrence und Buchung gemeinsam. Regelreihenfolge wird atomar revisionsgeprüft. Quellfingerprints werden vor Regelaktionen festgehalten; importierte Empfänger werden anhand eindeutiger aktiver Namen/Aliasse wiederverwendet oder atomar angelegt. Neue Dauerzahlungsbuchungen prüfen sichere Kontosummen und revidieren zusätzlich das Konto als CAS-Anker.
+- Betroffene Verträge/Pakete: [Architektur](architecture.md), [Dateiformate](formats.md), [Datenmodell](data-model.md), [API](api.md), domain, importers und ui; P5.2–P5.6.
+- Migration und Kompatibilität: Neue lokale Aggregattypen ergänzen das generische Speicherformat ohne Tabellenmigration. Bestehende Buchungen bleiben unverändert. Die Server-/Altclient-Kompatibilitätsprüfung folgt mit dem tatsächlichen Finanzprotokoll in P9; ältere Clients dürfen unbekannte Aggregate nicht still anwenden.
+- Prüfung: Formatfixtures, Fachfehlfälle, echte Browserworker, atomare Speicherfehlfälle, Wiederaufnahme und UI-Abläufe in den P5-Tests. Plattformgrenzen stehen in der P5-Übergabe.
+
+## ADR-034 — Pull-Request-Pflicht und geschützter Hauptbranch
+
+- Datum: 5. Oktober 2026.
+- Status: angenommen.
+- Herkunft: ausdrücklicher Nutzerauftrag.
+- Problem: Verbindliche Arbeitsanweisungen verlangten Zwischencommits, untersagten aber nicht eindeutig direkte Commits oder Pushes auf `main` und machten Pull Requests nur zur Empfehlung.
+- Entscheidung: Sämtliche Repositoryänderungen werden ausschließlich über Pull Requests integriert. Direkte Commits und Pushes auf `main` sind verboten. Zwischencommits liegen auf einem Themenbranch; Pushes auf Themenbranches dienen ausschließlich dem Erstellen oder Aktualisieren des zugehörigen Pull Requests. Änderungen gelangen erst über dessen Merge nach `main`.
+- Alternativen: Direkte Integration auf `main` wird ausgeschlossen.
+- Folgen: AGENTS.md, Agentenleitfaden, Entwicklungsleitfaden, Copilot-Anweisungen, Workflow-Skill und PR-Vorlage enthalten dieselbe verbindliche Vorgabe. GitHub-Branchschutz muss direkte Pushes auf `main` verhindern; diese Dokumentationsänderung konfiguriert das Repository nicht.
+- Betroffene Verträge/Pakete: [Agentenregeln](../AGENTS.md), [Agentenleitfaden](agent-guide.md), [Entwicklung](development.md), [Workflow-Skill](../.agents/skills/wimm-workflow/SKILL.md), Copilot-Anweisungen, GitHub-PR-Vorlage; D6.
+- Migration und Kompatibilität: Keine Code-, Daten- oder Protokollmigration. Vorhandene Branches und Commits bleiben erhalten; neue Änderungen folgen ab sofort dem PR-Ablauf.
+- Prüfung: Dokumentationskonsistenz, relative Links und Whitespace; tatsächliche Durchsetzung benötigt gesonderte Prüfung der GitHub-Repositoryeinstellungen.
+
+## ADR-035 — Markante und ruhige Finanzoberfläche
+
+- Datum: 5. Oktober 2026. Status: angenommen.
+- Herkunft: Nutzerwahl „Klar und markant“, Desktop und Mobil; ausdrücklicher Implementierungsauftrag UX-01–UX-06.
+- Problem: dauerhaft offene Formulare und gleichrangige Verwaltung verdrängen Finanzarbeit; Kontosumme suggeriert Budgetverfügbarkeit.
+- Entscheidung: Indigo-/Systemschriftgestaltung, Listen zuerst, kontextbezogene Dialoge und eigene mobile Mehr-Ansicht gemäß [UX-Konzept](ux-redesign.md). Kontosumme heißt „Kontostand gesamt“.
+- Folgen: bestehende UI-Defaults werden gemeinsam aktualisiert. Native Bedienung, Fachkern und E2EE-Grenzen bleiben verbindlich.
+- Migration und Tests: interne Ansichtsänderung ohne Datenmigration; atomarer Kontoeinstieg und vollständige UI-Regression. P6–P10 bleiben später.

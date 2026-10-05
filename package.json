@@ -18,7 +18,7 @@
     "dev:desktop": "pnpm --filter @wimm/desktop dev",
     "dev:server": "pnpm --filter @wimm/server dev",
     "dev:web": "pnpm --filter @wimm/web dev",
-    "test": "pnpm test:contracts && pnpm test:domain && pnpm test:crypto && pnpm test:storage && pnpm test:offline && pnpm --filter @wimm/server test && pnpm test:ui-unit",
+    "test": "pnpm test:contracts && pnpm test:domain && pnpm test:crypto && pnpm test:storage && pnpm test:offline && pnpm --filter @wimm/server test && pnpm test:ui-unit && pnpm test:importers",
     "test:contracts": "pnpm --filter @wimm/contracts test",
     "test:crypto": "pnpm --filter @wimm/crypto test",
     "test:domain": "pnpm --filter @wimm/domain test",
@@ -35,13 +35,15 @@
     "test:rust": "node scripts/check-rust.mjs test",
     "test:ui-unit": "pnpm --filter @wimm/ui test",
     "test:toolchain": "node --test scripts/check-toolchain.test.mjs",
-    "check:all": "pnpm check:docs && pnpm test:docs && pnpm check:package-graph && pnpm typecheck && pnpm lint && pnpm check:rust && pnpm test:toolchain && pnpm test && pnpm test:ui && pnpm test:ui:integration && pnpm test:ui:matrix && pnpm build && pnpm test:ui:offline",
+    "check:all": "pnpm check:docs && pnpm test:docs && pnpm check:package-graph && pnpm typecheck && pnpm lint && pnpm check:rust && pnpm test:toolchain && pnpm test && pnpm test:ui && pnpm test:ui:integration && pnpm test:ui:matrix && pnpm build && pnpm test:ui:offline && pnpm test:importers:worker",
     "test:ui:build": "node scripts/test-ui.mjs --build",
     "test:ui:offline": "node scripts/test-ui-offline.mjs",
     "test:ui:integration": "pnpm exec playwright test --config tests/workspace/config.ts",
     "test:ui:acceptance": "node scripts/test-ui-acceptance.mjs",
     "test:ui:matrix": "node scripts/test-ui-acceptance.mjs --matrix",
-    "test:ui:zoom": "node scripts/test-ui-acceptance.mjs --zoom"
+    "test:ui:zoom": "node scripts/test-ui-acceptance.mjs --zoom",
+    "test:importers": "pnpm --filter @wimm/importers test",
+    "test:importers:worker": "pnpm exec playwright test --config tests/importers/config.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0",

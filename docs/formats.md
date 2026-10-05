@@ -24,7 +24,11 @@ OFX/QFX: etablierter Parser für OFX SGML/XML und QFX verwenden; DTPOSTED auf Fi
 
 Eindeutige Quell-ID wird innerhalb Konto + Parserquelle verglichen; identische ID mit anderen Beträgen/Daten ist ein Prüfkonflikt, nicht automatisch überspringen. Ohne ID: Fingerprint aus Konto, Datum, Centbetrag, normalisiertem Empfänger und Verwendungszweck. Fingerprinttreffer sind Kandidaten; identische echte Zahlungen am selben Tag dürfen ausdrücklich getrennt übernommen werden.
 
-Fingerprintnormalisierung verwendet Unicode NFC, zusammengefasste Whitespaces und festgelegte casefold-/Kleinschreibung. Keine Entfernung von Ziffern. Hash und Entscheidung werden gespeichert. Eine Wiederholung desselben Importbatches erkennt bereits angewandte Quellzeilen unabhängig von einem bewusst zugelassenen Fingerprintduplikat.
+Fingerprintnormalisierung verwendet Unicode NFC, zusammengefasste Whitespaces und Kleinschreibung mit Locale `de`. Der Quellfingerprint wird vor Regelaktionen festgehalten; auch gleiche Quellzeilen innerhalb einer Datei werden schon in der Vorschau als Kandidaten bzw. Prüfkonflikte angezeigt. Keine Entfernung von Ziffern. Dateihash, normalisierter Fingerprint und Entscheidung werden gespeichert. Eine Wiederholung desselben Importbatches erkennt bereits angewandte Quellzeilen unabhängig von einem bewusst zugelassenen Fingerprintduplikat.
+
+Importierte Empfängernamen bleiben in der Buchung erhalten: Ein eindeutiger aktiver Name oder Alias im selben Bereich wird wiederverwendet, andernfalls wird ein Empfänger innerhalb derselben Gruppe angelegt. Mehrdeutige Namen müssen durch eine ausdrückliche Empfängerregel zugeordnet werden. Regeln und Empfängeranlage erzeugen keine Konten.
+
+Die Vorschau behält physische Originalzeile und parserseitigen Quellindex als Herkunft; normalisierte Vorschauzeilen bekommen zusätzlich eindeutige fortlaufende `sourceRow`-Werte. Das verhindert kollidierende Fortschrittsmarkierungen bei mehreren CAMT-Details einer Originalentry.
 
 ## WIMM-Export v1
 

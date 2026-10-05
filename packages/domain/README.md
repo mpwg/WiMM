@@ -19,3 +19,13 @@ pnpm test:ui:integration
 ```
 
 Die UI-Pakettests prüfen vollständige Gegenbefehlsfolgen mit einem atomaren Speicheradapter. Die Browserintegration ergänzt echtes IndexedDB, UI-Bestätigungen und Fehlrollback. Native Plattformprüfungen bleiben der zugehörigen P4-Abnahme zugeordnet. Verbindliche Regeln stehen in [Fachmodell](../../docs/domain.md), [Datenmodell](../../docs/data-model.md) und [API](../../docs/api.md).
+
+## Import und Automatisierung P5
+
+`automation.ts` enthält die reinen Regel-, Importgruppen- und Schedulebefehle. Geld, Referenzen und Revisionen werden vor Rückgabe einer vollständigen Änderungsmenge geprüft. `commitImportGroup` erzeugt höchstens 100 Buchungen zusammen mit Fingerprints und Fortschritt; der Aufrufer speichert alles atomar. Wiederaufnahme verwendet Import-ID und normalisierte Quellzeile. Identische Quell-IDs mit anderem Inhalt sind Prüfkonflikte; echte gleiche Zahlungen benötigen `separate`. Fingerprints verwenden NFC, zusammengefasste Whitespaces und deutsche Kleinschreibung ohne Ziffernverlust.
+
+Regeln unterstützen Datum/Betrag mit equals/gte/lte sowie Empfänger/Verwendungszweck mit equals/contains. Aktionen setzen Kategorie, Empfänger oder uncleared/cleared. Reihenfolge und Stop sind deterministisch; fremde Referenzen und beliebige Aktionen werden abgewiesen. `rule.reorder` erwartet die vollständige Reihenfolge mit Revisionen.
+
+`dueDates` erzeugt reine Vorschläge für weekly/monthly/yearly mit positivem Intervall und optionalem Enddatum. Monats-/Jahresrhythmen behalten den ursprünglichen Fälligkeitstag (F14). `resolveOccurrence` bestätigt oder überspringt atomar und idempotent. Eine ausdrücklich zugeordnete importierte Buchung wird verknüpft, ohne eine weitere Zahlung anzulegen. Konto-/Schedulerevisionen verhindern konkurrierende Doppelübernahmen. Eigener Code bleibt AGPL-3.0-or-later.
+
+Prüfung: `pnpm test:domain`; synthetische F14-, Regel-, Dubletten-, Referenz-, Überlauf- und Wiederaufnahmefälle in `automation.test.ts`. Importierte Empfänger werden anhand eindeutiger Namen/Aliasse wiederverwendet oder atomar mit der Gruppe angelegt; Quellfingerprints bleiben vor Regelanwendung festgehalten. Neue Dauerzahlungsbuchungen prüfen zusätzlich die sichere Kontosumme. UI-/Speicherintegration und Plattformgrenzen stehen in der [P5-Übergabe](../../docs/handoffs/p5.md).

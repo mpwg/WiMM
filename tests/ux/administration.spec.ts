@@ -1,0 +1,61 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import { expect, test } from '@playwright/test';
+import { Buffer } from 'node:buffer';
+
+test('Verwaltung zeigt Listen zuerst, schützt Entwürfe und beschreibt Regeln deutsch', async ({ page }) => {
+  await page.goto('/tests/workspace.html?count=3');
+  await page.getByRole('button', { name: 'Einstellungen', exact: true }).click();
+  await page.getByRole('button', { name: /^Kategorien/ }).click();
+  await expect(page.getByLabel('Neue Kategoriegruppe')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Neue Gruppe' }).click();
+  await page.getByLabel('Neue Kategoriegruppe').fill('Familie');
+  await page.getByRole('button', { name: 'Gruppe anlegen' }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Neue Kategorie' }).click();
+  await page.getByLabel('Kategorie', { exact: true }).fill('Alltag');
+  await page.getByRole('combobox', { name: 'Gruppe', exact: true }).selectOption({ label: 'Familie' });
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Ungespeicherte Eingaben verwerfen?' })).toBeVisible();
+  await page.getByRole('button', { name: 'Weiter bearbeiten' }).click();
+  await page.getByRole('button', { name: 'Kategorie anlegen', exact: true }).click();
+  await expect(page.getByRole('listitem').filter({ hasText: 'Alltag' })).toBeVisible();
+  await page.getByRole('button', { name: 'Alle Einstellungen' }).click();
+  await page.getByRole('button', { name: /^Regeln/ }).click();
+  await expect(page.getByLabel('Bedingungswert')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Neue Regel' }).click();
+  await page.getByLabel('Bedingungswert').fill('Supermarkt');
+  await page.getByRole('combobox', { name: 'Kategorie', exact: true }).selectOption({ label: 'Alltag' });
+  await page.getByRole('button', { name: 'Regel anlegen', exact: true }).click();
+  await expect(page.getByRole('listitem')).toContainText('Wenn Verwendungszweck enthält Supermarkt, dann Kategorie „Alltag“ setzen.');
+  await expect(page.getByRole('listitem')).not.toContainText('memo contains');
+});
+
+test('Import führt durch vier Schritte, verlangt Fehlerentscheidung und bewahrt bestätigte Gruppen', async ({ page }) => {
+  await page.goto('/tests/workspace.html?count=3');
+  await page.getByRole('button', { name: 'Buchungen', exact: true }).click();
+  await page.getByRole('button', { name: 'Importieren', exact: true }).click();
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Importdatei auswählen' }).click();
+  await (await chooser).setFiles({ name: 'synthetisch.csv', mimeType: 'text/csv', buffer: Buffer.from('Datum;Betrag;Empfänger;Notiz;ID\n05.10.2026;-12,50;Markt;Obst;ux-1\n31.02.2026;-2,00;Markt;Fehler;ux-2') });
+  const view = page.getByRole('region', { name: 'Dateiimport' });
+  await expect(view.locator('[aria-current=step]')).toContainText('Zuordnung prüfen');
+  await view.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: 'Testkonto' });
+  await view.getByRole('combobox', { name: 'Kategorie', exact: true }).selectOption({ label: 'Testkategorie' });
+  await view.getByRole('button', { name: 'Vorschau erstellen' }).click();
+  await expect(view.locator('[aria-current=step]')).toContainText('Vorschau bearbeiten');
+  await expect(view).toContainText('1 gültige Zeilen');
+  await view.getByRole('button', { name: 'Übernahme prüfen' }).click();
+  await view.getByRole('button', { name: 'Entscheidungen bestätigen' }).click();
+  await expect(view.getByRole('status')).toContainText('ausdrückliche Entscheidung');
+  await view.getByRole('button', { name: 'Zurück zur Vorschau' }).click();
+  await view.getByLabel('Entscheidung Zeile 2').selectOption('exclude');
+  await view.getByRole('button', { name: 'Übernahme prüfen' }).click();
+  await view.getByRole('button', { name: 'Entscheidungen bestätigen' }).click();
+  await view.getByRole('button', { name: 'Fortsetzen (bis 100 Buchungen)' }).click();
+  await expect(view).toContainText('Abgeschlossen · 2 / 2');
+  expect((await page.evaluate(() => window.workspaceTest.read())).filter(entry => entry.aggregateType === 'transaction')).toHaveLength(4);
+  await page.reload();
+  await page.getByRole('button', { name: 'Buchungen', exact: true }).click();
+  await page.getByRole('button', { name: 'Importieren', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Dateiimport' })).toContainText('Abgeschlossen · 2 / 2');
+});

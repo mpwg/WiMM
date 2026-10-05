@@ -17,7 +17,7 @@ self.addEventListener('fetch', (event) => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
-  const assetRequest = request.destination === 'document' || ['font', 'image', 'script', 'style'].includes(request.destination) || url.pathname.endsWith('.wasm');
+  const assetRequest = request.destination === 'document' || ['font', 'image', 'script', 'style', 'worker', 'sharedworker'].includes(request.destination) || url.pathname.endsWith('.wasm');
   if (!assetRequest) return;
   event.respondWith(caches.match(request).then(async (cached) => {
     if (cached !== undefined) return cached;

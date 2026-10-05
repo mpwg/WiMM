@@ -121,6 +121,19 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 - Prüfbelege: Dokumentationsvalidator und Whitespaceprüfung bestanden. Zehn Teilpläne mit 62 eindeutigen fortlaufenden IDs, jeweils neun vollständigen Aufgabenfeldern, offenen Statuswerten, noch leeren Implementierungsnachweisen und Vorgängervoraussetzungen geprüft; alle P2–P11-Pakete weiterhin offen und verlinkt. Manueller Abgleich mit Fach-/Speicher-/E2EE-/UI-/Betriebsverträgen und F-/S-/C-Abnahmekriterien bestanden. Veralteten Einstieg vor P1 aktualisiert. Zwischencommit `ba05fb5` legt die Teilpläne an; Abschlusscommit integriert Index/Übergabe und präzisiert früh benötigte Snapshot-/Entwurfsexportgrundlagen. Keine Anwendungstests, Builds, Installationen, Infrastruktur, Pushes oder Veröffentlichungen ausgeführt; ausschließlich Dokumentationsarbeit.
 - Nächster Schritt: [P2.1 — Exakte Geld- und Kalenderprimitive](p2-domain.md#p21--exakte-geld--und-kalenderprimitive) nach ausdrücklicher Implementierungsfreigabe übernehmen.
 
+## D6 — Pull-Request-Pflicht und Schutz von `main`
+
+- Status: in Arbeit (PR [#14](https://github.com/mpwg/WiMM/pull/14) offen).
+- Freigabe: ausdrücklicher Nutzerauftrag vom 5. Oktober 2026 zur Dokumentation einer neuen Grundregel.
+- Voraussetzungen: bestehende Commit-, Push- und GitHubregeln in AGENTS.md, Agentenleitfaden und Entwicklungsleitfaden abgeglichen.
+- Schritte: PR-Pflicht und Verbot direkter Commits/Pushes auf `main` in zentralen Arbeitsregeln, Agentenhilfen und PR-Vorlage konsistent festhalten; ADR dokumentieren.
+- Ergebnis: sämtliche Repositoryänderungen werden über Pull Requests integriert; Themenbranch-Pushes dienen ausschließlich dem jeweiligen Pull Request.
+- Verträge: ADR-034, `AGENTS.md`, Agentenleitfaden, Entwicklungsleitfaden, Copilot-Anweisungen, `wimm-workflow` und GitHub-PR-Vorlage.
+- Abnahme: keine verbindliche Anleitung erlaubt direkte Integration auf `main`; Hinweise zum Themenbranch-Push und zur nötigen GitHub-Branchschutzkonfiguration sind eindeutig.
+- Prüfungen: Dokumentationsstruktur, relative Links und Whitespace; Repositoryeinstellungen separat verifizieren, falls autorisiert.
+- Prüfbelege: `git diff --check` bestanden; die verbindlichen Arbeitsanweisungen und PR-Vorlage wurden auf konsistente PR-Pflicht, Themenbranch-Pushes und das Verbot direkter Commits/Pushes auf `main` abgeglichen. PR #14 ist offen. Repository-Branchschutz ist nicht geprüft oder geändert.
+- Einschränkungen: GitHub-Branchschutz ist hier nicht geprüft oder geändert.
+
 ## P1 — Projektgrundlage
 
 - Status: erledigt (3. Oktober 2026). Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn mit P1.1. Voraussetzung: D0 erledigt.
@@ -176,14 +189,14 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 
 ## P5 — Import und Automatisierung
 
-- Status: offen. Voraussetzung: P4.
+- Status: in Arbeit; P5.1–P5.6 implementiert, Gesamt-Abnahme mit offenen Browser-, Geräte- und Screenreaderprüfungen. Voraussetzung: P4; Nutzerauftrag vom 5. Oktober 2026 erlaubt P5.1 vor Abschluss der offenen P4-Abnahmen und verschiebt Windows-/Linux-Prüfungen. Der anschließende Nutzerauftrag „Setze P5.* um“ gibt P5.2–P5.6 frei und erlaubt die Fortsetzung; die offenen P4-Abnahmen bleiben bestehen.
 - Teilaufgaben: [P5.1–P5.6](p5-import.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: etablierte CSV/XML/OFX-Parser auswählen/lizenzprüfen; normalisierte Zwischenform; Mappingvorlagen und Vorschau; Dublettenentscheidungen; gruppierte Übernahme/Wiederaufnahme; Regeln mit Priorität und Stop; Schedule/Fälligkeiten/Bestätigung und Zuordnung importierter Zahlungen.
 - Ergebnis: alltagstauglicher Import ohne Bankanbieter und deterministische wiederkehrende Vorschläge.
 - Verträge: Formate, rule/schedule-Befehle, Quellreferenzen, Importbatchstatus.
 - Abnahme: CSV/CAMT/OFX/QFX-Referenzfixtures; keine automatische Übernahme ungültiger Zeilen; Wiederimport/Bestätigung ohne Doppelbuchung; Monatsende ohne Drift; Vorschläge verändern keine Salden.
 - Prüfungen: F14, Parser-/Dubletten-/Limitsuite, Replay/Abbruch eines Großimports, UI bleibt interaktiv.
-- Prüfbelege: noch keine.
+- Prüfbelege: 68 Fachtests, 47 Importertests, UI-Abläufe auf Web/Desktop-Frontend, echte IndexedDB-Gruppen/Wiederaufnahme/Fehlerfälle, 99.999-Zeilen-Vorschau, Zwei-Tab-CAS und gebaute PWA ohne Netzwerk. Echte macOS-arm64-Tauri-Laufzeit mit Importmenü, Systemdialog, Produktions-CSP, SQLite und Offline-Neustart geprüft. [Kriterienmatrix](handoffs/p5.md) und [native Teilmatrix](handoffs/p5-native.md) trennen diese Belege. Native Großimport-/Disk-full-Wiederholung und echter P5-Browserzoom 200 % bestanden. Firefox scheitert vor Appinteraktion am Profilstart; physische Touch- und Screenreaderprüfungen bleiben offen; Windows/Linux/macOS x86_64 nicht geprüft. P4 bleibt offen, P6 erhält keine Freigabe.
 
 ## P6 — Budget, Ziele und Berichte
 
@@ -254,3 +267,14 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 ## Übergabe nach einem Paket
 
 Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen ausführen und nach jedem abgeschlossenen Abschnitt einen Zwischencommit erstellen. Der Commit enthält zusammengehörige Änderungen und keine fremden/unverwandten Dateien. Für den nächsten Agenten verbleibende Einschränkungen und erstes nächstes Paket nennen. Keine automatische Veröffentlichung durch Abschluss von P11 ohne entsprechenden Auftrag.
+
+## UX-01–UX-06 — Markante, ruhige Neugestaltung
+
+- Status: in Arbeit; UX-01–UX-05 implementiert; UX-06 Gesamtabnahme offen.
+- Freigabe: ausdrücklicher Implementierungsauftrag vom 5. Oktober 2026 für [UX-Konzept](ux-redesign.md).
+- Voraussetzungen: vorhandene P4-/P5-Implementierungen; bestehende Abnahmelücken bleiben sichtbar.
+- Schritte: Konzept, gemeinsame Gestaltung, Navigation/Übersicht, Buchungen/Konten, Verwaltung/Import, Gesamtabnahme; je Etappe Themenbranch und PR.
+- Ergebnis: ruhige Desktop-/Mobilansichten mit Liste zuerst, gezielten Dialogen und eindeutigen Finanzbegriffen.
+- Verträge: interne Ansichts-/Dialogzustände; atomarer Kontoeinstieg über Fachkern, keine Speicher-/Transportmigration.
+- Abnahme: alle Alltagspfade, Fehler-/Entwurfs-/Fokusfälle, Hell/Dunkel/Zoom, Browser-/native Plattform-/Gerätematrix und Leistung.
+- Prüfungen und Nachweise: [UX-Kriterienmatrix](handoffs/ux.md). Keine zusätzliche Freigabe für P6–P10.

@@ -6,10 +6,11 @@ function values(form: HTMLFormElement): string {
 }
 interface DraftGuard {
   register(form: HTMLFormElement): () => void;
+  registerPending(id: string, dirty: boolean): () => void;
   saved(form: HTMLFormElement): void;
   request(action: () => void, form?: HTMLFormElement, trigger?: HTMLElement): void;
 }
-const DraftContext = createContext<DraftGuard>({ register: () => () => undefined, saved: () => undefined, request: (action) => action() });
+const DraftContext = createContext<DraftGuard>({ register: () => () => undefined, registerPending: () => () => undefined, saved: () => undefined, request: (action) => action() });
 export const useDraftGuard = () => useContext(DraftContext);
 export function useFormDraft(form: RefObject<HTMLFormElement | null>) {
   const guard = useDraftGuard();
@@ -21,21 +22,23 @@ export function useFormDraft(form: RefObject<HTMLFormElement | null>) {
   return () => setSavedVersion((version) => version + 1);
 }
 export function DraftProtection({ children }: { readonly children: ReactNode }) {
+  const pendingDrafts = useRef(new Map<string, boolean>());
   const forms = useRef(new Map<HTMLFormElement, string>());
   const [pending, setPending] = useState<{ action: () => void; trigger: HTMLElement | null }>();
   const dialog = useRef<HTMLDialogElement>(null);
   const [guard] = useState<DraftGuard>(() => ({
+    registerPending(id, dirty) { pendingDrafts.current.set(id, dirty); return () => { pendingDrafts.current.delete(id); }; },
     register(form) { forms.current.set(form, values(form)); return () => { forms.current.delete(form); }; },
     saved(form) { forms.current.set(form, values(form)); },
     request(action, form, trigger) {
-      const dirty = [...forms.current].some(([element, baseline]) => element.isConnected && (form === undefined || element === form) && values(element) !== baseline);
+      const dirty = [...pendingDrafts.current.values()].some(Boolean) || [...forms.current].some(([element, baseline]) => element.isConnected && (form === undefined || element === form) && values(element) !== baseline);
       if (dirty) setPending({ action, trigger: trigger ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null) });
       else action();
     }
   }));
   useEffect(() => {
     const unload = (event: BeforeUnloadEvent) => {
-      if ([...forms.current].some(([form, baseline]) => form.isConnected && values(form) !== baseline)) { event.preventDefault(); event.returnValue = ''; }
+      if ([...pendingDrafts.current.values()].some(Boolean) || [...forms.current].some(([form, baseline]) => form.isConnected && values(form) !== baseline)) { event.preventDefault(); event.returnValue = ''; }
     };
     window.addEventListener('beforeunload', unload); return () => window.removeEventListener('beforeunload', unload);
   }, []);

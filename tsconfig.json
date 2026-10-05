@@ -9,9 +9,12 @@
     "playwright.config.ts",
     "vitest.config.ts",
     "tests/ui/**/*.ts",
+    "tests/ux/**/*.ts",
     "tests/workspace/**/*.ts",
     "tests/acceptance/**/*.ts",
-    "apps/web/tests/**/*.tsx"
+    "apps/web/tests/**/*.tsx",
+    "tests/importers/**/*.ts",
+    "packages/importers/tests/**/*.ts"
   ],
   "exclude": [
     "node_modules",

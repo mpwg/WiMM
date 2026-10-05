@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1140" viewBox="0 0 1440 1140"><rect width="1440" height="1140" fill="#F7F8FA"/>
+<g transform="translate(20 20)"><rect width="420" height="510" rx="12" fill="white"/><rect width="100" height="510" rx="12" fill="#EEF0F6"/><g font-family="system-ui,sans-serif" fill="#181B25"><text x="12" y="35" font-size="15" font-weight="700">WiMM</text><text x="12" y="75" font-size="12">Privat</text>
+<text x="12" y="115" font-size="11">Übersicht</text>
+<text x="12" y="150" font-size="11">Buchungen</text>
+<text x="12" y="185" font-size="11">Konten</text>
+<text x="12" y="220" font-size="11">Einstellungen</text>
+<text x="118" y="42" font-size="22" font-weight="700">Übersicht</text>
+<text x="118" y="90" font-size="12">Kontostand gesamt · 4.280,50 EUR</text>
+<text x="118" y="150" font-size="12">Oktober 2026 · Ausgaben 620,00 EUR</text>
+<text x="118" y="210" font-size="12">Nächste Zahlung · Miete</text>
+<text x="118" y="270" font-size="12">Letzte Buchungen · Supermarkt</text>
+</g></g>
+<g transform="translate(455 20)"><rect width="235" height="510" rx="20" fill="white"/><g font-family="system-ui,sans-serif" fill="#181B25"><text x="15" y="34" font-size="12">Privater Bereich</text><text x="15" y="72" font-size="20" font-weight="700">Übersicht</text>
+<text x="15" y="120" font-size="12">Kontostand gesamt · 4.280,50</text><text x="15" y="138" font-size="12">EUR</text>
+<text x="15" y="185" font-size="12">Oktober 2026 · Ausgaben</text><text x="15" y="203" font-size="12">620,00 EUR</text>
+<text x="15" y="250" font-size="12">Nächste Zahlung · Miete</text><text x="15" y="268" font-size="12"></text>
+<text x="15" y="315" font-size="12">Letzte Buchungen · Supermarkt</text><text x="15" y="333" font-size="12"></text>
+<text x="15" y="482" font-size="12" fill="#4F46E5">Übersicht · Buchungen · Mehr</text></g></g>
+<g transform="translate(740 20)"><rect width="420" height="510" rx="12" fill="white"/><rect width="100" height="510" rx="12" fill="#EEF0F6"/><g font-family="system-ui,sans-serif" fill="#181B25"><text x="12" y="35" font-size="15" font-weight="700">WiMM</text><text x="12" y="75" font-size="12">Privat</text>
+<text x="12" y="115" font-size="11">Übersicht</text>
+<text x="12" y="150" font-size="11">Buchungen</text>
+<text x="12" y="185" font-size="11">Konten</text>
+<text x="12" y="220" font-size="11">Einstellungen</text>
+<text x="118" y="42" font-size="22" font-weight="700">Buchungen</text>
+<text x="118" y="90" font-size="12">Suche · Filter · Neue Buchung</text>
+<text x="118" y="150" font-size="12">05.10. · Supermarkt · −42,50 EUR</text>
+<text x="118" y="210" font-size="12">04.10. · Gehalt · +2.400,00 EUR</text>
+<text x="118" y="270" font-size="12">Liste steht im Vordergrund</text>
+</g></g>
+<g transform="translate(1175 20)"><rect width="235" height="510" rx="20" fill="white"/><g font-family="system-ui,sans-serif" fill="#181B25"><text x="15" y="34" font-size="12">Privater Bereich</text><text x="15" y="72" font-size="20" font-weight="700">Buchungen</text>
+<text x="15" y="120" font-size="12">Suche · Filter ·</text><text x="15" y="138" font-size="12">Neue Buchung</text>
+<text x="15" y="185" font-size="12">05.10. · Supermarkt ·</text><text x="15" y="203" font-size="12">−42,50 EUR</text>
+<text x="15" y="250" font-size="12">04.10. · Gehalt ·</text><text x="15" y="268" font-size="12">+2.400,00 EUR</text>
+<text x="15" y="315" font-size="12">Liste steht im Vordergrund</text><text x="15" y="333" font-size="12"></text>
+<text x="15" y="482" font-size="12" fill="#4F46E5">Übersicht · Buchungen · Mehr</text></g></g>
+<g transform="translate(20 590)"><rect width="420" height="510" rx="12" fill="white"/><rect width="100" height="510" rx="12" fill="#EEF0F6"/><g font-family="system-ui,sans-serif" fill="#181B25"><text x="12" y="35" font-size="15" font-weight="700">WiMM</text><text x="12" y="75" font-size="12">Privat</text>
+<text x="12" y="115" font-size="11">Übersicht</text>
+<text x="12" y="150" font-size="11">Buchungen</text>
+<text x="12" y="185" font-size="11">Konten</text>
+<text x="12" y="220" font-size="11">Einstellungen</text>
+<text x="118" y="42" font-size="22" font-weight="700">Neue Buchung</text>
+<text x="118" y="90" font-size="12">Ausgabe | Einnahme</text>
+<text x="118" y="150" font-size="12">42,50 EUR</text>
+<text x="118" y="210" font-size="12">Girokonto · 05.10.2026</text>
+<text x="118" y="270" font-size="12">Lebensmittel · Empfänger</text>
+<text x="118" y="330" font-size="12">Notiz / Aufteilen · Speichern</text>
+</g></g>
+<g transform="translate(455 590)"><rect width="235" height="510" rx="20" fill="white"/><g font-family="system-ui,sans-serif" fill="#181B25"><text x="15" y="34" font-size="12">Privater Bereich</text><text x="15" y="72" font-size="20" font-weight="700">Neue Buchung</text>
+<text x="15" y="120" font-size="12">Ausgabe | Einnahme</text><text x="15" y="138" font-size="12"></text>
+<text x="15" y="185" font-size="12">42,50 EUR</text><text x="15" y="203" font-size="12"></text>
+<text x="15" y="250" font-size="12">Girokonto · 05.10.2026</text><text x="15" y="268" font-size="12"></text>
+<text x="15" y="315" font-size="12">Lebensmittel · Empfänger</text><text x="15" y="333" font-size="12"></text>
+<text x="15" y="380" font-size="12">Notiz / Aufteilen ·</text><text x="15" y="398" font-size="12">Speichern</text>
+<text x="15" y="482" font-size="12" fill="#4F46E5">Übersicht · Buchungen · Mehr</text></g></g>
+<g transform="translate(740 590)"><rect width="420" height="510" rx="12" fill="white"/><rect width="100" height="510" rx="12" fill="#EEF0F6"/><g font-family="system-ui,sans-serif" fill="#181B25"><text x="12" y="35" font-size="15" font-weight="700">WiMM</text><text x="12" y="75" font-size="12">Privat</text>
+<text x="12" y="115" font-size="11">Übersicht</text>
+<text x="12" y="150" font-size="11">Buchungen</text>
+<text x="12" y="185" font-size="11">Konten</text>
+<text x="12" y="220" font-size="11">Einstellungen</text>
+<text x="118" y="42" font-size="22" font-weight="700">Kontodetails</text>
+<text x="118" y="90" font-size="12">Girokonto · 2.850,50 EUR</text>
+<text x="118" y="150" font-size="12">Neue Buchung · Umbuchen · Abgleichen</text>
+<text x="118" y="210" font-size="12">Letzte Bewegungen</text>
+<text x="118" y="270" font-size="12">Budgetrelevant · Kontoeinstellungen</text>
+</g></g>
+<g transform="translate(1175 590)"><rect width="235" height="510" rx="20" fill="white"/><g font-family="system-ui,sans-serif" fill="#181B25"><text x="15" y="34" font-size="12">Privater Bereich</text><text x="15" y="72" font-size="20" font-weight="700">Kontodetails</text>
+<text x="15" y="120" font-size="12">Girokonto · 2.850,50 EUR</text><text x="15" y="138" font-size="12"></text>
+<text x="15" y="185" font-size="12">Neue Buchung · Umbuchen</text><text x="15" y="203" font-size="12">· Abgleichen</text>
+<text x="15" y="250" font-size="12">Letzte Bewegungen</text><text x="15" y="268" font-size="12"></text>
+<text x="15" y="315" font-size="12">Budgetrelevant · Kontoeinstellungen</text><text x="15" y="333" font-size="12"></text>
+<text x="15" y="482" font-size="12" fill="#4F46E5">Übersicht · Buchungen · Mehr</text></g></g>
+</svg>

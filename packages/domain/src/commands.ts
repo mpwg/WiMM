@@ -16,7 +16,7 @@ export const p2AggregateTypes = [
   'payee',
   'transaction',
   'transfer',
-  'reconciliation'
+  'reconciliation', 'importMapping', 'importBatch', 'importFingerprint', 'rule', 'schedule', 'scheduleOccurrence'
 ] as const;
 
 export type P2AggregateType = (typeof p2AggregateTypes)[number];
@@ -34,7 +34,7 @@ export const p2CommandTypes = [
   'transfer.save',
   'transfer.delete',
   'reconciliation.confirm',
-  'reconciliation.unlock'
+  'reconciliation.unlock', 'importMapping.save', 'importBatch.save', 'import.commit', 'rule.save', 'rule.delete', 'rule.reorder', 'schedule.save', 'schedule.confirm', 'schedule.skip'
 ] as const;
 
 export type P2CommandType = (typeof p2CommandTypes)[number];

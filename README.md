@@ -2,7 +2,7 @@
 
 WhereIsMyMoney ist ein geplanter Open-Source-Finanzmanager für Familien. Gemeinsame Haushaltsfinanzen, persönliche Finanzbereiche, Budgetplanung und ein nachvollziehbarer Ausgleich zwischen Erwachsenen stehen im Mittelpunkt.
 
-**Projektstatus: P1 bis P3 abgeschlossen, P4 in Arbeit.** Der lokale Einstieg und P4.2.1 bis P4.2.7 sind einzeln abgenommen. Navigation und Stammdaten sind bei 320, 768, 900 und 1024 CSS-Pixeln geprüft; „System / Hell / Dunkel“ ist lokal wählbar. Bereichswechsel, Stammdaten und der Merge-Dialog sind per Tastatur bedienbar. P4.3 und P4.4 sind ebenfalls vollständig einzeln abgenommen: Buchungspflege, Transfers, Auswahlabgleich, bestätigte Korrektur/Entsperrung, Undo/Redo und Entwurfsschutz. Die [P4.4-Kriterienmatrix](docs/handoffs/p4-4.md) nennt Belege und Grenzen. Weitere Finanzfunktionen, Synchronisierung und die vollständige Plattformabnahme bleiben offen.
+**Projektstatus: P1 bis P3 abgeschlossen, P4 und P5 in Arbeit.** Der lokale Einstieg und P4.2.1 bis P4.2.7 sind einzeln abgenommen. Navigation und Stammdaten sind bei 320, 768, 900 und 1024 CSS-Pixeln geprüft; „System / Hell / Dunkel“ ist lokal wählbar. Bereichswechsel, Stammdaten und der Merge-Dialog sind per Tastatur bedienbar. P4.3 und P4.4 sind ebenfalls vollständig einzeln abgenommen: Buchungspflege, Transfers, Auswahlabgleich, bestätigte Korrektur/Entsperrung, Undo/Redo und Entwurfsschutz. Die [P4.4-Kriterienmatrix](docs/handoffs/p4-4.md) nennt Belege und Grenzen. P5.1–P5.6 sind implementiert: CSV/CAMT.053/OFX/QFX mit korrigierbarer Vorschau, gruppierter Übernahme/Wiederaufnahme, Regeln und Dauerzahlungen. Die [P5-Kriterienmatrix](docs/handoffs/p5.md) nennt Fach-/Speicher-/Offlinebelege, native macOS-Prüfungen und offene Firefox-, Geräte- und Screenreaderprüfungen. Budget, gemeinsame Kosten, Synchronisierung und die vollständige Plattformabnahme bleiben offen.
 
 ## Geplantes Produkt
 
@@ -20,7 +20,7 @@ Die erste Version richtet sich an Erwachsene im deutschsprachigen Raum, verwende
 
 ## Einstieg für einen implementierenden Agenten
 
-Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [Teilaufgabenübersicht P1–P11](docs/tasks.md#teilaufgaben-und-bearbeitungsfolge) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md). P4–P11 besitzen einzeln abnehmbare Teilaufgaben; nach Implementierungsfreigabe ist [P4.5.1](docs/p4-ui.md#p451--native-menübefehle-anbinden) der nächste Schritt.
+Für einen kompakten Start: [Einstiegsleitfaden](docs/getting-started.md), [Teilaufgabenübersicht P1–P11](docs/tasks.md#teilaufgaben-und-bearbeitungsfolge) und [synthetischer Referenzhaushalt mit Buchungsablauf](docs/reference-household.md). P4–P11 besitzen einzeln abnehmbare Teilaufgaben; [P5.1](docs/handoffs/p5-1.md) ist durch ausdrücklichen Auftrag umgesetzt und auf macOS arm64 abgenommen. Windows-/Linux-Läufe folgen später; offene P4-Abnahmen bleiben bestehen. P5.2 ist der nächste Importschritt und benötigt einen eigenen Auftrag.
 
 1. [Arbeitsregeln](AGENTS.md) lesen.
 2. Im [Dokumentationsindex](docs/README.md) die Lesereihenfolge beachten.

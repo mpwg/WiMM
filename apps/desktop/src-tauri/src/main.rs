@@ -211,6 +211,13 @@ fn main() {
                 true,
                 Some("CmdOrCtrl+N"),
             )?;
+            let import_file = MenuItem::with_id(
+                handle,
+                "import",
+                "Datei importieren …",
+                false,
+                Some("CmdOrCtrl+I"),
+            )?;
             let settings =
                 MenuItem::with_id(handle, "settings", "Einstellungen", false, None::<&str>)?;
             new_transaction.set_enabled(false)?;
@@ -220,6 +227,7 @@ fn main() {
                 true,
                 &[
                     &new_transaction,
+                    &import_file,
                     &PredefinedMenuItem::close_window(handle, Some("Fenster schließen"))?,
                 ],
             )?;

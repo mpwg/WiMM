@@ -2,8 +2,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
+  outputDir: './test-results/ui',
   forbidOnly: true,
   testDir: './tests/ui',
+  testIgnore: 'p5-offline.spec.ts',
   fullyParallel: true,
   timeout: 45_000,
   use: {

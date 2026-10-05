@@ -2,9 +2,10 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
+  outputDir: '../../test-results/pwa',
   forbidOnly: true,
   testDir: '.',
-  testMatch: 'p4-1-7.spec.ts',
+  testMatch: ['p4-1-7.spec.ts', 'p5-offline.spec.ts'],
   fullyParallel: true,
   timeout: 45_000,
   use: {
