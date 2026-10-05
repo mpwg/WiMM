@@ -72,7 +72,7 @@ fieldset { min-width: 0; }
 .inline-form { margin-top: 1rem; }
 .inline-form button[type='submit'], .inline-form h2, .inline-form p, .transaction-fields > button[type='submit'], .amount-field, .transaction-fields > details, .transaction-fields > .segment-control { grid-column: 1 / -1; }
 .merge-form h2, .merge-form p { margin: 0; }
-.table-wrap { max-width: 100%; overflow-x: auto; }
+.table-wrap { position: relative; max-width: 100%; overflow-x: auto; }
 .table-wrap table { border-collapse: collapse; min-width: 30rem; width: 100%; }
 .table-wrap th, .table-wrap td { border-bottom: 1px solid var(--border); padding: 0.75rem 0.5rem; text-align: left; }
 .table-wrap th { color: var(--muted); font-size: 0.875rem; font-weight: 500; }

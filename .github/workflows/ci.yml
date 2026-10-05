@@ -62,7 +62,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Playwright-Browser und Systemabhängigkeiten einrichten
-        run: pnpm exec playwright install --with-deps --only-shell chromium
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
 
       - name: Projekt prüfen
         run: pnpm check:ci

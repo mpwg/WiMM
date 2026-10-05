@@ -20,7 +20,7 @@ async function createHousehold(page: Page): Promise<{ readonly recoveryCode: str
   await page.getByRole('button', { name: 'Entsperren' }).click();
 
   const nonceBefore = await page.evaluate((key) => (JSON.parse(localStorage.getItem(key)!) as LocalProfile).vault.vault.nonce, profileStorageKey);
-  await page.getByRole('button', { name: '+ Haushalt anlegen' }).click();
+  await page.getByRole('button', { name: 'Haushalt anlegen' }).click();
   await expect(page.getByLabel('Bereich')).toHaveText(/Haushalt 1/);
   const householdId = await page.evaluate((key) => (JSON.parse(localStorage.getItem(key)!) as LocalProfile).selectedAreaId, profileStorageKey);
   return { recoveryCode: recoveryCode!, nonceBefore, householdId };

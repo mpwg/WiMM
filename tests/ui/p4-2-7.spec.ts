@@ -1,107 +1,28 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { expect, test, type Locator, type Page } from '@playwright/test';
-
-const passphrase = 'p4-2-7-tastaturfokus-passphrase-2026';
-const account = 'Girokonto Tastaturfokus';
-const group = 'Alltagsausgaben Tastaturfokus';
-const category = 'Lebensmittel Tastaturfokus';
-const source = 'Bäckerei Tastaturquelle';
-const target = 'Bäckerei Tastaturziel';
-
-async function expectVisibleFocus(locator: Locator): Promise<void> {
-  await expect(locator).toBeFocused();
-  expect(await locator.evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe('none');
-}
-
-async function tabUntil(page: Page, locator: Locator): Promise<void> {
-  for (let index = 0; index < 80; index += 1) {
+import { createVault } from '../helpers/local.js';
+async function activate(page: Page, target: Locator) {
+  await expect(target).toBeVisible();
+  for (let i = 0; i < 100; i++) {
     await page.keyboard.press('Tab');
-    if (await locator.evaluate((element) => element === document.activeElement)) {
-      await expectVisibleFocus(locator);
-      return;
+    if (await target.evaluate(element => element === document.activeElement)) {
+      expect(await target.evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe('none'); await page.keyboard.press('Enter'); return;
     }
   }
-  throw new Error(`Das Bedienelement ${await locator.ariaSnapshot()} ist nicht per Tabulator erreichbar.`);
+  throw new Error('Aktion nicht per Tabulator erreichbar');
 }
-
-async function typeAtFocused(page: Page, locator: Locator, value: string): Promise<void> {
-  await tabUntil(page, locator);
-  await locator.fill(value);
-}
-
-async function unlockLocalArea(page: Page): Promise<void> {
-  await page.goto('/');
-  await page.getByLabel('Entsperrpassphrase').fill(passphrase);
-  await page.getByLabel('Passphrase wiederholen').fill(passphrase);
-  await page.getByRole('button', { name: 'Tresor anlegen' }).click();
-  await page.getByLabel('Ich habe den Rettungscode sicher abgelegt.').check();
-  await page.getByRole('button', { name: 'Lokalen Bereich eröffnen' }).click();
-  await page.getByLabel('Entsperrpassphrase').fill(passphrase);
-  await page.getByRole('button', { name: 'Entsperren' }).click();
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
-}
-
 test('bedient Bereich, Navigation und Stammdaten per Tastatur und gibt den Dialogfokus zurück', async ({ page }) => {
-  await unlockLocalArea(page);
-
-  const area = page.getByLabel('Bereich');
-  await tabUntil(page, area);
-  await tabUntil(page, page.getByRole('button', { name: '+ Haushalt anlegen' }));
-  await page.keyboard.press('Enter');
-  await expect(page.getByText('Gemeinsamer Bereich', { exact: true })).toBeVisible();
-  await tabUntil(page, area);
-  await page.keyboard.press('Shift+Tab');
-  await page.keyboard.press('Tab');
-  await expectVisibleFocus(area);
-  await page.keyboard.press('p');
-  await expect(page.getByText('Privatbereich', { exact: true })).toBeVisible();
-  await tabUntil(page, area);
-  await page.keyboard.press('h');
-  await expect(page.getByText('Gemeinsamer Bereich', { exact: true })).toBeVisible();
-
-  const accounts = page.getByRole('button', { name: 'Konten', exact: true });
-  await tabUntil(page, accounts);
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('heading', { name: 'Konten', exact: true })).toBeVisible();
-  await typeAtFocused(page, page.getByLabel('Kontoname'), account);
-  await tabUntil(page, page.getByRole('button', { name: 'Konto anlegen' }));
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('cell', { name: account })).toBeVisible();
-
-  const categories = page.getByRole('button', { name: 'Kategorien', exact: true });
-  await tabUntil(page, categories);
-  await page.keyboard.press('Enter');
-  await typeAtFocused(page, page.getByLabel('Neue Kategoriegruppe'), group);
-  await tabUntil(page, page.getByRole('button', { name: 'Gruppe anlegen' }));
-  await page.keyboard.press('Enter');
-  await typeAtFocused(page, page.getByLabel('Kategorie', { exact: true }), category);
-  await tabUntil(page, page.getByRole('combobox', { name: 'Gruppe', exact: true }));
-  await page.keyboard.press('a');
-  await tabUntil(page, page.getByRole('button', { name: 'Kategorie anlegen' }));
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('listitem').filter({ hasText: category })).toBeVisible();
-
-  const payees = page.getByRole('button', { name: 'Empfänger', exact: true });
-  await tabUntil(page, payees);
-  await page.keyboard.press('Enter');
-  for (const name of [source, target]) {
-    await typeAtFocused(page, page.getByLabel('Empfänger', { exact: true }), name);
-    await tabUntil(page, page.getByRole('button', { name: 'Empfänger anlegen' }));
-    await page.keyboard.press('Enter');
-    await expect(page.getByRole('listitem').filter({ hasText: name })).toBeVisible();
-    await expect(page.getByLabel('Empfänger', { exact: true })).toBeEnabled();
-  }
-  await tabUntil(page, page.getByLabel('Quell-Empfänger'));
-  await page.keyboard.press('b');
-  await tabUntil(page, page.getByLabel('Ziel-Empfänger'));
-  await page.keyboard.press('b');
-  const merge = page.getByRole('button', { name: 'Zusammenführen und archivieren' });
-  await tabUntil(page, merge);
-  await page.keyboard.press('Enter');
-  const dialog = page.getByRole('dialog', { name: 'Empfänger zusammenführen?' });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.locator(':focus')).toHaveCount(1);
-  await page.keyboard.press('Escape');
-  await expect(dialog).toBeHidden();
-  await expectVisibleFocus(merge);
+  await createVault(page);
+  await activate(page, page.getByRole('button', { name: 'Haushalt anlegen', exact: true })); await expect(page.getByText('Gemeinsamer Bereich', { exact: true })).toBeVisible();
+  const area = page.getByLabel('Bereich'); await area.focus(); await page.keyboard.press('p'); await expect(page.getByText('Privatbereich', { exact: true })).toBeVisible();
+  await activate(page, page.getByRole('button', { name: 'Konten', exact: true }));
+  await activate(page, page.getByRole('button', { name: 'Neues Konto', exact: true })); await expect(page.getByLabel('Kontoname')).toBeFocused(); await page.keyboard.type('Girokonto Tastatur'); await activate(page, page.getByRole('button', { name: 'Konto anlegen', exact: true })); await expect(page.getByRole('button', { name: 'Neues Konto', exact: true })).toBeFocused();
+  await activate(page, page.getByRole('button', { name: 'Einstellungen', exact: true })); await activate(page, page.getByRole('button', { name: /^Kategorien/ })); await activate(page, page.getByRole('button', { name: 'Neue Gruppe', exact: true })); await page.keyboard.type('Alltag'); await activate(page, page.getByRole('button', { name: 'Gruppe anlegen', exact: true })); await expect(page.getByRole('dialog')).toHaveCount(0); await expect(page.getByRole('button', { name: 'Neue Gruppe', exact: true })).toBeFocused();
+  await activate(page, page.getByRole('button', { name: 'Neue Kategorie', exact: true })); await page.keyboard.type('Lebensmittel'); await page.keyboard.press('Tab'); await page.keyboard.press('a'); await activate(page, page.getByRole('button', { name: 'Kategorie anlegen', exact: true })); await expect(page.getByRole('listitem')).toContainText('Lebensmittel'); await expect(page.getByRole('dialog')).toHaveCount(0); await expect(page.getByRole('button', { name: 'Neue Kategorie', exact: true })).toBeFocused();
+  await activate(page, page.getByRole('button', { name: 'Alle Einstellungen' })); await activate(page, page.getByRole('button', { name: /^Empfänger/ }));
+  for (const name of ['Bäckerei Quelle', 'Bäckerei Ziel']) { await activate(page, page.getByRole('button', { name: 'Neuer Empfänger', exact: true })); await page.keyboard.type(name); await activate(page, page.getByRole('button', { name: 'Empfänger anlegen', exact: true })); await expect(page.getByRole('dialog')).toHaveCount(0); await expect(page.getByRole('button', { name: 'Neuer Empfänger', exact: true })).toBeFocused(); }
+  const trigger = page.getByRole('button', { name: 'Empfänger zusammenführen', exact: true }); await activate(page, trigger);
+  await page.getByLabel('Quell-Empfänger').focus(); await page.keyboard.press('b'); await page.keyboard.press('Tab'); await page.keyboard.press('b'); await activate(page, page.getByRole('button', { name: 'Zusammenführen und archivieren' }));
+  await page.keyboard.press('Escape'); await expect(page.getByRole('dialog', { name: 'Ungespeicherte Eingaben verwerfen?' })).toBeVisible(); await activate(page, page.getByRole('button', { name: 'Weiter bearbeiten' })); await expect(page.getByRole('dialog', { name: 'Empfänger zusammenführen', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape'); await activate(page, page.getByRole('button', { name: 'Eingaben verwerfen' })); await expect(trigger).toBeFocused();
 });
