@@ -12,6 +12,8 @@ Ergänzung vom 5. Oktober 2026: Der ausdrückliche Nutzerauftrag „Setze P4.4.*
 
 Ergänzung vom 5. Oktober 2026: Der ausdrückliche Nutzerauftrag „Setze P4.5 um“ umfasst P4.5.1–P4.5.7. Die ersten sechs Unteraufgaben sind abgenommen; die [Kriterienmatrix](handoffs/p4-5.md) belegt macOS arm64 und hält weitere native Plattformzellen offen.
 
+Ergänzung vom 5. Oktober 2026: Der Nutzerauftrag „Setze P4.6. um“ umfasst P4.6.1–P4.6.7. Umsetzung, Messungen und offene Abnahmen stehen in der [P4.6-Kriterienmatrix](handoffs/p4-6.md); P4 und P4.6 bleiben bei fehlenden Einzelbelegen in Arbeit.
+
 ## Kleine Arbeitsaufträge und Abschlussregeln
 
 Ein begrenzter Standardauftrag umfasst genau eine Unteraufgabe, einen beobachtbaren Ablauf und dessen unmittelbare Prüfungen. Richtgröße ist ein zusammenhängender Abschnitt in einer Agentensitzung, kein vollständiges P4.x-Paket. Der ausdrückliche Nutzerauftrag vom 4. Oktober 2026 „P.4.3.* komplett, alle Subtasks“ umfasst ausnahmsweise P4.3.1–P4.3.8; deren Kriterien werden weiterhin einzeln geprüft. Falls währenddessen weitere unabhängige Funktionen nötig werden, diese vor der Umsetzung als eigene Unteraufgabe dokumentieren. Eine garantierte Umsetzung lässt sich nicht aus der Größe ableiten; die Abnahme entscheidet anhand des tatsächlichen Verhaltens.
@@ -31,7 +33,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster notwendiger Abnahmeschritt: **P4.5.7 auf den fehlenden nativen Plattformen**; unabhängig davon ist **P4.6.1** nach entsprechendem Auftrag möglich. P4.4.1–P4.4.7 sind aufgrund des ausdrücklichen Sammelauftrags vom 5. Oktober 2026 einzeln abgenommen; Details in der [Kriterienmatrix](handoffs/p4-4.md).
+Nächste notwendige Abnahmen: **P4.5.7 auf den fehlenden nativen Plattformen** sowie die verbleibenden **P4.6-Browser-, Screenreader- und Gerätezellen**. P4.6 ist durch den Auftrag vom 5. Oktober 2026 ausdrücklich freigegeben; aktuelle Teilbelege stehen in der [Kriterienmatrix](handoffs/p4-6.md). P4.4.1–P4.4.7 sind aufgrund des ausdrücklichen Sammelauftrags vom 5. Oktober 2026 einzeln abgenommen; Details in der [Kriterienmatrix](handoffs/p4-4.md).
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -578,103 +580,103 @@ Nächster notwendiger Abnahmeschritt: **P4.5.7 auf den fehlenden nativen Plattfo
 
 ## P4.6 — Barrierefreiheit, Leistung und Gesamt-Abnahme
 
-- Status: offen.
-- Freigabe: vorhandener Nutzerauftrag zum Abschluss von P4; dieser Planungsauftrag startet keine Umsetzung.
+- Status: in Arbeit — aktuelle Teilbelege und offene Browser-/Screenreader-/Plattformzellen in der [Kriterienmatrix](handoffs/p4-6.md).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.6. um“ vom 5. Oktober 2026 für P4.6.1–P4.6.7.
 - Voraussetzungen: P4.5 funktional abgenommen; fehlende native Zielsysteme separat offen, unabhängige Prüfschritte bleiben möglich.
 - Schritte: Kernabläufe in Playwright und Projektprüfungen aufnehmen; Screenshot-/Viewportmatrix, Screenreader/Zoom, Fokus und Leistungsziele prüfen; native Belege zusammenführen.
 - Ergebnis: abgenommenes lokales Haushaltsbuch als Basis der Planungsfunktionen.
 - Verträge: [P4](tasks.md#p4--oberfläche-und-native-app), [UI](ui.md), [Prüfmatrix und Leistungsziele](testing.md).
 - Abnahme: Buchung/Transfer/Abgleich per Tastatur und Touch, Daten nach Neustart erhalten; keine Überlappung/abgeschnittenen Beträge; verfügbare native Zielsysteme geprüft, fehlende Prüfungen einzeln benannt.
 - Prüfungen: Chromium/Firefox/WebKit, fünf Viewports aus testing.md, Hell/Dunkel/200 % Zoom, echtes iOS-Safari soweit verfügbar; 50.000-Buchungen-Messung und native Plattformsmokechecks.
-- Prüfbelege: noch keine.
+- Prüfbelege: Aktuelle Einzelbelege und offene Abnahmezellen in der [P4.6-Kriterienmatrix](handoffs/p4-6.md).
 
 ### P4.6.1 — Kernabläufe in drei Browsern prüfen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.6; aktueller Auftrag nur Aufgabenplanung.
+- Status: in Arbeit — Teilprüfung dokumentiert; Gesamtabschluss bleibt gemäß Kriterienmatrix offen.
+- Freigabe: Nutzerauftrag zu P4.6 vom 5. Oktober 2026.
 - Voraussetzungen: P4.2–P4.4 abgenommen und P4.5.1–P4.5.6 erledigt; fehlende native Plattform blockiert nur ihren eigenen Nachweis.
 - Schritte: Vorhandene F01/F02/F03- und Abgleichabläufe in Chromium, Firefox und WebKit ausführen; browserspezifische Lücken gezielt schließen.
 - Ergebnis: Kernabläufe in drei Browsern prüfen mit dokumentierter Einzelabnahme.
 - Verträge: [P4-Abnahme](tasks.md#p4--oberfläche-und-native-app), [UI](ui.md), [Prüfmatrix](testing.md).
 - Abnahme: Buchung, Split, Transfer und Abgleich bestehen in jedem Browser; Offline-/Neustartnachweis konkret je unterstütztem Client dokumentiert.
 - Prüfungen: Pro Browser eigener Lauf mit Version, Web-/Desktop-Frontend und Ergebnis; WebKit ersetzt keinen echten iOS-Safari-Nachweis.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.6 und sind gezielt nachzuprüfen.
+- Prüfbelege: Aktuelle Kriterien und konkrete Belege in der [P4.6-Kriterienmatrix](handoffs/p4-6.md); fehlende Nachweise bleiben offen.
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.6.2 — Screenshot- und Viewportmatrix abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.6; aktueller Auftrag nur Aufgabenplanung.
+- Status: in Arbeit — eigene Abnahmekriterien erfüllt und belegt; die vollständige vorgelagerte Abnahme bleibt gemäß Kriterienmatrix offen.
+- Freigabe: Nutzerauftrag zu P4.6 vom 5. Oktober 2026.
 - Voraussetzungen: P4.6.1 abgenommen.
 - Schritte: Synthetische Kernansichten in den fünf Viewports aus testing.md in Hell/Dunkel prüfen.
 - Ergebnis: Screenshot- und Viewportmatrix abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [P4-Abnahme](tasks.md#p4--oberfläche-und-native-app), [UI](ui.md), [Prüfmatrix](testing.md).
 - Abnahme: Keine Überlappung, abgeschnittenen Beträge oder horizontaler Seitenüberlauf; Desktop-, Tablet- und Mobilkomposition erfüllen ui.md.
 - Prüfungen: Pro Viewport eigene Screenshotgruppe mit Übersichten, Liste, Details und Dialogen; lange deutsche Namen und große/negative Beträge.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.6 und sind gezielt nachzuprüfen.
+- Prüfbelege: Aktuelle Kriterien und konkrete Belege in der [P4.6-Kriterienmatrix](handoffs/p4-6.md); fehlende Nachweise bleiben offen.
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.6.3 — Echten Zoom und Tastaturzugang abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.6; aktueller Auftrag nur Aufgabenplanung.
+- Status: in Arbeit — eigene Abnahmekriterien erfüllt und belegt; die vollständige vorgelagerte Abnahme bleibt gemäß Kriterienmatrix offen.
+- Freigabe: Nutzerauftrag zu P4.6 vom 5. Oktober 2026.
 - Voraussetzungen: P4.6.2 abgenommen.
 - Schritte: Echten Browserzoom 200 %, Fokusfolge, Dialogfokus und reduced motion für Kernabläufe prüfen.
 - Ergebnis: Echten Zoom und Tastaturzugang abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [P4-Abnahme](tasks.md#p4--oberfläche-und-native-app), [UI](ui.md), [Prüfmatrix](testing.md).
 - Abnahme: Bei 200 % bleiben Beträge, Fehler und Aktionen erreichbar; Tastatur kann gesamten Ablauf bedienen; CSS-Zoom allein gilt nicht als Beleg.
 - Prüfungen: Realer Browserzoom mit Browser/Version dokumentiert; Tastaturabläufe und reduced motion prüfen; fehlende Automatisierung manuell belegen.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.6 und sind gezielt nachzuprüfen.
+- Prüfbelege: Aktuelle Kriterien und konkrete Belege in der [P4.6-Kriterienmatrix](handoffs/p4-6.md); fehlende Nachweise bleiben offen.
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.6.4 — Screenreader und Kontraste abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.6; aktueller Auftrag nur Aufgabenplanung.
+- Status: in Arbeit — Teilprüfung dokumentiert; Gesamtabschluss bleibt gemäß Kriterienmatrix offen.
+- Freigabe: Nutzerauftrag zu P4.6 vom 5. Oktober 2026.
 - Voraussetzungen: P4.6.3 abgenommen.
 - Schritte: Beschriftungen, Tabellen, Statusmeldungen, Fehlerzuordnung und Fokus mit echtem Screenreader prüfen; Kontraste messen.
 - Ergebnis: Screenreader und Kontraste abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [P4-Abnahme](tasks.md#p4--oberfläche-und-native-app), [UI](ui.md), [Prüfmatrix](testing.md).
 - Abnahme: Tresor, Buchung und Abgleich verständlich bedienbar; Status/Fehler angesagt; Kontrast mindestens 4,5:1 und Bedeutung zusätzlich als Text/Symbol.
 - Prüfungen: VoiceOver oder anderer verfügbarer Screenreader mit OS/Browser dokumentieren; Kontrastmessung; automatisierter Semantiktest allein genügt nicht.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.6 und sind gezielt nachzuprüfen.
+- Prüfbelege: Aktuelle Kriterien und konkrete Belege in der [P4.6-Kriterienmatrix](handoffs/p4-6.md); fehlende Nachweise bleiben offen.
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.6.5 — Leistungsziele mit 50.000 Buchungen messen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.6; aktueller Auftrag nur Aufgabenplanung.
+- Status: in Arbeit — eigene Abnahmekriterien erfüllt und belegt; die vollständige vorgelagerte Abnahme bleibt gemäß Kriterienmatrix offen.
+- Freigabe: Nutzerauftrag zu P4.6 vom 5. Oktober 2026.
 - Voraussetzungen: P4.6.4 abgenommen.
 - Schritte: Deterministischen synthetischen Datensatz erzeugen; Listenöffnen sowie warme Filter-/Scrollreaktion in dokumentierter Umgebung messen.
 - Ergebnis: Leistungsziele mit 50.000 Buchungen messen mit dokumentierter Einzelabnahme.
 - Verträge: [P4-Abnahme](tasks.md#p4--oberfläche-und-native-app), [UI](ui.md), [Prüfmatrix](testing.md).
 - Abnahme: Liste innerhalb zwei Sekunden, p95 Filter-/Scrollreaktion unter 100 ms; Zahlen bleiben korrekt; Datensatz, Hardware, Versionen und Messverfahren nachvollziehbar.
 - Prüfungen: Wiederholbare Messung von 50.000 Buchungen, zehn Konten, 100 Kategorien, 36 Monate und 1.000 SharedExpenses gemäß testing.md; SharedExpenses für P4 nur als synthetische Speicherlast, funktionale Familienabnahme erst in P7; konkrete Messwerte statt subjektiver Geschwindigkeit.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.6 und sind gezielt nachzuprüfen.
+- Prüfbelege: Aktuelle Kriterien und konkrete Belege in der [P4.6-Kriterienmatrix](handoffs/p4-6.md); fehlende Nachweise bleiben offen.
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.6.6 — Native Persistenz und echte Geräte ergänzen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.6; aktueller Auftrag nur Aufgabenplanung.
+- Status: in Arbeit — Teilprüfung dokumentiert; Gesamtabschluss bleibt gemäß Kriterienmatrix offen.
+- Freigabe: Nutzerauftrag zu P4.6 vom 5. Oktober 2026.
 - Voraussetzungen: P4.3.7/P4.3.8 und P4.5.7 auf der jeweils verfügbaren Plattform; unabhängige Browserprüfungen dürfen weiterlaufen.
 - Schritte: Gebündelte Tauri-App offline neu starten, echte native Disk-full-Prüfung und verfügbaren iOS-Safari-/PWA-Ablauf durchführen.
 - Ergebnis: Native Persistenz und echte Geräte ergänzen mit dokumentierter Einzelabnahme.
 - Verträge: [P4-Abnahme](tasks.md#p4--oberfläche-und-native-app), [UI](ui.md), [Prüfmatrix](testing.md).
 - Abnahme: Gespeicherte Buchungen/Transfer/Abgleich bleiben; echtes Disk-full zeigt Fehler und erhält Entwurf ohne Teilerfolg; reale Geräte separat nachgewiesen.
 - Prüfungen: Je verfügbarer Plattform/Architektur beziehungsweise Gerät eigener Lauf; Disk-full in begrenztem Testvolume ohne produktive Daten; fehlende Geräte bleiben offene Zellen.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.6 und sind gezielt nachzuprüfen.
+- Prüfbelege: Aktuelle Kriterien und konkrete Belege in der [P4.6-Kriterienmatrix](handoffs/p4-6.md); fehlende Nachweise bleiben offen.
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.6.7 — P4-Gesamtabnahme und Übergabe abschließen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.6; aktueller Auftrag nur Aufgabenplanung.
+- Status: in Arbeit — Teilprüfung dokumentiert; Gesamtabschluss bleibt gemäß Kriterienmatrix offen.
+- Freigabe: Nutzerauftrag zu P4.6 vom 5. Oktober 2026.
 - Voraussetzungen: Alle P4-Unterabnahmen belegt; offene Plattformzellen gemäß Abschlussregeln einzeln bewertet.
 - Schritte: Alle Unterabnahmen und offenen Plattformzellen zusammenführen; lokale Projektprüfungen ausführen und Gesamtstatus aktualisieren.
 - Ergebnis: P4-Gesamtabnahme und Übergabe abschließen mit dokumentierter Einzelabnahme.
 - Verträge: [P4-Abnahme](tasks.md#p4--oberfläche-und-native-app), [UI](ui.md), [Prüfmatrix](testing.md).
 - Abnahme: Keine P4-Abnahmelücke verdeckt; Gesamtabschluss nur bei erfüllten Kriterien; fehlende Plattformprüfungen konkret als Einschränkung oder Blockade gemäß tasks.md benannt.
 - Prüfungen: pnpm check:ci und Nachweismatrix mit Commit, Plattform/Browser, Testgruppe, Ergebnis und verbleibender Grenze; P5 erst nach P4-Abnahme.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.6 und sind gezielt nachzuprüfen.
+- Prüfbelege: Aktuelle Kriterien und konkrete Belege in der [P4.6-Kriterienmatrix](handoffs/p4-6.md); fehlende Nachweise bleiben offen.
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.

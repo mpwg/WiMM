@@ -66,3 +66,12 @@ jobs:
 
       - name: Projekt prüfen
         run: pnpm check:ci
+
+      - name: Fehlerberichte und Browseraufzeichnungen sichern
+        if: failure()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: prüfberichte-ubuntu
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
