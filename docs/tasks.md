@@ -270,7 +270,7 @@ Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen
 
 ## UX-01–UX-06 — Markante, ruhige Neugestaltung
 
-- Status: in Arbeit; UX-01 Konzept festgeschrieben, UX-02–UX-06 offen.
+- Status: in Arbeit; UX-01–UX-05 implementiert; UX-06 Gesamtabnahme offen.
 - Freigabe: ausdrücklicher Implementierungsauftrag vom 5. Oktober 2026 für [UX-Konzept](ux-redesign.md).
 - Voraussetzungen: vorhandene P4-/P5-Implementierungen; bestehende Abnahmelücken bleiben sichtbar.
 - Schritte: Konzept, gemeinsame Gestaltung, Navigation/Übersicht, Buchungen/Konten, Verwaltung/Import, Gesamtabnahme; je Etappe Themenbranch und PR.
