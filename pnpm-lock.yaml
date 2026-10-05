@@ -377,6 +377,9 @@ importers:
       '@wimm/domain':
         specifier: workspace:*
         version: link:../domain
+      '@wimm/importers':
+        specifier: workspace:*
+        version: link:../importers
       '@wimm/storage':
         specifier: workspace:*
         version: link:../storage

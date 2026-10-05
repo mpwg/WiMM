@@ -99,3 +99,16 @@ Keine Grundsatzentscheidung zu Fork, Lizenz, Mehrbenutzerstruktur, Rollen, Platt
 ## Änderungsformat
 
 Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidung, Alternativen, Folgen und betroffene Aufgaben. Nutzerwünsche haben Vorrang vor technischen Defaults. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen. Schema-/Syncänderungen nennen außerdem Migrations- und Kompatibilitätspfad. Bei Änderung bestehender Fachregeln Referenzrechnungen und Tests gleichzeitig aktualisieren.
+
+## ADR-033 — Lokale Importgruppen und Automatisierung
+
+- Datum: 5. Oktober 2026.
+- Status: angenommen.
+- Herkunft: ausdrücklicher Nutzerauftrag „Setze P5.* um“.
+- Problem: Rohparser allein ermöglichen keine bestätigte Übernahme; getrennte Fortschrittswrites und parallele Fälligkeitsbestätigungen könnten Doppelbuchungen erzeugen.
+- Entscheidung: Die gemeinsame Clientkomposition darf zusätzlich `importers` verwenden. Parser und vollständige Importgruppenvorbereitung laufen in lokal gebündelten Workern; die Clientaktion injiziert ihren Zeitpunkt. Mappingvorlagen, bestätigte Zeilenentscheidungen, Quellreferenzen und Fortschritt liegen ausschließlich im jeweiligen lokalen Bereich. Der Fachkern erzeugt je Gruppe höchstens 100 Buchungen zusammen mit Fingerprints und Fortschritt. Eine Kontorevision serialisiert konkurrierende Importgruppen; eine Schedulerevision serialisiert Fälligkeitsbestätigungen. Fachberechnungen bleiben plattformfrei.
+- Alternativen: Ein globaler Importrollback, automatische Dublettenentscheidung und ausführbare Regelskripte widersprechen den Verträgen.
+- Folgen: Abbruch beendet die Vorbereitung beziehungsweise pausiert zwischen bestätigten Gruppen. Bereits gespeicherte Gruppen bleiben erhalten. Reine Vorschläge ändern keine Salden. Bestätigung und ausdrückliche Importzuordnung schreiben Occurrence und Buchung gemeinsam. Regelreihenfolge wird atomar revisionsgeprüft.
+- Betroffene Verträge/Pakete: [Architektur](architecture.md), [Dateiformate](formats.md), [Datenmodell](data-model.md), [API](api.md), domain, importers und ui; P5.2–P5.6.
+- Migration und Kompatibilität: Neue lokale Aggregattypen ergänzen das generische Speicherformat ohne Tabellenmigration. Bestehende Buchungen bleiben unverändert. Die Server-/Altclient-Kompatibilitätsprüfung folgt mit dem tatsächlichen Finanzprotokoll in P9; ältere Clients dürfen unbekannte Aggregate nicht still anwenden.
+- Prüfung: Formatfixtures, Fachfehlfälle, echte Browserworker, atomare Speicherfehlfälle, Wiederaufnahme und UI-Abläufe in den P5-Tests. Plattformgrenzen stehen in der P5-Übergabe.

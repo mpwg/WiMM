@@ -13,7 +13,8 @@
     "@wimm/crypto": "workspace:*",
     "@wimm/domain": "workspace:*",
     "@wimm/storage": "workspace:*",
-    "react": "19.3.0"
+    "react": "19.3.0",
+    "@wimm/importers": "workspace:*"
   },
   "devDependencies": {
     "vitest": "5.0.2"

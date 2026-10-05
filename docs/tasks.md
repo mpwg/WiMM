@@ -176,7 +176,7 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 
 ## P5 — Import und Automatisierung
 
-- Status: in Arbeit. Voraussetzung: P4; Nutzerauftrag vom 5. Oktober 2026 erlaubt P5.1 vor Abschluss der offenen P4-Abnahmen und verschiebt Windows-/Linux-Prüfungen. P4 bleibt offen.
+- Status: in Arbeit. Voraussetzung: P4; Nutzerauftrag vom 5. Oktober 2026 erlaubt P5.1 vor Abschluss der offenen P4-Abnahmen und verschiebt Windows-/Linux-Prüfungen. Der anschließende Nutzerauftrag „Setze P5.* um“ gibt P5.2–P5.6 frei und erlaubt die Fortsetzung; die offenen P4-Abnahmen bleiben bestehen.
 - Teilaufgaben: [P5.1–P5.6](p5-import.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: etablierte CSV/XML/OFX-Parser auswählen/lizenzprüfen; normalisierte Zwischenform; Mappingvorlagen und Vorschau; Dublettenentscheidungen; gruppierte Übernahme/Wiederaufnahme; Regeln mit Priorität und Stop; Schedule/Fälligkeiten/Bestätigung und Zuordnung importierter Zahlungen.
 - Ergebnis: alltagstauglicher Import ohne Bankanbieter und deterministische wiederkehrende Vorschläge.

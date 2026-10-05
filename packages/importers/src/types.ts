@@ -28,6 +28,9 @@ export interface SourceRecord {
   cells?: string[];
   node?: ImportNode;
   fields?: Record<string, unknown>;
+  currency?: string;
+  accountHint?: string;
+  originalSourceRow?: number;
   issues: ImportIssue[];
 }
 export interface ParseRequest {
@@ -35,8 +38,10 @@ export interface ParseRequest {
   format: ImportFormat;
   encoding?: 'utf-8' | 'windows-1252';
   separator?: ',' | ';' | '\t';
+  mapping?: import('./preview.js').CsvMapping;
+  preview?: boolean;
 }
-export interface ParseResult { format: ImportFormat; records: SourceRecord[] }
+export interface ParseResult { format: ImportFormat; records: SourceRecord[]; preview?: import('./preview.js').PreviewRow[] }
 export interface CanonicalImportRecord {
   sourceRow: number;
   date: string;

@@ -2,7 +2,7 @@
 
 ## Auftrag und Reihenfolge
 
-Diese Teilaufgaben konkretisieren [P5](tasks.md#p5--import-und-automatisierung). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt ihre Planung; die weiteren Implementierungsfreigaben für P5 stehen aus. Der ausdrückliche Nutzerauftrag vom 5. Oktober 2026 gibt P5.1 frei und verschiebt Windows-/Linux-Prüfungen auf später; für diesen begrenzten Auftrag darf P5.1 trotz offener P4-Abnahmen beginnen. P4 bleibt offen. P5.1 bis P5.6 werden in Reihenfolge nach abgeschlossenem [P4](p4-ui.md) bearbeitet. Parser- und Fachregeln stehen weiterhin in den verlinkten Quellen.
+Diese Teilaufgaben konkretisieren [P5](tasks.md#p5--import-und-automatisierung). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt ihre Planung; der spätere ausdrückliche Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026 gibt das gesamte Paket frei und setzt die Bearbeitung nach P5.1 fort. Offene P4-Abnahmen bleiben unabhängig davon sichtbar. Der ausdrückliche Nutzerauftrag vom 5. Oktober 2026 gibt P5.1 frei und verschiebt Windows-/Linux-Prüfungen auf später; für diesen begrenzten Auftrag darf P5.1 trotz offener P4-Abnahmen beginnen. P4 bleibt offen. P5.1 bis P5.6 werden in Reihenfolge nach abgeschlossenem [P4](p4-ui.md) bearbeitet. Parser- und Fachregeln stehen weiterhin in den verlinkten Quellen.
 
 Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen; nach jedem abgeschlossenen Abschnitt einen zusammengehörigen Zwischencommit und eine [Übergabe](templates/handoff.md) erstellen. P5 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P6](p6-budget.md). Für die Umsetzung wimm-finance und für die Importflächen wimm-ui verwenden. Kein Bankabruf und keine direkte Actual-Budgetmigration in diesem Paket.
 
@@ -20,8 +20,8 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.2 — CSV-Mapping und Vorschau
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P5 erforderlich.
+- Status: in Arbeit.
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.1 erledigt.
 - Schritte: Encoding-/Trennzeichen-/Kopfzeilenauswahl, explizite Datums-/Zahlenformate und Soll/Haben-Mapping umsetzen; Vorlagen speichern; Originalzeilen neben normalisierten Buchungen und Fehlern anzeigen.
 - Ergebnis: korrigierbare CSV-Vorschau vor jeglicher Buchungsübernahme.
@@ -32,8 +32,8 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.3 — CAMT.053 und OFX/QFX
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P5 erforderlich.
+- Status: in Arbeit.
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.2 erledigt.
 - Schritte: CAMT-Namespaces und Entry-/TransactionDetails abbilden; OFX SGML/XML und QFX normalisieren; externe IDs, Finanzdatum und EUR prüfen; Sammelbuchungen sowie Kontozuordnung ausdrücklich vorschlagen.
 - Ergebnis: bankdateibasierter Import über dieselbe Vorschaupipeline.
@@ -44,8 +44,8 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.4 — Dubletten, gruppierte Übernahme und Wiederaufnahme
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P5 erforderlich.
+- Status: in Arbeit.
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.3 erledigt.
 - Schritte: Quell-ID-Konflikte und normalisierte Fingerprintkandidaten ermitteln; Entscheidungen speichern; bestätigte Gruppen bis 100 Buchungen über Fachbefehle übernehmen; Import-ID/Quellzeile und Fortschritt dauerhaft speichern.
 - Ergebnis: abbrechbarer, wiederaufnehmbarer Import mit nachvollziehbaren Dublettenentscheidungen.
@@ -56,8 +56,8 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.5 — Deterministische Buchungsregeln
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P5 erforderlich.
+- Status: in Arbeit.
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.4 erledigt.
 - Schritte: rule.save/delete/reorder mit Revisionen implementieren; katalogisierte Bedingungen/Aktionen und stopProcessing auswerten; Regeln in Importvorschau und Verwaltung integrieren.
 - Ergebnis: nachvollziehbare Regelanwendung ohne ausführbare Skripte.
@@ -68,8 +68,8 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.6 — Dauerzahlungen und Gesamt-Abnahme
 
-- Status: offen.
-- Freigabe: Implementierungsauftrag für P5 erforderlich.
+- Status: in Arbeit.
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.5 erledigt.
 - Schritte: Schedule-/Occurrence-Befehle, ursprünglichen Fälligkeitstag, Bestätigung/Überspringen und explizite Importzuordnung umsetzen; fällige Vorschläge/Verwaltung anbinden; gesamte Import-/Automatisierungssuite integrieren.
 - Ergebnis: wiederkehrende Vorschläge und abgenommene Dateiimporte ohne Doppelbuchung.

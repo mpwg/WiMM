@@ -4,3 +4,4 @@ export { normalizeImportRecord } from './normalize.js';
 export { parseImport } from './parser.js';
 export { createImportWorkerPort } from './worker-client.js';
 export type { ImportWorkerPort } from './worker-client.js';
+export * from './preview.js';

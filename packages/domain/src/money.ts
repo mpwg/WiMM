@@ -125,3 +125,10 @@ function assertMoneyRange(value: bigint, field: string): void {
     );
   }
 }
+
+/** Exakter editierbarer Dezimaltext, auch an den sicheren Centgrenzen. */
+export function moneyDecimal(value: Money): string {
+  assertMoney(value);
+  const amount = BigInt(value); const absolute = amount < 0n ? -amount : amount;
+  return `${amount < 0n ? '-' : ''}${absolute / 100n}.${String(absolute % 100n).padStart(2, '0')}`;
+}

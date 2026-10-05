@@ -8,3 +8,4 @@ export * from './transactions.js';
 export * from './transfers.js';
 export * from './projections.js';
 export * from './finance-actions.js';
+export * from './automation.js';

@@ -71,11 +71,14 @@ function xml(text: string, signal?: AbortSignal): SourceRecord[] {
   let entryCount = 0;
   let detailCount = 0;
   let line = 1;
+  let accountHint = '';
+  let accountNode = '';
   parser.on('doctype', () => fail('INVALID_FILE', 'DTD und externe Entitäten sind nicht erlaubt.'));
   parser.on('error', () => fail('INVALID_FILE', 'Die XML-Datei ist syntaktisch ungültig.'));
   parser.on('opentag', tag => {
     checkAbort(signal);
     if (++depth > 128) fail('INVALID_FILE', 'Die XML-Verschachtelung ist zu tief.');
+    if (!stack.length && ['IBAN', 'AcctId'].includes(tag.local)) accountNode = tag.local;
     if (tag.local === 'Ntry') { checkCount(++entryCount); line = parser.line + 1; }
     if (tag.local === 'TxDtls') checkCount(++detailCount);
     if (stack.length || tag.local === 'Ntry') {
@@ -85,13 +88,14 @@ function xml(text: string, signal?: AbortSignal): SourceRecord[] {
       stack.push(node);
     }
   });
-  const append = (textValue: string): void => { const node = stack.at(-1); if (node) node.text += textValue; };
+  const append = (textValue: string): void => { if (accountNode && !stack.length) accountHint += textValue.trim(); const node = stack.at(-1); if (node) node.text += textValue; };
   parser.on('text', append);
   parser.on('cdata', append);
   parser.on('closetag', () => {
     depth--;
+    accountNode = '';
     const node = stack.pop();
-    if (node && !stack.length) records.push({ sourceRow: records.length + 1, line, node, issues: [] });
+    if (node && !stack.length) records.push({ sourceRow: records.length + 1, line, node, accountHint, issues: [] });
   });
   for (let offset = 0; offset < text.length; offset += 65_536) { checkAbort(signal); parser.write(text.slice(offset, offset + 65_536)); }
   parser.close();
@@ -108,20 +112,25 @@ function ofx(text: string, signal?: AbortSignal): SourceRecord[] {
   const parsed: unknown = parseSync(text);
   const records: SourceRecord[] = [];
   // Iterative Traversierung vermeidet zusätzliche rekursive Adapterstacks.
-  const pending: unknown[] = [parsed];
+  const pending: { value: unknown; currency: string; accountHint: string }[] = [{ value: parsed, currency: '', accountHint: '' }];
   while (pending.length) {
     checkAbort(signal);
-    const value = pending.pop();
+    const current = pending.pop()!;
+    const value = current.value;
+    const currency = value !== null && typeof value === 'object' ? (typeof (value as Record<string, unknown>).CURDEF === 'string' ? (value as Record<string, unknown>).CURDEF as string : current.currency) : current.currency;
     if (value === null || typeof value !== 'object') continue;
+    const fieldsObject = value as Record<string, unknown>;
+    const account = fieldsObject.BANKACCTFROM ?? fieldsObject.CCACCTFROM;
+    const accountHint = account !== null && typeof account === 'object' && typeof (account as Record<string, unknown>).ACCTID === 'string' ? (account as Record<string, unknown>).ACCTID as string : current.accountHint;
     for (const [key, child] of Object.entries(value).reverse()) {
       if (key === 'STMTTRN') {
         for (const fields of Array.isArray(child) ? child : [child]) {
           checkCount(records.length + 1);
           if (fields === null || typeof fields !== 'object' || Array.isArray(fields)) fail('INVALID_FILE', 'Ein OFX-Datensatz ist ungültig.');
-          records.push({ sourceRow: records.length + 1, fields: fields as Record<string, unknown>, issues: [] });
+          records.push({ sourceRow: records.length + 1, fields: fields as Record<string, unknown>, currency, accountHint, issues: [] });
         }
-      } else if (Array.isArray(child)) { for (const item of (child as unknown[]).toReversed()) pending.push(item); }
-      else pending.push(child);
+      } else if (Array.isArray(child)) { for (const item of (child as unknown[]).toReversed()) pending.push({ value: item, currency, accountHint }); }
+      else pending.push({ value: child, currency, accountHint });
     }
   }
   if (!text.includes('<OFX>') || !records.length) fail('INVALID_FILE', 'Die Datei enthält keine OFX-Buchungen.');
