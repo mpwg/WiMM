@@ -279,3 +279,9 @@ Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen
 - Abnahme: alle Alltagspfade, Fehler-/Entwurfs-/Fokusfälle, Hell/Dunkel/Zoom, Browser-/native Plattform-/Gerätematrix und Leistung.
 - Prüfungen und Nachweise: [UX-Kriterienmatrix](handoffs/ux.md). Keine zusätzliche Freigabe für P6–P10.
 - Ergänzung vom 5. Oktober 2026: Der alternative [klickbare UX-Flow](assets/ux-flow-konzept.html) ist auf Nutzerauftrag dauerhaft unter `docs/assets` abgelegt und im [UX-Konzept](ux-redesign.md#alternativer-klickbarer-ux-flow) erläutert. Reiner Konzeptentwurf; Paketstatus und Implementierungsfreigaben bleiben unverändert. Prüfbelege und Grenzen stehen in der [UX-Übergabe](handoffs/ux.md#ablage-des-alternativen-ux-flows).
+
+### UX-Flow: aktuelle Umsetzung und Abnahme
+
+- Freigabe vom 5. Oktober 2026: Gestaltung und vorhandene Funktionen nach `docs/assets/ux-flow-konzept.html`; Budget, Teilen und Familienausgleich bleiben spätere Fachpakete.
+- Ergebnis: Grünakzent und warme Flächen in gemeinsamer UI, „WiMM.“, geführter Einstieg, Bereichskopf und reale Übersichtskennzahlen. Bestehende Bedien- und Fehlerprüfungen an Dialoge und Navigation angepasst; UX-Suite in reguläre Prüfung und CI aufgenommen.
+- Status: Umsetzung bereit zur PR-Prüfung; UX-06 Gesamtabnahme weiterhin offen. [Aktuelle Kriterienmatrix](handoffs/ux.md#umsetzung-des-freigegebenen-ux-flows-am-5-oktober-2026) enthält konkrete Belege und fehlende Plattform-/Geräte-/Zoomprüfungen. [Laufzeitansichten](assets/ux-flow-runtime/README.md) verwenden ausschließlich synthetische Daten.
