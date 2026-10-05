@@ -55,4 +55,4 @@ Die gemeinsame Oberfläche übernimmt Grünakzent, warme Flächen, die Wortmarke
 
 Buchungen und Konten werden über geschützte Dialoge bearbeitet; mobil füllen diese den Bildschirm. Import führt durch vier ausdrücklich bestätigte Schritte. Budget, Teilen und Familienausgleich sind weiterhin spätere Fachpakete. Es werden keine simulierten Konzeptdaten übernommen. Prüfung: `pnpm test:ux`; aktuelle Belege und offene Plattformprüfungen stehen in der UX-Übergabe.
 
-Aktuelle UX-Abnahme vom 5. Oktober 2026: [Kriterien und Prüfbelege](../../docs/handoffs/ux.md). Die Umsetzung ist bereit zur Prüfung; Firefox, vollständige native Plattform- und Gerätebelege sowie die gesamte Zoommatrix sind noch nicht vollständig abgenommen.
+Aktuelle UX-Abnahme vom 5. Oktober 2026: [Kriterien und Prüfbelege](../../docs/handoffs/ux.md). Die Umsetzung ist bereit zur Prüfung; Die Ubuntu-CI besteht einschließlich Firefox; vollständige Geräte-/Screenreader- und weitere native Plattformbelege sowie die gesamte Zoommatrix sind noch offen.
