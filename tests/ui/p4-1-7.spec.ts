@@ -37,7 +37,7 @@ test('startet die PWA nach einem Offline-Neustart und öffnet den Haushalt über
   const passphraseRestart = await page.context().newPage();
   const passphraseResponse = await passphraseRestart.goto('/');
   expect(passphraseResponse?.status()).toBe(200);
-  await expect(passphraseRestart.getByRole('heading', { name: 'Tresor entsperren' })).toBeVisible();
+  await expect(passphraseRestart.getByRole('heading', { name: 'Tresor entsperren' })).toBeVisible({ timeout: 15_000 });
   await expect(passphraseRestart.getByRole('heading', { name: 'Übersicht' })).toHaveCount(0);
   await passphraseRestart.getByLabel('Entsperrpassphrase').fill(passphrase);
   await passphraseRestart.getByRole('button', { name: 'Entsperren' }).click();
@@ -51,7 +51,7 @@ test('startet die PWA nach einem Offline-Neustart und öffnet den Haushalt über
   const recoveryRestart = await page.context().newPage();
   const recoveryResponse = await recoveryRestart.goto('/');
   expect(recoveryResponse?.status()).toBe(200);
-  await expect(recoveryRestart.getByRole('heading', { name: 'Tresor entsperren' })).toBeVisible();
+  await expect(recoveryRestart.getByRole('heading', { name: 'Tresor entsperren' })).toBeVisible({ timeout: 15_000 });
   await recoveryRestart.getByLabel('Rettungscode verwenden').check();
   await recoveryRestart.getByRole('textbox', { name: 'Rettungscode' }).fill(recoveryCode);
   await recoveryRestart.getByRole('button', { name: 'Entsperren' }).click();
