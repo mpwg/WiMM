@@ -10,6 +10,8 @@ Ergänzung vom 4. Oktober 2026: Der nachfolgende ausdrückliche Nutzerauftrag zu
 
 Ergänzung vom 5. Oktober 2026: Der ausdrückliche Nutzerauftrag „Setze P4.4.* vollständig um“ umfasst P4.4.1–P4.4.7. Umsetzung und Einzelabnahme stehen in der [P4.4-Kriterienmatrix](handoffs/p4-4.md); die historische reine Planungsfreigabe wird dadurch für diesen Umfang ergänzt.
 
+Ergänzung vom 5. Oktober 2026: Der ausdrückliche Nutzerauftrag „Setze P4.5 um“ umfasst P4.5.1–P4.5.7. Die ersten sechs Unteraufgaben sind abgenommen; die [Kriterienmatrix](handoffs/p4-5.md) belegt macOS arm64 und hält weitere native Plattformzellen offen.
+
 ## Kleine Arbeitsaufträge und Abschlussregeln
 
 Ein begrenzter Standardauftrag umfasst genau eine Unteraufgabe, einen beobachtbaren Ablauf und dessen unmittelbare Prüfungen. Richtgröße ist ein zusammenhängender Abschnitt in einer Agentensitzung, kein vollständiges P4.x-Paket. Der ausdrückliche Nutzerauftrag vom 4. Oktober 2026 „P.4.3.* komplett, alle Subtasks“ umfasst ausnahmsweise P4.3.1–P4.3.8; deren Kriterien werden weiterhin einzeln geprüft. Falls währenddessen weitere unabhängige Funktionen nötig werden, diese vor der Umsetzung als eigene Unteraufgabe dokumentieren. Eine garantierte Umsetzung lässt sich nicht aus der Größe ableiten; die Abnahme entscheidet anhand des tatsächlichen Verhaltens.
@@ -29,7 +31,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.5.1 — Native Menübefehle anbinden**. P4.4.1–P4.4.7 sind aufgrund des ausdrücklichen Sammelauftrags vom 5. Oktober 2026 einzeln abgenommen; Details in der [Kriterienmatrix](handoffs/p4-4.md).
+Nächster notwendiger Abnahmeschritt: **P4.5.7 auf den fehlenden nativen Plattformen**; unabhängig davon ist **P4.6.1** nach entsprechendem Auftrag möglich. P4.4.1–P4.4.7 sind aufgrund des ausdrücklichen Sammelauftrags vom 5. Oktober 2026 einzeln abgenommen; Details in der [Kriterienmatrix](handoffs/p4-4.md).
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -473,105 +475,105 @@ Nächster konkreter Arbeitsauftrag: **P4.5.1 — Native Menübefehle anbinden**.
 
 ## P4.5 — Native Menüs, Dialoge und Plattformbedienung
 
-- Status: in Arbeit.
-- Freigabe: Nutzerauftrag zum Abschluss von P4.
+- Status: in Arbeit — P4.5.1–P4.5.6 abgenommen; P4.5.7 auf macOS arm64 geprüft, weitere native Plattformzellen offen.
+- Freigabe: Ausdrücklicher Nutzerauftrag „Setze P4.5 um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.4 erledigt.
 - Schritte: originale Fensterdekoration, Systemmenüs, Cmd-/Ctrl-Kurzbefehle, native Datei-/Speicherdialogports und Systembrowserlinks integrieren; Capabilities begrenzen; spätere Import-/Exportaktionen nur entsprechend vorhandenem Funktionsumfang anbieten.
 - Ergebnis: plattformgerecht bedienbare Tauri-App und passende Browseralternativen.
 - Verträge: [Plattformintegration](architecture.md#plattformintegration), [Systemintegration](ui.md), [Tauri-Sicherheit](security.md).
 - Abnahme: echte native Menüs/Dialoge auf verfügbaren Zielsystemen; Textfeld-Undo unverändert plattformüblich; externe Links öffnen Systembrowser; Tauri lädt nur gebündelte Inhalte.
 - Prüfungen: native Smokechecks mit Plattform/Architektur, Menü, Dialog, Shortcut, Fremdlink und Offline-Neustart; ungeprüfte Systeme konkret ausweisen.
-- Prüfbelege: Die Tauri-Hülle erstellt ein natives Datei-/Bearbeiten-Menü mit Neu, Undo/Redo und Standard-Textaktionen; `cargo check` und der Desktop-Produktionsbuild bestanden. Ein PlatformServices-Port wird sowohl in Web als auch Desktop injiziert. Offen: Anbindung der Menübefehle, native Datei-/Speicherdialoge, Systembrowserlinks, begrenzte Capabilities und echter nativer Smokecheck.
+- Prüfbelege: Native Menüs/Kurzbefehle, dialoggebundene Dateiports, Systembrowser und begrenzte Capabilities sind umgesetzt. Chromium-Web/Desktop-Frontend, Rust/SQLite und echte macOS-arm64-Interaktion einschließlich Offline-Neustart sind in der [P4.5-Kriterienmatrix](handoffs/p4-5.md) belegt. Windows, Linux und macOS x86_64 fehlen; P4.5 bleibt ausdrücklich nicht vollständig abgenommen.
 
 ### P4.5.1 — Native Menübefehle anbinden
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.5; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: Nutzerauftrag „Setze P4.5 um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.4 einschließlich P4.4.1–P4.4.7 abgenommen.
 - Schritte: Vorhandene Tauri-Menüereignisse über PlatformServices an neue Buchung, Suche und Undo/Redo anbinden; Menügruppen vervollständigen.
 - Ergebnis: Native Menübefehle anbinden mit dokumentierter Einzelabnahme.
 - Verträge: [Plattformintegration](architecture.md#plattformintegration), [Systemintegration](ui.md), [Sicherheit](security.md).
 - Abnahme: Datei/Bearbeiten/Ansicht/Hilfe und plattformübliche Appaktionen erreichbar; nicht verfügbare Import-/Exportfunktionen nicht als nutzbar dargestellt.
 - Prüfungen: Menüereignisse gezielt integrieren und echten macOS-Menüaufruf prüfen; native Plattformmatrix separat P4.5.7.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.5 und sind gezielt nachzuprüfen.
+- Prüfbelege: Konkrete Einzelbelege und Plattformgrenzen stehen in der [P4.5-Kriterienmatrix](handoffs/p4-5.md).
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.5.2 — Plattformübliche Kurzbefehle abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.5; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: Nutzerauftrag „Setze P4.5 um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.5.1 abgenommen.
 - Schritte: Cmd-/Ctrl+N/F/Z und Redo mit Dialogen und Textfeldern prüfen; Konflikte korrigieren.
 - Ergebnis: Plattformübliche Kurzbefehle abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [Plattformintegration](architecture.md#plattformintegration), [Systemintegration](ui.md), [Sicherheit](security.md).
 - Abnahme: Neue Buchung/Suche und Fach-Undo funktionieren außerhalb Textfeldern; Textfeld-Undo und Standardtextaktionen bleiben plattformüblich.
 - Prüfungen: Gezielte UI-Prüfung plus echtes Tauri auf macOS: Menü und Tastatur, fokussiertes Textfeld und Finanzaktion.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.5 und sind gezielt nachzuprüfen.
+- Prüfbelege: Konkrete Einzelbelege und Plattformgrenzen stehen in der [P4.5-Kriterienmatrix](handoffs/p4-5.md).
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.5.3 — Nativen Öffnendialog als Port bereitstellen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.5; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: Nutzerauftrag „Setze P4.5 um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.5.2 abgenommen.
 - Schritte: Dateiöffnen über begrenzten Plattformport und Browserdateiauswahl bereitstellen; synthetische Datei für Portprüfung verwenden.
 - Ergebnis: Nativen Öffnendialog als Port bereitstellen mit dokumentierter Einzelabnahme.
 - Verträge: [Plattformintegration](architecture.md#plattformintegration), [Systemintegration](ui.md), [Sicherheit](security.md).
 - Abnahme: Desktop zeigt echten Systemdialog; Auswahl liefert nur bestätigte Datei; Abbruch ist folgenlos; Webalternative funktioniert.
 - Prüfungen: Portintegration und echter Öffnendialog auf verfügbarer Plattform; kein Finanzimport vor P5.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.5 und sind gezielt nachzuprüfen.
+- Prüfbelege: Konkrete Einzelbelege und Plattformgrenzen stehen in der [P4.5-Kriterienmatrix](handoffs/p4-5.md).
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.5.4 — Nativen Speicherdialog als Port bereitstellen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.5; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: Nutzerauftrag „Setze P4.5 um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.5.3 abgenommen.
 - Schritte: Dateispeichern über Plattformport und Browserdownload bereitstellen; synthetischen Inhalt für Portprüfung verwenden.
 - Ergebnis: Nativen Speicherdialog als Port bereitstellen mit dokumentierter Einzelabnahme.
 - Verträge: [Plattformintegration](architecture.md#plattformintegration), [Systemintegration](ui.md), [Sicherheit](security.md).
 - Abnahme: Desktop bestätigt Pfad und Überschreiben im Systemdialog; Abbruch schreibt nichts; Schreibfehler sichtbar; Webdownload nutzbar.
 - Prüfungen: Portintegration und echter Speicherdialog mit Abbruch/Fehler auf verfügbarer Plattform; kein WIMM-Export vor P10.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.5 und sind gezielt nachzuprüfen.
+- Prüfbelege: Konkrete Einzelbelege und Plattformgrenzen stehen in der [P4.5-Kriterienmatrix](handoffs/p4-5.md).
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.5.5 — Externe Links im Systembrowser öffnen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.5; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: Nutzerauftrag „Setze P4.5 um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.5.4 abgenommen.
 - Schritte: Hilfe-/Lizenz-/Quellcodelinks über begrenzten Linkport öffnen; unzulässige URL-Schemata abweisen.
 - Ergebnis: Externe Links im Systembrowser öffnen mit dokumentierter Einzelabnahme.
 - Verträge: [Plattformintegration](architecture.md#plattformintegration), [Systemintegration](ui.md), [Sicherheit](security.md).
 - Abnahme: Externer Link öffnet im Systembrowser; privilegiertes Tauri-Fenster bleibt bei gebündelter App; Browseralternative öffnet sicher.
 - Prüfungen: URL-Fehlfälle am Port und echter Tauri-Linkaufruf auf verfügbarer Plattform.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.5 und sind gezielt nachzuprüfen.
+- Prüfbelege: Konkrete Einzelbelege und Plattformgrenzen stehen in der [P4.5-Kriterienmatrix](handoffs/p4-5.md).
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.5.6 — Tauri-Capabilities begrenzen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.5; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: Nutzerauftrag „Setze P4.5 um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.5.5 abgenommen.
 - Schritte: Neue Menü-/Datei-/Linkrechte gegen Architektur und Sicherheitsvertrag prüfen; unnötige Berechtigungen entfernen.
 - Ergebnis: Tauri-Capabilities begrenzen mit dokumentierter Einzelabnahme.
 - Verträge: [Plattformintegration](architecture.md#plattformintegration), [Systemintegration](ui.md), [Sicherheit](security.md).
 - Abnahme: Nur benötigte Commands/Scopes freigegeben; kein beliebiger SQL-/Dateizugriff; entfernte Inhalte können nicht in privilegierter Ansicht laden.
 - Prüfungen: Konfigurationsprüfung, negative Command-/Navigationsfälle und Desktopbuild; konkrete erlaubte Rechte dokumentieren.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.5 und sind gezielt nachzuprüfen.
+- Prüfbelege: Konkrete Einzelbelege und Plattformgrenzen stehen in der [P4.5-Kriterienmatrix](handoffs/p4-5.md).
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ### P4.5.7 — Native Systemintegration je Zielsystem prüfen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.5; aktueller Auftrag nur Aufgabenplanung.
+- Status: in Arbeit — macOS arm64 erfüllt; Windows, Linux und macOS x86_64 nicht prüfbar.
+- Freigabe: Nutzerauftrag „Setze P4.5 um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.5.6 abgenommen.
 - Schritte: Menü, Shortcut, Öffnen/Speichern, Textfeld-Undo, Fremdlink und originale Fensterdekoration an echtem Tauri prüfen.
 - Ergebnis: Native Systemintegration je Zielsystem prüfen mit dokumentierter Einzelabnahme.
 - Verträge: [Plattformintegration](architecture.md#plattformintegration), [Systemintegration](ui.md), [Sicherheit](security.md).
 - Abnahme: Jede verfügbare Plattform hat eigenen Nachweis mit Architektur/Build; fehlende Windows-/Linux-/macOS-Zellen bleiben offen und benannt.
 - Prüfungen: Pro Plattform eigener kleiner Smokecheck mit synthetischen Daten; keine Browseremulation als native Abnahme.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.5 und sind gezielt nachzuprüfen.
+- Prüfbelege: Konkrete Einzelbelege und Plattformgrenzen stehen in der [P4.5-Kriterienmatrix](handoffs/p4-5.md).
 - Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
 
 ## P4.6 — Barrierefreiheit, Leistung und Gesamt-Abnahme

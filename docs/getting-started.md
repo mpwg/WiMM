@@ -2,12 +2,12 @@
 
 ## In zehn Minuten orientieren
 
-WhereIsMyMoney besitzt die abgeschlossenen Pakete P1 bis P3 mit Workspace, Fachkern, Crypto-Binding, lokalem Speicher und Offline-Assetbasis. D5 ergänzt die Teilaufgaben bis P11. Die [50 offenen Teilaufgaben für P4–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) benötigen weiterhin einen ausdrücklichen Auftrag. Diese Anleitung erteilt ihn nicht.
+WhereIsMyMoney besitzt die abgeschlossenen Pakete P1 bis P3 mit Workspace, Fachkern, Crypto-Binding, lokalem Speicher und Offline-Assetbasis. D5 ergänzt die Teilaufgaben bis P11. Die [verbleibenden Teilaufgaben für P4–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) benötigen weiterhin einen ausdrücklichen Auftrag. Diese Anleitung erteilt ihn nicht.
 
 1. [Arbeitsregeln](../AGENTS.md) und [Dokumentationsindex](README.md) lesen, danach die dort vorgeschriebenen Grundlagen: Fachmodell, Architektur, Entscheidungen und Aufgaben.
 2. Den tatsächlichen Nutzerauftrag mit dem [Paketstatus](tasks.md) abgleichen. Vorhandene Änderungen prüfen und bewahren; keinen Branch ungefragt wechseln.
 3. Über die [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) die aufgabenspezifischen Abschnitte und den passenden Projektskill wählen.
-4. Das konkrete Ergebnis, betroffene Verträge und Abnahmekriterien benennen. P4.1, P4.2.1 bis P4.2.7 sowie P4.3.1 bis P4.3.8 und P4.4.1 bis P4.4.7 sind abgeschlossen; nach Implementierungsfreigabe für P4 folgt [P4.5.1](p4-ui.md#p451--native-menübefehle-anbinden). Die weiteren Pakete besitzen eigene verlinkte Teilpläne in der Aufgabenübersicht.
+4. Das konkrete Ergebnis, betroffene Verträge und Abnahmekriterien benennen. P4.1, P4.2.1 bis P4.2.7 sowie P4.3.1 bis P4.3.8 und P4.4.1 bis P4.4.7 sowie P4.5.1 bis P4.5.6 sind abgeschlossen. [P4.5.7](p4-ui.md#p457--native-systemintegration-je-zielsystem-prüfen) benötigt weitere native Plattformnachweise; unabhängig davon kann nach Auftrag P4.6.1 folgen. Die weiteren Pakete besitzen eigene verlinkte Teilpläne in der Aufgabenübersicht.
 5. Erst den begrenzten Arbeitsschritt bearbeiten, dann passende Prüfungen ausführen und die Nachweise im Paket festhalten. Nicht ausgeführte Prüfungen ausdrücklich nennen.
 
 Für den Zusammenhang der Komponenten anschließend das [durchgängige Buchungsbeispiel](reference-household.md#durchgängiger-ablauf-einer-buchung) lesen. Für die vollständige Lesereihenfolge bleibt der Dokumentationsindex maßgeblich.
