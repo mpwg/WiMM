@@ -132,3 +132,10 @@ export function moneyDecimal(value: Money): string {
   const amount = BigInt(value); const absolute = amount < 0n ? -amount : amount;
   return `${amount < 0n ? '-' : ''}${absolute / 100n}.${String(absolute % 100n).padStart(2, '0')}`;
 }
+
+/** Die gewählte Buchungsrichtung bestimmt das Vorzeichen eines eingegebenen Betrags. */
+export function parseDirectedMoney(value: string, direction: 'expense' | 'income', field = 'Der Betrag'): Money {
+  const amount = parseMoney(value, field);
+  const magnitude = BigInt(amount) < 0n ? -BigInt(amount) : BigInt(amount);
+  return moneyFromBigInt(direction === 'expense' ? -magnitude : magnitude, field);
+}

@@ -9,8 +9,8 @@ export function today(): string { return new Intl.DateTimeFormat('sv-SE', { time
 function moneyText(value: number) { const money = BigInt(value); const absolute = money < 0 ? -money : money; return `${money < 0 ? '-' : ''}${absolute / 100n},${String(absolute % 100n).padStart(2, '0')}`; }
 function message(reason: unknown) { return reason instanceof Error ? /revision|stale/i.test(reason.message) ? 'Der Stand wurde inzwischen geändert. Ihre Eingaben bleiben erhalten; bitte öffnen Sie den aktuellen Vorgang erneut.' : reason.message : 'Die Eingaben wurden nicht gespeichert.'; }
 
-export function TransferForm({ model, previous, onSaved, onBusy }: { readonly model: FinanceModel; readonly previous?: TransferAggregate; readonly onSaved?: () => void; readonly onBusy?: (busy: boolean) => void }) {
-  const [source, setSource] = useState<string>(previous?.sourceAccountId ?? ''); const [target, setTarget] = useState<string>(previous?.targetAccountId ?? '');
+export function TransferForm({ model, previous, onSaved, onBusy, defaultAccountId }: { readonly model: FinanceModel; readonly defaultAccountId?: UUID | undefined; readonly previous?: TransferAggregate; readonly onSaved?: () => void; readonly onBusy?: (busy: boolean) => void }) {
+  const [source, setSource] = useState<string>(previous?.sourceAccountId ?? defaultAccountId ?? ''); const [target, setTarget] = useState<string>(previous?.targetAccountId ?? '');
   const [amount, setAmount] = useState(previous === undefined ? '' : moneyText(previous.amount)); const [date, setDate] = useState<string>(previous?.date ?? today());
   const [category, setCategory] = useState<string>(previous?.budgetCategoryId ?? ''); const [release, setRelease] = useState(previous?.budgetRelease === true);
   const [error, setError] = useState<string>(); const [saving, setSaving] = useState(false); const busy = useRef(false);
@@ -36,8 +36,9 @@ export function TransferForm({ model, previous, onSaved, onBusy }: { readonly mo
     </fieldset></form>{error === undefined ? null : <p role="alert" className="field-error">{error}</p>}
   </section>;
 }
-export function ReconciliationForm({ model }: { readonly model: FinanceModel }) {
-  const [account, setAccount] = useState(''); const [balance, setBalance] = useState(''); const [date, setDate] = useState(today()); const [ids, setIds] = useState<UUID[]>([]);
+export function ReconciliationForm({ model, defaultAccountId, onSaved }: { readonly model: FinanceModel; readonly defaultAccountId?: UUID | undefined; readonly onSaved?: () => void }) {
+  const [step, setStep] = useState(0);
+  const [account, setAccount] = useState(defaultAccountId ?? ''); const [balance, setBalance] = useState(''); const [date, setDate] = useState(today()); const [ids, setIds] = useState<UUID[]>([]);
   const [result, setResult] = useState<string>(); const [saving, setSaving] = useState(false); const busy = useRef(false);
   const [correction, setCorrection] = useState<{ amount: Money; account: UUID; date: string }>(); const [category, setCategory] = useState(''); const [correctionDate, setCorrectionDate] = useState('');
   const form = useRef<HTMLFormElement>(null); const saved = useFormDraft(form); const dialog = useRef<HTMLDialogElement>(null); const trigger = useRef<HTMLButtonElement>(null);
@@ -47,7 +48,7 @@ export function ReconciliationForm({ model }: { readonly model: FinanceModel }) 
   if (account !== '' && balance !== '') try { difference = model.difference(account as UUID, balance, date, ids); } catch (reason) { invalid = message(reason); }
   async function submit(event: FormEvent) {
     event.preventDefault(); if (busy.current) return; busy.current = true; setSaving(true); setResult(undefined);
-    try { await model.reconcile(account as UUID, balance, date, ids); setIds([]); setBalance(''); saved(); setResult('Abgleich gespeichert. Die ausgewählten Buchungen sind gesperrt.'); }
+    try { await model.reconcile(account as UUID, balance, date, ids); setIds([]); setBalance(''); saved(); setResult('Abgleich gespeichert. Die ausgewählten Buchungen sind gesperrt.'); onSaved?.(); }
     catch (reason) { setResult(message(reason)); } finally { busy.current = false; setSaving(false); }
   }
   function closeCorrection() { if (busy.current) return; dialog.current?.close(); setCorrection(undefined); requestAnimationFrame(() => trigger.current?.focus()); }
@@ -55,17 +56,18 @@ export function ReconciliationForm({ model }: { readonly model: FinanceModel }) 
     event.preventDefault(); if (correction === undefined || busy.current) return; busy.current = true; setSaving(true);
     try {
       await model.storeTransaction({ accountId: correction.account, date: correctionDate, amount: moneyText(correction.amount), note: 'Korrektur zum Kontoauszug', opening: false, splits: [{ categoryId: category as UUID, amount: moneyText(correction.amount) }] });
-      dialog.current?.close(); setCorrection(undefined); setResult('Korrekturbuchung gespeichert. Wählen Sie diese Buchung zusätzlich aus und prüfen Sie den Abgleich erneut.'); trigger.current?.focus();
+      dialog.current?.close(); setCorrection(undefined); setStep(1); setResult('Korrekturbuchung gespeichert. Wählen Sie diese Buchung zusätzlich aus und prüfen Sie den Abgleich erneut.'); trigger.current?.focus();
     } catch (reason) { setResult(message(reason)); } finally { busy.current = false; setSaving(false); }
   }
-  return <section className="transfer"><h2>Abgleich</h2><p>Wählen Sie die Bewegungen des Kontoauszugs. Bereits abgeglichene Buchungen bilden den Ausgangssaldo.</p>
+  return <section className="transfer"><h2>Abgleich</h2><ol className="stepper" aria-label="Abgleichschritte">{['Auszugsdaten', 'Buchungen auswählen', 'Prüfen und bestätigen'].map((label, index) => <li key={label} aria-current={step === index ? 'step' : undefined}>{index + 1}. {label}</li>)}</ol><p>Wählen Sie die Bewegungen des Kontoauszugs. Bereits abgeglichene Buchungen bilden den Ausgangssaldo.</p>
     <form aria-label="Abgleich" className="inline-form" ref={form} onSubmit={(event) => void submit(event)}><fieldset className="transaction-fields" disabled={saving}>
-      <label>Abgleichkonto<select required value={account} onChange={(event) => { setAccount(event.target.value); setIds([]); }}><option value="">Auswählen</option>{model.accounts.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select></label>
-      <label>Auszugssaldo<input required inputMode="decimal" value={balance} onChange={(event) => setBalance(event.target.value)} /></label><label>Auszugsdatum<input required type="date" value={date} onChange={(event) => { setDate(event.target.value); setIds([]); }} /></label>
-      <fieldset><legend>Buchungen auswählen</legend>{candidates.length === 0 ? <p>Keine offenen Bewegungen für dieses Konto und Datum.</p> : candidates.map((transaction) => <label key={transaction.id}><input type="checkbox" checked={ids.includes(transaction.id)} onChange={(event) => setIds((selected) => event.target.checked ? [...selected, transaction.id] : selected.filter((id) => id !== transaction.id))} /> {transaction.date} · {transaction.note ?? (transaction.kind === 'transfer' ? 'Umbuchung' : 'Anfangsbestand')} · {formatMoney(transaction.amount)}</label>)}</fieldset>
-      <p aria-live="polite">{difference === undefined ? invalid ?? 'Geben Sie den Auszugssaldo ein.' : `Differenz: ${formatMoney(difference)}`}</p>
+      {step === 0 ? <><label>Abgleichkonto<select required value={account} onChange={(event) => { setAccount(event.target.value); setIds([]); }}><option value="">Auswählen</option>{model.accounts.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select></label>
+      <label>Auszugssaldo<input required inputMode="decimal" value={balance} onChange={(event) => setBalance(event.target.value)} /></label><label>Auszugsdatum<input required type="date" value={date} onChange={(event) => { setDate(event.target.value); setIds([]); }} /></label><button type="button" disabled={account === '' || balance === '' || invalid !== undefined} onClick={() => setStep(1)}>Buchungen auswählen</button></> : null}
+      {step === 1 ? <><fieldset><legend>Buchungen auswählen</legend>{candidates.length === 0 ? <p>Keine offenen Bewegungen für dieses Konto und Datum.</p> : candidates.map((transaction) => <label key={transaction.id}><input type="checkbox" checked={ids.includes(transaction.id)} onChange={(event) => setIds((selected) => event.target.checked ? [...selected, transaction.id] : selected.filter((id) => id !== transaction.id))} /> {transaction.date} · {transaction.note ?? (transaction.kind === 'transfer' ? 'Umbuchung' : 'Anfangsbestand')} · {formatMoney(transaction.amount)}</label>)}</fieldset><button type="button" disabled={ids.length === 0} onClick={() => setStep(2)}>Abgleich prüfen</button></> : null}
+      {step === 2 ? <><p aria-live="polite">{difference === undefined ? invalid ?? 'Geben Sie den Auszugssaldo ein.' : `Differenz: ${formatMoney(difference)}`}</p>
       <button type="submit" disabled={difference !== 0 || ids.length === 0}>Abgleich bestätigen</button>
-      {difference === undefined || difference === 0 ? null : <button type="button" ref={trigger} onClick={() => { setCategory(''); setCorrectionDate(date); setCorrection({ amount: difference!, account: account as UUID, date }); }}>Korrektur vorschlagen</button>}
+      {difference === undefined || difference === 0 ? null : <button type="button" ref={trigger} onClick={() => { setCategory(''); setCorrectionDate(date); setCorrection({ amount: difference!, account: account as UUID, date }); }}>Korrektur vorschlagen</button>}</> : null}
+      {step > 0 ? <button type="button" onClick={() => setStep(value => value - 1)}>Zurück</button> : null}
     </fieldset></form>{result === undefined ? null : <p role="status">{result}</p>}
     {correction === undefined ? null : <dialog className="confirmation-dialog" aria-labelledby="correction-title" ref={dialog} onCancel={(event) => { event.preventDefault(); closeCorrection(); }}>
       <h2 id="correction-title">Korrekturbuchung bestätigen?</h2><p>Eine eigene Buchung über {formatMoney(correction.amount)} auf {model.accounts.find((entry) => entry.id === correction.account)?.name} verändert den Kontostand. Sie wird erst mit Ihrer Bestätigung angelegt und noch nicht abgeglichen.</p>
