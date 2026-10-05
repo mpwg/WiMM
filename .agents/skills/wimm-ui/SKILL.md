@@ -6,7 +6,7 @@ license: AGPL-3.0-or-later
 
 # Oberfläche und native Bedienung
 
-Lies [UI-Spezifikation](../../../docs/ui.md), den betreffenden Ablauf in [Produkt](../../../docs/product.md) und die [Screenshot-/Plattformmatrix](../../../docs/testing.md). Keine neue Designsprache oder Marketingseite aus einer Arbeitsansicht machen.
+Lies [UI-Spezifikation](../../../docs/ui.md), den betreffenden Ablauf in [Produkt](../../../docs/product.md) und die [Screenshot-/Plattformmatrix](../../../docs/testing.md). Die durch Nutzerauftrag freigegebene Designsprache aus [UX-Konzept](../../../docs/ux-redesign.md) verwenden; keine Marketingseite aus einer Arbeitsansicht machen.
 
 - Desktop und Touch als eigene Kompositionen; gemeinsame Fachkomponenten/Plattformtokens nutzen.
 - Desktopfenster, Menüs, Dialoge, Shortcuts und Fokus plattformgerecht; mobile Listen/Details statt gequetschter Desktoptabellen.

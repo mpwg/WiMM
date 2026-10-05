@@ -126,3 +126,12 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 - Betroffene Verträge/Pakete: [Agentenregeln](../AGENTS.md), [Agentenleitfaden](agent-guide.md), [Entwicklung](development.md), [Workflow-Skill](../.agents/skills/wimm-workflow/SKILL.md), Copilot-Anweisungen, GitHub-PR-Vorlage; D6.
 - Migration und Kompatibilität: Keine Code-, Daten- oder Protokollmigration. Vorhandene Branches und Commits bleiben erhalten; neue Änderungen folgen ab sofort dem PR-Ablauf.
 - Prüfung: Dokumentationskonsistenz, relative Links und Whitespace; tatsächliche Durchsetzung benötigt gesonderte Prüfung der GitHub-Repositoryeinstellungen.
+
+## ADR-035 — Markante und ruhige Finanzoberfläche
+
+- Datum: 5. Oktober 2026. Status: angenommen.
+- Herkunft: Nutzerwahl „Klar und markant“, Desktop und Mobil; ausdrücklicher Implementierungsauftrag UX-01–UX-06.
+- Problem: dauerhaft offene Formulare und gleichrangige Verwaltung verdrängen Finanzarbeit; Kontosumme suggeriert Budgetverfügbarkeit.
+- Entscheidung: Indigo-/Systemschriftgestaltung, Listen zuerst, kontextbezogene Dialoge und eigene mobile Mehr-Ansicht gemäß [UX-Konzept](ux-redesign.md). Kontosumme heißt „Kontostand gesamt“.
+- Folgen: bestehende UI-Defaults werden gemeinsam aktualisiert. Native Bedienung, Fachkern und E2EE-Grenzen bleiben verbindlich.
+- Migration und Tests: interne Ansichtsänderung ohne Datenmigration; atomarer Kontoeinstieg und vollständige UI-Regression. P6–P10 bleiben später.

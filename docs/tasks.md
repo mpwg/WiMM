@@ -267,3 +267,14 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 ## Übergabe nach einem Paket
 
 Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen ausführen und nach jedem abgeschlossenen Abschnitt einen Zwischencommit erstellen. Der Commit enthält zusammengehörige Änderungen und keine fremden/unverwandten Dateien. Für den nächsten Agenten verbleibende Einschränkungen und erstes nächstes Paket nennen. Keine automatische Veröffentlichung durch Abschluss von P11 ohne entsprechenden Auftrag.
+
+## UX-01–UX-06 — Markante, ruhige Neugestaltung
+
+- Status: in Arbeit; UX-01 Konzept festgeschrieben, UX-02–UX-06 offen.
+- Freigabe: ausdrücklicher Implementierungsauftrag vom 5. Oktober 2026 für [UX-Konzept](ux-redesign.md).
+- Voraussetzungen: vorhandene P4-/P5-Implementierungen; bestehende Abnahmelücken bleiben sichtbar.
+- Schritte: Konzept, gemeinsame Gestaltung, Navigation/Übersicht, Buchungen/Konten, Verwaltung/Import, Gesamtabnahme; je Etappe Themenbranch und PR.
+- Ergebnis: ruhige Desktop-/Mobilansichten mit Liste zuerst, gezielten Dialogen und eindeutigen Finanzbegriffen.
+- Verträge: interne Ansichts-/Dialogzustände; atomarer Kontoeinstieg über Fachkern, keine Speicher-/Transportmigration.
+- Abnahme: alle Alltagspfade, Fehler-/Entwurfs-/Fokusfälle, Hell/Dunkel/Zoom, Browser-/native Plattform-/Gerätematrix und Leistung.
+- Prüfungen und Nachweise: [UX-Kriterienmatrix](handoffs/ux.md). Keine zusätzliche Freigabe für P6–P10.
