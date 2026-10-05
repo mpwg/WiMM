@@ -22,7 +22,7 @@ UX-06: aktuelle Gesamtabnahme und Regression der geänderten Bedienabläufe. P6�
 
 Auf Nutzerwunsch nach UX-05 angehalten. Die Implementierung ist gesichert; die gesamte Neugestaltung ist noch nicht abgenommen. Aktiver Branch: `codex/ux-05-verwaltung-import`, Implementierungscommit: `f37f40a`.
 
-Die fünf Pull Requests bauen aufeinander auf und sind noch nicht zusammengeführt:
+Die fünf Pull Requests bauen aufeinander auf. UX-01–UX-04 sind inzwischen auf `main` integriert; UX-05 folgt mit PR 20. Der Nutzer hat am 5. Oktober 2026 den Merge aller fünf UX-PRs und das Übergehen der GitHub-Prüfregeln ausdrücklich freigegeben. Diese Freigabe ersetzt keine UX-06-Gesamtabnahme. Die Ubuntu-Prüfung von UX-05 meldete 33 fehlgeschlagene und fünf bestandene bestehende UI-Tests; die offenen Prüfungen unten bleiben bestehen.
 
 - [UX-01: Konzept – PR 15](https://github.com/mpwg/WiMM/pull/15)
 - [UX-02: Gestaltung – PR 16](https://github.com/mpwg/WiMM/pull/16)
