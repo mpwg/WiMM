@@ -190,14 +190,25 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   useEffect(() => () => {
     void context.platform.setMenuCommands(['new-transaction', 'search', 'overview', 'settings'].map((id) => ({ id, title: id, enabled: false })));
   }, [context.platform]);
+  function navigate(next: View) {
+    setView(next);
+    if (matchMedia('(max-width: 767px)').matches) requestAnimationFrame(() => document.querySelector<HTMLElement>('.finance-main')?.scrollIntoView({ block: 'start' }));
+  }
+  useEffect(() => {
+    if (state === 'ready' && matchMedia('(max-width: 767px)').matches) document.querySelector<HTMLElement>('.finance-main')?.scrollIntoView({ block: 'start' });
+  }, [view, state]);
   return <div data-history-version={historyVersion} className={`app-shell${desktop ? ' desktop-shell' : ''}`} data-color-scheme={colorScheme}>
     <aside className="sidebar"><p className="product">WhereIsMyMoney</p><AreaPicker context={context} disabled={saving} request={(action, trigger) => guard.request(action, undefined, trigger)} />
-      <nav aria-label="Hauptnavigation">{([['overview', 'Übersicht'], ['transactions', 'Buchungen'], ['accounts', 'Konten'], ['categories', 'Kategorien'], ['payees', 'Empfänger']] as const).map(([id, label]) =>
-        <button disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => guard.request(() => setView(id))} type="button">{label}</button>
+      <p className="mobile-only more-title">Mehr</p><nav id="more-navigation" aria-label="Hauptnavigation" tabIndex={-1}>{([['overview', 'Übersicht'], ['transactions', 'Buchungen'], ['accounts', 'Konten'], ['categories', 'Kategorien'], ['payees', 'Empfänger']] as const).map(([id, label]) =>
+        <button data-primary={id === 'overview' || id === 'transactions' ? 'true' : undefined} disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => guard.request(() => navigate(id))} type="button">{label}</button>
       )}</nav><button disabled={saving} className="quiet" onClick={() => guard.request(() => { void context.createHousehold(); })} type="button">+ Haushalt anlegen</button><button disabled={saving} className="quiet" onClick={() => guard.request(() => { void context.lock(); })} type="button">Tresor sperren</button>
       <details><summary>Hilfe</summary><p>WhereIsMyMoney · Version 0.0.0</p>{[['Hilfe und Quellcode', 'https://github.com/mpwg/WiMM'], ['Lizenz AGPL-3.0-or-later', 'https://www.gnu.org/licenses/agpl-3.0.html']].map(([label, url]) => <p key={url}><a href={url} onClick={(event) => { event.preventDefault(); void context.platform.openExternalUrl(url!).catch(() => setMessage('Der Link konnte nicht geöffnet werden.')); }}>{label}</a></p>)}</details>
       <label className="area-picker">Farbschema<select value={colorScheme} onChange={(event) => changeColorScheme(event.target.value as ColorScheme)}><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
     </aside>
+    <nav className="mobile-navigation" aria-label="Mobile Hauptnavigation">
+      {([['overview', 'Übersicht'], ['transactions', 'Buchungen']] as const).map(([id, label]) => <button disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => guard.request(() => navigate(id))} type="button">{label}</button>)}
+      <button type="button" onClick={() => { const navigation = document.getElementById('more-navigation'); navigation?.scrollIntoView({ block: 'center' }); navigation?.querySelector<HTMLButtonElement>('button:not([data-primary])')?.focus(); }}>Mehr</button>
+    </nav>
     <main className="finance-main" key={context.activeArea.id}><header><div><p className="eyebrow">{context.activeArea.kind === 'private' ? 'Privatbereich' : 'Gemeinsamer Bereich'}</p><h1>{titleFor(view)}</h1></div><span aria-live="polite" className="local-status">{saving ? "Wird lokal gespeichert …" : "● Lokaler Stand"}</span></header>
       {message === undefined ? null : <p aria-live="polite" className="notice">{message}</p>}
       {state === 'loading' ? <p aria-live="polite">Lokale Daten werden geladen …</p> : null}

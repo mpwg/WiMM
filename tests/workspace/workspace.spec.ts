@@ -24,7 +24,7 @@ test('verzögerter Commit sowie Quota und Disk-full erhalten alle Splitwerte und
   await page.getByLabel('Splitbetrag 3', { exact: true }).fill('-10');
   await page.getByLabel('Notiz').fill('Vollständiger Entwurf');
   const before = await read(page);
-  for (const mode of ['quota', 'disk']) {
+  for (const mode of ['quota', 'disk', 'native-disk']) {
     await page.evaluate((value) => window.workspaceTest.mode(value), mode);
     await page.getByRole('button', { name: 'Lokal speichern' }).click();
     await expect(page.getByRole('alert')).toContainText('Speicher ist voll');

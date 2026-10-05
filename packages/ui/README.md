@@ -95,3 +95,19 @@ Der Browserdateiport verwendet echte Dateiauswahl einschließlich folgenlosem Ab
 `p4-5.spec.ts` prüft Kurzbefehle, Entwürfe, gesperrten Tresor sowie Auswahl, Abbruch, Downloadinhalt und Fremdlink. Der Port-Harness benötigt den Entwicklungsserver; im Vorschau-Build wird nur dieser Harness ausgelassen. Native Menüs und Systemdialoge werden separat mit Plattformangabe in der [P4.5-Übergabe](../../docs/handoffs/p4-5.md) geprüft. Die Finanzansicht wird als eigenes Modul vor dem Einstieg vollständig geladen, damit beide Produktionsbuilds unter der bestehenden Chunkgrößengrenze bleiben.
 
 Der separate Moduleinstieg `@wimm/ui/workspace` exportiert die Finanzansicht. Die App lädt ihn vollständig vor dem Einstieg, damit die Service-Worker-Kontrolle auch beim Neustart in den Sperrbildschirm alle benötigten Module cached.
+
+## Gesamtprüfung P4.6
+
+Die mobile Hauptnavigation bleibt am unteren Bildschirmrand erreichbar und bietet Übersicht, Buchungen und Mehr. Mehr führt mit sichtbarem Fokus zu Konten, Kategorien und Empfängern; Budget folgt erst in P6. Ein eigener scrollbarer Inhaltsbereich endet oberhalb der Navigation; die untere sichere Fläche wird berücksichtigt. Mobile Buchungslisten zeigen große negative Beträge vollständig in einer eigenen Zeile. Lange Kategorienamen umbrechen auch im Detaildialog. Modale Dialoge halten Tab und Umschalt+Tab im obersten geöffneten Dialog.
+
+```sh
+pnpm test:ui:matrix
+pnpm test:ui:acceptance
+pnpm test:ui:zoom
+```
+
+Die Matrix prüft beide Kompositionen bei 320×568, 390×844, 768×1024, 1440×900 und 1920×1080 in Hell und Dunkel: Übersicht, Konten, Kategorien, Empfänger, Buchungen, Details und Feldfehler. Sie misst berechnete Textkontraste und erzeugt 160 synthetische Screenshots. Die Leistungsprüfung verwendet 50.000 Buchungen, zehn Konten, 100 Kategorien und 36 Monate; 1.000 synthetische SharedExpense-Payloads liegen ausschließlich als Speicherlast in Testprojektionen, ohne vorgezogene P7-Funktion. Sie prüft die gespeicherten Mengen, Saldo, Filtertreffer und konkrete Scroll-IDs sowie kaltes Listenöffnen, warme Filter-/Scrollreaktion mit fünf Vorläufen und 30 Messungen. Die Matrix ist Teil von `pnpm check:ci`.
+
+Die zusätzliche Browserabnahme verwendet Chromium, Firefox und WebKit gegen beide gebauten Frontends; zunächst beide Apps bauen und die drei Playwright-Browser installieren. Jeder Browser wird mit einem dauerhaften, getrennten Profil vollständig beendet und erneut gestartet. Chromium-Web startet dabei bereits ohne Netzwerk aus dem Service Worker; WebKit/Firefox und Desktop-Frontend laden die Appassets zunächst lokal und prüfen dann ohne Netzwerk. Der Zoomlauf benötigt macOS-Bedienungshilfenzugriff und das deutschsprachige echte Chromium-Systemmenü; er bestätigt 200 % über halbierte Inhaltsbreite und verdoppelte Pixeldichte bei unverändertem CSS-Zoom. Er gehört wegen seiner GUI-Voraussetzungen nicht zur allgemeinen CI-Serie.
+
+JSON-Berichte, Screenshots und Traces liegen unter `test-results/p4-6-*`, dauerhafte synthetische Profile unter `.toolchain-checks/`. Ein Browserstartfehler bleibt ein fehlgeschlagener Lauf und wird nicht still ausgelassen. Echte Screenreader-, native Plattform- und Gerätenachweise stehen getrennt in der [P4.6-Kriterienmatrix](../../docs/handoffs/p4-6.md). P4.6 und P4 sind bei offenen Zellen nicht vollständig abgenommen.

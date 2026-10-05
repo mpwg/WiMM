@@ -30,7 +30,24 @@ if (parameters.get('p44') === 'true') {
   initial.push({ ...meta(7), aggregateType: 'account', name: 'Extern', type: 'savings', onBudget: false, archived: false } as AccountAggregate);
   initial.push({ ...meta(8), aggregateType: 'transaction', accountId, date: '2026-10-05', amount: 100000, kind: 'opening', clearance: 'uncleared', splits: [] } as TransactionAggregate);
 }
-if ((await adapter.query({ spaceId })).length === 0) await adapter.applyAtomicBatch({ expectedRevisions: [], aggregates: initial.map(toStoredAggregate), outbox: [], projections: [] });
+// P4.6-Datensätze bleiben ausschließlich in der getrennten Testseite.
+const performanceFixture = parameters.get('performance') === 'true';
+const matrixFixture = parameters.get('matrix') === 'true';
+if (performanceFixture) {
+  for (let index = 1; index < 10; index++) initial.push({ ...meta(60000 + index), aggregateType: 'account', name: `Konto ${index}`, type: 'checking', onBudget: true, archived: false } as AccountAggregate);
+  for (let index = 1; index < 100; index++) initial.push({ ...meta(61000 + index), aggregateType: 'category', name: `Kategorie ${index}`, groupId, sortOrder: index, archived: false } as CategoryAggregate);
+  for (const entry of initial) if (entry.aggregateType === 'transaction') {
+    const index = Number(entry.id.slice(-12)) - 100;
+    const month = index % 36;
+    Object.assign(entry, { accountId: index % 10 === 0 ? accountId : id(60000 + index % 10), date: `${2024 + Math.floor(month / 12)}-${String(month % 12 + 1).padStart(2, '0')}-05`, splits: [{ id: id(100000 + index), categoryId: index % 100 === 0 ? categoryId : id(61000 + index % 100), amount: -100 }] });
+  }
+}
+if (matrixFixture) {
+  Object.assign(initial[0]!, { name: 'Gemeinschaftliches Rücklagenkonto für außergewöhnliche Familienausgaben' });
+  Object.assign(initial[2]!, { name: 'AußergewöhnlicheHaushaltsausgabenUndFamilienrücklagen' });
+  for (const entry of initial) if (entry.aggregateType === 'transaction') Object.assign(entry, { amount: -123456789, note: 'Österreichische Gemeinschaftsbäckerei mit außergewöhnlich langer Bezeichnung', splits: [{ id: id(100000), categoryId, amount: -123456789 }] });
+}
+if ((await adapter.query({ spaceId })).length === 0) await adapter.applyAtomicBatch({ expectedRevisions: [], aggregates: initial.map(toStoredAggregate), outbox: [], projections: performanceFixture ? Array.from({ length: 1000 }, (_, index) => ({ spaceId, kind: 'synthetic-shared-expense-load', key: String(index), payload: { id: id(200000 + index), amount: 100, source: 'private_advance', reimbursementSource: 'household', categoryId, shares: [{ participantId: id(300000), amount: 50 }, { participantId: id(300001), amount: 50 }] } })) : [] });
 let mode = 'normal'; let release: (() => void) | undefined;
 const storage: WorkspaceStorage = {
   query: (query) => adapter.query(query),
@@ -38,6 +55,7 @@ const storage: WorkspaceStorage = {
     if (mode === 'delay') await new Promise<void>((resolve) => { release = resolve; });
     if (mode === 'quota') throw new DOMException('QuotaExceededError', 'QuotaExceededError');
     if (mode === 'disk') throw new Error('SQLite disk full');
+    if (mode === 'native-disk') throw 'Speicherfehler: database or disk is full';
     if (mode === 'partial') {
       // Der letzte Put besitzt einen ungültigen Schlüssel: Dexie muss auch die
       // vorher geschriebenen Transfer-/Abgleichzeilen in derselben Transaktion zurückrollen.
@@ -48,10 +66,25 @@ const storage: WorkspaceStorage = {
   }
 };
 declare global { interface Window { workspaceTest: {
-  mode(value: string): void; release(): void; read(): Promise<readonly StoredAggregate[]>; stale(id: string): Promise<void>;
+  mode(value: string): void; release(): void; read(): Promise<readonly StoredAggregate[]>; stale(id: string): Promise<void>; fixture(): Promise<{ transactions: number; accounts: number; categories: number; months: number; sharedExpenseLoad: number }>;
 } } }
 window.workspaceTest = {
   mode(value) { mode = value; }, release() { release?.(); }, read: () => adapter.query({ spaceId }),
+  async fixture() {
+    const aggregates = await adapter.query({ spaceId });
+    const sharedExpenseLoad = await new Promise<number>((resolve, reject) => {
+      const request = indexedDB.open('wimm-workspace-integration');
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        const database = request.result;
+        const query = database.transaction('projections').objectStore('projections').getAll();
+        query.onerror = () => { database.close(); reject(query.error); };
+        query.onsuccess = () => { const entries = query.result as { kind: string }[]; database.close(); resolve(entries.filter((entry) => entry.kind === 'synthetic-shared-expense-load').length); };
+      };
+    });
+    const transactions = aggregates.filter((entry) => entry.aggregateType === 'transaction') as unknown as TransactionAggregate[];
+    return { transactions: transactions.length, accounts: aggregates.filter((entry) => entry.aggregateType === 'account').length, categories: aggregates.filter((entry) => entry.aggregateType === 'category').length, months: new Set(transactions.map((entry) => entry.date.slice(0, 7))).size, sharedExpenseLoad };
+  },
   async stale(transactionId) {
     const transaction = await adapter.readAggregate(transactionId as UUID);
     if (transaction === undefined) throw new Error('Testbuchung fehlt');

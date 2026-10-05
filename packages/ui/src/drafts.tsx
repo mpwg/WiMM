@@ -39,6 +39,23 @@ export function DraftProtection({ children }: { readonly children: ReactNode }) 
     };
     window.addEventListener('beforeunload', unload); return () => window.removeEventListener('beforeunload', unload);
   }, []);
+  useEffect(() => {
+    // Der oberste native HTML-Dialog behält den Tabfokus auch am Rand;
+    // bei verschachtelten Verwerfungsfragen bleibt nur diese Frage aktiv.
+    const trap = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+      const modal = [...document.querySelectorAll<HTMLDialogElement>('dialog:modal')].at(-1);
+      if (modal === undefined) return;
+      const controls = [...modal.querySelectorAll<HTMLElement>('button, input, select, textarea, a[href], [tabindex]')].filter((element) => element.tabIndex >= 0 && !element.matches(':disabled') && element.getClientRects().length > 0);
+      const first = controls[0], last = controls.at(-1);
+      if (first === undefined || last === undefined) { event.preventDefault(); modal.focus(); return; }
+      if (!modal.contains(document.activeElement) || (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+        event.preventDefault(); (event.shiftKey ? last : first).focus();
+      }
+    };
+    document.addEventListener('keydown', trap);
+    return () => document.removeEventListener('keydown', trap);
+  }, []);
   useEffect(() => { if (pending !== undefined) dialog.current?.showModal(); }, [pending]);
   function cancel() { const trigger = pending?.trigger; dialog.current?.close(); setPending(undefined); requestAnimationFrame(() => trigger?.focus()); }
   return <DraftContext.Provider value={guard}>{children}{pending === undefined ? null : <dialog ref={dialog} className="confirmation-dialog" aria-labelledby="draft-title" onCancel={(event) => { event.preventDefault(); cancel(); }}>
