@@ -36,8 +36,8 @@ Clientobjekte zusätzlich: entsperrter UserVault nur zur Laufzeit, gepinnte Iden
 | Category | groupId, name, sortOrder, archived | Gruppe im selben Bereich |
 | Payee | name, aliases[], archived | Aliasse normalisiert; Merge als expliziter Fachbefehl |
 | Transaction | accountId, date, amount, kind, payeeId?, note?, clearance, importReference?, scheduleOccurrenceId? | splits[] mit id/categoryId/amount; normale Buchungen mindestens ein Split |
-| Transfer | date, sourceAccountId, targetAccountId, sourceTransactionId, targetTransactionId, amount, budgetCategoryId? | Zwei Transaction-Kinder, vollständiges Aggregat; Betrag positiv, Konten verschieden; budgetCategoryId bei einem Budgetgrenzübertritt verpflichtend |
-| Reconciliation | accountId, statementDate, statementBalance, transactionIds[] | Betroffene Buchungsrevisionen prüfen; historische Bestätigung |
+| Transfer | date, sourceAccountId, targetAccountId, sourceTransactionId, targetTransactionId, amount, budgetCategoryId?, budgetRelease? | Zwei Transaction-Kinder, vollständiges Aggregat; Betrag positiv, Konten verschieden; budgetCategoryId beim Verlassen des Budgets als Ausgabenkategorie verpflichtend; beim Eintritt stattdessen budgetRelease=true nach ausdrücklicher Geldfreigabe |
+| Reconciliation | accountId, statementDate, statementBalance, transactionIds[] | Nur die ausgewählten offenen Bewegungen speichern; bestätigte Ausgangsbuchungen bis statementDate zusätzlich mit CAS prüfen; Differenz muss null sein; historische Bestätigung |
 | BudgetMethodPeriod | effectiveMonth, method | Pro Bereich/Monat eindeutig, chronologische Historie |
 | BudgetMonth | month, method, lines[] | lines: categoryId, planned?/assigned; vollständiger Monatsstand mit einer Revision |
 | AllocationPolicy | effectiveDate, method, entries[], archived | entries: participantId, weight bzw. declaredIncome; keine Privatbereichsreferenzen |

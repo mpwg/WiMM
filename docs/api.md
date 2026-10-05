@@ -58,8 +58,8 @@ Die folgende Tabelle beschreibt ausschließlich clientintern entschlüsselte Fac
 | `categoryGroup.save`, `category.save`, `category.archive` | Gruppe/Kategorie bzw. Archivstatus |
 | `payee.save`, `payee.merge` | Empfänger bzw. sourceIds/targetId; alle Referenzen atomar |
 | `transaction.save`, `transaction.delete` | volle Buchung mit Splits bzw. id; abgeglichene Änderung gesperrt |
-| `transfer.save`, `transfer.delete` | Transfer samt beiden Seiten, alle zugehörigen Revisionen |
-| `reconciliation.confirm`, `reconciliation.unlock` | Kontoauszug und IDs bzw. Abgleich-ID und betroffene Buchungen |
+| `transfer.save`, `transfer.delete` | Transfer samt beiden Seiten, alle zugehörigen Revisionen; Budgetabgang mit Ausgabenkategorie, Budgeteintritt mit bestätigtem budgetRelease |
+| `reconciliation.confirm`, `reconciliation.unlock` | Kontoauszug und ausgewählte offene IDs, bestätigte Ausgangsbuchungen zusätzlich mit CAS; Bestätigung nur bei Differenz null; Entsperrung umfasst verbundene Abgleiche und vollständige Transferpaare |
 | `budget.method.set`, `budget.month.save`, `budget.move` | Methode/Monat, volle Zeilen bzw. month/from/to/amount |
 | `participant.save`, `participant.archive` | Teilnehmer ohne Rechtefelder; Zuordnung zur externen Identität separat Verwaltungs-API |
 | `allocationPolicy.save` | Gültigkeitsdatum und explizite Grundlagen |
@@ -72,7 +72,7 @@ Die folgende Tabelle beschreibt ausschließlich clientintern entschlüsselte Fac
 | `rule.save`, `rule.delete`, `rule.reorder` | Regel bzw. gesamte neue Reihenfolge mit Revisionen |
 | `savingsGoal.save`, `savingsGoal.archive` | Ziel bzw. Archivstatus |
 
-`undo` ist kein privilegierter Serverbefehl. Die UI erzeugt denselben passenden Gegenbefehl mit aktueller Revision. Import übernimmt normale `transaction.save`-Operationen; Batch-/Dublettenmetadaten bleiben bereichseigene Daten. Die maximale Batchgröße bedeutet keine Atomizität eines kompletten Großimports; Vorschau bestätigt dies vor Übernahme.
+`undo` ist kein privilegierter Serverbefehl. Die UI erzeugt denselben passenden Gegenbefehl mit der seit der eigenen Aktion erwarteten Revision und prüft sämtliche betroffenen Aggregate und Referenzen erneut. Die Historie umfasst nur erfolgreiche Buchungs-, Transfer- und Abgleichaktionen des aktiven Bereichs und bleibt flüchtig; neue Aktionen verwerfen den Redozweig, Bereichswechsel und andere Stammdatenaktionen leeren die Historie. Revisionen sinken niemals, neue Aggregate werden beim Rückgängigmachen als Tombstones erhalten. Import übernimmt normale `transaction.save`-Operationen; Batch-/Dublettenmetadaten bleiben bereichseigene Daten. Die maximale Batchgröße bedeutet keine Atomizität eines kompletten Großimports; Vorschau bestätigt dies vor Übernahme.
 
 ## Push-Antwort
 

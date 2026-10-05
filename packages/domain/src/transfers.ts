@@ -12,9 +12,10 @@ import {
   type P2AggregateType,
   type RevisionExpectation
 } from './commands.js';
-import type { AccountAggregate } from './master-data.js';
+import type { AccountAggregate, CategoryAggregate, CategoryGroupAggregate } from './master-data.js';
 import { DomainValidationError } from './errors.js';
-import { assertMoney, subtractMoney } from './money.js';
+import { assertMoney, subtractMoney, sumMoney } from './money.js';
+import { parseFinanceDate } from './calendar.js';
 import { normalizeTransaction, type TransactionAggregate } from './transactions.js';
 
 export interface TransferFields {
@@ -25,6 +26,7 @@ export interface TransferFields {
   readonly targetTransactionId: UUID;
   readonly amount: Money;
   readonly budgetCategoryId?: UUID;
+  readonly budgetRelease?: boolean;
 }
 
 export type TransferAggregate = P2Aggregate<'transfer', TransferFields>;
@@ -45,12 +47,15 @@ export interface TransferCommandInput {
   readonly target: TransactionAggregate;
   readonly sourceAccount: AccountAggregate;
   readonly targetAccount: AccountAggregate;
+  readonly budgetCategory?: CategoryAggregate;
+  readonly budgetGroup?: CategoryGroupAggregate;
 }
 
 export interface ReconciliationCommandInput {
   readonly spaceId: UUID;
   readonly reconciliation: ReconciliationAggregate;
   readonly transactions: readonly TransactionAggregate[];
+  readonly previousTransactions?: readonly TransactionAggregate[];
 }
 
 export interface ReconciliationConfirmation {
@@ -65,6 +70,7 @@ export function saveTransfer(
   dependencies: DomainDependencies
 ): DomainChangeSet<'transfer.save'> {
   const { transfer, source, target } = normalizeTransfer(input);
+  if (source.clearance === 'reconciled' || target.clearance === 'reconciled') throw new DomainValidationError('INVALID_COMMAND', 'Abgeglichene Umbuchungen müssen vor Änderungen atomar entsperrt werden.');
   const expectations = transferExpectations(input, transfer, heads, true);
   return createChangeSet<'transfer.save', TransferAggregate | TransactionAggregate>(
     {
@@ -125,6 +131,9 @@ export function confirmReconciliation(
 ): ReconciliationConfirmation {
   const reconciliation = normalizeReconciliation(input.reconciliation);
   validateReconciliationTransactions(input, reconciliation);
+  const difference = reconciliationDifference(input);
+  if (difference !== 0) throw new DomainValidationError('INVALID_COMMAND', 'Die Auszugsdifferenz muss vor der Bestätigung null sein.');
+  if (input.transactions.some((transaction) => transaction.clearance === 'reconciled')) throw new DomainValidationError('INVALID_COMMAND', 'Bereits abgeglichene Buchungen gehören zum bestätigten Ausgangssaldo.');
   const updatedTransactions = input.transactions.map((transaction) =>
     reviseAggregate<TransactionAggregate>({ ...transaction, clearance: 'reconciled' }, dependencies)
   );
@@ -132,7 +141,7 @@ export function confirmReconciliation(
     {
       commandType: 'reconciliation.confirm',
       spaceId: input.spaceId,
-      expectedRevisions: reconciliationExpectations(reconciliation, input.transactions, heads, true),
+      expectedRevisions: reconciliationExpectations(reconciliation, [...input.transactions, ...(input.previousTransactions ?? [])], heads, true),
       mutations: [{ aggregate: reconciliation }, ...updatedTransactions.map((aggregate) => ({ aggregate }))]
     },
     heads,
@@ -140,10 +149,7 @@ export function confirmReconciliation(
   );
   return Object.freeze({
     changeSet,
-    difference: input.transactions.reduce(
-      (difference, transaction) => subtractMoney(difference, transaction.amount, 'Die Auszugsdifferenz'),
-      reconciliation.statementBalance
-    )
+    difference
   });
 }
 
@@ -183,6 +189,7 @@ function normalizeTransfer(input: TransferCommandInput): {
   readonly target: TransactionAggregate;
 } {
   const transfer = input.transfer;
+  parseFinanceDate(transfer.date, 'Das Umbuchungsdatum');
   assertAggregateSpace(transfer, input.spaceId, 'Die Umbuchung');
   assertUuid(transfer.sourceAccountId, 'Das Quellkonto');
   assertUuid(transfer.targetAccountId, 'Das Zielkonto');
@@ -233,11 +240,13 @@ function transferExpectations(
   ];
   if (transfer.budgetCategoryId !== undefined) {
     expected.push(expectationForHead(transfer.budgetCategoryId, 'category', input.spaceId, heads));
+    expected.push(expectationForHead(input.budgetGroup!.id, 'categoryGroup', input.spaceId, heads));
   }
   return expected;
 }
 
 function normalizeReconciliation(reconciliation: ReconciliationAggregate): ReconciliationAggregate {
+  parseFinanceDate(reconciliation.statementDate, 'Das Auszugsdatum');
   assertAggregateSpace(reconciliation, reconciliation.spaceId, 'Der Abgleich');
   assertUuid(reconciliation.accountId, 'Das Abgleichkonto');
   assertMoney(reconciliation.statementBalance, 'Der Auszugssaldo');
@@ -301,18 +310,19 @@ function validateBudgetBoundary(input: TransferCommandInput, transfer: TransferA
   ) {
     throw new DomainValidationError('INVALID_AGGREGATE', 'Die Umbuchung verweist nicht auf ihre vollständigen Konten.');
   }
-  const crossesBudget = input.sourceAccount.onBudget !== input.targetAccount.onBudget;
-  if (crossesBudget && transfer.budgetCategoryId === undefined) {
-    throw new DomainValidationError(
-      'INVALID_AGGREGATE',
-      'Ein Budgetgrenzübertritt benötigt eine explizite Budgetkategorie.'
-    );
+  const leavesBudget = input.sourceAccount.onBudget && !input.targetAccount.onBudget;
+  const entersBudget = !input.sourceAccount.onBudget && input.targetAccount.onBudget;
+  if (leavesBudget && transfer.budgetCategoryId === undefined) {
+    throw new DomainValidationError('INVALID_AGGREGATE', 'Beim Verlassen des Budgets ist eine Ausgabenkategorie erforderlich.');
   }
-  if (!crossesBudget && transfer.budgetCategoryId !== undefined) {
-    throw new DomainValidationError(
-      'INVALID_AGGREGATE',
-      'Eine Budgetkategorie ist nur beim Budgetgrenzübertritt zulässig.'
-    );
+  if (leavesBudget && (input.budgetCategory?.id !== transfer.budgetCategoryId || input.budgetCategory?.spaceId !== input.spaceId || input.budgetGroup?.id !== input.budgetCategory?.groupId || input.budgetGroup?.spaceId !== input.spaceId || input.budgetGroup?.kind !== 'expense')) {
+    throw new DomainValidationError('INVALID_AGGREGATE', 'Der Budgetabgang benötigt eine Ausgabenkategorie im selben Bereich.');
+  }
+  if (!leavesBudget && transfer.budgetCategoryId !== undefined) {
+    throw new DomainValidationError('INVALID_AGGREGATE', 'Eine Budgetkategorie ist nur beim Verlassen des Budgets zulässig.');
+  }
+  if (entersBudget !== (transfer.budgetRelease === true)) {
+    throw new DomainValidationError('INVALID_AGGREGATE', 'Beim Eintritt ins Budget muss vorhandenes Geld ausdrücklich freigegeben werden.');
   }
 }
 
@@ -372,4 +382,20 @@ function assertUuid(value: unknown, field: string): asserts value is UUID {
   if (!uuidSchema.safeParse(value).success) {
     throw new DomainValidationError('INVALID_AGGREGATE', `${field} muss eine UUID sein.`);
   }
+}
+
+/** Auszugssaldo abzüglich bestätigtem Ausgangssaldo und ausdrücklich ausgewählten Bewegungen. */
+export function reconciliationDifference(input: ReconciliationCommandInput): Money {
+  parseFinanceDate(input.reconciliation.statementDate, 'Das Auszugsdatum');
+  assertMoney(input.reconciliation.statementBalance);
+  const ids = new Set<UUID>();
+  for (const transaction of [...(input.previousTransactions ?? []), ...input.transactions]) {
+    normalizeTransaction(transaction);
+    if (transaction.spaceId !== input.spaceId || transaction.accountId !== input.reconciliation.accountId || transaction.deletedAt !== undefined || transaction.date > input.reconciliation.statementDate || ids.has(transaction.id)) {
+      throw new DomainValidationError('INVALID_AGGREGATE', 'Die Auszugsauswahl enthält unpassende oder doppelte Buchungen.');
+    }
+    ids.add(transaction.id);
+  }
+  if ((input.previousTransactions ?? []).some((transaction) => transaction.clearance !== 'reconciled')) throw new DomainValidationError('INVALID_AGGREGATE', 'Der Ausgangssaldo enthält nicht abgeglichene Buchungen.');
+  return subtractMoney(input.reconciliation.statementBalance, sumMoney([...(input.previousTransactions ?? []), ...input.transactions].map((transaction) => transaction.amount)), 'Die Auszugsdifferenz');
 }

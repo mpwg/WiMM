@@ -9,6 +9,8 @@ import {
   saveTransfer,
   unlockReconciliation,
   type AccountAggregate,
+  type CategoryAggregate,
+  type CategoryGroupAggregate,
   type AggregateHead,
   type AggregateHeadReader,
   type DomainDependencies,
@@ -21,6 +23,7 @@ const SPACE = '00000000-0000-4000-8000-000000000001' as UUID;
 const SOURCE_ACCOUNT = '00000000-0000-4000-8000-000000000011' as UUID;
 const TARGET_ACCOUNT = '00000000-0000-4000-8000-000000000012' as UUID;
 const CATEGORY = '00000000-0000-4000-8000-000000000013' as UUID;
+const GROUP = '00000000-0000-4000-8000-000000000020' as UUID;
 const TRANSFER = '00000000-0000-4000-8000-000000000014' as UUID;
 const SOURCE_TRANSACTION = '00000000-0000-4000-8000-000000000015' as UUID;
 const TARGET_TRANSACTION = '00000000-0000-4000-8000-000000000016' as UUID;
@@ -149,13 +152,15 @@ describe('Umbuchungen und Kontenabgleich', () => {
     const result = saveTransfer(
       {
         spaceId: SPACE,
+        budgetCategory: { ...account(CATEGORY, true), aggregateType: 'category', groupId: GROUP, sortOrder: 0 } as unknown as CategoryAggregate,
+        budgetGroup: { ...account(GROUP, true), aggregateType: 'categoryGroup', kind: 'expense', sortOrder: 0 } as unknown as CategoryGroupAggregate,
         transfer: transfer({ budgetCategoryId: CATEGORY }),
         source: transferTransaction(SOURCE_TRANSACTION, SOURCE_ACCOUNT, -20_000 as Money),
         target: transferTransaction(TARGET_TRANSACTION, TARGET_ACCOUNT, 20_000 as Money),
         sourceAccount: account(SOURCE_ACCOUNT, true),
         targetAccount: account(TARGET_ACCOUNT, false)
       },
-      reader(head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account'), head(CATEGORY, 1, 'category')),
+      reader(head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account'), head(CATEGORY, 1, 'category'), head(GROUP, 1, 'categoryGroup')),
       dependencies()
     );
     expect(result.aggregates).toHaveLength(3);
@@ -191,6 +196,8 @@ describe('Umbuchungen und Kontenabgleich', () => {
     const deleted = deleteTransfer(
       {
         spaceId: SPACE,
+        budgetCategory: { ...account(CATEGORY, true), aggregateType: 'category', groupId: GROUP, sortOrder: 0 } as unknown as CategoryAggregate,
+        budgetGroup: { ...account(GROUP, true), aggregateType: 'categoryGroup', kind: 'expense', sortOrder: 0 } as unknown as CategoryGroupAggregate,
         transfer: transfer({ budgetCategoryId: CATEGORY }),
         source: transferTransaction(SOURCE_TRANSACTION, SOURCE_ACCOUNT, -20_000 as Money),
         target: transferTransaction(TARGET_TRANSACTION, TARGET_ACCOUNT, 20_000 as Money),
@@ -203,7 +210,7 @@ describe('Umbuchungen und Kontenabgleich', () => {
         head(TARGET_TRANSACTION, 1, 'transaction'),
         head(SOURCE_ACCOUNT, 1, 'account'),
         head(TARGET_ACCOUNT, 1, 'account'),
-        head(CATEGORY, 1, 'category')
+        head(CATEGORY, 1, 'category'), head(GROUP, 1, 'categoryGroup')
       ),
       dependencies()
     );
@@ -218,11 +225,11 @@ describe('Umbuchungen und Kontenabgleich', () => {
 
   it('liefert die Auszugsdifferenz ohne Korrekturbuchung und entsperrt atomar', () => {
     const confirmed = confirmReconciliation(
-      { spaceId: SPACE, reconciliation: reconciliation(), transactions: [normalTransaction()] },
+      { spaceId: SPACE, reconciliation: reconciliation({ statementBalance: -20_000 as Money }), transactions: [normalTransaction()] },
       reader(head(SOURCE_ACCOUNT, 1, 'account'), head(NORMAL_TRANSACTION, 1, 'transaction')),
       dependencies()
     );
-    expect(confirmed.difference).toBe(70_000);
+    expect(confirmed.difference).toBe(0);
     expect(confirmed.changeSet.aggregates).toHaveLength(2);
     expect(confirmed.changeSet.aggregates).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: NORMAL_TRANSACTION, clearance: 'reconciled', revision: 2 })])
@@ -243,5 +250,30 @@ describe('Umbuchungen und Kontenabgleich', () => {
         expect.objectContaining({ id: NORMAL_TRANSACTION, clearance: 'cleared', revision: 3 })
       ])
     );
+  });
+});
+
+describe('P4.4-Vertragsgrenzen', () => {
+  const input = () => ({ spaceId: SPACE, transfer: transfer(), source: transferTransaction(SOURCE_TRANSACTION, SOURCE_ACCOUNT, -20_000 as Money), target: transferTransaction(TARGET_TRANSACTION, TARGET_ACCOUNT, 20_000 as Money), sourceAccount: account(SOURCE_ACCOUNT, false), targetAccount: account(TARGET_ACCOUNT, true) });
+  it('verlangt die ausdrückliche Geldfreigabe beim Eintritt und verbietet die Abgangskategorie', () => {
+    const heads = reader(head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account'));
+    expectDomainError(() => saveTransfer(input(), heads, dependencies()), 'INVALID_AGGREGATE');
+    expect(saveTransfer({ ...input(), transfer: transfer({ budgetRelease: true }) }, heads, dependencies()).aggregates).toHaveLength(3);
+    expectDomainError(() => saveTransfer({ ...input(), transfer: transfer({ budgetRelease: true, budgetCategoryId: CATEGORY }) }, heads, dependencies()), 'INVALID_AGGREGATE');
+  });
+  it('weist nicht passende Ausgabenkategorie, ungültiges Datum und gesperrte Transferänderung ab', () => {
+    const heads = reader(head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account'), head(CATEGORY, 1, 'category'));
+    expectDomainError(() => saveTransfer({ ...input(), sourceAccount: account(SOURCE_ACCOUNT, true), targetAccount: account(TARGET_ACCOUNT, false), transfer: transfer({ budgetCategoryId: CATEGORY }) }, heads, dependencies()), 'INVALID_AGGREGATE');
+    expectDomainError(() => saveTransfer({ ...input(), transfer: transfer({ date: '2026-02-30', budgetRelease: true }) }, heads, dependencies()), 'INVALID_DATE');
+    expectDomainError(() => saveTransfer({ ...input(), transfer: transfer({ budgetRelease: true }), source: { ...input().source, clearance: 'reconciled' } }, heads, dependencies()), 'INVALID_COMMAND');
+  });
+  it('weist Differenz und doppelte Bestätigung ab, berücksichtigt bestätigte Ausgangsbuchungen mit CAS', () => {
+    const heads = reader(head(SOURCE_ACCOUNT, 1, 'account'), head(NORMAL_TRANSACTION, 1, 'transaction'));
+    expectDomainError(() => confirmReconciliation({ spaceId: SPACE, reconciliation: reconciliation(), transactions: [normalTransaction()] }, heads, dependencies()), 'INVALID_COMMAND');
+    const previous = { ...normalTransaction('reconciled'), id: SOURCE_TRANSACTION, amount: 100_000 as Money, splits: [{ id: SPLIT, categoryId: CATEGORY, amount: 100_000 as Money }] };
+    const confirmed = confirmReconciliation({ spaceId: SPACE, reconciliation: reconciliation({ statementBalance: 80_000 as Money }), transactions: [normalTransaction()], previousTransactions: [previous] }, reader(head(SOURCE_ACCOUNT, 1, 'account'), head(NORMAL_TRANSACTION, 1, 'transaction'), head(SOURCE_TRANSACTION, 2, 'transaction')), dependencies());
+    expect(confirmed.difference).toBe(0); expect(confirmed.changeSet.expectedRevisions).toContainEqual({ id: SOURCE_TRANSACTION, expectedRevision: 2 });
+    expect(confirmed.changeSet.aggregates.map((entry) => entry.id)).not.toContain(SOURCE_TRANSACTION);
+    expectDomainError(() => confirmReconciliation({ spaceId: SPACE, reconciliation: reconciliation({ statementBalance: -20_000 as Money }), transactions: [normalTransaction('reconciled')] }, reader(head(SOURCE_ACCOUNT, 1, 'account'), head(NORMAL_TRANSACTION, 2, 'transaction')), dependencies()), 'INVALID_COMMAND');
   });
 });

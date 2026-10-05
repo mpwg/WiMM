@@ -34,7 +34,21 @@ Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Eintr
 | ADR-028 | Repositorylokale Agenten-Skills und gemeinsame Vorlagen, GitHub/VS Code | Nutzerauftrag plus technischer Default | Vier Skills in .agents/skills; zentrale Docs statt Regelkopien; keine globale Plugininstallation, kein Push/CI/Appstart |
 | ADR-029 | Kompakter Einstieg, P1-Teilaufgaben und portable Prüfungen; Hooks erst P1 | Nutzerauftrag D2 und bestätigter Ergänzungsplan | Zentrale Fachquellen erhalten, Beispiele synthetisch; optionaler pre-commit prüft vorgemerkte Inhalte ohne Dateiumschreiben; gemeinsame Prüfungen in CI; keine automatische Commit-/Push-/Taskabschlussfunktion |
 | ADR-030 | Serveridentitäten ausschließlich extern; Apps lokal eigenständig | Nutzerentscheidung vom 2. Oktober 2026; ersetzt ADR-011 Authentifizierungsdefault | Keine lokale Benutzer-/Passwortverwaltung oder Setupkonten; Serververbindung setzt OIDC oder gleichwertigen externen Identitätsdienst voraus; Standalone-Apps benötigen keine Anmeldung |
+| ADR-032 | Abgleich nur ohne Differenz, Budgeteintritt mit Geldfreigabe und gezielte Gegenbefehle | P4.4-Vertragsabgleich mit verbindlichem Fachmodell | Auswahl, Ausgangssaldo und CAS explizit; keine Snapshotrücksetzung |
 | ADR-031 | Gemeinsame UI enthält den lokalen Client-Composition-Root | P4-Umsetzung | Die UI darf die lokalen Crypto-/Storage-Clients zusammensetzen; native Systemfunktionen bleiben injizierte Ports |
+
+## ADR-032 — Abgleich und lokale Gegenbefehle
+
+- Datum: 5. Oktober 2026.
+- Status: angenommen.
+- Herkunft: P4.4-Implementierungsauftrag und Abgleich mit dem bestehenden Fachmodell.
+- Problem: Die bisherige Implementierung bestätigte Kontoauszüge trotz Differenz; das Datenmodell verlangte beim Budgeteintritt eine Kategorie, obwohl das Fachmodell eine Freigabe vorhandenen Geldes vorsieht. Entsperrung und Historie benötigten einen vollständigen atomaren Umfang.
+- Entscheidung: Nur Differenz null erlaubt `reconciliation.confirm`. Bestätigte Ausgangsbuchungen bis zum Auszugsdatum werden zusätzlich mit CAS gelesen; die neue Bestätigung enthält nur ausgewählte offene Bewegungen. Beim Budgetabgang ist eine Ausgabenkategorie erforderlich, beim Eintritt stattdessen `budgetRelease=true`. Die Entsperrung hebt verbundene Abgleiche samt Transferpaaren in einem Batch auf. Undo/Redo erzeugt geprüfte reguläre Gegenbefehle für die betroffenen Aggregate; Revisionen steigen und Tombstones bleiben erhalten.
+- Alternativen: Automatische Korrekturbuchungen und vollständige Bereichssnapshotrücksetzungen widersprechen Bestätigung beziehungsweise Revisionsschutz und werden ausgeschlossen.
+- Folgen: UI zeigt Auswahl und Differenz, verlangt separate Korrekturbestätigung und bewahrt geänderte Eingaben bis zum bestätigten Verwerfen. Die flüchtige Historie wird bei Bereichswechsel und Stammdatenaktionen geleert.
+- Betroffene Verträge/Pakete: [Fachmodell](domain.md), [Datenmodell](data-model.md), [Fachbefehle](api.md#fachbefehle), domain, ui und P4.4.
+- Migration und Kompatibilität: Keine Speicherstrukturmigration; das optionale Finanzfeld `budgetRelease` liegt im bestehenden Aggregatpayload. Die bisherige UI konnte mangels Kategorieangabe keine Budgetgrenztransfers erzeugen. Alte synthetische Abgleiche mit Differenz werden nicht automatisch korrigiert; explizit entsperren und neu prüfen. Finanzvertrag vor der ersten Veröffentlichung präzisiert; Servertransport unverändert.
+- Prüfung: F03, Differenz-/Ausgangssaldo-/Budgetgrenzfälle, atomare Fehlrollback- und Gegenbefehlsprüfungen sowie Chromium-Tastatur/Touch und dauerhafter Neustart in P4.4.
 
 ## ADR-031 — Lokale Client-Composition in der UI
 
