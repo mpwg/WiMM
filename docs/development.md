@@ -53,6 +53,24 @@ P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft
 
 Die abgeschlossenen [P1-Teilaufgaben](p1-foundation.md), [P2-Teilaufgaben](p2-domain.md), [P3-Teilaufgaben](p3-storage.md), [P4.1](p4-ui.md#p41--composition-root-und-lokaler-einstieg) und [P4.2](p4-ui.md#p42--navigation-übersicht-und-stammdaten) dokumentieren die Grundlage. Die [Teilaufgabenübersicht P4–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) legt die nächsten Schritte fest; mit [P4.4.1](p4-ui.md#p441--transferdialog-und-f03-abnehmen) fortfahren. Für den ersten Einstieg den [Kurzleitfaden](getting-started.md) nutzen; [Referenzhaushalt](reference-household.md) und [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) helfen bei konkreten Aufgaben.
 
+## Workspace aufräumen
+
+Alle Befehle im Repositoryhauptverzeichnis ausführen. Laufende Entwicklungsserver, Builds, Tests und die Desktop-App vorher beenden. Die Aufräumbefehle benötigen nur Node und Git; sie installieren oder starten keine Anwendung.
+
+| Befehl | Wirkung |
+| --- | --- |
+| `pnpm clean:preview` | Zeigt alle vorhandenen Löschziele, ohne etwas zu entfernen |
+| `pnpm clean` | Entfernt Desktop-Rust-Builds (`apps/desktop/src-tauri/target`), generierte Tauri-Dateien (`gen`), Workspace-`dist`-Ordner und lokale `*.tsbuildinfo` |
+| `pnpm clean:tests` | Entfernt `test-results` und `.toolchain-checks`, einschließlich lokaler Screenshots, Traces und temporärer Browserprofile |
+| `pnpm clean:deps` | Entfernt `node_modules` im Root und in den vorhandenen Workspacepaketen |
+| `pnpm clean:all` | Kombiniert Builds, Testergebnisse und Abhängigkeiten |
+
+Eine einzelne Stufe lässt sich vorab ansehen, zum Beispiel mit `pnpm clean --dry-run` oder `pnpm clean:tests --dry-run`. Nach `clean:deps` oder `clean:all` zuerst `pnpm install --frozen-lockfile` ausführen. Auch ohne installierte Abhängigkeiten funktioniert `node scripts/clean.mjs --all --dry-run`; ohne `--dry-run` wird tatsächlich gelöscht. Der nächste Desktopbuild erzeugt den Rust-Buildordner erneut und benötigt entsprechend mehr Zeit.
+
+Quellcode, Lockfiles, `.git`, lokale Finanzdaten und globale pnpm-/Cargo-/Browsercaches gehören nicht zu den Löschzielen. Das Skript prüft alle Ziele vor dem Löschen und bricht bei versionierten Dateien oder verlinkten Elternverzeichnissen ab. Einzelne verlinkte Löschziele werden nur als Link entfernt. Vor `clean:tests` benötigte Abnahmebelege außerhalb der beiden Ergebnisordner sichern.
+
+Am 5. Oktober 2026 belegte die Arbeitskopie rund 17 GB: rund 15 GB Desktop-Rust-Builds, 721 MB temporäre Prüfdateien, 178 MB Testergebnisse und 405 MB Root-Abhängigkeiten. `pnpm clean` adressiert damit den größten Speicherverbrauch; tatsächliche Größen hängen von den bisherigen Builds ab.
+
 ## Aktuelle Toolprüfungen
 
 `pnpm check:ci` startet dieselbe vollständige Prüfserie lokal und in CI: Dokumentation und Validator-Tests, Paketgraph, TypeScript, Oxlint, Rust-Format/Clippy/Tests, Toolchain-Fehlerproben, alle vorhandenen Pakettests einschließlich `@wimm/ui`, UI-Tests und Builds. Node-Warnungen brechen die zentrale Serie ab; `NO_COLOR` wird für Kindprozesse in `FORCE_COLOR=0` übersetzt, um widersprüchliche Farbvariablen zu vermeiden. Die einzelnen Befehle bleiben für gezielte Prüfungen verfügbar.
