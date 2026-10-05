@@ -3,8 +3,8 @@ import { useEffect, useRef, type ButtonHTMLAttributes, type ReactNode } from 're
 import { X, type LucideIcon } from 'lucide-react';
 import { useDraftGuard } from './drafts.js';
 
-export function Button({ variant = 'secondary', icon: Icon, children, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { readonly variant?: 'primary' | 'secondary' | 'quiet' | 'danger'; readonly icon?: LucideIcon }) {
-  return <button type="button" {...props} className={`button ${variant} ${className}`}>
+export function Button({ variant = 'secondary', icon: Icon, children, className = '', onClick, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { readonly variant?: 'primary' | 'secondary' | 'quiet' | 'danger'; readonly icon?: LucideIcon }) {
+  return <button type="button" {...props} onClick={(event) => { event.currentTarget.focus(); onClick?.(event); }} className={`button ${variant} ${className}`}>
     {Icon === undefined ? null : <Icon size={18} aria-hidden="true" />}{children}
   </button>;
 }

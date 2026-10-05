@@ -6,7 +6,10 @@ Am 5. Oktober 2026 ausdrücklich freigegeben: UX-01–UX-06. Ziel ist eine klare
 
 ## Gestaltung
 
-Systemschrift mit 16 px Fließtext, 14 px Zusatztext, 28 px Seitentitel und 36 px führender Zahl. Hell: #F7F8FA, #FFFFFF, #181B25, Akzent #4F46E5. Dunkel: #14161C, #1D2029, #F3F4F8, Akzent #A5B4FC. Semantische Tokens trennen Eingabegrenzen von dekorativen Trennlinien. 4-/8-Pixelraster, 8 px Kontroll- und 12 px Dialogrundung. Lucide-Icons mit Text beziehungsweise zugänglichem Namen. Normale Ausgaben neutral, destruktive Aktionen rot; niemals alleinige Farbcodierung. Übergänge 120–180 ms, reduced motion berücksichtigt.
+Der zusätzliche Nutzerauftrag vom 5. Oktober 2026 ersetzt die Indigo-Defaults durch den [klickbaren UX-Flow](assets/ux-flow-konzept.html), beschränkt auf vorhandene Funktionen. Budget, Teilen und Ausgleich bleiben spätere Fachpakete. Die führende Kennzahl ist deshalb „Kontostand gesamt“ aus den tatsächlich gespeicherten Buchungen.
+
+
+Systemschrift mit 16 px Fließtext, 14 px Zusatztext, 28 px Seitentitel und 36 px führender Zahl. Hell: #F5F5F1, #FFFFFF, #202F29, Akzent #235E48. Dunkel: #171D1B, #222B27, #EDF4EF, Akzent #A2D9B9. Warme Flächen, Wortmarke „WiMM.“ und ruhigere Schriftgewichte entsprechen dem Flow. Semantische Tokens trennen Eingabegrenzen von dekorativen Trennlinien. 4-/8-Pixelraster, 9 px Kontroll- und 14 px Dialogrundung. Lucide-Icons mit Text beziehungsweise zugänglichem Namen. Normale Ausgaben neutral, destruktive Aktionen rot; niemals alleinige Farbcodierung. Übergänge 120–180 ms, reduced motion berücksichtigt.
 
 ## Navigation und Abläufe
 
@@ -41,7 +44,7 @@ Budget, Ausgleich, Berichte, Konflikte und Wiederherstellung übernehmen später
 
 ## Alternativer klickbarer UX-Flow
 
-Der [UX-Flow-Entwurf](assets/ux-flow-konzept.html) ist auf Nutzerauftrag vom 5. Oktober 2026 dauerhaft im Repository abgelegt. Er erkundet eine alternative Gestaltung mit Grünakzent, warmen Flächen und einer führenden Budgetzahl unabhängig von der vorhandenen Implementierung. Er ersetzt nicht die freigegebene Designsprache oder die UX-06-Abnahme.
+Der [UX-Flow-Entwurf](assets/ux-flow-konzept.html) ist auf Nutzerauftrag vom 5. Oktober 2026 dauerhaft im Repository abgelegt. Er erkundet eine alternative Gestaltung mit Grünakzent, warmen Flächen und einer führenden Budgetzahl unabhängig von der vorhandenen Implementierung. Der spätere ausdrückliche Umsetzungsauftrag gibt seine Gestaltung und Abläufe für vorhandene Funktionen frei; eine UX-06-Abnahme ersetzt die Konzeptdatei nicht.
 
 Klickbare Abläufe: lokaler Einstieg mit Tresor/Rettungscode/erstem Konto; Buchung mit optionaler Veröffentlichungsvorschau; gemeinsame Kosten und tatsächlicher Ausgleich; Budgetzuweisung; Importvorschau mit Dubletten und fehlerhaften Zeilen. Budget und Familienfinanzen sind ausschließlich Zukunftsentwürfe. Alle Daten sind synthetisch; der Entwurf speichert keine Finanzdaten dauerhaft und verbindet sich mit keinem Server.
 

@@ -1,0 +1,132 @@
+{
+  "date": "2026-10-05",
+  "implementationCommit": "430a4b0",
+  "runtime": "Tauri 2 / macOS 27 arm64 / SQLite",
+  "isolatedProfile": "wimm/ux-flow-native/v2",
+  "offlineLaunch": "sandbox-exec: (version 1)(allow default)(deny network*)",
+  "observations": {
+    "v2-overview": [
+      "AXGroup | Kontostand gesamt | Kontostand gesamt |",
+      "AXStaticText |  |  | Kontostand gesamt",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Konten öffnen |  |",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Öffnendialog prüfen |  |"
+    ],
+    "v2-open-sheet": [
+      "AXGroup | Kontostand gesamt | Kontostand gesamt |",
+      "AXStaticText |  |  | Kontostand gesamt",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Konten öffnen |  |",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Öffnendialog prüfen |  |",
+      "AXButton | Cancel |  |"
+    ],
+    "v2-open-cancelled": [
+      "AXGroup | Kontostand gesamt | Kontostand gesamt |",
+      "AXStaticText |  |  | Kontostand gesamt",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Konten öffnen |  |",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Öffnendialog prüfen |  |",
+      "AXStaticText |  |  | Abgebrochen"
+    ],
+    "v2-save-sheet": [
+      "AXGroup | Kontostand gesamt | Kontostand gesamt |",
+      "AXStaticText |  |  | Kontostand gesamt",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Konten öffnen |  |",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Öffnendialog prüfen |  |",
+      "AXStaticText |  |  | Datei speichern",
+      "AXStaticText |  |  | Save As:",
+      "AXButton | Cancel |  |",
+      "AXButton | Save |  |"
+    ],
+    "v2-save-cancelled": [
+      "AXGroup | Kontostand gesamt | Kontostand gesamt |",
+      "AXStaticText |  |  | Kontostand gesamt",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Konten öffnen |  |",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Öffnendialog prüfen |  |"
+    ],
+    "v2-rights": [
+      "AXGroup | Kontostand gesamt | Kontostand gesamt |",
+      "AXStaticText |  |  | Kontostand gesamt",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Konten öffnen |  |",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Öffnendialog prüfen |  |",
+      "AXStaticText |  |  | Unzulässige Commands, Pfade und Links abgewiesen"
+    ],
+    "v2-text-undo": [
+      "AXStaticText |  |  | Betrag",
+      "AXTextField | Betrag | Betrag |",
+      "AXStaticText |  |  | Betrag in EUR; die gewählte Richtung bestimmt das Vorzeichen.",
+      "AXButton | Lokal speichern |  |"
+    ],
+    "v2-locked": [
+      "AXHeading | Tresor entsperren |  | 1",
+      "AXStaticText |  |  | Tresor entsperren",
+      "AXButton | Entsperren |  |",
+      "AXButton | Öffnendialog prüfen |  |",
+      "AXStaticText |  |  | Unzulässige Commands, Pfade und Links abgewiesen"
+    ],
+    "v2-offline-locked": [
+      "AXHeading | Tresor entsperren |  | 1",
+      "AXStaticText |  |  | Tresor entsperren",
+      "AXButton | Entsperren |  |",
+      "AXButton | Öffnendialog prüfen |  |"
+    ],
+    "v2-offline-unlocked": [
+      "AXGroup | Kontostand gesamt | Kontostand gesamt |",
+      "AXStaticText |  |  | Kontostand gesamt",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Konten öffnen |  |",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXButton | Öffnendialog prüfen |  |"
+    ],
+    "v2-selected-file": [
+      "AXStaticText |  |  | eingabe.txt: Synthetische native UX-Dateiprüfung"
+    ],
+    "v2-category-result": [
+      "AXStaticText |  |  | Speicherport beendet"
+    ],
+    "v2-finance-saved": [
+      "AXStaticText |  |  | € 900,00",
+      "AXStaticText |  |  | € 900,00",
+      "AXStaticText |  |  | € 900,00"
+    ],
+    "v2-finance-undo": [
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00",
+      "AXStaticText |  |  | € 1.000,00"
+    ],
+    "v2-finance-redo": [
+      "AXStaticText |  |  | € 900,00",
+      "AXStaticText |  |  | € 900,00",
+      "AXStaticText |  |  | € 900,00"
+    ],
+    "v2-command-n": [
+      "AXHeading | Neue Buchung |  | 2"
+    ],
+    "v2-command-f-focus": "Durchsuchen",
+    "savedFileBytes": "Synthetische P4.5-Portprüfung"
+  }
+}

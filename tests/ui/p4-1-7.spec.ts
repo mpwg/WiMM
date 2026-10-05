@@ -14,8 +14,8 @@ async function createHousehold(page: Page): Promise<string> {
   await page.getByRole('button', { name: 'Lokalen Bereich eröffnen' }).click();
   await page.getByLabel('Entsperrpassphrase').fill(passphrase);
   await page.getByRole('button', { name: 'Entsperren' }).click();
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
-  await page.getByRole('button', { name: '+ Haushalt anlegen' }).click();
+  await expect(page.getByRole('heading', { name: 'Alles im Blick.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Haushalt anlegen' }).click();
   await expect(page.getByLabel('Bereich')).toHaveText(/Haushalt 1/);
   return recoveryCode!;
 }
@@ -40,10 +40,10 @@ test('startet die PWA nach einem Offline-Neustart und öffnet den Haushalt über
   const passphraseResponse = await passphraseRestart.goto('/');
   expect(passphraseResponse?.status()).toBe(200);
   await expect(passphraseRestart.getByRole('heading', { name: 'Tresor entsperren' })).toBeVisible({ timeout: 15_000 });
-  await expect(passphraseRestart.getByRole('heading', { name: 'Übersicht' })).toHaveCount(0);
+  await expect(passphraseRestart.getByRole('heading', { name: 'Alles im Blick.' })).toHaveCount(0);
   await passphraseRestart.getByLabel('Entsperrpassphrase').fill(passphrase);
   await passphraseRestart.getByRole('button', { name: 'Entsperren' }).click();
-  await expect(passphraseRestart.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
+  await expect(passphraseRestart.getByRole('heading', { name: 'Alles im Blick.' })).toBeVisible();
   await expect(passphraseRestart.getByLabel('Bereich')).toHaveText(/Haushalt 1/);
 
   await passphraseRestart.getByRole('button', { name: 'Tresor sperren' }).click();
@@ -57,6 +57,6 @@ test('startet die PWA nach einem Offline-Neustart und öffnet den Haushalt über
   await recoveryRestart.getByLabel('Rettungscode verwenden').check();
   await recoveryRestart.getByRole('textbox', { name: 'Rettungscode' }).fill(recoveryCode);
   await recoveryRestart.getByRole('button', { name: 'Entsperren' }).click();
-  await expect(recoveryRestart.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
+  await expect(recoveryRestart.getByRole('heading', { name: 'Alles im Blick.' })).toBeVisible();
   await expect(recoveryRestart.getByLabel('Bereich')).toHaveText(/Haushalt 1/);
 });

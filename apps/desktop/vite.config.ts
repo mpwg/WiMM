@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import react from '@vitejs/plugin-react';
+import { clientIconDirectives } from '../../scripts/client-directives.js';
 import { createLogger, defineConfig } from 'vite';
 
 export default defineConfig(({ command }) => {
@@ -30,7 +31,7 @@ export default defineConfig(({ command }) => {
         }
       }
     },
-    plugins: [react()],
+    plugins: [clientIconDirectives(), react()],
     server: {
       port: 1420,
       strictPort: true,

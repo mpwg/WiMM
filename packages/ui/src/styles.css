@@ -1,17 +1,17 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 :root, .app-shell {
   color-scheme: light;
-  --background: #f7f8fa; --surface: #fff; --text: #181b25; --muted: #626777;
-  --border: #e1e4ec; --input-border: #858b9a; --accent: #4f46e5; --accent-text: #fff;
-  --selected: #eeedff; --selected-text: #4338ca; --notice: #eeedff; --status: #18704a;
-  --danger: #b42332; --hover: #f0f1f6; --radius: 8px; --dialog-radius: 12px;
+  --background: #f5f5f1; --surface: #fff; --text: #202f29; --muted: #607068;
+  --border: #dde4df; --input-border: #7c8980; --accent: #235e48; --accent-text: #fff;
+  --selected: #e6efe8; --selected-text: #235e48; --notice: #e6efe8; --status: #18704a;
+  --danger: #923d20; --hover: #edf2ec; --radius: 9px; --dialog-radius: 14px;
 }
-:root { font-family: system-ui, sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.5; color: var(--text); }
+:root { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-synthesis: none; font-size: 16px; line-height: 1.5; color: var(--text); }
 * { box-sizing: border-box; }
 body { background: var(--background); margin: 0; }
 h1, h2, h3, p, label { overflow-wrap: anywhere; }
-h1 { font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.035em; margin: 0.25rem 0; font-weight: 700; }
-h2 { font-size: 1.125rem; letter-spacing: -0.015em; margin: 0 0 1rem; font-weight: 650; }
+h1 { font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.035em; margin: 0.25rem 0; font-weight: 500; }
+h2 { font-size: 1.125rem; letter-spacing: -0.015em; margin: 0 0 1rem; font-weight: 500; }
 h3 { font-size: 1rem; margin: 0 0 0.5rem; }
 a { color: var(--accent); }
 button, input, select, textarea { font: inherit; }
@@ -64,7 +64,7 @@ fieldset { min-width: 0; }
 .overview-grid { display: grid; gap: 1.5rem; grid-template-columns: 2fr 1fr 1fr; margin: 0 0 2rem; padding: 1.5rem 0 2rem; border-bottom: 1px solid var(--border); }
 .overview-grid article { min-width: 0; }
 .overview-grid p { color: var(--muted); font-size: 0.875rem; margin: 0 0 0.5rem; }
-.overview-grid strong { display: block; font-size: 1.5rem; font-weight: 650; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.overview-grid strong { display: block; font-size: 1.5rem; font-weight: 500; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .overview-grid article:first-child strong { font-size: 2.25rem; }
 .section-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 1.5rem 0 0.75rem; }
 .section-heading h2 { margin: 0; }
@@ -72,7 +72,7 @@ fieldset { min-width: 0; }
 .inline-form { margin-top: 1rem; }
 .inline-form button[type='submit'], .inline-form h2, .inline-form p, .transaction-fields > button[type='submit'], .amount-field, .transaction-fields > details, .transaction-fields > .segment-control { grid-column: 1 / -1; }
 .merge-form h2, .merge-form p { margin: 0; }
-.table-wrap { max-width: 100%; overflow-x: auto; }
+.table-wrap { position: relative; max-width: 100%; overflow-x: auto; }
 .table-wrap table { border-collapse: collapse; min-width: 30rem; width: 100%; }
 .table-wrap th, .table-wrap td { border-bottom: 1px solid var(--border); padding: 0.75rem 0.5rem; text-align: left; }
 .table-wrap th { color: var(--muted); font-size: 0.875rem; font-weight: 500; }
@@ -111,7 +111,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 .transaction-table .virtual-spacer td { border: 0; padding: 0; }
 .transaction-link { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; border: 0; color: var(--text); background: transparent; padding: 0.5rem 0; }
 .transaction-dialog dd { margin: 0 0 0.75rem; overflow-wrap: anywhere; }
-.transaction-dialog dt { font-weight: 550; color: var(--muted); font-size: 0.875rem; }
+.transaction-dialog dt { overflow-wrap: anywhere; font-weight: 550; color: var(--muted); font-size: 0.875rem; }
 .amount-field input { font-size: 2rem; font-variant-numeric: tabular-nums; font-weight: 600; }
 .segment-control { display: flex; gap: 0.25rem; }
 .segment-control button { flex: 1; }
@@ -123,13 +123,13 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 .import-preview > li { border-bottom: 1px solid var(--border); padding: 1rem 0; }
 .import-preview pre { max-height: 12rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 .stepper { display: flex; gap: 0.75rem; flex-wrap: wrap; padding: 0; list-style: none; color: var(--muted); font-size: 0.875rem; }
-.stepper [aria-current='step'] { color: var(--accent); font-weight: 650; }
+.stepper [aria-current='step'] { color: var(--accent); font-weight: 500; }
 .mobile-only, .mobile-navigation, .mobile-transactions { display: none; }
 @media (prefers-color-scheme: dark) {
-  :root, .app-shell[data-color-scheme='system'] { color-scheme: dark; --background: #14161c; --surface: #1d2029; --text: #f3f4f8; --muted: #a5adbf; --border: #343947; --input-border: #7d8596; --accent: #a5b4fc; --accent-text: #181b25; --selected: #2a2d49; --selected-text: #c7d2fe; --notice: #2a2d49; --status: #80d6a6; --danger: #ff9aa5; --hover: #292d38; }
+  :root, .app-shell[data-color-scheme='system'] { color-scheme: dark; --background: #171d1b; --surface: #222b27; --text: #edf4ef; --muted: #a7b9af; --border: #3d4c43; --input-border: #82988a; --accent: #a2d9b9; --accent-text: #202f29; --selected: #2d4235; --selected-text: #a2d9b9; --notice: #2d4235; --status: #80d6a6; --danger: #ffcc9b; --hover: #29362e; }
 }
-.app-shell[data-color-scheme='dark'] { color-scheme: dark; --background: #14161c; --surface: #1d2029; --text: #f3f4f8; --muted: #a5adbf; --border: #343947; --input-border: #7d8596; --accent: #a5b4fc; --accent-text: #181b25; --selected: #2a2d49; --selected-text: #c7d2fe; --notice: #2a2d49; --status: #80d6a6; --danger: #ff9aa5; --hover: #292d38; }
-.app-shell[data-color-scheme='light'] { color-scheme: light; --background: #f7f8fa; --surface: #fff; --text: #181b25; --muted: #626777; --border: #e1e4ec; --input-border: #858b9a; --accent: #4f46e5; --accent-text: #fff; --selected: #eeedff; --selected-text: #4338ca; --notice: #eeedff; --status: #18704a; --danger: #b42332; --hover: #f0f1f6; }
+.app-shell[data-color-scheme='dark'] { color-scheme: dark; --background: #171d1b; --surface: #222b27; --text: #edf4ef; --muted: #a7b9af; --border: #3d4c43; --input-border: #82988a; --accent: #a2d9b9; --accent-text: #202f29; --selected: #2d4235; --selected-text: #a2d9b9; --notice: #2d4235; --status: #80d6a6; --danger: #ffcc9b; --hover: #29362e; }
+.app-shell[data-color-scheme='light'] { color-scheme: light; --background: #f5f5f1; --surface: #fff; --text: #202f29; --muted: #607068; --border: #dde4df; --input-border: #7c8980; --accent: #235e48; --accent-text: #fff; --selected: #e6efe8; --selected-text: #235e48; --notice: #e6efe8; --status: #18704a; --danger: #923d20; --hover: #edf2ec; }
 @media (min-width: 768px) {
   .app-shell { display: grid; grid-template-columns: 12rem minmax(0, 1fr); }
   .sidebar { height: 100dvh; position: sticky; top: 0; overflow-y: auto; }
@@ -183,4 +183,55 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
   .account-table td:first-child button { white-space: normal; }
   .account-table td:nth-child(2) { grid-column: 1; color: var(--muted); font-size: 0.875rem; }
   .account-table td.money { grid-column: 1 / -1; text-align: left !important; }
+}
+
+/* Gemeinsame Gestaltung aus dem freigegebenen UX-Flow. */
+.product { gap: 0; font-size: 1.5rem; font-weight: 500; padding: 0 0.5rem; }
+.product span { color: var(--accent); }
+.sidebar { gap: 1.75rem; padding: 1.75rem 1rem; }
+.sidebar-footer .local-status { padding: 0.625rem 0.875rem; }
+.area-picker select { background: var(--selected); }
+.workspace-pane { min-width: 0; }
+.area-header { display: flex; align-items: center; gap: 1rem; min-height: 72px; padding: 1rem 2rem; background: var(--surface); border-bottom: 1px solid var(--border); }
+.area-header > p { margin: 0; }
+.area-header .local-status { margin-left: auto; }
+.finance-main { max-width: 1200px; padding: 2rem; }
+.finance-main > header { margin-bottom: 1.75rem; }
+.finance-main > header .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.75rem; }
+.overview-hero { background: var(--selected); border-radius: 14px; padding: 1.5rem 1.75rem; margin-bottom: 1.75rem; min-width: 0; }
+.overview-hero p { margin: 0; color: var(--muted); }
+.overview-hero .hero-amount { display: block; font-size: 2.625rem; line-height: 1.2; letter-spacing: -0.04em; font-weight: 500; margin: 0.5rem 0; text-align: left !important; white-space: normal; overflow-wrap: anywhere; }
+.hero-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+.overview-columns { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 1.75rem; }
+.overview-columns > section { min-width: 0; }
+.overview-columns .section-heading:first-child { margin-top: 0; }
+.overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 1.25rem 0; margin: 1rem 0; gap: 1rem; }
+.overview-grid article:first-child { grid-column: auto; }
+.overview-grid article:first-child strong { font-size: 1.5rem; }
+.overview-columns .plain-list > li { flex-wrap: nowrap; gap: 0.75rem; }
+.overview-columns .plain-list > li > span:not(.row-symbol):not(.money) { flex: 1; }
+.row-symbol { width: 36px; height: 36px; background: var(--surface); border-radius: 10px; display: grid; place-items: center; color: var(--accent); flex-shrink: 0; }
+.overview-columns .plain-list .money { flex: 0 0 auto; white-space: nowrap; }
+.auth { margin: 3rem auto; padding: 2rem; max-width: 34rem; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+.auth .auth-brand { margin-bottom: 1.5rem; }
+.auth h1 { font-size: 2rem; }
+.auth .stepper { margin: 0 0 1.5rem; }
+.notice.error { border-left: 3px solid var(--danger); }
+@media (max-width: 1023px) {
+  .area-header { padding: 1rem 1.5rem; }
+  .finance-main { padding: 1.5rem; }
+  .overview-columns { grid-template-columns: 1fr; }
+}
+@media (max-width: 767px) {
+  .sidebar { display: none; }
+  .desktop-only { display: none; }
+  .area-header { padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 0.75rem; align-items: end; flex-wrap: wrap; }
+  .area-header .area-actions { flex: 1; }
+  .area-header .local-status { margin-left: 0; font-size: 0.75rem; }
+  .finance-main { padding: 1.5rem 1rem; }
+  .overview-hero { padding: 1.25rem; }
+  .overview-hero .hero-amount { font-size: 2.25rem; }
+  .overview-columns .plain-list > li { flex-wrap: wrap; }
+  .overview-columns .plain-list > li > .money { max-width: 100%; }
+  .auth { margin: 1rem; padding: 1.5rem; }
 }

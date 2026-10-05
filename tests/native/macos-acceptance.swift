@@ -7,9 +7,10 @@ let app = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName
 let root = AXUIElementCreateApplication(app.processIdentifier)
 func attribute(_ element: AXUIElement, _ name: String) -> AnyObject? { var value: CFTypeRef?; AXUIElementCopyAttributeValue(element, name as CFString, &value); return value }
 func children(_ element: AXUIElement) -> [AXUIElement] { attribute(element, kAXChildrenAttribute as String) as? [AXUIElement] ?? [] }
-func find(_ element: AXUIElement, _ label: String, _ role: String) -> AXUIElement? {
+func find(_ element: AXUIElement, _ label: String, _ role: String, _ depth: Int = 0) -> AXUIElement? {
+    guard depth < 40 else { return nil }
     if attribute(element, kAXRoleAttribute as String) as? String == role && (attribute(element, kAXTitleAttribute as String) as? String == label || attribute(element, kAXDescriptionAttribute as String) as? String == label) { return element }
-    for child in children(element) { if let result = find(child, label, role) { return result } }
+    for child in children(element) { if let result = find(child, label, role, depth + 1) { return result } }
     return nil
 }
 func key(_ code: CGKeyCode, _ flags: CGEventFlags = []) {
