@@ -42,3 +42,13 @@ Für die Fortsetzung in UX-06:
 - Tastatur, Fokus und Screenreader sowie native Menüs, echte mobile Tastatur und sichere Bildschirmflächen prüfen. Fehlende Plattformen und Geräte ausdrücklich als offen dokumentieren.
 
 Manueller Aufruf der gezielten Suite: `pnpm exec playwright test --config tests/ux/config.ts --project Chromium`. Vor der Gesamtabnahme sämtliche relevanten Prüfungen auf dem dann aktuellen Stand ausführen.
+
+## Ablage des alternativen UX-Flows
+
+- Ergebnis: Auf Nutzerauftrag vom 5. Oktober 2026 ist der [klickbare alternative UX-Flow](../assets/ux-flow-konzept.html) dauerhaft unter `docs/assets` abgelegt. Der vorherige Pfad unter `.toolchain-checks` fehlte; die temporäre Ablage ist für ein dauerhaftes Konzept ungeeignet. [Konzeptbeschreibung](../ux-redesign.md#alternativer-klickbarer-ux-flow) und Aufgabenübersicht verlinken die neue Ablage.
+- Geänderte Verträge: keine; reiner synthetischer Konzeptentwurf. Grünakzent, Budget und Ausgleich sind Designoptionen; keine Änderung der freigegebenen Appgestaltung oder P6-/P7-Implementierung.
+- Geprüft: JavaScript-Syntax und reale Chromium-Klickabläufe auf macOS arm64 für Einstieg, Buchung/Teilen/Ausgleich, Budgetbestätigung, Privat-/Haushaltstrennung und Import. Übersichtsbreiten 320, 390, 736 und 1024 Pixel ohne horizontalen Überlauf; keine JavaScript-Laufzeitfehler. Lokale Dokumentationslinks, SPDX-Hinweis und `git diff --check` geprüft.
+- Nicht geprüft: vollständiger Dokumentationsvalidator und seine Kontrolltests, da die Projektabhängigkeiten `markdown-it` und `yaml` nach Bereinigung nicht installiert sind. Keine Installation für diesen Ablageauftrag. Native Plattformen, Screenreader und Geräte nicht geprüft; die Konzeptprüfung ersetzt keine Appabnahme.
+- Commits: zusammengehöriger Abschnitt auf `codex/ux-flow-konzept-ablage`; Commit ist in der Git-Historie des zugehörigen Pull Requests festgehalten.
+- Einschränkungen: keine dauerhafte Speicherung oder Serveranbindung; Import und Finanzaktionen sind simuliert. Optionale Chat-Icons sind außerhalb der Inline-Vorschau nicht verfügbar; alle Aktionen bleiben beschriftet.
+- Nächster Schritt: alternative Gestaltung mit dem Nutzer abstimmen. UX-06 bleibt offen; P6–P10 erhalten durch die Ablage keine Freigabe.

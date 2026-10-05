@@ -38,3 +38,11 @@ Budget, Ausgleich, Berichte, Konflikte und Wiederherstellung übernehmen später
 ## Synthetische Entwürfe
 
 [Desktop und Mobil](assets/ux-wireframes.svg) zeigen Übersicht, Buchungen, Erfassung und Kontodetails. Es handelt sich um Entwürfe, nicht um Laufzeitbelege. Aktuelle Abnahmebelege werden in [UX-Übergabe](handoffs/ux.md) geführt.
+
+## Alternativer klickbarer UX-Flow
+
+Der [UX-Flow-Entwurf](assets/ux-flow-konzept.html) ist auf Nutzerauftrag vom 5. Oktober 2026 dauerhaft im Repository abgelegt. Er erkundet eine alternative Gestaltung mit Grünakzent, warmen Flächen und einer führenden Budgetzahl unabhängig von der vorhandenen Implementierung. Er ersetzt nicht die freigegebene Designsprache oder die UX-06-Abnahme.
+
+Klickbare Abläufe: lokaler Einstieg mit Tresor/Rettungscode/erstem Konto; Buchung mit optionaler Veröffentlichungsvorschau; gemeinsame Kosten und tatsächlicher Ausgleich; Budgetzuweisung; Importvorschau mit Dubletten und fehlerhaften Zeilen. Budget und Familienfinanzen sind ausschließlich Zukunftsentwürfe. Alle Daten sind synthetisch; der Entwurf speichert keine Finanzdaten dauerhaft und verbindet sich mit keinem Server.
+
+Die Datei ist ein selbstständiger HTML-Fragmententwurf für die Inline-Vorschau im Chat; sie lässt sich auch direkt im Browser öffnen. Beschriftete Aktionen funktionieren ohne Chat-Anbindung. Die Chat-Vorschau ergänzt die optionalen Lucide-Icons. Die Ablage liegt bewusst außerhalb der temporären, von Bereinigung betroffenen `.toolchain-checks`.

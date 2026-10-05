@@ -278,3 +278,4 @@ Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen
 - Verträge: interne Ansichts-/Dialogzustände; atomarer Kontoeinstieg über Fachkern, keine Speicher-/Transportmigration.
 - Abnahme: alle Alltagspfade, Fehler-/Entwurfs-/Fokusfälle, Hell/Dunkel/Zoom, Browser-/native Plattform-/Gerätematrix und Leistung.
 - Prüfungen und Nachweise: [UX-Kriterienmatrix](handoffs/ux.md). Keine zusätzliche Freigabe für P6–P10.
+- Ergänzung vom 5. Oktober 2026: Der alternative [klickbare UX-Flow](assets/ux-flow-konzept.html) ist auf Nutzerauftrag dauerhaft unter `docs/assets` abgelegt und im [UX-Konzept](ux-redesign.md#alternativer-klickbarer-ux-flow) erläutert. Reiner Konzeptentwurf; Paketstatus und Implementierungsfreigaben bleiben unverändert. Prüfbelege und Grenzen stehen in der [UX-Übergabe](handoffs/ux.md#ablage-des-alternativen-ux-flows).
