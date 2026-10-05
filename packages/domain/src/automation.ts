@@ -6,13 +6,14 @@ import { parseFinanceDate } from './calendar.js';
 import { assertMoney, sumMoney } from './money.js';
 import { DomainValidationError } from './errors.js';
 import { saveTransaction, type TransactionAggregate, type TransactionFields } from './transactions.js';
+import { savePayee, type PayeeAggregate } from './master-data.js';
 
 export type RuleCondition = { field: 'date' | 'amount' | 'payee' | 'memo'; operator: 'equals' | 'contains' | 'gte' | 'lte'; value: string | number };
 export type RuleAction = { field: 'categoryId' | 'payeeId'; value: UUID } | { field: 'clearance'; value: 'uncleared' | 'cleared' };
 export type RuleAggregate = P2Aggregate<'rule', { order: number; conditions: readonly RuleCondition[]; actions: readonly RuleAction[]; stopProcessing: boolean; enabled: boolean }>;
 export type ScheduleAggregate = P2Aggregate<'schedule', { startDate: IsoDate; frequency: 'weekly' | 'monthly' | 'yearly'; interval: number; endDate?: IsoDate; enabled: boolean; template: Omit<TransactionFields, 'date' | 'scheduleOccurrenceId' | 'importReference'> }>;
 export type OccurrenceAggregate = P2Aggregate<'scheduleOccurrence', { scheduleId: UUID; dueDate: IsoDate; state: 'confirmed' | 'skipped'; transactionId?: UUID }>;
-export interface ImportCandidate { sourceRow: number; parserSource?: 'csv' | 'camt053' | 'ofx' | 'qfx'; date: IsoDate; amount: Money; payee?: string; memo?: string; externalId?: string; categoryId?: UUID; payeeId?: UUID; clearance?: 'uncleared' | 'cleared'; occurrence?: { scheduleId: UUID; dueDate: IsoDate } }
+export interface ImportCandidate { sourceRow: number; parserSource?: 'csv' | 'camt053' | 'ofx' | 'qfx'; date: IsoDate; amount: Money; payee?: string; memo?: string; externalId?: string; sourceFingerprint?: string; categoryId?: UUID; payeeId?: UUID; clearance?: 'uncleared' | 'cleared' }
 export type ImportDecision = 'import' | 'exclude' | 'separate';
 export type ImportBatchAggregate = P2Aggregate<'importBatch', { fileHash: string; accountId: UUID; rows: readonly { candidate: ImportCandidate | null; sourceRow: number; decision: ImportDecision; issues: readonly string[] }[]; committedRows: readonly number[]; state: 'ready' | 'partial' | 'completed' }>;
 export type ImportFingerprintAggregate = P2Aggregate<'importFingerprint', { accountId: UUID; parserSource: string; externalId?: string; fingerprint: string; transactionId: UUID; importId: UUID; sourceRow: number }>;
@@ -50,12 +51,12 @@ export function reorderRules(ids: readonly UUID[], rules: readonly RuleAggregate
   return automationChange('rule.reorder', ids.map((id, order) => reviseAggregate({ ...rules.find(r => r.id === id)!, order }, deps)), all, deps);
 }
 export function applyRules(candidate: ImportCandidate, rules: readonly RuleAggregate[], all: readonly P2Aggregate[], spaceId: UUID): { candidate: ImportCandidate; applied: UUID[] } {
-  let result = { ...candidate }; const applied: UUID[] = [];
+  let result = { ...candidate, sourceFingerprint: importFingerprint(candidate) }; const applied: UUID[] = [];
   for (const rule of [...rules].filter(r => r.enabled && !r.deletedAt && r.spaceId === spaceId).sort((a, b) => a.order - b.order || a.id.localeCompare(b.id))) {
     validateRule(rule, all);
     const match = rule.conditions.every(c => { const value = result[c.field] ?? ''; return c.operator === 'equals' ? value === c.value : c.operator === 'contains' ? String(value).normalize('NFC').toLocaleLowerCase('de').includes(String(c.value).normalize('NFC').toLocaleLowerCase('de')) : c.operator === 'gte' ? value >= c.value : value <= c.value; });
     if (!match) continue;
-    for (const action of rule.actions) result = { ...result, [action.field]: action.value };
+    for (const action of rule.actions) { result = { ...result, [action.field]: action.value }; if (action.field === 'payeeId') result = { ...result, payee: (references(all, spaceId, action.value, 'payee') as P2Aggregate<'payee', { name: string }>).name }; }
     applied.push(rule.id); if (rule.stopProcessing) break;
   }
   return { candidate: result, applied };
@@ -108,12 +109,28 @@ export function resolveOccurrence(schedule: ScheduleAggregate, date: IsoDate, st
     if (imported && (imported.spaceId !== schedule.spaceId || imported.accountId !== schedule.template.accountId)) fail('Die importierte Zahlung liegt in einem anderen Bereich.');
     if (imported?.scheduleOccurrenceId) fail('Die Zahlung ist bereits einer Fälligkeit zugeordnet.');
     const tx: TransactionAggregate = imported ? reviseAggregate({ ...imported, scheduleOccurrenceId: occurrence.id }, deps) : { ...createAggregateMetadata(schedule.spaceId, deps), aggregateType: 'transaction', ...schedule.template, date, scheduleOccurrenceId: occurrence.id, splits: schedule.template.splits.map(split => ({ ...split, id: deps.ids.next() })) };
+    if (!imported) {
+      sumMoney([...all.filter((a): a is TransactionAggregate => a.aggregateType === 'transaction' && !a.deletedAt && a.spaceId === schedule.spaceId && (a as TransactionAggregate).accountId === tx.accountId).map(a => a.amount), tx.amount]);
+      aggregates.push(reviseAggregate(references(all, schedule.spaceId, tx.accountId, 'account'), deps));
+    }
     const checked = checkedTransaction(tx, all, deps); refs = [...refs, ...checked.expectedRevisions.filter(e => e.id !== tx.id).map(e => e.id)];
     aggregates.push(checked.aggregates[0]!, { ...occurrence, transactionId: tx.id } as OccurrenceAggregate);
   } else aggregates.push(occurrence);
   return automationChange(state === 'confirmed' ? 'schedule.confirm' : 'schedule.skip', aggregates, all, deps, refs);
 }
-export function importFingerprint(row: ImportCandidate): string { return JSON.stringify([row.date, row.amount, (row.payee ?? '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('de'), (row.memo ?? '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('de')]); }
+export function importFingerprint(row: ImportCandidate): string { return row.sourceFingerprint ?? JSON.stringify([row.date, row.amount, (row.payee ?? '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('de'), (row.memo ?? '').normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('de')]); }
+export function classifyImportCandidates(rows: readonly ImportCandidate[], accountId: UUID, fingerprints: readonly ImportFingerprintAggregate[]): Map<number, 'new' | 'duplicate' | 'conflict'> {
+  const ids = new Map<string, Set<string>>(); const contents = new Set<string>();
+  const key = (source: string, id: string) => JSON.stringify([source, id]);
+  for (const f of fingerprints) if (f.accountId === accountId && !f.deletedAt) { contents.add(f.fingerprint); if (f.externalId) { const k = key(f.parserSource, f.externalId); const values = ids.get(k) ?? new Set<string>(); values.add(f.fingerprint); ids.set(k, values); } }
+  const result = new Map<number, 'new' | 'duplicate' | 'conflict'>();
+  for (const row of rows) {
+    const fingerprint = importFingerprint(row); const k = row.externalId ? key(row.parserSource ?? 'csv', row.externalId) : undefined; const same = k ? ids.get(k) : undefined;
+    result.set(row.sourceRow, same && [...same].some(f => f !== fingerprint) ? 'conflict' : (k ? !!same?.size : contents.has(fingerprint)) ? 'duplicate' : 'new');
+    contents.add(fingerprint); if (k) { const values = same ?? new Set<string>(); values.add(fingerprint); ids.set(k, values); }
+  }
+  return result;
+}
 export function duplicateStatus(row: ImportCandidate, accountId: UUID, fingerprints: readonly ImportFingerprintAggregate[]): 'new' | 'duplicate' | 'conflict' {
   const fingerprint = importFingerprint(row);
   const sameId = row.externalId ? fingerprints.filter(f => f.accountId === accountId && f.parserSource === (row.parserSource ?? 'csv') && f.externalId === row.externalId) : [];
@@ -133,13 +150,15 @@ function validateImportBatch(batch: ImportBatchAggregate, all: readonly P2Aggreg
 export function saveImportBatch(batch: ImportBatchAggregate, all: readonly P2Aggregate[], deps: DomainDependencies) {
   validateImportBatch(batch, all);
   const previous = all.find(a => a.id === batch.id) as ImportBatchAggregate | undefined;
+  if (!previous && (batch.committedRows.length || batch.state !== 'ready')) fail('Ein neuer Import muss ohne übernommene Zeilen beginnen.');
+  if (previous && (previous.rows.length !== batch.rows.length || previous.rows.some(row => !batch.rows.some(r => r.sourceRow === row.sourceRow)) || previous.state !== batch.state)) fail('Quellzeilen und Fortschrittsstatus dürfen nicht still geändert werden.');
   if (previous && (previous.fileHash !== batch.fileHash || previous.accountId !== batch.accountId || JSON.stringify(previous.committedRows) !== JSON.stringify(batch.committedRows) || previous.committedRows.some(n => JSON.stringify(previous.rows.find(r => r.sourceRow === n)) !== JSON.stringify(batch.rows.find(r => r.sourceRow === n))))) fail('Bereits übernommene Importzeilen sind unveränderlich.');
   return automationChange('importBatch.save', [batch], all, deps, [batch.accountId]);
 }
 export function commitImportGroup(batch: ImportBatchAggregate, all: readonly P2Aggregate[], deps: DomainDependencies): DomainChangeSet | null {
   validateImportBatch(batch, all);
   const current = all.find(a => a.id === batch.id);
-  if (!current || current.revision !== batch.revision) fail('Der Importstand ist veraltet.');
+  if (!current || current.revision !== batch.revision || JSON.stringify((current as ImportBatchAggregate).rows) !== JSON.stringify(batch.rows) || JSON.stringify((current as ImportBatchAggregate).committedRows) !== JSON.stringify(batch.committedRows)) fail('Der Importstand ist veraltet oder enthält ungespeicherte Entscheidungen.');
   const pending = batch.rows.filter(r => !batch.committedRows.includes(r.sourceRow)).slice(0, 100);
   if (!pending.length) return null;
   const fingerprints = active(all, 'importFingerprint') as ImportFingerprintAggregate[];
@@ -152,8 +171,20 @@ export function commitImportGroup(batch: ImportBatchAggregate, all: readonly P2A
     if (status === 'conflict') fail('Gleiche Quell-ID mit anderem Inhalt: zuerst den Prüfkonflikt klären oder ausschließen.');
     if (status === 'duplicate' && row.decision !== 'separate') fail('Eine mögliche Dublette benötigt eine ausdrückliche Entscheidung.');
     if (!candidate.categoryId || !uuidSchema.safeParse(candidate.categoryId).success) fail('Die Importkategorie fehlt.');
-    const tx: TransactionAggregate = { ...createAggregateMetadata(batch.spaceId, deps), aggregateType: 'transaction', kind: 'normal', accountId: batch.accountId, date: candidate.date, amount: candidate.amount, ...(candidate.memo ? { note: candidate.memo } : {}), ...(candidate.payeeId ? { payeeId: candidate.payeeId } : {}), clearance: candidate.clearance ?? 'uncleared', importReference: `${batch.id}:${row.sourceRow}`, splits: [{ id: deps.ids.next(), categoryId: candidate.categoryId, amount: candidate.amount }] };
-    const checked = checkedTransaction(tx, all, deps); checked.expectedRevisions.filter(e => e.id !== tx.id).forEach(e => refs.add(e.id)); changes.push(checked.aggregates[0]!);
+    let payeeId = candidate.payeeId;
+    if (!payeeId && candidate.payee?.trim()) {
+      const normalize = (text: string) => text.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('de-AT');
+      const matching = [...all, ...changes].filter((a): a is PayeeAggregate => a.aggregateType === 'payee' && a.spaceId === batch.spaceId && !a.deletedAt && !(a as PayeeAggregate).archived).filter(p => [p.name, ...p.aliases].some(name => normalize(name) === normalize(candidate.payee!)));
+      if (matching.length > 1) fail('Der Empfängername ist mehrdeutig. Bitte über eine Regel ausdrücklich zuordnen.');
+      payeeId = matching[0]?.id;
+      if (!payeeId) {
+        const payee: PayeeAggregate = { ...createAggregateMetadata(batch.spaceId, deps), aggregateType: 'payee', name: candidate.payee, aliases: [], archived: false };
+        const checkedPayee = savePayee({ commandType: 'payee.save', spaceId: batch.spaceId, expectedRevisions: [{ id: payee.id, expectedRevision: 0 }], mutations: [{ aggregate: payee }] }, { get: id => all.find(a => a.id === id) }, deps);
+        changes.push(checkedPayee.aggregates[0]!); payeeId = payee.id;
+      }
+    }
+    const tx: TransactionAggregate = { ...createAggregateMetadata(batch.spaceId, deps), aggregateType: 'transaction', kind: 'normal', accountId: batch.accountId, date: candidate.date, amount: candidate.amount, ...(candidate.memo ? { note: candidate.memo } : {}), ...(payeeId ? { payeeId } : {}), clearance: candidate.clearance ?? 'uncleared', importReference: `${batch.id}:${row.sourceRow}`, splits: [{ id: deps.ids.next(), categoryId: candidate.categoryId, amount: candidate.amount }] };
+    const checked = checkedTransaction(tx, [...all, ...changes], deps); checked.expectedRevisions.filter(e => e.id !== tx.id).forEach(e => refs.add(e.id)); changes.push(checked.aggregates[0]!);
     changes.push({ ...createAggregateMetadata(batch.spaceId, deps), aggregateType: 'importFingerprint', accountId: batch.accountId, parserSource: candidate.parserSource ?? 'csv', externalId: candidate.externalId, fingerprint: importFingerprint(candidate), transactionId: tx.id, importId: batch.id, sourceRow: row.sourceRow } as ImportFingerprintAggregate);
   }
   // Auch innerhalb der Gruppe sichere Summen erzwingen.

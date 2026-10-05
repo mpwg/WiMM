@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import react from '@vitejs/plugin-react';
 import { createLogger, defineConfig } from 'vite';
 
@@ -30,6 +32,15 @@ export default defineConfig(({ command }) => {
         }
       }
     },
-    plugins: [react()]
+    plugins: [react(), {
+      name: 'wimm-offline-assets',
+      apply: 'build',
+      closeBundle() {
+        const assets = readdirSync('dist/assets').sort().map(file => `/assets/${file}`);
+        const version = createHash('sha256').update(JSON.stringify(assets)).digest('hex').slice(0, 16);
+        const source = readFileSync('dist/service-worker.js', 'utf8');
+        writeFileSync('dist/service-worker.js', source.replace("const appShell = ['/'];", `const appShell = ${JSON.stringify(['/', ...assets])};`).replace('wimm-app-assets-v1', `wimm-app-assets-${version}`));
+      }
+    }]
   };
 });

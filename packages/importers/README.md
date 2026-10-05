@@ -34,4 +34,4 @@ Ursprüngliche Hinweise sind vollständig unter [licenses](licenses/papaparse.tx
 
 `pnpm test:importers` prüft Parserfixtures, echte Byte-/Datensatzgrenzen, Syntax-/Entitätsfehler, Abbruch und sichere Centnormalisierung. `pnpm test:importers:worker` verwendet einen echten Chromium-Worker: lokale Bytes, Startmeldung mit anschließendem Abbruch, strukturierter Fehler und erfolgreicher neuer Auftrag; keine XHR-/Fetch-/Uploadanfrage. Beide Prüfungen gehören zur zentralen Prüfserie. Testdaten sind synthetisch.
 
-Aktuelle Kriterien und Plattformgrenzen stehen in der [P5.1-Übergabe](../../docs/handoffs/p5-1.md). Windows-/Linux-Ausführung folgt gemäß Nutzerauftrag später; dieser Stand behauptet keine neue native Plattformabnahme von P4.
+Parserauswahl und Herkunft stehen in der [P5.1-Übergabe](../../docs/handoffs/p5-1.md); aktuelle Gesamtbelege und Plattformgrenzen in der [P5-Kriterienmatrix](../../docs/handoffs/p5.md). Windows-/Linux-Ausführung folgt gemäß Nutzerauftrag später; dieser Stand behauptet keine neue native Plattformabnahme von P4.

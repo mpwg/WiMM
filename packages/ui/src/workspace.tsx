@@ -43,6 +43,8 @@ import { DraftProtection, useDraftGuard } from './drafts.js';
 import { isTextEditing } from './platform.js';
 import { FinanceHistory } from './history.js';
 import { TransferForm, ReconciliationForm } from './account-actions.js';
+import { ImportView, AutomationView } from './automation-views.js';
+import { AutomationModel } from './automation-model.js';
 import { Transactions } from './transactions.js';
 
 type ColorScheme = 'system' | 'light' | 'dark';
@@ -59,7 +61,7 @@ export interface TransactionInput {
   readonly splits: readonly { readonly id?: UUID; readonly categoryId: UUID; readonly amount: string }[];
 }
 
-type View = 'overview' | 'accounts' | 'categories' | 'payees' | 'transactions';
+type View = 'overview' | 'accounts' | 'categories' | 'payees' | 'transactions' | 'import' | 'automation';
 
 /**
  * Der Composition Root wählt den dauerhaften Speicher. Die Fachansicht kennt
@@ -184,24 +186,25 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
         const action = () => { setView('transactions'); if (id === 'new-transaction') setNewVersion((value) => value + 1); setFocusRequest((value) => ({ target: id === 'search' ? 'search' : 'amount', version: (value?.version ?? 0) + 1 })); };
         if (id === 'search' && view === 'transactions') action(); else guard.request(action);
       }
+      if (id === 'import') guard.request(() => setView('import'));
       if (id === 'overview') guard.request(() => setView('overview'));
       if (id === 'settings') guard.request(() => setView('categories'));
     }
     function keydown(event: KeyboardEvent) {
       if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
       const key = event.key.toLowerCase();
-      const id = key === 'n' ? 'new-transaction' : key === 'f' ? 'search' : key === 'z' ? (event.shiftKey ? 'redo' : 'undo') : key === 'y' && event.ctrlKey ? 'redo' : undefined;
+      const id = key === 'i' ? 'import' : key === 'n' ? 'new-transaction' : key === 'f' ? 'search' : key === 'z' ? (event.shiftKey ? 'redo' : 'undo') : key === 'y' && event.ctrlKey ? 'redo' : undefined;
       if (id === undefined || ((id === 'undo' || id === 'redo') && isTextEditing(document.activeElement))) return;
       event.preventDefault(); command(id);
     }
     document.addEventListener('keydown', keydown);
     let disposed = false; let unlisten: (() => void) | undefined;
     void context.platform.onMenuCommand((id) => command(id, true)).then((stop) => { if (disposed) stop(); else unlisten = stop; }).catch(() => setMessage('Die Systemmenüs konnten nicht verbunden werden.'));
-    void context.platform.setMenuCommands(['new-transaction', 'search', 'overview', 'settings'].map((id) => ({ id, title: id, enabled: state === 'ready' && !saving }))).catch(() => setMessage('Die Systemmenüs konnten nicht aktualisiert werden.'));
+    void context.platform.setMenuCommands(['new-transaction', 'search', 'overview', 'settings', 'import'].map((id) => ({ id, title: id, enabled: state === 'ready' && !saving }))).catch(() => setMessage('Die Systemmenüs konnten nicht aktualisiert werden.'));
     return () => { disposed = true; unlisten?.(); document.removeEventListener('keydown', keydown); };
   });
   useEffect(() => () => {
-    void context.platform.setMenuCommands(['new-transaction', 'search', 'overview', 'settings'].map((id) => ({ id, title: id, enabled: false })));
+    void context.platform.setMenuCommands(['new-transaction', 'search', 'overview', 'settings', 'import'].map((id) => ({ id, title: id, enabled: false })));
   }, [context.platform]);
   function navigate(next: View) {
     setView(next);
@@ -212,7 +215,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   }, [view, state]);
   return <div ref={shell} data-history-version={historyVersion} className={`app-shell${desktop ? ' desktop-shell' : ''}`} data-color-scheme={colorScheme}>
     <aside className="sidebar"><p className="product">WhereIsMyMoney</p><AreaPicker context={context} disabled={saving} request={(action, trigger) => guard.request(action, undefined, trigger)} />
-      <p className="mobile-only more-title">Mehr</p><nav id="more-navigation" aria-label="Hauptnavigation" tabIndex={-1}>{([['overview', 'Übersicht'], ['transactions', 'Buchungen'], ['accounts', 'Konten'], ['categories', 'Kategorien'], ['payees', 'Empfänger']] as const).map(([id, label]) =>
+      <p className="mobile-only more-title">Mehr</p><nav id="more-navigation" aria-label="Hauptnavigation" tabIndex={-1}>{([['overview', 'Übersicht'], ['transactions', 'Buchungen'], ['accounts', 'Konten'], ['categories', 'Kategorien'], ['payees', 'Empfänger'], ['import', 'Import'], ['automation', 'Regeln und Dauerzahlungen']] as const).map(([id, label]) =>
         <button data-primary={id === 'overview' || id === 'transactions' ? 'true' : undefined} disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => guard.request(() => navigate(id))} type="button">{label}</button>
       )}</nav><button disabled={saving} className="quiet" onClick={() => guard.request(() => { void context.createHousehold(); })} type="button">+ Haushalt anlegen</button><button disabled={saving} className="quiet" onClick={() => guard.request(() => { void context.lock(); })} type="button">Tresor sperren</button>
       <details><summary>Hilfe</summary><p>WhereIsMyMoney · Version 0.0.0</p>{[['Hilfe und Quellcode', 'https://github.com/mpwg/WiMM'], ['Lizenz AGPL-3.0-or-later', 'https://www.gnu.org/licenses/agpl-3.0.html']].map(([label, url]) => <p key={url}><a href={url} onClick={(event) => { event.preventDefault(); void context.platform.openExternalUrl(url!).catch(() => setMessage('Der Link konnte nicht geöffnet werden.')); }}>{label}</a></p>)}</details>
@@ -233,12 +236,17 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
       {state === 'ready' && view === 'categories' ? <Categories model={model} /> : null}
       {state === 'ready' && view === 'payees' ? <Payees model={model} /> : null}
       {state === 'ready' && view === 'transactions' ? <Transactions key={newVersion} model={model} /> : null}
+      {state === 'ready' && view === 'import' ? <ImportView model={new AutomationModel(model)} platform={context.platform} /> : null}
+      {state === 'ready' && view === 'automation' ? <AutomationView model={new AutomationModel(model)} /> : null}
       </fieldset>
     </main>
   </div>;
 }
 
 export class FinanceModel {
+  get allAggregates() { return [...this.heads.values()]; }
+  get activeSpaceId() { return this.spaceId; }
+  async commitAutomation(change: DomainChangeSet) { await this.execute(change); }
   readonly allAccounts: readonly AccountAggregate[];
   readonly accounts: readonly AccountAggregate[];
   readonly allCategories: readonly CategoryAggregate[];
@@ -424,6 +432,6 @@ function Payees({ model }: { readonly model: FinanceModel }) {
 }
 function AccountTable({ accounts, balances, onArchive, archived = false }: { readonly accounts: readonly AccountAggregate[]; readonly balances: readonly { readonly accountId: UUID; readonly balance: number }[]; readonly onArchive?: (id: UUID) => Promise<void>; readonly archived?: boolean }) { return <div className="table-wrap" role="region" aria-label={archived ? 'Archivierte Konten' : 'Kontoliste'} tabIndex={0}><table className="account-table"><thead><tr><th>Konto</th><th>Art</th><th className="money">Guthaben</th>{archived ? <th>Status</th> : null}{onArchive === undefined ? null : <th><span className="visually-hidden">Aktion</span></th>}</tr></thead><tbody>{accounts.map((account) => <tr key={account.id}><td>{account.name}</td><td>{account.type}</td><td className="money">{formatMoney(balances.find((balance) => balance.accountId === account.id)?.balance ?? 0)}</td>{archived ? <td>Archiviert</td> : null}{onArchive === undefined ? null : <td><button className="quiet small-action" onClick={() => void onArchive(account.id)} type="button">Archivieren</button></td>}</tr>)}</tbody></table></div>; }
 function Empty({ title, text }: { readonly title: string; readonly text: string }) { return <section className="empty"><h2>{title}</h2><p>{text}</p></section>; }
-function titleFor(view: View) { return ({ overview: 'Übersicht', accounts: 'Konten', categories: 'Kategorien', payees: 'Empfänger', transactions: 'Buchungen' })[view]; }
+function titleFor(view: View) { return ({ overview: 'Übersicht', accounts: 'Konten', categories: 'Kategorien', payees: 'Empfänger', transactions: 'Buchungen', import: 'Import', automation: 'Regeln und Dauerzahlungen' })[view]; }
 export function formatMoney(cents: number) { return new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' }).format(cents / 100); }
 function messageFor(reason: unknown, fallback: string) { return reason instanceof Error ? reason.message : fallback; }

@@ -47,11 +47,18 @@ Clientobjekte zusätzlich: entsperrter UserVault nur zur Laufzeit, gepinnte Iden
 | Settlement | date, payerId, recipientId, amount, householdTransactionId?, applications[] | applications: expenseId/amount; payer != recipient; tatsächlicher Zahlungsweg |
 | AdvanceOffset | expenseId, participantId, date, amount, reason | Dokumentierte Eigenanteilsverrechnung, auf ursprünglichen Eigenanteil begrenzt |
 | Schedule | startDate, frequency, interval, endDate?, template, enabled | frequency weekly/monthly/yearly; Template ohne fremde Bereichsreferenzen |
-| ScheduleOccurrence | scheduleId, dueDate, state, transactionId? | Paar eindeutig; state proposed/confirmed/skipped |
+| ScheduleOccurrence | scheduleId, dueDate, state, transactionId? | Paar eindeutig; dauerhaft confirmed/skipped; proposed ist eine reine Projektion ohne Saldoänderung |
 | Rule | order, conditions[], actions[], stopProcessing, enabled | Nur katalogisierte Bedingungen/Aktionen |
+| ImportMapping | name, mapping | CSV-Zuordnung mit Encoding, Separator, Kopfzeile, Spalten und Datum-/Zahlenformat; bereichseigen |
+| ImportBatch | fileHash, accountId, rows[], committedRows[], state | rows: sourceRow, candidate?, decision import/exclude/separate, issues[]; state ready/partial/completed; bestätigte Zeilen unveränderlich |
+| ImportFingerprint | accountId, parserSource, externalId?, fingerprint, transactionId, importId, sourceRow | Quell-ID nach Konto/Parser; Fingerprinttreffer benötigen eine ausdrückliche Entscheidung |
 | SavingsGoal | categoryId, targetAmount, targetDate?, archived | Betrag positiv; Rate und Fortschritt Projektionen |
 
 Systemkategorien/-teilnehmer erhalten lokale stabile IDs und werden als vollständige Datensätze exportiert. Sie dürfen nicht vom Nutzer entfernt werden. Finanzierungs-/Ausgleichsbuchungen werden durch den zugehörigen Befehl erzeugt; unabhängig davon veränderbare Kopien sind unzulässig.
+
+Importkandidaten enthalten Quellzeile, Parserquelle, Finanzdatum, Centbetrag, Empfänger, Verwendungszweck und externe ID sowie optional Kategorie, Empfänger-ID und Abgleichstatus. `sourceFingerprint` hält vor Regelanwendung die normalisierte Quelle fest; eine Empfängerregel verändert nicht die Quell-ID-Prüfung. Die Importzeilen enthalten keine Rechte oder Fremdbereichsreferenzen.
+
+Ein Gruppencommit schreibt höchstens 100 Quellzeilen samt normalen Buchungen, erforderlichen Empfängern, Fingerprints und Batchfortschritt atomar. Das Konto wird als CAS-Anker revidiert, damit parallele Importe desselben Kontos ihre Dublettenprüfung wiederholen müssen. Ausschlüsse zählen als bearbeitete Quellzeilen, erzeugen aber keine Buchung. Dauerzahlungsbestätigung/-überspringen revidiert analog die Schedule als CAS-Anker für das eindeutige Paar Schedule/Fälligkeit.
 
 ## Nur private/lokale Verknüpfungen
 

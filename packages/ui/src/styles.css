@@ -177,3 +177,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   .mobile-navigation button[aria-current='page'] { background: var(--selected); color: var(--selected-text); }
   .finance-main { padding-bottom: 1rem; }
 }
+
+.import-preview { list-style: none; padding: 0; }
+.import-preview > li { border-bottom: 1px solid var(--border); padding: 1rem 0; }
+.import-preview pre { max-height: 12rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }

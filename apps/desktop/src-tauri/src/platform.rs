@@ -171,7 +171,7 @@ pub fn platform_set_menu(app: tauri::AppHandle, commands: Vec<MenuCommand>) -> R
         for command in commands {
             if !matches!(
                 command.id.as_str(),
-                "new-transaction" | "search" | "overview" | "settings"
+                "new-transaction" | "search" | "overview" | "settings" | "import"
             ) {
                 return Err("Unbekannter Menübefehl.".into());
             }

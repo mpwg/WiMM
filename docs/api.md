@@ -68,11 +68,14 @@ Die folgende Tabelle beschreibt ausschließlich clientintern entschlüsselte Fac
 | `contribution.save`, `contribution.delete` | Einlage und gemeinsame Kontobuchung |
 | `settlement.save`, `settlement.delete` | Zahlung, Anwendungen auf Vorleistungen und gegebenenfalls gemeinsame Kontobuchung |
 | `advanceOffset.save`, `advanceOffset.delete` | Eigenanteilsverrechnung mit Begründung; Ausgabenrevision mitprüfen |
+| `importMapping.save` | bereichseigene, validierte CSV-Mappingvorlage |
+| `importBatch.save` | bestätigte Vorschauentscheidungen; kein Finanzcommit, bereits bearbeitete Quellzeilen unveränderlich |
+| `import.commit` | höchstens 100 Quellzeilen: fachvalidierte normale Buchungen, Empfänger, Fingerprints, Konto-CAS und Fortschritt atomar |
 | `schedule.save`, `schedule.confirm`, `schedule.skip` | Schedule bzw. Fälligkeit und Buchung; Occurrence-ID eindeutig |
 | `rule.save`, `rule.delete`, `rule.reorder` | Regel bzw. gesamte neue Reihenfolge mit Revisionen |
 | `savingsGoal.save`, `savingsGoal.archive` | Ziel bzw. Archivstatus |
 
-`undo` ist kein privilegierter Serverbefehl. Die UI erzeugt denselben passenden Gegenbefehl mit der seit der eigenen Aktion erwarteten Revision und prüft sämtliche betroffenen Aggregate und Referenzen erneut. Die Historie umfasst nur erfolgreiche Buchungs-, Transfer- und Abgleichaktionen des aktiven Bereichs und bleibt flüchtig; neue Aktionen verwerfen den Redozweig, Bereichswechsel und andere Stammdatenaktionen leeren die Historie. Revisionen sinken niemals, neue Aggregate werden beim Rückgängigmachen als Tombstones erhalten. Import übernimmt normale `transaction.save`-Operationen; Batch-/Dublettenmetadaten bleiben bereichseigene Daten. Die maximale Batchgröße bedeutet keine Atomizität eines kompletten Großimports; Vorschau bestätigt dies vor Übernahme.
+`undo` ist kein privilegierter Serverbefehl. Die UI erzeugt denselben passenden Gegenbefehl mit der seit der eigenen Aktion erwarteten Revision und prüft sämtliche betroffenen Aggregate und Referenzen erneut. Die Historie umfasst nur erfolgreiche Buchungs-, Transfer- und Abgleichaktionen des aktiven Bereichs und bleibt flüchtig; neue Aktionen verwerfen den Redozweig, Bereichswechsel und andere Stammdatenaktionen leeren die Historie. Revisionen sinken niemals, neue Aggregate werden beim Rückgängigmachen als Tombstones erhalten. Import validiert normale Buchungen mit demselben `transaction.save`-Fachvertrag und bündelt sie innerhalb von `import.commit`; Batch-/Dublettenmetadaten bleiben bereichseigene Daten. Noch nicht gespeicherte Entscheidungen dürfen keinen Gruppencommit auslösen. Die maximale Batchgröße bedeutet keine Atomizität eines kompletten Großimports; Vorschau bestätigt dies vor Übernahme.
 
 ## Push-Antwort
 
