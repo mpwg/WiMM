@@ -1,5 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { expect, test, type Page } from '@playwright/test';
+
+for (const desktop of [false, true]) test(`${desktop ? 'Desktop-Frontend' : 'Web'}: mehrzeilige Mobilnavigation reserviert ihre tatsächliche Höhe`, async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto(`/tests/workspace.html?desktop=${desktop}&count=1`);
+  const navigation = page.locator('.mobile-navigation');
+  await expect(navigation).toBeVisible();
+  // Erzwingt auch auf macOS den auf Linux beobachteten Schriftumbruch.
+  await navigation.locator('button').evaluateAll((buttons) => buttons.forEach((button) => { (button as HTMLElement).style.fontSize = '24px'; }));
+  await expect.poll(async () => (await navigation.boundingBox())?.height ?? 0).toBeGreaterThan(64);
+  const overlap = async () => {
+    const content = await page.locator('.app-shell').boundingBox();
+    const bar = await navigation.boundingBox();
+    return content!.y + content!.height - bar!.y;
+  };
+  await expect.poll(overlap).toBeLessThanOrEqual(0);
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await expect(navigation).toBeHidden();
+  await page.setViewportSize({ width: 320, height: 568 });
+  await expect(navigation).toBeVisible();
+  await expect.poll(overlap).toBeLessThanOrEqual(0);
+});
+
 async function layout(page: Page) {
   expect(await page.locator('html').evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   expect(await page.locator('.money, .overview-grid strong').evaluateAll((elements) => elements.filter((element) => element.getBoundingClientRect().width > 0).every((element) => element.scrollWidth <= element.clientWidth))).toBe(true);

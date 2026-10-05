@@ -168,7 +168,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 
 .mobile-only, .mobile-navigation { display: none; }
 @media (max-width: 767px) {
-  .app-shell { height: calc(100dvh - 4rem - env(safe-area-inset-bottom)); min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
+  .app-shell { height: calc(100dvh - var(--mobile-navigation-height, calc(4rem + env(safe-area-inset-bottom)))); min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
   .mobile-only { display: block; }
   .more-title { font-weight: 700; margin: 0.5rem 0 0; }
   .sidebar nav button[data-primary] { display: none; }

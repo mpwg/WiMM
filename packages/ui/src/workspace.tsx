@@ -79,6 +79,19 @@ export function FinanceWorkspace(props: { readonly context: UnlockedAppContext; 
 }
 function WorkspaceContent({ context, storageForProfile, desktop = false, view, setView }: { readonly context: UnlockedAppContext; readonly storageForProfile: WorkspaceStorageFactory; readonly desktop?: boolean; readonly view: View; readonly setView: (view: View) => void }) {
   const guard = useDraftGuard();
+  const shell = useRef<HTMLDivElement>(null);
+  const mobileNavigation = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const navigation = mobileNavigation.current;
+    const container = shell.current;
+    if (navigation === null || container === null) return;
+    // Schriftmetriken, Umbrüche und sichere Flächen können die Leiste vergrößern.
+    const update = () => container.style.setProperty('--mobile-navigation-height', `${navigation.getBoundingClientRect().height}px`);
+    const observer = new ResizeObserver(update);
+    observer.observe(navigation);
+    update();
+    return () => observer.disconnect();
+  }, []);
   const [newVersion, setNewVersion] = useState(0);
   const [focusRequest, setFocusRequest] = useState<{ target: 'amount' | 'search'; version: number }>();
   const [history] = useState(() => new FinanceHistory());
@@ -197,7 +210,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   useEffect(() => {
     if (state === 'ready' && matchMedia('(max-width: 767px)').matches) document.querySelector<HTMLElement>('.finance-main')?.scrollIntoView({ block: 'start' });
   }, [view, state]);
-  return <div data-history-version={historyVersion} className={`app-shell${desktop ? ' desktop-shell' : ''}`} data-color-scheme={colorScheme}>
+  return <div ref={shell} data-history-version={historyVersion} className={`app-shell${desktop ? ' desktop-shell' : ''}`} data-color-scheme={colorScheme}>
     <aside className="sidebar"><p className="product">WhereIsMyMoney</p><AreaPicker context={context} disabled={saving} request={(action, trigger) => guard.request(action, undefined, trigger)} />
       <p className="mobile-only more-title">Mehr</p><nav id="more-navigation" aria-label="Hauptnavigation" tabIndex={-1}>{([['overview', 'Übersicht'], ['transactions', 'Buchungen'], ['accounts', 'Konten'], ['categories', 'Kategorien'], ['payees', 'Empfänger']] as const).map(([id, label]) =>
         <button data-primary={id === 'overview' || id === 'transactions' ? 'true' : undefined} disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => guard.request(() => navigate(id))} type="button">{label}</button>
@@ -205,7 +218,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
       <details><summary>Hilfe</summary><p>WhereIsMyMoney · Version 0.0.0</p>{[['Hilfe und Quellcode', 'https://github.com/mpwg/WiMM'], ['Lizenz AGPL-3.0-or-later', 'https://www.gnu.org/licenses/agpl-3.0.html']].map(([label, url]) => <p key={url}><a href={url} onClick={(event) => { event.preventDefault(); void context.platform.openExternalUrl(url!).catch(() => setMessage('Der Link konnte nicht geöffnet werden.')); }}>{label}</a></p>)}</details>
       <label className="area-picker">Farbschema<select value={colorScheme} onChange={(event) => changeColorScheme(event.target.value as ColorScheme)}><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
     </aside>
-    <nav className="mobile-navigation" aria-label="Mobile Hauptnavigation">
+    <nav ref={mobileNavigation} className="mobile-navigation" aria-label="Mobile Hauptnavigation">
       {([['overview', 'Übersicht'], ['transactions', 'Buchungen']] as const).map(([id, label]) => <button disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => guard.request(() => navigate(id))} type="button">{label}</button>)}
       <button type="button" onClick={() => { const navigation = document.getElementById('more-navigation'); navigation?.scrollIntoView({ block: 'center' }); navigation?.querySelector<HTMLButtonElement>('button:not([data-primary])')?.focus(); }}>Mehr</button>
     </nav>

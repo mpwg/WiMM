@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { expect, test } from '@playwright/test';
+import { arch, cpus, platform, release, totalmem } from 'node:os';
 for (const desktop of [false, true]) test(`50.000 Buchungen: ${desktop ? 'Desktop-Frontend' : 'Web'} Öffnen, Filter und Scrollen`, async ({ page, browser }, info) => {
   await page.goto(`/tests/workspace.html?desktop=${desktop}&count=50000&performance=true`);
   await expect(page.getByRole('heading', { name: 'Übersicht', exact: true })).toBeVisible();
@@ -41,7 +42,7 @@ for (const desktop of [false, true]) test(`50.000 Buchungen: ${desktop ? 'Deskto
     const p95 = (values: number[]) => [...values].sort((a, b) => a - b)[Math.ceil(values.length * 0.95) - 1]!;
     return { open, filter, scroll, filterP95: p95(filter), scrollP95: p95(scroll), counts, countText: document.querySelector('.transaction-filters + p')?.textContent };
   });
-  await info.attach('Messung', { body: JSON.stringify({ ...results, coldOpen, browser: browser.version(), fixture: { transactions: 50000, accounts: 10, categories: 100, months: 36, syntheticSharedExpenses: 1000 }, environment: 'macOS arm64, Apple M4 Pro, 24 GB; Vite-Testseite mit echtem IndexedDB, zwei Animationsframes bis Darstellung; 5 warme Vorläufe, 30 Messungen' }), contentType: 'application/json' });
+  await info.attach('Messung', { body: JSON.stringify({ ...results, coldOpen, browser: browser.version(), fixture: { transactions: 50000, accounts: 10, categories: 100, months: 36, syntheticSharedExpenses: 1000 }, environment: { platform: platform(), release: release(), architecture: arch(), cpu: cpus()[0]?.model, memoryBytes: totalmem(), ci: Boolean(process.env.CI), method: 'Vite-Testseite mit echtem IndexedDB, zwei Animationsframes bis Darstellung; 5 warme Vorläufe, 30 Messungen' } }), contentType: 'application/json' });
   expect(results.countText).toBe('50000 Buchungen'); expect(Math.max(...results.counts)).toBeLessThanOrEqual(16);
   expect(coldOpen).toBeLessThan(2000); expect(results.open).toBeLessThan(2000); expect(results.filterP95).toBeLessThan(100); expect(results.scrollP95).toBeLessThan(100);
 });
