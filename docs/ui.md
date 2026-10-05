@@ -1,5 +1,9 @@
 # Oberfläche und Plattformgestaltung
 
+## Freigegebene Neugestaltung
+
+Der Nutzerauftrag vom 5. Oktober 2026 gibt UX-01–UX-06 gemäß [UX-Konzept](ux-redesign.md) frei. Die markante, ruhige Gestaltung mit Indigoakzent ersetzt die bisherigen visuellen Defaults. P6–P10 werden nur gestalterisch vorbereitet, nicht implementiert.
+
 ## Leitlinien
 
 Die App ist ein Arbeitswerkzeug für Familienfinanzen. Erste Ansicht ist die nutzbare Finanzübersicht, keine Marketingseite. Klare Zahlen, kurze Wege und sichtbarer Bereich haben Vorrang. Gemeinsame und private Bereiche besitzen dieselbe Navigation, aber eine eindeutige Bereichskennzeichnung.
@@ -8,16 +12,16 @@ Desktop- und Touchansichten werden bewusst unterschiedlich komponiert; gemeinsam
 
 ## Layout und Navigation
 
-- Desktop: native Fensterleiste, schmale Seitenleiste mit Bereichswechsel, kompakter Inhaltskopf, zentrale Tabellen/Arbeitsansichten. Kein Browseradressfeld und keine Navigationsleiste wie auf einer Website.
+- Desktop: native Fensterleiste, schmale Seitenleiste mit Bereichswechsel, kompakter Inhaltskopf, zentrale Tabellen/Arbeitsansichten. Kategorien, Empfänger, Regeln, Dauerzahlungen und Farbschema liegen unter Einstellungen; Import ist eine sekundäre Buchungsaktion. Kein Browseradressfeld und keine Navigationsleiste wie auf einer Website.
 - Tablet: kompakte Seitenleiste, bei Platzmangel ausblendbar; Inhaltsansichten behalten ausreichend lesbare Spalten.
-- Mobil: Bereich im Kopf, untere Navigation Übersicht/Buchungen/Budget/Mehr; Konten, Ausgleich und Berichte unter Mehr. Listen mit Detailansichten statt zusammengeschobener Desktoptabellen.
+- Mobil: Bereich im Kopf, zunächst untere Navigation Übersicht/Buchungen/Mehr; Budget ergänzt die Navigation mit P6. Mehr ist eine eigene Ansicht; Konten, Ausgleich und Berichte unter Mehr. Listen mit Detailansichten statt zusammengeschobener Desktoptabellen.
 - Mindestfenster Desktop 900 × 600; Touchlayout unter 768 CSS-Pixeln, mittleres Layout 768–1023, volle Seitenleiste ab 1024. Kein horizontaler Seitenüberlauf bei 320 Pixeln; Tabellen dürfen nur innerhalb ihres beschrifteten Arbeitsbereichs scrollen.
 
 ## Hauptansichten
 
 | Ansicht | Inhalte | Primäre Aktionen |
 | --- | --- | --- |
-| Übersicht | verfügbares Geld, Monatsausgaben, kommende Zahlungen, Ziele; Haushalt zusätzlich Ausgleich | Buchung erfassen, fällige Zahlung bestätigen |
+| Übersicht | Kontostand gesamt, Monatsausgaben, kommende Zahlungen, Ziele; Haushalt zusätzlich Ausgleich | Buchung erfassen, fällige Zahlung bestätigen |
 | Buchungen | Datum, Konto, Empfänger, Kategorie, Betrag, Abgleich-/Syncstatus; Filter und Suche | hinzufügen, importieren, bearbeiten, splitten, teilen |
 | Konten | Guthaben, Budgetzugehörigkeit, Archivstatus und Kontodetails | Konto anlegen, Umbuchung, Abgleich |
 | Budget | Monatswechsel, Methodenauswahl, Plan/Ist oder Zuweisung/Verfügbar | Werte ändern, Umschichten, Ziele öffnen |
@@ -28,13 +32,13 @@ Desktop- und Touchansichten werden bewusst unterschiedlich komponiert; gemeinsam
 
 ## Bedienelemente
 
-Systemschrift und feste Typografiestufen; keine viewportabhängige Schriftgröße. Tabellenbeträge rechtsbündig mit tabellarischen Ziffern, Währung und Vorzeichen. Rot bedeutet Problem/Ausgabeabweichung, Grün positiven Status; zusätzliche Symbole/Text verhindern reine Farbcodierung. Hell-/Dunkelmodus folgt zunächst dem System und ist überschreibbar.
+Systemschrift, Indigoakzent und feste Typografiestufen; keine viewportabhängige Schriftgröße. Tabellenbeträge rechtsbündig mit tabellarischen Ziffern, Währung und Vorzeichen. Normale Ausgaben bleiben neutral; Rot bedeutet Problem/Ausgabeabweichung oder destruktive Aktion, Grün positiven Status; zusätzliche Symbole/Text verhindern reine Farbcodierung. Hell-/Dunkelmodus folgt zunächst dem System und ist überschreibbar.
 
 Werkzeugaktionen mit Lucide-Icons und zugänglichem Namen/Tooltip; klare Befehle mit Icon und Text. Binäre Werte als Checkbox/Toggle, Methoden als Segmentsteuerung, Auswahlmengen als Menüs, Zahlen als Eingabe. Keine verschachtelten Karten; Tabellen und Seitenabschnitte ungerahmt, Modale und einzelne fachliche Einträge dürfen gerahmt sein. Stabile Spalten-/Buttonmaße verhindern Sprünge durch Status-/Ladetexte.
 
 ## Formulare und wichtige Dialoge
 
-Buchung: Betrag prominent, Vorzeichenmodus Ausgabe/Einnahme, Konto, Datum, Empfänger, Kategorie und optionale Splits/Notiz. Datum öffnet plattformgerechte Auswahl; Betrag verwendet Dezimaltastatur und exakte Parserregeln. Speichern wartet auf dauerhaften lokalen Commit; bei Fehler bleiben sämtliche Eingaben erhalten.
+Buchungen zeigen zuerst die Liste. Neue Buchung und Bearbeitung öffnen einen begrenzten Desktopdialog beziehungsweise einen bildschirmfüllenden mobilen Dialog. Buchung: Betrag prominent, Vorzeichenmodus Ausgabe/Einnahme, Konto, Datum, Empfänger, Kategorie und optionale Splits/Notiz. Datum öffnet plattformgerechte Auswahl; Betrag verwendet Dezimaltastatur und exakte Parserregeln. Speichern wartet auf dauerhaften lokalen Commit; bei Fehler bleiben sämtliche Eingaben erhalten.
 
 Veröffentlichung: Vorschau ausschließlich gemeinsamer Felder; zahlende Person, Verteilung, Erstattungsquelle und deren Wirkung auf Haushaltsreserve. Private Notizen werden nicht vorausgefüllt. Ein gefüllter Dialog ist allein keine Zustimmung: erst der Befehl „Ausgabe teilen“ veröffentlicht.
 

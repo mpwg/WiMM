@@ -112,3 +112,12 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 - Betroffene Verträge/Pakete: [Architektur](architecture.md), [Dateiformate](formats.md), [Datenmodell](data-model.md), [API](api.md), domain, importers und ui; P5.2–P5.6.
 - Migration und Kompatibilität: Neue lokale Aggregattypen ergänzen das generische Speicherformat ohne Tabellenmigration. Bestehende Buchungen bleiben unverändert. Die Server-/Altclient-Kompatibilitätsprüfung folgt mit dem tatsächlichen Finanzprotokoll in P9; ältere Clients dürfen unbekannte Aggregate nicht still anwenden.
 - Prüfung: Formatfixtures, Fachfehlfälle, echte Browserworker, atomare Speicherfehlfälle, Wiederaufnahme und UI-Abläufe in den P5-Tests. Plattformgrenzen stehen in der P5-Übergabe.
+
+## ADR-035 — Markante und ruhige Finanzoberfläche
+
+- Datum: 5. Oktober 2026. Status: angenommen.
+- Herkunft: Nutzerwahl „Klar und markant“, Desktop und Mobil; ausdrücklicher Implementierungsauftrag UX-01–UX-06.
+- Problem: dauerhaft offene Formulare und gleichrangige Verwaltung verdrängen Finanzarbeit; Kontosumme suggeriert Budgetverfügbarkeit.
+- Entscheidung: Indigo-/Systemschriftgestaltung, Listen zuerst, kontextbezogene Dialoge und eigene mobile Mehr-Ansicht gemäß [UX-Konzept](ux-redesign.md). Kontosumme heißt „Kontostand gesamt“.
+- Folgen: bestehende UI-Defaults werden gemeinsam aktualisiert. Native Bedienung, Fachkern und E2EE-Grenzen bleiben verbindlich.
+- Migration und Tests: interne Ansichtsänderung ohne Datenmigration; atomarer Kontoeinstieg und vollständige UI-Regression. P6–P10 bleiben später.

@@ -6,6 +6,8 @@ D0 ist die Spezifikationsübergabe, D1 ergänzt verpflichtende E2EE und Agenten-
 
 Für den ersten Überblick: [Einstieg](getting-started.md). Für die schrittweise Umsetzung: [Teilaufgabenübersicht P1–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge), mit laufender [P4.6-Gesamtabnahme](handoffs/p4-6.md), als verbleibende native Abnahme [P4.5.7](p4-ui.md#p457--native-systemintegration-je-zielsystem-prüfen). Die abgeschlossenen [P1-Teilaufgaben](p1-foundation.md), [P2-Teilaufgaben](p2-domain.md), [P3-Teilaufgaben](p3-storage.md), [P4.1](p4-ui.md#p41--composition-root-und-lokaler-einstieg), [P4.2.1](p4-ui.md#p421--navigation-und-bereichstrennung-prüfen), [P4.2.2](p4-ui.md#p422--übersicht-und-kontostart-prüfen), [P4.2.3](p4-ui.md#p423--kontoarchivierung-mit-referenzen-abnehmen), [P4.2.4](p4-ui.md#p424--kategoriearchivierung-mit-referenzen-abnehmen), [P4.2.5](p4-ui.md#p425--empfänger-merge-mit-buchungsreferenz-abnehmen), [P4.2.6](p4-ui.md#p426--layout-und-farbschema-stabilisieren) [P4.2.7](p4-ui.md#p427--tastaturfokus-für-navigation-und-stammdaten-abnehmen) und [P4.3.1–P4.3.8](handoffs/p4-3.md) sowie [P4.4.1–P4.4.7](handoffs/p4-4.md) und [P4.5.1–P4.5.6](handoffs/p4-5.md) dokumentieren die Grundlage. Der [Referenzhaushalt](reference-household.md) verbindet Fachbeispiele mit dem Buchungs-/Syncablauf; er ist kein importierbarer Snapshot.
 
+Die [UX-Neugestaltung](ux-redesign.md) ist durch ausdrücklichen Nutzerauftrag vom 5. Oktober 2026 für UX-01–UX-06 freigegeben; [aktuelle UX-Abnahme](handoffs/ux.md).
+
 ## Lesereihenfolge
 
 | Schritt | Dokument | Zweck |

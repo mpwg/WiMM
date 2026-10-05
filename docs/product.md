@@ -35,7 +35,7 @@ Eine externe Identität kann mehrere Haushaltsmitgliedschaften haben. Der letzte
 
 ## Navigation
 
-Bereichswechsel: Privat, Haushalte und deren Syncstatus. Innerhalb eines Bereichs: Übersicht, Buchungen, Konten, Budget, Berichte; im Haushalt zusätzlich Ausgleich. Einstellungen enthalten Kategorien, Regeln, Dauerzahlungen, Ziele, Sicherungen und gegebenenfalls Mitglieder. Die Oberfläche zeigt sichtbar, in welchem Bereich eine neue Buchung entsteht.
+Bereichswechsel: Privat, Haushalte und deren Syncstatus. Innerhalb eines Bereichs: Übersicht, Buchungen, Konten, Budget, Berichte; im Haushalt zusätzlich Ausgleich. Einstellungen enthalten Kategorien, Empfänger, Regeln, Dauerzahlungen, Farbschema sowie später Ziele, Sicherungen und gegebenenfalls Mitglieder. Import ist eine sekundäre Aktion der Buchungsansicht. Mobil führt Mehr auf eine eigene Ansicht. Noch nicht implementierte Fachpakete erzeugen keine Platzhalternavigation. Die Oberfläche zeigt sichtbar, in welchem Bereich eine neue Buchung entsteht.
 
 ## Abläufe und Zustände
 
