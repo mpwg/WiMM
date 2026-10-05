@@ -8,6 +8,8 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 Ergänzung vom 4. Oktober 2026: Der nachfolgende ausdrückliche Nutzerauftrag zum vollständigen Abschluss von P4.3.1–P4.3.8 ist umgesetzt und einzeln abgenommen; die aktuelle [Kriterienmatrix](handoffs/p4-3.md) ergänzt die historische Planungsänderung.
 
+Ergänzung vom 5. Oktober 2026: Der ausdrückliche Nutzerauftrag „Setze P4.4.* vollständig um“ umfasst P4.4.1–P4.4.7. Umsetzung und Einzelabnahme stehen in der [P4.4-Kriterienmatrix](handoffs/p4-4.md); die historische reine Planungsfreigabe wird dadurch für diesen Umfang ergänzt.
+
 ## Kleine Arbeitsaufträge und Abschlussregeln
 
 Ein begrenzter Standardauftrag umfasst genau eine Unteraufgabe, einen beobachtbaren Ablauf und dessen unmittelbare Prüfungen. Richtgröße ist ein zusammenhängender Abschnitt in einer Agentensitzung, kein vollständiges P4.x-Paket. Der ausdrückliche Nutzerauftrag vom 4. Oktober 2026 „P.4.3.* komplett, alle Subtasks“ umfasst ausnahmsweise P4.3.1–P4.3.8; deren Kriterien werden weiterhin einzeln geprüft. Falls währenddessen weitere unabhängige Funktionen nötig werden, diese vor der Umsetzung als eigene Unteraufgabe dokumentieren. Eine garantierte Umsetzung lässt sich nicht aus der Größe ableiten; die Abnahme entscheidet anhand des tatsächlichen Verhaltens.
@@ -27,7 +29,7 @@ Für jede Unteraufgabe: Schritte und Abnahme erfüllen, gezielte Tests mit Ergeb
 | P4.5 | P4.5.1–P4.5.7 | Menüs, Kurzbefehle, Öffnen, Speichern, Links, Capabilities und native Prüfung einzeln |
 | P4.6 | P4.6.1–P4.6.7 | Browser, Screenshots, Zoom, Screenreader, Leistung, Plattformen und Gesamtabschluss einzeln |
 
-Nächster konkreter Arbeitsauftrag: **P4.4.1 — Transferdialog und F03 abnehmen**. Beispiel für einen begrenzten Folgeauftrag: „Prüfe P4.4.1 vollständig, schließe festgestellte Lücken und dokumentiere nur dessen Abnahme.“
+Nächster konkreter Arbeitsauftrag: **P4.5.1 — Native Menübefehle anbinden**. P4.4.1–P4.4.7 sind aufgrund des ausdrücklichen Sammelauftrags vom 5. Oktober 2026 einzeln abgenommen; Details in der [Kriterienmatrix](handoffs/p4-4.md).
 
 ## P4.1 — Composition Root und lokaler Einstieg
 
@@ -368,7 +370,7 @@ Nächster konkreter Arbeitsauftrag: **P4.4.1 — Transferdialog und F03 abnehmen
 
 ## P4.4 — Transfer, Abgleich und Rückgängig
 
-- Status: in Arbeit.
+- Status: erledigt (5. Oktober 2026) — alle sieben Unteraufgaben einzeln erfüllt.
 - Freigabe: Nutzerauftrag zum Abschluss von P4.
 - Voraussetzungen: P4.3 erledigt.
 - Schritte: Transfer-/Abgleichdialoge und atomare Entsperrung anbinden; Differenz ausdrücklich anzeigen; Undo/Redo als reguläre Gegenbefehle mit aktuellen Revisionen durchführen; ungespeicherte Eingaben schützen.
@@ -376,98 +378,98 @@ Nächster konkreter Arbeitsauftrag: **P4.4.1 — Transferdialog und F03 abnehmen
 - Verträge: [Transfer-/Abgleichregeln](domain.md), [Fachbefehle](api.md#fachbefehle), [Tastaturregeln](ui.md#tastatur-und-systemintegration).
 - Abnahme: Transferseiten bleiben gemeinsam; abgeglichene Änderung erfordert Entsperrung; Korrekturbuchung nur nach eigener Bestätigung; Undo kann stale Revisionen nicht überschreiben.
 - Prüfungen: F03, Abgleichdifferenz, gesperrte Bearbeitung, Gegenbefehl bei veraltetem Stand, Tastatur-/Touchdialoge.
-- Prüfbelege: Die Kontenansicht besitzt Formulare für `saveTransfer` und `confirmReconciliation`; beide verwenden vollständige Fachaggregate und werden über den atomaren lokalen Speicher ausgeführt. Der Abgleich zeigt die vom Fachkern gelieferte Differenz und erzeugt keine verdeckte Korrekturbuchung. Offen: Entsperren abgeglichener Buchungen, Gegenbefehle für Undo/Redo, Schutz ungespeicherter Eingaben sowie UI-Prüfungen F03 und Stale-Revision.
+- Prüfbelege: F03 und Budgetgrenzen, Auszugsauswahl/Differenz, bestätigte Korrektur und Entsperrung, revisionsgeprüfte Undo-/Redo-Ketten sowie Entwurfsschutz sind für Web und Desktop-Frontend belegt. Kriterien, aktuelle Prüfungen, README und Plattformgrenzen stehen in der [P4.4-Übergabe](handoffs/p4-4.md).
 
 ### P4.4.1 — Transferdialog und F03 abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.4; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.4.* vollständig um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.3 einschließlich P4.3.1–P4.3.8 abgenommen.
 - Schritte: Vorhandenen Transferablauf für zwei Konten einschließlich Budgetgrenzen prüfen und vervollständigen.
 - Ergebnis: Transferdialog und F03 abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [Fachmodell](domain.md), [Fachbefehle](api.md#fachbefehle), [Tastaturregeln](ui.md#tastatur-und-systemintegration).
 - Abnahme: F03 zeigt 800/200 EUR, Gesamt 1.000 EUR und Verbrauch null; Budgetgrenztransfer verlangt die vorgesehene Kategorie/Freigabe.
 - Prüfungen: F03 über Chromium auf Web und Desktop-Frontend per Tastatur/Touch; Fehler zwischen Transferseiten erzeugt keine Teilbuchung.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.4 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete Interaktionen, Fach-/Speicherprüfungen und Testdaten stehen in der [P4.4-Kriterienmatrix](handoffs/p4-4.md).
+- Einschränkungen: Chromium mit emuliertem Touch und IndexedDB-Desktop-Testadapter; native Menüs/Kurzbefehle und übergreifende Plattformprüfungen bleiben P4.5/P4.6. Details in der [Übergabe](handoffs/p4-4.md).
 
 ### P4.4.2 — Abgleich und Differenz abnehmen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.4; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.4.* vollständig um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.4.1 abgenommen.
 - Schritte: Ausgewählte Buchungen, Auszugssaldo und sichtbare Differenz in bestehendem Abgleichdialog prüfen.
 - Ergebnis: Abgleich und Differenz abnehmen mit dokumentierter Einzelabnahme.
 - Verträge: [Fachmodell](domain.md), [Fachbefehle](api.md#fachbefehle), [Tastaturregeln](ui.md#tastatur-und-systemintegration).
 - Abnahme: Passende Summe gleicht exakt die Auswahl ab; abweichende Summe zeigt Differenz und erzeugt keine Korrekturbuchung.
 - Prüfungen: Chromium: erfolgreicher und abgelehnter Abgleich; Auswahl, Status und Saldo nach Neustart vergleichen.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.4 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete Interaktionen, Fach-/Speicherprüfungen und Testdaten stehen in der [P4.4-Kriterienmatrix](handoffs/p4-4.md).
+- Einschränkungen: Chromium mit emuliertem Touch und IndexedDB-Desktop-Testadapter; native Menüs/Kurzbefehle und übergreifende Plattformprüfungen bleiben P4.5/P4.6. Details in der [Übergabe](handoffs/p4-4.md).
 
 ### P4.4.3 — Abgeglichene Buchungen atomar entsperren
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.4; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.4.* vollständig um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.4.2 abgenommen.
 - Schritte: Explizite Entsperrbestätigung für gesperrte normale Buchungen und Transferpaare anbinden.
 - Ergebnis: Abgeglichene Buchungen atomar entsperren mit dokumentierter Einzelabnahme.
 - Verträge: [Fachmodell](domain.md), [Fachbefehle](api.md#fachbefehle), [Tastaturregeln](ui.md#tastatur-und-systemintegration).
 - Abnahme: Änderung/Löschung vor Entsperrung gesperrt; bestätigte Entsperrung betrifft das vollständige Aggregat; Abbruch verändert nichts.
 - Prüfungen: Chromium: Sperre → Abbruch → bestätigte Entsperrung → Bearbeitung; Transferseiten und Fehlrollback prüfen.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.4 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete Interaktionen, Fach-/Speicherprüfungen und Testdaten stehen in der [P4.4-Kriterienmatrix](handoffs/p4-4.md).
+- Einschränkungen: Chromium mit emuliertem Touch und IndexedDB-Desktop-Testadapter; native Menüs/Kurzbefehle und übergreifende Plattformprüfungen bleiben P4.5/P4.6. Details in der [Übergabe](handoffs/p4-4.md).
 
 ### P4.4.4 — Korrekturbuchung ausdrücklich bestätigen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.4; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.4.* vollständig um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.4.3 abgenommen.
 - Schritte: Bei Abgleichdifferenz einen gesonderten Korrekturvorgang mit Betrag, Datum und Kategorie anbieten.
 - Ergebnis: Korrekturbuchung ausdrücklich bestätigen mit dokumentierter Einzelabnahme.
 - Verträge: [Fachmodell](domain.md), [Fachbefehle](api.md#fachbefehle), [Tastaturregeln](ui.md#tastatur-und-systemintegration).
 - Abnahme: Differenz allein bucht nichts; erst eigene Bestätigung legt die sichtbare Korrekturbuchung an; Abbruch erhält Daten.
 - Prüfungen: Chromium: Differenz → Korrekturvorschau → abbrechen/bestätigen; Projektion und erneuten Abgleich prüfen.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.4 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete Interaktionen, Fach-/Speicherprüfungen und Testdaten stehen in der [P4.4-Kriterienmatrix](handoffs/p4-4.md).
+- Einschränkungen: Chromium mit emuliertem Touch und IndexedDB-Desktop-Testadapter; native Menüs/Kurzbefehle und übergreifende Plattformprüfungen bleiben P4.5/P4.6. Details in der [Übergabe](handoffs/p4-4.md).
 
 ### P4.4.5 — Rückgängig mit Revisionsprüfung umsetzen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.4; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.4.* vollständig um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.4.4 abgenommen.
 - Schritte: Lokale Historie erfolgreicher Finanzaktionen und Gegenbefehle für die in P4 vorhandenen Buchungs-/Transfer-/Abgleichaktionen anbinden.
 - Ergebnis: Rückgängig mit Revisionsprüfung umsetzen mit dokumentierter Einzelabnahme.
 - Verträge: [Fachmodell](domain.md), [Fachbefehle](api.md#fachbefehle), [Tastaturregeln](ui.md#tastatur-und-systemintegration).
 - Abnahme: Undo stellt fachlichen Vorzustand atomar wieder her; nach zwischenzeitlicher Fremdänderung klare Ablehnung und kein Überschreiben.
 - Prüfungen: Gezielte Integration für Erfassung, Änderung, Löschung, Transfer und Abgleich; Chromium für Undo und stale Revision; keine unkontrollierte Snapshotrücksetzung.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.4 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete Interaktionen, Fach-/Speicherprüfungen und Testdaten stehen in der [P4.4-Kriterienmatrix](handoffs/p4-4.md).
+- Einschränkungen: Chromium mit emuliertem Touch und IndexedDB-Desktop-Testadapter; native Menüs/Kurzbefehle und übergreifende Plattformprüfungen bleiben P4.5/P4.6. Details in der [Übergabe](handoffs/p4-4.md).
 
 ### P4.4.6 — Wiederholen mit Revisionsprüfung umsetzen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.4; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.4.* vollständig um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.4.5 abgenommen.
 - Schritte: Redo erfolgreicher Gegenbefehle ergänzen; neue Aktion und Bereichswechsel in der Historie behandeln.
 - Ergebnis: Wiederholen mit Revisionsprüfung umsetzen mit dokumentierter Einzelabnahme.
 - Verträge: [Fachmodell](domain.md), [Fachbefehle](api.md#fachbefehle), [Tastaturregeln](ui.md#tastatur-und-systemintegration).
 - Abnahme: Redo reproduziert Aktion einmal; stale Revision wird abgewiesen; neue Aktion verwirft Redo-Zweig; keine Historie wirkt auf fremden Bereich.
 - Prüfungen: Integrationsprüfungen der Gegenbefehle plus Chromium: Undo → Redo, stale Revision und Bereichswechsel.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.4 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete Interaktionen, Fach-/Speicherprüfungen und Testdaten stehen in der [P4.4-Kriterienmatrix](handoffs/p4-4.md).
+- Einschränkungen: Chromium mit emuliertem Touch und IndexedDB-Desktop-Testadapter; native Menüs/Kurzbefehle und übergreifende Plattformprüfungen bleiben P4.5/P4.6. Details in der [Übergabe](handoffs/p4-4.md).
 
 ### P4.4.7 — Ungespeicherte Eingaben schützen
 
-- Status: offen.
-- Freigabe: erbt die bestehende Freigabe von P4.4; aktueller Auftrag nur Aufgabenplanung.
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag „Setze P4.4.* vollständig um“ vom 5. Oktober 2026.
 - Voraussetzungen: P4.4.6 abgenommen.
 - Schritte: Abbrechen, Escape, Navigation und Bereichswechsel mit geändertem Formular absichern.
 - Ergebnis: Ungespeicherte Eingaben schützen mit dokumentierter Einzelabnahme.
 - Verträge: [Fachmodell](domain.md), [Fachbefehle](api.md#fachbefehle), [Tastaturregeln](ui.md#tastatur-und-systemintegration).
 - Abnahme: Geänderte Eingaben werden nur nach ausdrücklichem Verwerfen entfernt; Abbruch der Rückfrage erhält Werte; sauberes Formular schließt ohne Rückfrage.
 - Prüfungen: Chromium per Tastatur und Touch mit Buchungs-, Transfer- und Abgleichformular; Fokus nach Rückfrage prüfen.
-- Prüfbelege: Einzelabnahme noch nicht dokumentiert; vorhandene Teilbelege stehen bei P4.4 und sind gezielt nachzuprüfen.
-- Einschränkungen: spätere Paketfunktionen bleiben außerhalb des Auftrags; fehlende Prüfmittel mit konkreter offener Abnahme dokumentieren.
+- Prüfbelege: Einzelabnahme erfüllt; konkrete Interaktionen, Fach-/Speicherprüfungen und Testdaten stehen in der [P4.4-Kriterienmatrix](handoffs/p4-4.md).
+- Einschränkungen: Chromium mit emuliertem Touch und IndexedDB-Desktop-Testadapter; native Menüs/Kurzbefehle und übergreifende Plattformprüfungen bleiben P4.5/P4.6. Details in der [Übergabe](handoffs/p4-4.md).
 
 ## P4.5 — Native Menüs, Dialoge und Plattformbedienung
 
