@@ -10,6 +10,7 @@
     "vitest.config.ts",
     "tests/ui/**/*.ts",
     "tests/workspace/**/*.ts",
+    "tests/acceptance/**/*.ts",
     "apps/web/tests/**/*.tsx"
   ],
   "exclude": [

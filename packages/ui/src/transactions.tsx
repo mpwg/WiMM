@@ -12,8 +12,9 @@ function moneyText(cents: number): string {
   return `${value < 0n ? '-' : ''}${absolute / 100n},${String(absolute % 100n).padStart(2, '0')}`;
 }
 function errorText(reason: unknown): string {
-  if (reason instanceof Error && /revision|stale/i.test(reason.message)) return 'Die Buchung wurde inzwischen geändert. Bitte öffnen Sie den aktuellen Stand erneut; Ihre Eingaben bleiben erhalten.';
-  if (reason instanceof Error && /quota|disk|full|space/i.test(reason.message)) return 'Der lokale Speicher ist voll. Ihre Eingaben bleiben erhalten. Schaffen Sie Platz und versuchen Sie es erneut.';
+  const message = reason instanceof Error ? reason.message : typeof reason === 'string' ? reason : '';
+  if (/revision|stale/i.test(message)) return 'Die Buchung wurde inzwischen geändert. Bitte öffnen Sie den aktuellen Stand erneut; Ihre Eingaben bleiben erhalten.';
+  if (/quota|disk|full|space/i.test(message)) return 'Der lokale Speicher ist voll. Ihre Eingaben bleiben erhalten. Schaffen Sie Platz und versuchen Sie es erneut.';
   return reason instanceof Error ? reason.message : 'Die Buchung wurde nicht gespeichert. Ihre Eingaben bleiben erhalten.';
 }
 interface SplitDraft { id: string; categoryId: string; amount: string }
