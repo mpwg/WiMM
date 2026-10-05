@@ -9,12 +9,14 @@ Die Auswahlübersichten unten dokumentieren P1.1; die tatsächlichen Installatio
 | Bestandteil | Auswahlübersicht P1.1 | Tatsächlich gesperrt |
 | --- | --- | --- |
 | Tauri-CLI | 2.11.5 | 2.12.0; notwendige Korrektur der veralteten STATIC_VCRUNTIME-Übergabe |
-| tauri-build | 2.6.3 | 2.7.0 |
+| Tauri-JS-API | 2.11.1 | 2.12.0; an die aktuelle stabile Tauri-2-Linie angepasst |
+| tauri | 2.11.6 | 2.12.1 |
+| tauri-build | 2.6.3 | 2.7.1 |
 | Dexie | 4.4.6 | 4.2.1 |
 | rusqlite | 0.40.2 | 0.37.0 |
 | better-sqlite3 | 13.0.3 für den späteren Server | Noch keine Abhängigkeit des aktuellen Servers |
 
-T1 ergänzt [Oxlint 1.85.0](https://registry.npmjs.org/oxlint/1.85.0) und [oxlint-tsgolint 7.0.2003](https://registry.npmjs.org/oxlint-tsgolint/7.0.2003), beide MIT. Registry-Veröffentlichungen: 21. beziehungsweise 24. September 2026; beide erfüllen am 4. Oktober die sieben Tage Reifezeit. Oxlint verlangt Node `^20.19.0 || >=22.12.0` und oxlint-tsgolint mindestens 7.0.2001; die gewählten Versionen erfüllen dies. Tauri-CLI [2.12.0](https://registry.npmjs.org/@tauri-apps%2fcli/2.12.0) erschien am 26. September 2026 und erfüllt ebenfalls die Reifezeit; Rust-Core und JS-API bleiben unverändert. Neue plattformspezifische Pakete sind einschließlich Integrität im pnpm-Lockfile gesperrt. TypeScript bleibt 7.0.2, das Sprachziel wird ES2025. Rust bleibt 1.99.0 und ist nun einschließlich Clippy/rustfmt versioniert festgelegt.
+T1 ergänzt [Oxlint 1.85.0](https://registry.npmjs.org/oxlint/1.85.0) und [oxlint-tsgolint 7.0.2003](https://registry.npmjs.org/oxlint-tsgolint/7.0.2003), beide MIT. Registry-Veröffentlichungen: 21. beziehungsweise 24. September 2026; beide erfüllen am 4. Oktober die sieben Tage Reifezeit. Oxlint verlangt Node `^20.19.0 || >=22.12.0` und oxlint-tsgolint mindestens 7.0.2001; die gewählten Versionen erfüllen dies. Tauri-CLI [2.12.0](https://registry.npmjs.org/@tauri-apps%2fcli/2.12.0) erschien am 26. September 2026 und erfüllt ebenfalls die Reifezeit. Am 5. Oktober wurde die übersehene JS-API auf [2.12.0](https://registry.npmjs.org/@tauri-apps%2fapi/2.12.0) angehoben. API und CLI 2.12.1 erschienen am 30. September und erfüllen die festgelegte Reifezeit von sieben Tagen noch nicht; die verwendeten 2.12.0-Releases sind die neuesten reifen stabilen Versionen. Rust-Core 2.12.1 und tauri-build 2.7.1 sind bereits in Cargo-Manifest und Lockfile gesperrt. Neue plattformspezifische Pakete sind einschließlich Integrität im pnpm-Lockfile gesperrt. TypeScript bleibt 7.0.2, das Sprachziel wird ES2025. Rust bleibt 1.99.0 und ist nun einschließlich Clippy/rustfmt versioniert festgelegt.
 
 `skipLibCheck` bleibt wegen TS1540 in Dexie 4.2.1 und TS2694 in thread-stream 4.2.0 nötig. Das ist eine dokumentierte Fremddeklarationsgrenze, keine Abschaltung eigener Typprüfungen. Die [Entwicklungsanleitung](development.md#aktuelle-toolprüfungen) beschreibt die verbindlichen Warnungsregeln. Die vorhandenen pnpm-Regeln für Installationsskripte, exakte Versionen, Peers und Reifezeit bleiben erhalten.
 
@@ -22,7 +24,7 @@ T1 ergänzt [Oxlint 1.85.0](https://registry.npmjs.org/oxlint/1.85.0) und [oxlin
 
 - Es werden ausschließlich stabile Releases verwendet; Vorabversionen, insbesondere Tauri 3-Alpha, sind ausgeschlossen.
 - Node 26 ist die aktuelle stabile Laufzeitlinie. Das Projekt verlangt mindestens Node 26.10.0 und akzeptiert bis vor Node 28 auch die nächste Hauptlinie; so bleiben zeitnahe Sicherheits- und Patchupdates ohne Konfigurationsänderung nutzbar.
-- Alle hier gewählten Laufzeiten erfüllen ihre dokumentierten Mindestversionen mit Node 26.10.0. Tatsächliche Installation, Typprüfung und Builds sind ausdrücklich erst P1.2 beziehungsweise P1.5. Tauri 2.12.1 wurde nicht übernommen, weil die Veröffentlichung am 30. September 2026 die festgelegte Reifezeit von sieben Tagen noch nicht erfüllt; die neueste reife kompatible 2.11-Kombination ist festgelegt.
+- Alle hier gewählten Laufzeiten erfüllen ihre dokumentierten Mindestversionen mit Node 26.10.0. Tatsächliche Installation, Typprüfung und Builds sind ausdrücklich erst P1.2 beziehungsweise P1.5. Für npm gilt die Sperre neuer Releases für sieben Tage. Daher bleiben Tauri-CLI und JS-API bei 2.12.0, bis 2.12.1 diese Frist erfüllt; Rust-Core 2.12.1 und tauri-build 2.7.1 sind bereits vorhanden.
 - MIT, ISC und Apache-2.0 sind mit der Projektlizenz AGPL-3.0-or-later vereinbar. Vollständige Lizenztexte und Copyright-Hinweise der tatsächlich aufgelösten transitiven Abhängigkeiten werden vor einer Distribution aus dem Lockfile in Fremdhinweise übernommen.
 
 ## Toolchain
@@ -32,7 +34,7 @@ T1 ergänzt [Oxlint 1.85.0](https://registry.npmjs.org/oxlint/1.85.0) und [oxlin
 | Node.js | 26.10.0, Engine `>=26.10.0 <28` | [Node-Release](https://nodejs.org/en/download/current), [Releaseplan](https://github.com/nodejs/Release); MIT | Aktuelle stabile Linie; der Bereich lässt die nächste Hauptlinie zu, ohne beliebig unbekannte Hauptversionen freizugeben. |
 | pnpm | 12.8.1, Engine `>=12.8.1 <14` | [npm-Metadaten](https://registry.npmjs.org/pnpm/12.8.1); MIT | Aktuelle stabile Version; `packageManager` bleibt für reproduzierbare Installationen bei 12.8.1, während der Engine-Bereich kompatible neuere Versionen bis vor 14 zulässt. |
 | Rust | 1.99.0 | [Rust-Releaseankündigungen](https://blog.rust-lang.org/releases/); Apache-2.0 oder MIT | Aktuelle stabile Toolchain; über der Mindestversion Rust 1.90 von Tauri 2.12.1. |
-| Tauri | CLI 2.11.5; JS-API 2.11.1; Rust-Core 2.11.6; Rust-Build 2.6.3 | [CLI-Metadaten](https://registry.npmjs.org/@tauri-apps%2fcli/2.11.5), [API-Metadaten](https://registry.npmjs.org/@tauri-apps%2fapi/2.11.1), [Rust-Core](https://crates.io/api/v1/crates/tauri/2.11.6), [Rust-Build](https://crates.io/api/v1/crates/tauri-build/2.6.3); Apache-2.0 oder MIT | Neueste reife stabile Tauri-2-Kombination gemäß sieben Tagen Reifezeit, passend zur Architektur. Rust-Core und Rust-Build folgen eigenständigen Versionslinien; keine 3.x-Alpha. |
+| Tauri | CLI 2.12.0; JS-API 2.12.0; Rust-Core 2.12.1; Rust-Build 2.7.1 | [CLI-Metadaten](https://registry.npmjs.org/@tauri-apps%2fcli/2.12.0), [API-Metadaten](https://registry.npmjs.org/@tauri-apps%2fapi/2.12.0), [Rust-Core](https://crates.io/api/v1/crates/tauri/2.12.1), [Rust-Build](https://crates.io/api/v1/crates/tauri-build/2.7.1); Apache-2.0 oder MIT | Neueste reife stabile npm-Versionen; Rust-Core und Rust-Build folgen eigenständigen Versionslinien. Tauri 3 bleibt ausgeschlossen. |
 
 ## JavaScript- und Laufzeitbibliotheken
 
@@ -83,4 +85,4 @@ Für jede aufgelöste direkte oder transitive Abhängigkeit werden mindestens Na
 
 ## P4.5 — Native Systemports
 
-Zusätzlich exakt gesperrt: `tauri-plugin-dialog` 2.7.1 und `tauri-plugin-opener` 2.5.5, jeweils Apache-2.0 oder MIT; `url` 2.5.8 (MIT oder Apache-2.0) und `tempfile` 3.27.0 (MIT oder Apache-2.0). Die offiziellen [Dialog-](https://v2.tauri.app/plugin/dialog/) und [Opener-APIs](https://v2.tauri.app/plugin/opener/) werden ausschließlich innerhalb der begrenzten Rust-Appcommands verwendet. Die neueren Dialog-/Opener-Versionen verlangen Tauri 2.12 und passen nicht zum gesperrten Core 2.11.6. Es wurde kein Upstreamquellcode kopiert. Checksummen und transitive Auflösung stehen in `apps/desktop/src-tauri/Cargo.lock`; vollständige Distributionhinweise bleiben P11.
+Zusätzlich exakt gesperrt: `tauri-plugin-dialog` 2.7.3 und `tauri-plugin-opener` 2.5.5, jeweils Apache-2.0 oder MIT; `url` 2.5.8 (MIT oder Apache-2.0) und `tempfile` 3.27.0 (MIT oder Apache-2.0). Die offiziellen [Dialog-](https://v2.tauri.app/plugin/dialog/) und [Opener-APIs](https://v2.tauri.app/plugin/opener/) werden ausschließlich innerhalb der begrenzten Rust-Appcommands verwendet. Beide Plugins sind mit Tauri 2.12 kompatibel. Es wurde kein Upstreamquellcode kopiert. Checksummen und transitive Auflösung stehen in `apps/desktop/src-tauri/Cargo.lock`; vollständige Distributionhinweise bleiben P11.
