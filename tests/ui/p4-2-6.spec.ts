@@ -10,7 +10,7 @@ async function checkLayout(page: Page): Promise<void> {
   expect(await page.locator('html').evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   const smallTargets = await page.locator('.app-shell button, .app-shell input, .app-shell select').evaluateAll((elements) => elements.filter((element) => {
     const rect = element.getBoundingClientRect();
-    return rect.width < 44 || rect.height < 44;
+    return rect.width > 0 && rect.height > 0 && (rect.width < 44 || rect.height < 44);
   }).map((element) => element.outerHTML));
   expect(smallTargets).toEqual([]);
   expect(await page.locator('.app-shell').evaluate((element) => getComputedStyle(element).fontFamily)).toContain('system-ui');

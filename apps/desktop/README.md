@@ -32,3 +32,15 @@ swiftc tests/native/macos-ax.swift -o .toolchain-checks/p4-5/ax
 ```
 
 Der AX-Treiber benötigt macOS-Bedienungshilfenzugriff; er kann ausschließlich die laufende Test-App über ihre echten Oberflächenelemente bedienen. Nach der Prüfung erneut ohne die Testvariable bauen. Das Testpanel nutzt die tatsächlichen Datei-/Linkports und prüft zusätzliche abgewiesene IPC-Aufrufe; es importiert und exportiert keine Finanzdaten.
+
+## Persistenzabnahme P4.6
+
+Der native Prüfbuild kann zusätzlich einen ausdrücklich getrennten Profilstore-Schlüssel erhalten:
+
+```sh
+VITE_WIMM_NATIVE_SMOKE=1 VITE_WIMM_NATIVE_SMOKE_PROFILE=wimm/p4-6-native-profile/v1 pnpm --dir apps/desktop exec tauri build --config '{"identifier":"at.mpwg.wimm.p46smoke"}'
+mkdir -p .toolchain-checks/p4-6
+swiftc tests/native/macos-acceptance.swift -o .toolchain-checks/p4-6/input
+```
+
+Der ergänzende AX-Treiber füllt synthetische Textfelder mit Systemtastatureingaben und wählt echte WebKit-Auswahlfelder. Er verändert keine Fachdaten direkt. Die beobachteten Offline-Neustart- und Disk-full-Läufe stehen mit Plattform, Testvolume und Grenzen in der [P4.6-Übergabe](../../docs/handoffs/p4-6.md). Ein begrenztes Testvolume muss ausschließlich den getrennten Testdatensatz aufnehmen; produktive Appdaten dürfen dafür nicht verwendet werden. Nach dem Lauf App beenden, Testprofilpfad wiederherstellen und Testvolume aushängen. Abschließend ohne Testvariablen bauen.

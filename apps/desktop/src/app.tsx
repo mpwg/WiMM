@@ -8,7 +8,7 @@ import type { UUID } from '@wimm/contracts';
 // Das getrennte Modul vor dem Einstieg laden: nach SW-Kontrolle wird es so
 // auch bei einem Neustart in den Sperrbildschirm vollständig gecacht.
 const { FinanceWorkspace } = await import('@wimm/ui/workspace');
-const profileStore = createBrowserProfileStore(import.meta.env.VITE_WIMM_NATIVE_SMOKE === '1' ? 'wimm/native-smoke-profile/v1' : 'wimm/desktop-profile/v1');
+const profileStore = createBrowserProfileStore(import.meta.env.VITE_WIMM_NATIVE_SMOKE === '1' ? (import.meta.env.VITE_WIMM_NATIVE_SMOKE_PROFILE ?? 'wimm/native-smoke-profile/v1') : 'wimm/desktop-profile/v1');
 const platform = createDesktopPlatformServices();
 
 function createDesktopWorkspaceStorage(profileId: UUID): WorkspaceStorage {
