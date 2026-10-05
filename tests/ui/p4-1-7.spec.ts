@@ -28,6 +28,8 @@ async function waitForPwaControl(page: Page): Promise<void> {
 }
 
 test('startet die PWA nach einem Offline-Neustart und öffnet den Haushalt über Passphrase und Rettungscode', async ({ page }) => {
+  test.skip(process.env.WIMM_BUILD !== '1', 'Offline-Neustart wird gegen den gebauten Webclient geprüft.');
+
   const recoveryCode = await createHousehold(page);
   await waitForPwaControl(page);
 
