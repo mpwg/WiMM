@@ -44,7 +44,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.4 — Dubletten, gruppierte Übernahme und Wiederaufnahme
 
-- Status: in Arbeit: umgesetzt und im Web/Desktop-Frontend abgenommen; native Großimport-/Disk-full-Wiederholung bleibt offen.
+- Status: erledigt (5. Oktober 2026); Fach-/Webkriterien und echte native macOS-arm64-Großimport-/Disk-full-Wiederaufnahme abgenommen.
 - Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.3 erledigt.
 - Schritte: Quell-ID-Konflikte und normalisierte Fingerprintkandidaten ermitteln; Entscheidungen speichern; bestätigte Gruppen bis 100 Buchungen über Fachbefehle übernehmen; Import-ID/Quellzeile und Fortschritt dauerhaft speichern.
@@ -52,7 +52,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 - Verträge: [Dubletten und Importablauf](formats.md), ImportBatch/ImportFingerprint in [Datenmodell](data-model.md), [StorageAdapter](architecture.md).
 - Abnahme: echte gleiche Zahlungen ausdrücklich getrennt möglich; gleiche ID mit anderem Inhalt Prüfkonflikt; Wiederaufnahme ohne Doppelbuchung; Teilübernahme klar angezeigt; kein Gesamtabbruch mit behauptetem Vollrollback.
 - Prüfungen: Wiederimport, bewusst zugelassene Dublette, Abbruch vor/nach Gruppencommit, Quota/Disk-full und Großimport ohne blockierenden UI-Thread.
-- Prüfbelege: Fachtests, echte IndexedDB-Gruppen 100/100/5, vollständiger Chromium-Neustart, simulierte Speicherfehler und Teilwrite-Rollback, 99.999-Zeilen-Vorschau und Zwei-Tab-CAS; native SQLite-Wiederaufnahme auf macOS arm64. Native Großimport-/Disk-full-Wiederholung offen; [Matrix](handoffs/p5.md) und [native Teilabnahme](handoffs/p5-native.md).
+- Prüfbelege: Fachtests, echte IndexedDB-Gruppen 100/100/5, vollständiger Chromium-Neustart, simulierte Speicherfehler und Teilwrite-Rollback, 99.999-Zeilen-Vorschau und Zwei-Tab-CAS; native SQLite-Wiederaufnahme auf macOS arm64. Native 10.000-Zeilen-Vorschau, erste Gruppe, tatsächlich volles Testvolume, vollständiger SQLite-Rollback und Offline-Wiederaufnahme bestanden; [Matrix](handoffs/p5.md) und [native Teilabnahme](handoffs/p5-native.md).
 
 ## P5.5 — Deterministische Buchungsregeln
 
@@ -68,7 +68,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.6 — Dauerzahlungen und Gesamt-Abnahme
 
-- Status: in Arbeit: Dauerzahlungen umgesetzt und fachlich/in Chromium abgenommen; Gesamt-Abnahme wegen nativer und Geräteprüfungen offen.
+- Status: in Arbeit: Dauerzahlungen umgesetzt und fachlich/in Chromium abgenommen; Gesamt-Abnahme wegen Firefox-, Geräte- und Screenreaderprüfungen offen.
 - Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.5 erledigt.
 - Schritte: Schedule-/Occurrence-Befehle, ursprünglichen Fälligkeitstag, Bestätigung/Überspringen und explizite Importzuordnung umsetzen; fällige Vorschläge/Verwaltung anbinden; gesamte Import-/Automatisierungssuite integrieren.
@@ -76,4 +76,4 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 - Verträge: [Dauerzahlungen](domain.md), [Schedule-Befehle](api.md), [P5](tasks.md#p5--import-und-automatisierung), F14 in [Tests](testing.md).
 - Abnahme: F14 und alle vier Formatfixtures bestanden; Vorschläge verändern keine Salden; wiederholte Bestätigung idempotent; Importzuordnung erzeugt keine zweite Fälligkeit/Buchung.
 - Prüfungen: Monatsende/Schaltjahr/Intervall/Enddatum, Doppelbestätigung und Importzuordnung; Parser-/Dubletten-/Limit-/Abbruchsuite sowie UI-Abläufe und Fachregressionen.
-- Prüfbelege: F14, Monatsende/Schaltjahr/weekly/yearly/Enddatum, sichere Kontosummen, wiederholte Bestätigung/Skip und ausdrückliche Importzuordnung; gebaute PWA offline einschließlich beider bisher ungenutzter Worker. [Kriterienmatrix](handoffs/p5.md) nennt verbleibende native, Geräte- und Zugänglichkeitsprüfungen.
+- Prüfbelege: F14, Monatsende/Schaltjahr/weekly/yearly/Enddatum, sichere Kontosummen, wiederholte Bestätigung/Skip und ausdrückliche Importzuordnung; gebaute PWA offline einschließlich beider bisher ungenutzter Worker. [Kriterienmatrix](handoffs/p5.md) nennt bestandenen echten Browserzoom 200 % sowie verbleibende Firefox-, Geräte- und Screenreaderprüfungen.
