@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Ausschließlich Vite-Testseite; kein Produktionsentry und keine Fehlerports in der App.
+import { FinanceWorkspace } from '@wimm/ui/workspace';
 import { createRoot } from 'react-dom/client';
-import { FinanceWorkspace, type UnlockedAppContext, type WorkspaceStorage } from '@wimm/ui';
+import { createBrowserPlatformServices, type UnlockedAppContext, type WorkspaceStorage } from '@wimm/ui';
 import { IndexedDbStorageAdapter, toStoredAggregate, type StoredAggregate } from '@wimm/storage';
 import type { AtomicBatch, UUID } from '@wimm/contracts';
 import type { AccountAggregate, CategoryGroupAggregate, CategoryAggregate, P2Aggregate, TransactionAggregate } from '@wimm/domain';
@@ -59,5 +60,5 @@ window.workspaceTest = {
   }
 };
 const area = { id: spaceId, kind: 'private', label: 'Synthetischer Bereich' } as const;
-const context = { activeArea: area, profile: { profileId, areas: [area] }, selectArea: () => undefined, createHousehold: async () => undefined, lock: async () => undefined } as unknown as UnlockedAppContext;
+const context = { platform: createBrowserPlatformServices(), activeArea: area, profile: { profileId, areas: [area] }, selectArea: () => undefined, createHousehold: async () => undefined, lock: async () => undefined } as unknown as UnlockedAppContext;
 createRoot(document.getElementById('root')!).render(<FinanceWorkspace context={context} storageForProfile={() => storage} desktop={parameters.get('desktop') === 'true'} />);

@@ -3,9 +3,11 @@ use std::fs;
 use std::sync::Mutex;
 
 use rusqlite::{Connection, OptionalExtension, Transaction, params};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
+mod platform;
+use platform::*;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 
 struct StorageState(Mutex<Connection>);
@@ -17,7 +19,7 @@ struct ExpectedRevision {
     expected_revision: i64,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct StoredAggregate {
     handle: String,
@@ -106,7 +108,7 @@ fn storage_apply_batch(
     let transaction = connection.transaction().map_err(storage_error)?;
     assert_expected_revisions(&transaction, &batch)?;
     for aggregate in &batch.aggregates {
-        let payload = serde_json::to_string(&aggregate.payload).map_err(storage_error)?;
+        let payload = serde_json::to_string(aggregate).map_err(storage_error)?;
         transaction.execute(
             "INSERT INTO aggregates(profile_id, handle, space_id, revision, payload) VALUES (?1, ?2, ?3, ?4, ?5)
              ON CONFLICT(profile_id, handle) DO UPDATE SET space_id = excluded.space_id, revision = excluded.revision, payload = excluded.payload",
@@ -166,7 +168,7 @@ fn storage_read_aggregate(
         .map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
     connection
         .query_row(
-            "SELECT payload FROM aggregates WHERE profile_id = ?1 AND handle = ?2",
+            "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND handle = ?2",
             params![profile_id, handle],
             |row| row.get::<_, String>(0),
         )
@@ -187,7 +189,7 @@ fn storage_query_aggregates(
         .lock()
         .map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
     let mut statement = connection
-        .prepare("SELECT payload FROM aggregates WHERE profile_id = ?1 AND space_id = ?2")
+        .prepare("SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2")
         .map_err(storage_error)?;
     let rows = statement
         .query_map(params![profile_id, space_id], |row| row.get::<_, String>(0))
@@ -210,34 +212,123 @@ fn main() {
                 Some("CmdOrCtrl+N"),
             )?;
             let settings =
-                MenuItem::with_id(handle, "settings", "Einstellungen", true, None::<&str>)?;
+                MenuItem::with_id(handle, "settings", "Einstellungen", false, None::<&str>)?;
+            new_transaction.set_enabled(false)?;
             let file = Submenu::with_items(
                 handle,
                 "Datei",
                 true,
                 &[
                     &new_transaction,
-                    &settings,
-                    &PredefinedMenuItem::close_window(handle, None)?,
+                    &PredefinedMenuItem::close_window(handle, Some("Fenster schließen"))?,
                 ],
             )?;
+            let undo = MenuItem::with_id(handle, "undo", "Rückgängig", true, Some("CmdOrCtrl+Z"))?;
+            let redo = MenuItem::with_id(
+                handle,
+                "redo",
+                "Wiederholen",
+                true,
+                Some("CmdOrCtrl+Shift+Z"),
+            )?;
+            let search = MenuItem::with_id(handle, "search", "Suchen", false, Some("CmdOrCtrl+F"))?;
             let edit = Submenu::with_items(
                 handle,
                 "Bearbeiten",
                 true,
                 &[
-                    &PredefinedMenuItem::undo(handle, None)?,
-                    &PredefinedMenuItem::redo(handle, None)?,
+                    &undo,
+                    &redo,
                     &PredefinedMenuItem::separator(handle)?,
-                    &PredefinedMenuItem::cut(handle, None)?,
-                    &PredefinedMenuItem::copy(handle, None)?,
-                    &PredefinedMenuItem::paste(handle, None)?,
-                    &PredefinedMenuItem::select_all(handle, None)?,
+                    &PredefinedMenuItem::cut(handle, Some("Ausschneiden"))?,
+                    &PredefinedMenuItem::copy(handle, Some("Kopieren"))?,
+                    &PredefinedMenuItem::paste(handle, Some("Einfügen"))?,
+                    &PredefinedMenuItem::select_all(handle, Some("Alles auswählen"))?,
+                    &search,
                 ],
             )?;
-            Menu::with_items(handle, &[&file, &edit])
+            let overview = MenuItem::with_id(handle, "overview", "Übersicht", false, None::<&str>)?;
+            let view = Submenu::with_items(
+                handle,
+                "Ansicht",
+                true,
+                &[
+                    &overview,
+                    &PredefinedMenuItem::fullscreen(handle, Some("Vollbild"))?,
+                    &PredefinedMenuItem::minimize(handle, Some("Minimieren"))?,
+                ],
+            )?;
+            let help_link =
+                MenuItem::with_id(handle, "help", "Hilfe und Quellcode", true, None::<&str>)?;
+            let license = MenuItem::with_id(
+                handle,
+                "license",
+                "Lizenz AGPL-3.0-or-later",
+                true,
+                None::<&str>,
+            )?;
+            let about = PredefinedMenuItem::about(
+                handle,
+                Some("Über WhereIsMyMoney"),
+                Some(tauri::menu::AboutMetadata {
+                    name: Some("WhereIsMyMoney".into()),
+                    version: Some(env!("CARGO_PKG_VERSION").into()),
+                    copyright: Some("AGPL-3.0-or-later".into()),
+                    ..Default::default()
+                }),
+            )?;
+            let help = Submenu::with_items(handle, "Hilfe", true, &[&about, &help_link, &license])?;
+            let app_menu = Submenu::with_items(
+                handle,
+                "WhereIsMyMoney",
+                true,
+                &[
+                    &settings,
+                    &PredefinedMenuItem::separator(handle)?,
+                    &PredefinedMenuItem::hide(handle, Some("WhereIsMyMoney ausblenden"))?,
+                    &PredefinedMenuItem::hide_others(handle, Some("Andere ausblenden"))?,
+                    &PredefinedMenuItem::show_all(handle, Some("Alle einblenden"))?,
+                    &PredefinedMenuItem::quit(handle, Some("WhereIsMyMoney beenden"))?,
+                ],
+            )?;
+            #[cfg(target_os = "macos")]
+            return Menu::with_items(handle, &[&app_menu, &file, &edit, &view, &help]);
+            #[cfg(not(target_os = "macos"))]
+            Menu::with_items(handle, &[&file, &edit, &view, &app_menu, &help])
+        })
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(
+            tauri_plugin_opener::Builder::new()
+                .open_js_links_on_click(false)
+                .build(),
+        )
+        .on_menu_event(|app, event| {
+            let id = event.id().as_ref();
+            if matches!(id, "help" | "license") {
+                let url = if id == "help" {
+                    "https://github.com/mpwg/WiMM"
+                } else {
+                    "https://www.gnu.org/licenses/agpl-3.0.html"
+                };
+                if let Err(error) = platform_open_url(app.clone(), url.into()) {
+                    let _ = app.emit_to("main", "platform-error", error);
+                }
+            } else {
+                let _ = app.emit_to("main", "platform-menu", id);
+            }
         })
         .setup(|app| {
+            tauri::WebviewWindowBuilder::new(
+                app,
+                "main",
+                tauri::WebviewUrl::App("index.html".into()),
+            )
+            .title("WhereIsMyMoney")
+            .inner_size(960.0, 720.0)
+            .min_inner_size(900.0, 600.0)
+            .on_navigation(bundled_navigation)
+            .on_new_window(|_, _| tauri::webview::NewWindowResponse::Deny)
+            .build()?;
             let directory = app.path().app_local_data_dir()?;
             fs::create_dir_all(&directory)?;
             let connection = Connection::open(directory.join("wimm.sqlite3"))?;
@@ -246,6 +337,10 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            platform_choose_files,
+            platform_write_file,
+            platform_open_url,
+            platform_set_menu,
             storage_apply_batch,
             storage_read_aggregate,
             storage_query_aggregates
@@ -258,6 +353,20 @@ fn main() {
 mod tests {
     use super::*;
 
+    #[test]
+    fn sqlite_read_preserves_heads_including_legacy_payloads() {
+        let connection = Connection::open_in_memory().unwrap();
+        initialize_storage(&connection).unwrap();
+        let aggregate: StoredAggregate = serde_json::from_value(serde_json::json!({"handle":"h", "spaceId":"s", "revision":3, "id":"h", "aggregateType":"account"})).unwrap();
+        let complete = serde_json::to_value(&aggregate).unwrap();
+        assert_eq!(complete["revision"], 3);
+        assert_eq!(complete["spaceId"], "s");
+        // Historische gespeicherte Payloads besaßen die Kopfwerte nur in SQL-Spalten.
+        connection.execute("INSERT INTO aggregates(profile_id, handle, space_id, revision, payload) VALUES ('p','h','s',3,?1)", [r#"{"id":"h","aggregateType":"account"}"#]).unwrap();
+        let raw: String = connection.query_row("SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND handle = ?2", params!["p", "h"], |row| row.get(0)).unwrap();
+        let loaded: Value = serde_json::from_str(&raw).unwrap();
+        assert_eq!(loaded, complete);
+    }
     #[test]
     fn sqlite_aktiviert_fremdschluessel_und_rollt_abbruch_zurueck() {
         let mut connection = Connection::open_in_memory().expect("In-Memory-SQLite verfügbar");

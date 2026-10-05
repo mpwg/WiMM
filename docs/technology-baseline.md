@@ -80,3 +80,7 @@ Die Tauri-Dokumentation nennt zielsystemabhängige Voraussetzungen und keinen Er
 ## Herkunftsregister ab P1.2
 
 Für jede aufgelöste direkte oder transitive Abhängigkeit werden mindestens Name, exakte Version, Registry-Integrität aus dem Lockfile, SPDX-Lizenz, Upstream-URL, Copyright-/NOTICE-Datei und erforderliche Weitergabe in einer maschinenlesbar auswertbaren Liste festgehalten. Übernommener Quellcode erhält zusätzlich Herkunftscommit, lokale Änderungen und ursprüngliche Hinweise. Diese Grundlage ersetzt weder die Lizenzprüfung des Lockfiles noch eine Sicherheitsprüfung der Pakete.
+
+## P4.5 — Native Systemports
+
+Zusätzlich exakt gesperrt: `tauri-plugin-dialog` 2.7.1 und `tauri-plugin-opener` 2.5.5, jeweils Apache-2.0 oder MIT; `url` 2.5.8 (MIT oder Apache-2.0) und `tempfile` 3.27.0 (MIT oder Apache-2.0). Die offiziellen [Dialog-](https://v2.tauri.app/plugin/dialog/) und [Opener-APIs](https://v2.tauri.app/plugin/opener/) werden ausschließlich innerhalb der begrenzten Rust-Appcommands verwendet. Die neueren Dialog-/Opener-Versionen verlangen Tauri 2.12 und passen nicht zum gesperrten Core 2.11.6. Es wurde kein Upstreamquellcode kopiert. Checksummen und transitive Auflösung stehen in `apps/desktop/src-tauri/Cargo.lock`; vollständige Distributionhinweise bleiben P11.

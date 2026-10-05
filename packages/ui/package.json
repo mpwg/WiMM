@@ -4,7 +4,10 @@
   "private": true,
   "license": "AGPL-3.0-or-later",
   "type": "module",
-  "exports": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./workspace": "./src/workspace.tsx"
+  },
   "dependencies": {
     "@wimm/contracts": "workspace:*",
     "@wimm/crypto": "workspace:*",

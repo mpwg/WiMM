@@ -16,3 +16,8 @@ createRoot(rootElement).render(
     <App />
   </StrictMode>
 );
+
+// Der gewöhnliche Produktionsbuild enthält weder Panel noch Testaktionen.
+if (import.meta.env.VITE_WIMM_NATIVE_SMOKE === '1') {
+  void import('./native-smoke.js').then(({ mountNativeSmoke }) => mountNativeSmoke());
+}

@@ -1,7 +1,19 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Grundlegende Rechte für das Hauptfenster.",
-  "windows": ["main"],
-  "permissions": ["core:default"]
+  "description": "Nur lokale Hauptansicht: Ereignisse, feste Speicherbefehle und dialoggebundene Datei-/Linkports.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    "allow-storage-apply-batch",
+    "allow-storage-read-aggregate",
+    "allow-storage-query-aggregates",
+    "allow-platform-choose-files",
+    "allow-platform-write-file",
+    "allow-platform-open-url",
+    "allow-platform-set-menu"
+  ]
 }

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-storage-query-aggregates"
+description = "Enables the storage_query_aggregates command without any pre-configured scope."
+commands.allow = ["storage_query_aggregates"]
+
+[[permission]]
+identifier = "deny-storage-query-aggregates"
+description = "Denies the storage_query_aggregates command without any pre-configured scope."
+commands.deny = ["storage_query_aggregates"]

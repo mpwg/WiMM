@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 
 function values(form: HTMLFormElement): string {
   return JSON.stringify([...form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea')].map((field) => [field.type, field.value, field instanceof HTMLInputElement ? field.checked : false]));
@@ -13,8 +13,12 @@ const DraftContext = createContext<DraftGuard>({ register: () => () => undefined
 export const useDraftGuard = () => useContext(DraftContext);
 export function useFormDraft(form: RefObject<HTMLFormElement | null>) {
   const guard = useDraftGuard();
-  useEffect(() => form.current === null ? undefined : guard.register(form.current), [form, guard]);
-  return () => { if (form.current !== null) { const element = form.current; requestAnimationFrame(() => guard.saved(element)); } };
+  const [savedVersion, setSavedVersion] = useState(0);
+  useLayoutEffect(() => form.current === null ? undefined : guard.register(form.current), [form, guard]);
+  // Nach dem React-Commit sind die zurückgesetzten Felder schon sauber,
+  // bevor die nächste Navigation oder ein nativer Menübefehl sie lesen kann.
+  useLayoutEffect(() => { if (savedVersion > 0 && form.current !== null) guard.saved(form.current); }, [savedVersion, form, guard]);
+  return () => setSavedVersion((version) => version + 1);
 }
 export function DraftProtection({ children }: { readonly children: ReactNode }) {
   const forms = useRef(new Map<HTMLFormElement, string>());

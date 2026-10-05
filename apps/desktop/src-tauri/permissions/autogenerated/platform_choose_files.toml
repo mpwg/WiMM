@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-platform-choose-files"
+description = "Enables the platform_choose_files command without any pre-configured scope."
+commands.allow = ["platform_choose_files"]
+
+[[permission]]
+identifier = "deny-platform-choose-files"
+description = "Denies the platform_choose_files command without any pre-configured scope."
+commands.deny = ["platform_choose_files"]

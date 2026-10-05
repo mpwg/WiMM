@@ -73,6 +73,7 @@ export interface PlatformServices {
   chooseImportFiles(request: ImportFileRequest): Promise<readonly ImportedFile[]>;
   writeExport(request: ExportFileRequest): Promise<void>;
   openExternalUrl(url: string): Promise<void>;
+  onMenuCommand(handler: (id: string) => void): Promise<() => void>;
   setMenuCommands(commands: readonly PlatformCommand[]): Promise<void>;
   getDataDirectory(): Promise<string | undefined>;
   secureTokens: SecureTokenStore;

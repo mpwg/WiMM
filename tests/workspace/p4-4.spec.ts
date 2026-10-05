@@ -123,3 +123,22 @@ test('Redo lehnt Fremdänderung ab und eine neue Buchung verwirft den Redozweig'
   await view(page, 'Buchungen'); const form = page.getByRole('form', { name: 'Buchung erfassen', exact: true }); await form.getByLabel('Betrag', { exact: true }).fill('-1'); await form.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: 'Testkonto' }); await form.getByRole('combobox', { name: 'Kategorie', exact: true }).selectOption({ label: 'Testkategorie' }); await form.getByRole('button', { name: 'Lokal speichern' }).click(); await expect(form.getByLabel('Betrag', { exact: true })).toHaveValue('');
   await expect(page.getByRole('button', { name: 'Wiederholen', exact: true })).toBeDisabled();
 });
+
+test('Gespeicherte Transfer- und Abgleichformulare sind vor dem nächsten Animationsframe sauber', async ({ page }, info) => {
+  // Ein pausierter Renderframe darf keine Rückfrage nach bestätigtem Commit erzeugen.
+  await page.addInitScript(() => { window.requestAnimationFrame = () => 1; });
+  await open(page, info.project.name.startsWith('Desktop'));
+  const transferForm = await transfer(page);
+  await transferForm.getByRole('button', { name: 'Umbuchung speichern' }).click();
+  await expect(transferForm.getByLabel('Umbuchungsbetrag')).toHaveValue('');
+  await view(page, 'Buchungen');
+  await expect(page.getByRole('heading', { name: 'Buchungen', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Ungespeicherte Eingaben verwerfen?' })).toHaveCount(0);
+  await view(page, 'Konten');
+  const reconciliation = await reconcile(page, '800');
+  await reconciliation.getByRole('button', { name: 'Abgleich bestätigen' }).click();
+  await expect(reconciliation.getByLabel('Auszugssaldo')).toHaveValue('');
+  await view(page, 'Buchungen');
+  await expect(page.getByRole('heading', { name: 'Buchungen', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: 'Ungespeicherte Eingaben verwerfen?' })).toHaveCount(0);
+});

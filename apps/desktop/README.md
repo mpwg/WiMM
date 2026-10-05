@@ -1,0 +1,34 @@
+# @wimm/desktop
+
+Native WhereIsMyMoney-App mit Tauri 2 und gebündelter React-Finanzansicht. Der lokale Betrieb benötigt keinen Server. Fachbefehle kommen aus dem gemeinsamen Fachkern; SQLite schreibt vollständige Batches atomar.
+
+## Bedienung und Systemports
+
+Datei, Bearbeiten, Ansicht und Hilfe sind Systemmenüs; macOS ergänzt Appaktionen. Neue Buchung und Suche verwenden Cmd/Ctrl+N/F. Cmd/Ctrl+Z und Umschalt+Cmd/Ctrl+Z bedienen außerhalb von Textfeldern die revisionsgeprüfte Finanzhistorie; Ctrl+Y ergänzt Redo. In Textfeldern bleibt die Bearbeitung einschließlich Undo/Redo im WebKit-/Systemtexteditor. Neue Buchung und Navigation beachten ungespeicherte Eingaben und offene Dialoge. Gesperrte Tresore bieten keine Finanzmenüaktionen.
+
+Öffnen und Speichern sind vorbereitete Ports für P5/P10, keine bereits verfügbaren Finanzimport-/Sicherungsfunktionen. Die Rust-Brücke zeigt selbst den Systemdialog und verarbeitet ausschließlich die bestätigte Datei. Sie akzeptiert keinen Pfad aus JavaScript. Abbruch liefert keine Dateien beziehungsweise schreibt nichts. Die aktuelle Portgrenze ist 32 MiB je Datei. Speichern schreibt zunächst eine temporäre Datei im bestätigten Verzeichnis und ersetzt das Ziel erst nach erfolgreichem Schreiben und Synchronisieren; Fehler werden an den Aufrufer zurückgegeben. Pfade verlassen die Rust-Brücke nicht. Browseralternativen stehen in `@wimm/ui` bereit.
+
+Hilfe und Lizenz öffnen HTTP-/HTTPS-Links ohne eingebettete Zugangsdaten im Systembrowser. Andere Schemata, entfernte Navigation und zusätzliche Webviewfenster sind gesperrt. Produktion lädt nur Appassets; die Entwicklungsorigin ist ausschließlich im Entwicklungsbuild erlaubt. Die Hauptfenster-Capability erlaubt nur Ereignisabonnement sowie sieben benannte Appcommands. Es gibt keine allgemeine Datei-, SQL-, Shell-, Dialogplugin- oder Openerplugin-Berechtigung. OS-Tokenspeicherung folgt P8; Tokens bleiben aktuell flüchtig.
+
+## Entwicklung und Prüfung
+
+Aus der aktiven Repository-Arbeitskopie:
+
+```sh
+pnpm --filter @wimm/desktop dev
+pnpm --filter @wimm/desktop build
+pnpm check:rust
+WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-5.spec.ts --config tests/ui/desktop.config.ts
+```
+
+Die Browserprüfung verwendet den ausdrücklich vorgesehenen IndexedDB-Testfallback. Die echte native Abnahme ist in der [P4.5-Kriterienmatrix](../../docs/handoffs/p4-5.md) getrennt dokumentiert.
+
+Ein gesonderter Prüfbuild bindet über `VITE_WIMM_NATIVE_SMOKE=1` das synthetische Portpanel ein. Der gewöhnliche Build enthält es nicht. Ein separater Identifier und ein eigener Profilstore-Schlüssel halten diesen Test von Produktprofilen getrennt:
+
+```sh
+VITE_WIMM_NATIVE_SMOKE=1 pnpm --dir apps/desktop exec tauri build --config '{"identifier":"at.mpwg.wimm.p45smoke"}'
+mkdir -p .toolchain-checks/p4-5
+swiftc tests/native/macos-ax.swift -o .toolchain-checks/p4-5/ax
+```
+
+Der AX-Treiber benötigt macOS-Bedienungshilfenzugriff; er kann ausschließlich die laufende Test-App über ihre echten Oberflächenelemente bedienen. Nach der Prüfung erneut ohne die Testvariable bauen. Das Testpanel nutzt die tatsächlichen Datei-/Linkports und prüft zusätzliche abgewiesene IPC-Aufrufe; es importiert und exportiert keine Finanzdaten.

@@ -40,6 +40,7 @@ import { toStoredAggregate, type PendingOperation, type StoredAggregate, type St
 
 import type { UnlockedAppContext } from './app.js';
 import { DraftProtection, useDraftGuard } from './drafts.js';
+import { isTextEditing } from './platform.js';
 import { FinanceHistory } from './history.js';
 import { TransferForm, ReconciliationForm } from './account-actions.js';
 import { Transactions } from './transactions.js';
@@ -78,6 +79,8 @@ export function FinanceWorkspace(props: { readonly context: UnlockedAppContext; 
 }
 function WorkspaceContent({ context, storageForProfile, desktop = false, view, setView }: { readonly context: UnlockedAppContext; readonly storageForProfile: WorkspaceStorageFactory; readonly desktop?: boolean; readonly view: View; readonly setView: (view: View) => void }) {
   const guard = useDraftGuard();
+  const [newVersion, setNewVersion] = useState(0);
+  const [focusRequest, setFocusRequest] = useState<{ target: 'amount' | 'search'; version: number }>();
   const [history] = useState(() => new FinanceHistory());
   const aggregatesRef = useRef<readonly StoredAggregate[]>([]);
   const busy = useRef(false);
@@ -150,11 +153,49 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
       setHistoryVersion((version) => version + 1);
     } catch (error) { setMessage(messageFor(error, 'Die Aktion wurde nicht ausgeführt.')); }
   }
+  useEffect(() => {
+    if (focusRequest !== undefined && state === 'ready' && view === 'transactions') {
+      document.querySelector<HTMLInputElement>(focusRequest.target === 'amount' ? '[aria-label="Buchung erfassen"] input[aria-label="Betrag"]' : '[data-transaction-search]')?.focus();
+    }
+  }, [focusRequest, state, view, newVersion]);
+  useEffect(() => {
+    function command(id: string, native = false) {
+      const editing = isTextEditing(document.activeElement);
+      if ((id === 'undo' || id === 'redo') && editing) {
+        if (native) document.execCommand(id);
+        return;
+      }
+      if (saving || state !== 'ready' || document.querySelector('dialog[open]') !== null) return;
+      if (id === 'undo' || id === 'redo') { guard.request(() => { void moveHistory(id); }); return; }
+      if (id === 'new-transaction' || id === 'search') {
+        const action = () => { setView('transactions'); if (id === 'new-transaction') setNewVersion((value) => value + 1); setFocusRequest((value) => ({ target: id === 'search' ? 'search' : 'amount', version: (value?.version ?? 0) + 1 })); };
+        if (id === 'search' && view === 'transactions') action(); else guard.request(action);
+      }
+      if (id === 'overview') guard.request(() => setView('overview'));
+      if (id === 'settings') guard.request(() => setView('categories'));
+    }
+    function keydown(event: KeyboardEvent) {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
+      const key = event.key.toLowerCase();
+      const id = key === 'n' ? 'new-transaction' : key === 'f' ? 'search' : key === 'z' ? (event.shiftKey ? 'redo' : 'undo') : key === 'y' && event.ctrlKey ? 'redo' : undefined;
+      if (id === undefined || ((id === 'undo' || id === 'redo') && isTextEditing(document.activeElement))) return;
+      event.preventDefault(); command(id);
+    }
+    document.addEventListener('keydown', keydown);
+    let disposed = false; let unlisten: (() => void) | undefined;
+    void context.platform.onMenuCommand((id) => command(id, true)).then((stop) => { if (disposed) stop(); else unlisten = stop; }).catch(() => setMessage('Die Systemmenüs konnten nicht verbunden werden.'));
+    void context.platform.setMenuCommands(['new-transaction', 'search', 'overview', 'settings'].map((id) => ({ id, title: id, enabled: state === 'ready' && !saving }))).catch(() => setMessage('Die Systemmenüs konnten nicht aktualisiert werden.'));
+    return () => { disposed = true; unlisten?.(); document.removeEventListener('keydown', keydown); };
+  });
+  useEffect(() => () => {
+    void context.platform.setMenuCommands(['new-transaction', 'search', 'overview', 'settings'].map((id) => ({ id, title: id, enabled: false })));
+  }, [context.platform]);
   return <div data-history-version={historyVersion} className={`app-shell${desktop ? ' desktop-shell' : ''}`} data-color-scheme={colorScheme}>
     <aside className="sidebar"><p className="product">WhereIsMyMoney</p><AreaPicker context={context} disabled={saving} request={(action, trigger) => guard.request(action, undefined, trigger)} />
       <nav aria-label="Hauptnavigation">{([['overview', 'Übersicht'], ['transactions', 'Buchungen'], ['accounts', 'Konten'], ['categories', 'Kategorien'], ['payees', 'Empfänger']] as const).map(([id, label]) =>
         <button disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => guard.request(() => setView(id))} type="button">{label}</button>
       )}</nav><button disabled={saving} className="quiet" onClick={() => guard.request(() => { void context.createHousehold(); })} type="button">+ Haushalt anlegen</button><button disabled={saving} className="quiet" onClick={() => guard.request(() => { void context.lock(); })} type="button">Tresor sperren</button>
+      <details><summary>Hilfe</summary><p>WhereIsMyMoney · Version 0.0.0</p>{[['Hilfe und Quellcode', 'https://github.com/mpwg/WiMM'], ['Lizenz AGPL-3.0-or-later', 'https://www.gnu.org/licenses/agpl-3.0.html']].map(([label, url]) => <p key={url}><a href={url} onClick={(event) => { event.preventDefault(); void context.platform.openExternalUrl(url!).catch(() => setMessage('Der Link konnte nicht geöffnet werden.')); }}>{label}</a></p>)}</details>
       <label className="area-picker">Farbschema<select value={colorScheme} onChange={(event) => changeColorScheme(event.target.value as ColorScheme)}><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
     </aside>
     <main className="finance-main" key={context.activeArea.id}><header><div><p className="eyebrow">{context.activeArea.kind === 'private' ? 'Privatbereich' : 'Gemeinsamer Bereich'}</p><h1>{titleFor(view)}</h1></div><span aria-live="polite" className="local-status">{saving ? "Wird lokal gespeichert …" : "● Lokaler Stand"}</span></header>
@@ -167,7 +208,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
       {state === 'ready' && view === 'accounts' ? <Accounts model={model} /> : null}
       {state === 'ready' && view === 'categories' ? <Categories model={model} /> : null}
       {state === 'ready' && view === 'payees' ? <Payees model={model} /> : null}
-      {state === 'ready' && view === 'transactions' ? <Transactions model={model} /> : null}
+      {state === 'ready' && view === 'transactions' ? <Transactions key={newVersion} model={model} /> : null}
       </fieldset>
     </main>
   </div>;

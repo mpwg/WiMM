@@ -59,7 +59,7 @@ Ein lokaler Bereich wird nach bestätigter Rettungscodesicherung über `spaces/f
 
 ## Plattformintegration
 
-Desktop verwendet originale Fensterdekoration, Systemmenüs, Dateiöffnen/-speichern, Betriebssystem-Schlüsselspeicher und bekannte Tastenkürzel. Native Datendialoge sind auf Web/PWA durch Browserdateiauswahl ersetzt. `PlatformServices` abstrahiert Dateiimport, Export, externe Links, Menübefehle, Datenpfad und sichere Tokenspeicherung.
+Desktop verwendet originale Fensterdekoration, Systemmenüs, Dateiöffnen/-speichern, Betriebssystem-Schlüsselspeicher und bekannte Tastenkürzel. Native Datendialoge sind auf Web/PWA durch Browserdateiauswahl ersetzt. `PlatformServices` abstrahiert Dateiimport, Export, externe Links, Menübefehle, Datenpfad und sichere Tokenspeicherung. `onMenuCommand` liefert ein abmeldbares Ereignisabonnement; `setMenuCommands` aktualisiert die Erreichbarkeit der Finanzaktionen. In P4.5 zeigt die begrenzte Rust-Dateibrücke selbst Öffnen/Speichern und verarbeitet ausschließlich bestätigte Dateien, ohne einen frei übergebenen Dateipfad zu akzeptieren. Die spätere Import-/Exportfachlogik bleibt P5/P10.
 
 Tauri lädt nur gebündelte Inhalte. Netzwerkanfragen gehen über eine begrenzte native Transportbrücke zur ausdrücklich konfigurierten HTTPS-Serverorigin; keine Tokens im React-Speicher persistieren. Bei localhost ist HTTP für Entwicklung zulässig. SQLite-Schreibbatch und Konsistenzprüfung erfolgen in Rust atomar; Fachberechnungen bleiben TypeScript.
 

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { isTextEditing } from './platform.js';
 import type { PlatformServices } from '@wimm/contracts';
 
 import {
@@ -85,12 +86,6 @@ export function createBrowserProfileStore(key = 'wimm/local-profile/v1'): Profil
   };
 }
 
-/** Browserport: Systemaktionen werden nur auf explizite Nutzeraktionen ausgeführt. */
-export function createBrowserPlatformServices(): PlatformServices {
-  const tokens = new Map<string, Uint8Array>();
-  return { chooseImportFiles: async () => [], writeExport: async () => undefined, openExternalUrl: async (url) => { window.open(url, '_blank', 'noopener,noreferrer'); }, setMenuCommands: async () => undefined, getDataDirectory: async () => undefined, secureTokens: { read: async (key) => tokens.get(key), write: async (key, value) => { tokens.set(key, value.slice()); }, remove: async (key) => { tokens.delete(key); } } };
-}
-
 /** Test- und Plattformport ohne Browserpersistenz; niemals als Produktstandard verwenden. */
 export function createMemoryProfileStore(initial?: LocalProfile): ProfileStore {
   let profile = initial;
@@ -154,6 +149,13 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
       () => setNotice('Die Client-Kryptografie konnte nicht vorbereitet werden.')
     );
   }, [store]);
+
+  useEffect(() => {
+    if (screen.kind === 'unlocked') return;
+    let disposed = false; let stop: (() => void) | undefined;
+    void platform.onMenuCommand((id) => { if ((id === 'undo' || id === 'redo') && isTextEditing(document.activeElement)) document.execCommand(id); }).then((unlisten) => { if (disposed) unlisten(); else stop = unlisten; }).catch(() => setNotice('Die Systemmenüs konnten nicht verbunden werden.'));
+    return () => { disposed = true; stop?.(); };
+  }, [platform, screen.kind]);
 
   if (screen.kind === 'loading') {
     return notice === undefined
