@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } fro
 import type { AtomicBatch, UUID } from '@wimm/contracts';
 import {
   createAggregateMetadata,
+  dueDates,
+  type OccurrenceAggregate,
   projectAccountBalances,
   projectConsumption,
   sumMoney,
@@ -46,6 +48,9 @@ import { TransferForm, ReconciliationForm } from './account-actions.js';
 import { ImportView, AutomationView } from './automation-views.js';
 import { AutomationModel } from './automation-model.js';
 import { Transactions } from './transactions.js';
+import { Button, EmptyState } from './components.js';
+import { Wallet, LayoutDashboard, ArrowLeftRight, Landmark, Settings, LockKeyhole, CircleHelp, Ellipsis, ChevronRight, Plus, Upload, Undo2, Redo2, Check, Tags, Users, ListFilter, CalendarClock, Palette } from 'lucide-react';
+import { today } from './account-actions.js';
 
 type ColorScheme = 'system' | 'light' | 'dark';
 
@@ -61,7 +66,7 @@ export interface TransactionInput {
   readonly splits: readonly { readonly id?: UUID; readonly categoryId: UUID; readonly amount: string }[];
 }
 
-type View = 'overview' | 'accounts' | 'categories' | 'payees' | 'transactions' | 'import' | 'automation';
+type View = 'overview' | 'accounts' | 'categories' | 'payees' | 'transactions' | 'import' | 'automation' | 'schedules' | 'settings' | 'more' | 'help';
 
 /**
  * Der Composition Root wählt den dauerhaften Speicher. Die Fachansicht kennt
@@ -188,7 +193,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
       }
       if (id === 'import') guard.request(() => setView('import'));
       if (id === 'overview') guard.request(() => setView('overview'));
-      if (id === 'settings') guard.request(() => setView('categories'));
+      if (id === 'settings') guard.request(() => setView('settings'));
     }
     function keydown(event: KeyboardEvent) {
       if (!(event.metaKey || event.ctrlKey) || event.altKey) return;
@@ -213,31 +218,58 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   useEffect(() => {
     if (state === 'ready' && matchMedia('(max-width: 767px)').matches) document.querySelector<HTMLElement>('.finance-main')?.scrollIntoView({ block: 'start' });
   }, [view, state]);
+  const openNew = () => guard.request(() => { setView('transactions'); setNewVersion((value) => value + 1); });
+  const go = (next: View) => guard.request(() => navigate(next));
+  const settingsView = ['settings', 'categories', 'payees', 'automation', 'schedules'].includes(view);
+  const navItems = [['overview', 'Übersicht', LayoutDashboard], ['transactions', 'Buchungen', ArrowLeftRight], ['accounts', 'Konten', Landmark]] as const;
+  const links = (items: typeof navItems) => items.map(([id, label, Icon]) => <Button variant="quiet" icon={Icon} disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => go(id)}>{label}</Button>);
   return <div ref={shell} data-history-version={historyVersion} className={`app-shell${desktop ? ' desktop-shell' : ''}`} data-color-scheme={colorScheme}>
-    <aside className="sidebar"><p className="product">WhereIsMyMoney</p><AreaPicker context={context} disabled={saving} request={(action, trigger) => guard.request(action, undefined, trigger)} />
-      <p className="mobile-only more-title">Mehr</p><nav id="more-navigation" aria-label="Hauptnavigation" tabIndex={-1}>{([['overview', 'Übersicht'], ['transactions', 'Buchungen'], ['accounts', 'Konten'], ['categories', 'Kategorien'], ['payees', 'Empfänger'], ['import', 'Import'], ['automation', 'Regeln und Dauerzahlungen']] as const).map(([id, label]) =>
-        <button data-primary={id === 'overview' || id === 'transactions' ? 'true' : undefined} disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => guard.request(() => navigate(id))} type="button">{label}</button>
-      )}</nav><button disabled={saving} className="quiet" onClick={() => guard.request(() => { void context.createHousehold(); })} type="button">+ Haushalt anlegen</button><button disabled={saving} className="quiet" onClick={() => guard.request(() => { void context.lock(); })} type="button">Tresor sperren</button>
-      <details><summary>Hilfe</summary><p>WhereIsMyMoney · Version 0.0.0</p>{[['Hilfe und Quellcode', 'https://github.com/mpwg/WiMM'], ['Lizenz AGPL-3.0-or-later', 'https://www.gnu.org/licenses/agpl-3.0.html']].map(([label, url]) => <p key={url}><a href={url} onClick={(event) => { event.preventDefault(); void context.platform.openExternalUrl(url!).catch(() => setMessage('Der Link konnte nicht geöffnet werden.')); }}>{label}</a></p>)}</details>
-      <label className="area-picker">Farbschema<select value={colorScheme} onChange={(event) => changeColorScheme(event.target.value as ColorScheme)}><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
+    <aside className="sidebar"><p className="product"><Wallet size={24} aria-hidden="true" />WhereIsMyMoney</p>
+      <div className="area-actions"><AreaPicker context={context} disabled={saving} request={(action, trigger) => guard.request(action, undefined, trigger)} />
+        <Button variant="quiet" icon={Plus} disabled={saving} onClick={() => guard.request(() => { void context.createHousehold(); })}>Haushalt anlegen</Button>
+      </div>
+      <nav aria-label="Hauptnavigation">{links(navItems)}</nav>
+      <div className="sidebar-footer"><Button variant="quiet" icon={Settings} disabled={saving} aria-current={settingsView ? 'page' : undefined} onClick={() => go('settings')}>Einstellungen</Button>
+        <Button variant="quiet" icon={CircleHelp} onClick={() => go('help')}>Hilfe</Button>
+        <Button variant="quiet" icon={LockKeyhole} disabled={saving} onClick={() => guard.request(() => { void context.lock(); })}>Tresor sperren</Button>
+      </div>
     </aside>
     <nav ref={mobileNavigation} className="mobile-navigation" aria-label="Mobile Hauptnavigation">
-      {([['overview', 'Übersicht'], ['transactions', 'Buchungen']] as const).map(([id, label]) => <button disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => guard.request(() => navigate(id))} type="button">{label}</button>)}
-      <button type="button" onClick={() => { const navigation = document.getElementById('more-navigation'); navigation?.scrollIntoView({ block: 'center' }); navigation?.querySelector<HTMLButtonElement>('button:not([data-primary])')?.focus(); }}>Mehr</button>
+      {([['overview', 'Übersicht', LayoutDashboard], ['transactions', 'Buchungen', ArrowLeftRight], ['more', 'Mehr', Ellipsis]] as const).map(([id, label, Icon]) =>
+        <Button variant="quiet" icon={Icon} disabled={saving} aria-current={view === id || (id === 'more' && !['overview', 'transactions'].includes(view)) ? 'page' : undefined} key={id} onClick={() => go(id)}>{label}</Button>)}
     </nav>
-    <main className="finance-main" key={context.activeArea.id}><header><div><p className="eyebrow">{context.activeArea.kind === 'private' ? 'Privatbereich' : 'Gemeinsamer Bereich'}</p><h1>{titleFor(view)}</h1></div><span aria-live="polite" className="local-status">{saving ? "Wird lokal gespeichert …" : "● Lokaler Stand"}</span></header>
-      {message === undefined ? null : <p aria-live="polite" className="notice">{message}</p>}
-      {state === 'loading' ? <p aria-live="polite">Lokale Daten werden geladen …</p> : null}
+    <main className="finance-main" key={context.activeArea.id}>
+      <header><div><p className="eyebrow">{context.activeArea.kind === 'private' ? 'Privatbereich' : 'Gemeinsamer Bereich'} · {context.activeArea.label}</p><h1 tabIndex={-1}>{titleFor(view)}</h1></div>
+        <div className="header-actions">{state === 'ready' && (view === 'overview' || view === 'transactions') ? <>
+          {view === 'transactions' ? <Button icon={Upload} disabled={saving} onClick={() => go('import')}>Importieren</Button> : null}
+          {model.accounts.length > 0 ? <Button variant="primary" icon={Plus} disabled={saving} onClick={openNew}>Neue Buchung</Button> : null}
+        </> : null}</div>
+      </header>
+      <div className="workspace-status"><span role="status" className="local-status"><Check size={14} aria-hidden="true" />{saving ? 'Wird lokal gespeichert …' : message === 'Lokal gespeichert.' ? message : 'Lokal gespeichert'}</span>
+        <div className="toolbar history-actions"><Button variant="quiet" icon={Undo2} disabled={saving || !history.canUndo} onClick={() => void moveHistory('undo')}>Rückgängig</Button><Button variant="quiet" icon={Redo2} disabled={saving || !history.canRedo} onClick={() => void moveHistory('redo')}>Wiederholen</Button></div>
+      </div>
+      {message === undefined || message === 'Lokal gespeichert.' ? null : <p role="alert" className="notice error">{message}</p>}
+      {state === 'loading' ? <p role="status">Lokale Daten werden geladen …</p> : null}
       {state === 'error' ? <p role="alert">Die Daten bleiben unverändert. Bitte entsperren Sie den Tresor erneut oder starten Sie die App neu.</p> : null}
-      <div className="dialog-actions"><button disabled={saving || !history.canUndo} type="button" onClick={() => void moveHistory('undo')}>Rückgängig</button><button disabled={saving || !history.canRedo} type="button" onClick={() => void moveHistory('redo')}>Wiederholen</button></div>
       <fieldset className="workspace-content" disabled={saving}>
-      {state === 'ready' && view === 'overview' ? <Overview model={model} onNew={() => guard.request(() => setView('transactions'))} /> : null}
-      {state === 'ready' && view === 'accounts' ? <Accounts model={model} /> : null}
-      {state === 'ready' && view === 'categories' ? <Categories model={model} /> : null}
-      {state === 'ready' && view === 'payees' ? <Payees model={model} /> : null}
-      {state === 'ready' && view === 'transactions' ? <Transactions key={newVersion} model={model} /> : null}
-      {state === 'ready' && view === 'import' ? <ImportView model={new AutomationModel(model)} platform={context.platform} /> : null}
-      {state === 'ready' && view === 'automation' ? <AutomationView model={new AutomationModel(model)} /> : null}
+        {state === 'ready' && view === 'overview' ? <Overview model={model} onAccounts={() => go('accounts')} onTransactions={() => go('transactions')} onSchedules={() => go('schedules')} /> : null}
+        {state === 'ready' && view === 'accounts' ? <Accounts model={model} /> : null}
+        {state === 'ready' && view === 'categories' ? <Categories model={model} /> : null}
+        {state === 'ready' && view === 'payees' ? <Payees model={model} /> : null}
+        {state === 'ready' && view === 'transactions' ? <Transactions key={newVersion} model={model} /> : null}
+        {state === 'ready' && view === 'import' ? <ImportView model={new AutomationModel(model)} platform={context.platform} /> : null}
+        {state === 'ready' && (view === 'automation' || view === 'schedules') ? <AutomationView model={new AutomationModel(model)} /> : null}
+        {state === 'ready' && (settingsView || view === 'more') ? <>
+          {view === 'settings' || view === 'more' ? <div className="settings-list">
+            {view === 'more' ? <Button icon={Landmark} onClick={() => go('accounts')}>Konten<ChevronRight size={18} aria-hidden="true" /></Button> : null}
+            {(view === 'more' ? [['settings', 'Einstellungen', 'Kategorien, Empfänger und Automatisierung', Settings]] as const : [
+              ['categories', 'Kategorien', 'Ausgaben und Einnahmen ordnen', Tags], ['payees', 'Empfänger', 'Empfänger verwalten und zusammenführen', Users], ['automation', 'Regeln', 'Importierte Buchungen automatisch zuordnen', ListFilter], ['schedules', 'Dauerzahlungen', 'Wiederkehrende Zahlungen und fällige Vorschläge', CalendarClock]
+            ] as const).map(([id, label, description, Icon]) => <button type="button" key={id} onClick={() => go(id)}><span><Icon size={20} aria-hidden="true" /><span>{label}<small>{description}</small></span></span><ChevronRight size={18} aria-hidden="true" /></button>)}
+            {view === 'more' ? <><Button icon={CircleHelp} onClick={() => go('help')}>Hilfe<ChevronRight size={18} aria-hidden="true" /></Button><Button icon={LockKeyhole} onClick={() => guard.request(() => { void context.lock(); })}>Tresor sperren</Button></> : null}
+          </div> : <Button variant="quiet" icon={Settings} onClick={() => go('settings')}>Alle Einstellungen</Button>}
+          {view === 'settings' ? <section className="appearance"><h2><Palette size={18} aria-hidden="true" /> Erscheinungsbild</h2><label>Farbschema<select value={colorScheme} onChange={(event) => changeColorScheme(event.target.value as ColorScheme)}><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label></section> : null}
+        </> : null}
+        {view === 'help' ? <section><h2>WhereIsMyMoney</h2><p className="help-text">Version 0.0.0 · Lokal und verschlüsselt</p>{[['Hilfe und Quellcode', 'https://github.com/mpwg/WiMM'], ['Lizenz AGPL-3.0-or-later', 'https://www.gnu.org/licenses/agpl-3.0.html']].map(([label, url]) => <p key={url}><a href={url} onClick={(event) => { event.preventDefault(); void context.platform.openExternalUrl(url!).catch(() => setMessage('Der Link konnte nicht geöffnet werden.')); }}>{label}</a></p>)}</section> : null}
       </fieldset>
     </main>
   </div>;
@@ -393,13 +425,23 @@ export class FinanceModel {
 }
 
 function AreaPicker({ context, disabled = false, request }: { readonly context: UnlockedAppContext; readonly disabled?: boolean; readonly request: (action: () => void, trigger: HTMLElement) => void }) { return <label className="area-picker">Bereich<select aria-label="Bereich" disabled={disabled} onChange={(event) => { const id = event.target.value; request(() => context.selectArea(id), event.currentTarget); }} value={context.activeArea.id}>{context.profile.areas.map((area) => <option key={area.id} value={area.id}>{area.label}</option>)}</select></label>; }
-function Overview({ model, onNew }: { readonly model: FinanceModel; readonly onNew: () => void }) {
+function Overview({ model, onAccounts, onTransactions, onSchedules }: { readonly model: FinanceModel; readonly onAccounts: () => void; readonly onTransactions: () => void; readonly onSchedules: () => void }) {
+  if (model.allAccounts.length === 0) return <EmptyState title="Ihr erster Überblick" action={<Button variant="primary" icon={Plus} onClick={onAccounts}>Erstes Konto anlegen</Button>}>Legen Sie Ihr erstes Konto an. Danach sehen Sie hier Ihre Kontostände und die Buchungen dieses Monats.</EmptyState>;
   const balances = projectAccountBalances(model.transactions);
   const total = sumMoney(balances.map((item) => item.balance), 'Das Gesamtguthaben');
-  const month = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Vienna', year: 'numeric', month: '2-digit' }).format(new Date());
+  const month = today().slice(0, 7);
+  const monthLabel = new Intl.DateTimeFormat('de-AT', { month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' }).format(new Date(`${month}-15T12:00:00Z`));
   const consumption = projectConsumption(model.transactions.filter((transaction) => transaction.date.startsWith(month)), model.allCategories, model.groups);
-  return <section><div className="overview-grid"><article><p>Verfügbares Geld</p><strong>{formatMoney(total)}</strong></article><article><p>Monatsausgaben</p><strong>{formatMoney(consumption.expense)}</strong></article><article><p>Monatseinnahmen</p><strong>{formatMoney(consumption.income)}</strong></article><article><p>Ausstehende Änderungen</p><strong>Keine</strong></article></div>{model.accounts.length === 0 ? <Empty title="Noch keine Konten" text="Legen Sie zuerst ein Konto mit Anfangsbestand an. Erfundenes Guthaben zeigt die Übersicht nicht." /> : <AccountTable accounts={model.accounts} balances={balances} />}<button onClick={onNew} type="button">Neue Buchung</button></section>;
+  const recent = [...model.transactions].sort((left, right) => right.date.localeCompare(left.date) || left.id.localeCompare(right.id)).slice(0, 5);
+  const automation = new AutomationModel(model);
+  const due = automation.schedules.filter(schedule => schedule.enabled).flatMap(schedule => dueDates(schedule, today() as never).filter(date => !automation.all.some(entry => entry.aggregateType === 'scheduleOccurrence' && (entry as OccurrenceAggregate).scheduleId === schedule.id && (entry as OccurrenceAggregate).dueDate === date)).map(date => ({ schedule, date }))).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+  return <section><p className="help-text">{monthLabel}</p><div className="overview-grid"><article><p>Kontostand gesamt</p><strong>{formatMoney(total)}</strong></article><article><p>Monatsausgaben</p><strong>{formatMoney(consumption.expense)}</strong></article><article><p>Monatseinnahmen</p><strong>{formatMoney(consumption.income)}</strong></article></div>
+    {due.length > 0 ? <section><div className="section-heading"><h2>Fällige Zahlungsvorschläge</h2><Button variant="quiet" icon={CalendarClock} onClick={onSchedules}>Dauerzahlungen</Button></div><p className="help-text">Vorschläge verändern Ihren Kontostand erst nach Bestätigung.</p><ul className="plain-list">{due.map(({ schedule, date }) => <li key={`${schedule.id}:${date}`}><span>{schedule.template.note || 'Dauerzahlung'}<small>{displayDate(date)}</small></span><span className="money">{formatMoney(schedule.template.amount)}</span><Button onClick={onSchedules}>Vorschlag prüfen</Button></li>)}</ul></section> : null}
+    <section><div className="section-heading"><h2>Letzte Buchungen</h2><Button variant="quiet" icon={ChevronRight} onClick={onTransactions}>Alle Buchungen</Button></div>{recent.length === 0 ? <p className="help-text">Noch keine Buchungen. Erfassen Sie Ihre erste Zahlung über „Neue Buchung“.</p> : <ul className="plain-list">{recent.map(transaction => <li key={transaction.id}><span>{model.allPayees.find(payee => payee.id === transaction.payeeId)?.name ?? transaction.note ?? (transaction.kind === 'opening' ? 'Anfangsbestand' : 'Buchung')}<small>{displayDate(transaction.date)} · {model.allAccounts.find(account => account.id === transaction.accountId)?.name}</small></span><span className="money">{formatMoney(transaction.amount)}</span></li>)}</ul>}</section>
+    <section><div className="section-heading"><h2>Ihre Konten</h2><Button variant="quiet" icon={ChevronRight} onClick={onAccounts}>Konten öffnen</Button></div><AccountTable accounts={model.allAccounts} balances={balances} /></section>
+  </section>;
 }
+
 function Accounts({ model }: { readonly model: FinanceModel }) {
   const [name, setName] = useState(''); const [type, setType] = useState<AccountAggregate['type']>('checking'); const [budget, setBudget] = useState(true); const [error, setError] = useState<string>();
   async function submit(event: FormEvent) { event.preventDefault(); setError(undefined); try { await model.addAccount(name, type, budget); setName(''); } catch (reason) { setError(messageFor(reason, 'Das Konto wurde nicht gespeichert.')); } }
@@ -432,6 +474,8 @@ function Payees({ model }: { readonly model: FinanceModel }) {
 }
 function AccountTable({ accounts, balances, onArchive, archived = false }: { readonly accounts: readonly AccountAggregate[]; readonly balances: readonly { readonly accountId: UUID; readonly balance: number }[]; readonly onArchive?: (id: UUID) => Promise<void>; readonly archived?: boolean }) { return <div className="table-wrap" role="region" aria-label={archived ? 'Archivierte Konten' : 'Kontoliste'} tabIndex={0}><table className="account-table"><thead><tr><th>Konto</th><th>Art</th><th className="money">Guthaben</th>{archived ? <th>Status</th> : null}{onArchive === undefined ? null : <th><span className="visually-hidden">Aktion</span></th>}</tr></thead><tbody>{accounts.map((account) => <tr key={account.id}><td>{account.name}</td><td>{account.type}</td><td className="money">{formatMoney(balances.find((balance) => balance.accountId === account.id)?.balance ?? 0)}</td>{archived ? <td>Archiviert</td> : null}{onArchive === undefined ? null : <td><button className="quiet small-action" onClick={() => void onArchive(account.id)} type="button">Archivieren</button></td>}</tr>)}</tbody></table></div>; }
 function Empty({ title, text }: { readonly title: string; readonly text: string }) { return <section className="empty"><h2>{title}</h2><p>{text}</p></section>; }
-function titleFor(view: View) { return ({ overview: 'Übersicht', accounts: 'Konten', categories: 'Kategorien', payees: 'Empfänger', transactions: 'Buchungen', import: 'Import', automation: 'Regeln und Dauerzahlungen' })[view]; }
+function titleFor(view: View) { return ({ overview: 'Übersicht', accounts: 'Konten', categories: 'Kategorien', payees: 'Empfänger', transactions: 'Buchungen', import: 'Import', automation: 'Regeln', schedules: 'Dauerzahlungen', settings: 'Einstellungen', more: 'Mehr', help: 'Hilfe' })[view]; }
 export function formatMoney(cents: number) { return new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' }).format(cents / 100); }
 function messageFor(reason: unknown, fallback: string) { return reason instanceof Error ? reason.message : fallback; }
+
+export function displayDate(date: string) { const [year, month, day] = date.split('-'); return `${day}.${month}.${year}`; }

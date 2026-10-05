@@ -9,6 +9,7 @@
     "playwright.config.ts",
     "vitest.config.ts",
     "tests/ui/**/*.ts",
+    "tests/ux/**/*.ts",
     "tests/workspace/**/*.ts",
     "tests/acceptance/**/*.ts",
     "apps/web/tests/**/*.tsx",

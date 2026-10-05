@@ -167,3 +167,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
   .mobile-transactions small { grid-column: 1 / -1; overflow-wrap: anywhere; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; scroll-behavior: auto !important; } }
+.workspace-status { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+.history-actions button { font-size: 0.875rem; }
+.appearance { margin-top: 2rem; max-width: 24rem; }
+.appearance h2 { display: flex; align-items: center; gap: 0.5rem; }
