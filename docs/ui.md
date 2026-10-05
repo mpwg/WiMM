@@ -2,7 +2,7 @@
 
 ## Freigegebene Neugestaltung
 
-Der Nutzerauftrag vom 5. Oktober 2026 gibt UX-01–UX-06 gemäß [UX-Konzept](ux-redesign.md) frei. Die markante, ruhige Gestaltung mit Indigoakzent ersetzt die bisherigen visuellen Defaults. P6–P10 werden nur gestalterisch vorbereitet, nicht implementiert.
+Der Nutzerauftrag vom 5. Oktober 2026 gibt UX-01–UX-06 gemäß [UX-Konzept](ux-redesign.md) frei. Der anschließende Umsetzungsauftrag für den [klickbaren UX-Flow](assets/ux-flow-konzept.html) ersetzt den Indigoakzent durch Grünakzent und warme Flächen. Die Übersicht „Alles im Blick.“ führt mit dem echten Kontostand gesamt; letzte Buchungen und fällige Vorschläge stehen darunter. P6–P10 werden nur gestalterisch vorbereitet, nicht implementiert.
 
 ## Leitlinien
 
@@ -32,7 +32,7 @@ Desktop- und Touchansichten werden bewusst unterschiedlich komponiert; gemeinsam
 
 ## Bedienelemente
 
-Systemschrift, Indigoakzent und feste Typografiestufen; keine viewportabhängige Schriftgröße. Tabellenbeträge rechtsbündig mit tabellarischen Ziffern, Währung und Vorzeichen. Normale Ausgaben bleiben neutral; Rot bedeutet Problem/Ausgabeabweichung oder destruktive Aktion, Grün positiven Status; zusätzliche Symbole/Text verhindern reine Farbcodierung. Hell-/Dunkelmodus folgt zunächst dem System und ist überschreibbar.
+Systemschrift, Grünakzent und feste Typografiestufen; keine viewportabhängige Schriftgröße. Tabellenbeträge rechtsbündig mit tabellarischen Ziffern, Währung und Vorzeichen. Normale Ausgaben bleiben neutral; Rot bedeutet Problem/Ausgabeabweichung oder destruktive Aktion, Grün positiven Status; zusätzliche Symbole/Text verhindern reine Farbcodierung. Hell-/Dunkelmodus folgt zunächst dem System und ist überschreibbar.
 
 Werkzeugaktionen mit Lucide-Icons und zugänglichem Namen/Tooltip; klare Befehle mit Icon und Text. Binäre Werte als Checkbox/Toggle, Methoden als Segmentsteuerung, Auswahlmengen als Menüs, Zahlen als Eingabe. Keine verschachtelten Karten; Tabellen und Seitenabschnitte ungerahmt, Modale und einzelne fachliche Einträge dürfen gerahmt sein. Stabile Spalten-/Buttonmaße verhindern Sprünge durch Status-/Ladetexte.
 

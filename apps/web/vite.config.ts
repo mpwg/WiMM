@@ -2,6 +2,7 @@
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import react from '@vitejs/plugin-react';
+import { clientIconDirectives } from '../../scripts/client-directives.js';
 import { createLogger, defineConfig } from 'vite';
 
 export default defineConfig(({ command }) => {
@@ -32,7 +33,7 @@ export default defineConfig(({ command }) => {
         }
       }
     },
-    plugins: [react(), {
+    plugins: [clientIconDirectives(), react(), {
       name: 'wimm-offline-assets',
       apply: 'build',
       closeBundle() {

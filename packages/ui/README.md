@@ -126,10 +126,16 @@ Die ergänzende P5-Browserabnahme verwendet `tests/ui/p5-browsers.config.ts` geg
 
 ## UX-Neugestaltung
 
-Die freigegebene Neugestaltung verwendet semantische Indigo-/Hell-/Dunkeltokens, Systemschrift und gemeinsame Buttons, Arbeitsdialoge, Leer- und Statuszustände. Dekorative Trennlinien und zugängliche Eingabegrenzen sind getrennt. Lucide React 1.45.0 (ISC, Herkunft: npm-Paket `lucide-react`, unverändert) liefert Icons; [Fremdlizenz](licenses/lucide-react.txt) bleibt erhalten. Die bestehenden Abhängigkeits-Reifevorgaben werden eingehalten.
+Die freigegebene Neugestaltung verwendet semantische Grün-/Hell-/Dunkeltokens, Systemschrift und gemeinsame Buttons, Arbeitsdialoge, Leer- und Statuszustände. Dekorative Trennlinien und zugängliche Eingabegrenzen sind getrennt. Lucide React 1.45.0 (ISC, Herkunft: npm-Paket `lucide-react`, unverändert) liefert Icons; [Fremdlizenz](licenses/lucide-react.txt) bleibt erhalten. Die bestehenden Abhängigkeits-Reifevorgaben werden eingehalten.
 
 Buchungen zeigen zuerst die Liste. „Neue Buchung“ und Cmd/Ctrl+N öffnen denselben Arbeitsdialog mit Ausgabe-/Einnahmerichtung, optionaler Notiz und Aufteilung. Kontoanlage bietet einen optionalen Anfangsbestand; der Fachkern erstellt beide Aggregate in einem atomaren Batch. Kontodetails begrenzen die Buchungsliste auf das gewählte Konto und öffnen Umbuchung beziehungsweise geführten Abgleich.
 
 ## Verwaltung und Import nach UX-05
 
 Einstellungen bündeln Kategorien, Empfänger, Regeln, Dauerzahlungen und Farbschema. Verwaltungsansichten zeigen zuerst Listen; Anlage und Bearbeitung öffnen geschützte Arbeitsdialoge. Regeln erscheinen als deutsche Wenn-dann-Sätze. Der lokale Import führt durch Datei, Zuordnung, Vorschau und Bestätigung; ungültige Zeilen und mögliche Dubletten verlangen ausdrückliche Entscheidungen. Bestätigte Gruppen werden mit „Fortsetzen“ übernommen und bleiben dauerhaft wiederaufnehmbar.
+
+## Oberfläche nach dem UX-Flow
+
+Die gemeinsame Oberfläche übernimmt Grünakzent, warme Flächen, die Wortmarke „WiMM.“ und ruhige Listen aus dem freigegebenen klickbaren Konzept. „Alles im Blick.“ zeigt den echten **Kontostand gesamt**, letzte Buchungen, fällige Zahlungsvorschläge und Monatswerte. Desktop verwendet eine Seitenleiste mit separatem Bereichskopf; mobil bleiben Übersicht, Buchungen und die eigene Mehr-Ansicht erreichbar. Einstellungen enthalten Verwaltung und Farbschema. Tresor, Rettungscode und erstes Konto bilden den geführten lokalen Einstieg.
+
+Buchungen und Konten werden über geschützte Dialoge bearbeitet; mobil füllen diese den Bildschirm. Import führt durch vier ausdrücklich bestätigte Schritte. Budget, Teilen und Familienausgleich sind weiterhin spätere Fachpakete. Es werden keine simulierten Konzeptdaten übernommen. Prüfung: `pnpm test:ux`; aktuelle Belege und offene Plattformprüfungen stehen in der UX-Übergabe.
