@@ -11,6 +11,7 @@ import {
   sumMoney,
   parseFinanceDate,
   parseMoney,
+  parseDirectedMoney,
   reviseAggregate,
   subtractMoney,
   archiveAccount,
@@ -23,7 +24,7 @@ import {
   deleteTransfer,
   saveTransaction,
   deleteTransaction,
-  saveAccount,
+  createAccountWithOpening,
   saveCategory,
   saveCategoryGroup,
   savePayee,
@@ -41,14 +42,14 @@ import {
 import { toStoredAggregate, type PendingOperation, type StoredAggregate, type StoredProjection } from '@wimm/storage';
 
 import type { UnlockedAppContext } from './app.js';
-import { DraftProtection, useDraftGuard } from './drafts.js';
+import { DraftProtection, useDraftGuard, useFormDraft } from './drafts.js';
 import { isTextEditing } from './platform.js';
 import { FinanceHistory } from './history.js';
 import { TransferForm, ReconciliationForm } from './account-actions.js';
 import { ImportView, AutomationView } from './automation-views.js';
 import { AutomationModel } from './automation-model.js';
-import { Transactions } from './transactions.js';
-import { Button, EmptyState } from './components.js';
+import { Transactions, TransactionForm, TransactionList } from './transactions.js';
+import { Button, Dialog, EmptyState } from './components.js';
 import { Wallet, LayoutDashboard, ArrowLeftRight, Landmark, Settings, LockKeyhole, CircleHelp, Ellipsis, ChevronRight, Plus, Upload, Undo2, Redo2, Check, Tags, Users, ListFilter, CalendarClock, Palette } from 'lucide-react';
 import { today } from './account-actions.js';
 
@@ -62,7 +63,7 @@ function storedColorScheme(): ColorScheme {
 }
 
 export interface TransactionInput {
-  readonly accountId: UUID; readonly payeeId?: UUID; readonly amount: string; readonly date: string; readonly note: string; readonly opening: boolean;
+  readonly direction?: 'expense' | 'income'; readonly accountId: UUID; readonly payeeId?: UUID; readonly amount: string; readonly date: string; readonly note: string; readonly opening: boolean;
   readonly splits: readonly { readonly id?: UUID; readonly categoryId: UUID; readonly amount: string }[];
 }
 
@@ -99,7 +100,9 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
     update();
     return () => observer.disconnect();
   }, []);
-  const [newVersion, setNewVersion] = useState(0);
+  const [newBooking, setNewBooking] = useState<{ accountId?: UUID }>();
+  const [selectedAccount, setSelectedAccount] = useState<UUID>();
+  const [selectedTransaction, setSelectedTransaction] = useState<UUID>();
   const [focusRequest, setFocusRequest] = useState<{ target: 'amount' | 'search'; version: number }>();
   const [history] = useState(() => new FinanceHistory());
   const aggregatesRef = useRef<readonly StoredAggregate[]>([]);
@@ -177,7 +180,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
     if (focusRequest !== undefined && state === 'ready' && view === 'transactions') {
       document.querySelector<HTMLInputElement>(focusRequest.target === 'amount' ? '[aria-label="Buchung erfassen"] input[aria-label="Betrag"]' : '[data-transaction-search]')?.focus();
     }
-  }, [focusRequest, state, view, newVersion]);
+  }, [focusRequest, state, view]);
   useEffect(() => {
     function command(id: string, native = false) {
       const editing = isTextEditing(document.activeElement);
@@ -188,7 +191,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
       if (saving || state !== 'ready' || document.querySelector('dialog[open]') !== null) return;
       if (id === 'undo' || id === 'redo') { guard.request(() => { void moveHistory(id); }); return; }
       if (id === 'new-transaction' || id === 'search') {
-        const action = () => { setView('transactions'); if (id === 'new-transaction') setNewVersion((value) => value + 1); setFocusRequest((value) => ({ target: id === 'search' ? 'search' : 'amount', version: (value?.version ?? 0) + 1 })); };
+        const action = () => { if (id === 'new-transaction') setNewBooking({}); else setView('transactions'); setFocusRequest((value) => ({ target: id === 'search' ? 'search' : 'amount', version: (value?.version ?? 0) + 1 })); };
         if (id === 'search' && view === 'transactions') action(); else guard.request(action);
       }
       if (id === 'import') guard.request(() => setView('import'));
@@ -218,7 +221,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   useEffect(() => {
     if (state === 'ready' && matchMedia('(max-width: 767px)').matches) document.querySelector<HTMLElement>('.finance-main')?.scrollIntoView({ block: 'start' });
   }, [view, state]);
-  const openNew = () => guard.request(() => { setView('transactions'); setNewVersion((value) => value + 1); });
+  const openNew = () => guard.request(() => setNewBooking({}));
   const go = (next: View) => guard.request(() => navigate(next));
   const settingsView = ['settings', 'categories', 'payees', 'automation', 'schedules'].includes(view);
   const navItems = [['overview', 'Übersicht', LayoutDashboard], ['transactions', 'Buchungen', ArrowLeftRight], ['accounts', 'Konten', Landmark]] as const;
@@ -252,11 +255,11 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
       {state === 'loading' ? <p role="status">Lokale Daten werden geladen …</p> : null}
       {state === 'error' ? <p role="alert">Die Daten bleiben unverändert. Bitte entsperren Sie den Tresor erneut oder starten Sie die App neu.</p> : null}
       <fieldset className="workspace-content" disabled={saving}>
-        {state === 'ready' && view === 'overview' ? <Overview model={model} onAccounts={() => go('accounts')} onTransactions={() => go('transactions')} onSchedules={() => go('schedules')} /> : null}
-        {state === 'ready' && view === 'accounts' ? <Accounts model={model} /> : null}
+        {state === 'ready' && view === 'overview' ? <Overview model={model} onAccounts={() => go('accounts')} onTransactions={(id) => { setSelectedTransaction(id); go('transactions'); }} onSchedules={() => go('schedules')} onAccount={(id) => { setSelectedAccount(id); go('accounts'); }} /> : null}
+        {state === 'ready' && view === 'accounts' ? <Accounts model={model} saving={saving} selectedId={selectedAccount} onSelect={setSelectedAccount} onNew={(accountId) => setNewBooking({ accountId })} /> : null}
         {state === 'ready' && view === 'categories' ? <Categories model={model} /> : null}
         {state === 'ready' && view === 'payees' ? <Payees model={model} /> : null}
-        {state === 'ready' && view === 'transactions' ? <Transactions key={newVersion} model={model} /> : null}
+        {state === 'ready' && view === 'transactions' ? <Transactions model={model} initialSelection={selectedTransaction} onSelectionClosed={() => setSelectedTransaction(undefined)} onAccounts={() => go('accounts')} /> : null}
         {state === 'ready' && view === 'import' ? <ImportView model={new AutomationModel(model)} platform={context.platform} /> : null}
         {state === 'ready' && (view === 'automation' || view === 'schedules') ? <AutomationView model={new AutomationModel(model)} /> : null}
         {state === 'ready' && (settingsView || view === 'more') ? <>
@@ -272,6 +275,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
         {view === 'help' ? <section><h2>WhereIsMyMoney</h2><p className="help-text">Version 0.0.0 · Lokal und verschlüsselt</p>{[['Hilfe und Quellcode', 'https://github.com/mpwg/WiMM'], ['Lizenz AGPL-3.0-or-later', 'https://www.gnu.org/licenses/agpl-3.0.html']].map(([label, url]) => <p key={url}><a href={url} onClick={(event) => { event.preventDefault(); void context.platform.openExternalUrl(url!).catch(() => setMessage('Der Link konnte nicht geöffnet werden.')); }}>{label}</a></p>)}</section> : null}
       </fieldset>
     </main>
+    {newBooking === undefined ? null : <Dialog title="Neue Buchung" busy={saving} onClose={() => setNewBooking(undefined)}><TransactionForm model={model} defaultAccountId={newBooking.accountId} onSaved={() => setNewBooking(undefined)} /></Dialog>}
   </div>;
 }
 
@@ -300,9 +304,9 @@ export class FinanceModel {
     this.payees = this.allPayees.filter((payee) => !payee.archived);
     this.transactions = aggregates.filter((aggregate): aggregate is StoredAggregate & TransactionAggregate => aggregate.aggregateType === 'transaction' && aggregate.deletedAt === undefined);
   }
-  async addAccount(name: string, type: AccountAggregate['type'], onBudget: boolean) {
+  async addAccount(name: string, type: AccountAggregate['type'], onBudget: boolean, opening?: { amount: string; date: string }) {
     const aggregate: AccountAggregate = { ...createAggregateMetadata(this.spaceId, this.domainDependencies), aggregateType: 'account', name, type, onBudget, archived: false };
-    await this.execute(saveAccount({ commandType: 'account.save', spaceId: this.spaceId, expectedRevisions: [{ id: aggregate.id, expectedRevision: 0 }], mutations: [{ aggregate }] }, this, this.domainDependencies));
+    await this.execute(createAccountWithOpening(aggregate, opening, this, this.domainDependencies));
   }
   async addGroup(name: string, kind: CategoryGroupAggregate['kind']) {
     const aggregate: CategoryGroupAggregate = { ...createAggregateMetadata(this.spaceId, this.domainDependencies), aggregateType: 'categoryGroup', name, kind, sortOrder: this.groups.length, archived: false };
@@ -358,10 +362,10 @@ export class FinanceModel {
     }, this, this.domainDependencies));
   }
   async storeTransaction(input: TransactionInput, previous?: TransactionAggregate) {
-    const amount = parseMoney(input.amount, 'Der Betrag');
+    const amount = input.direction === undefined ? parseMoney(input.amount, 'Der Betrag') : parseDirectedMoney(input.amount, input.direction);
     const splits = input.opening ? [] : input.splits.map((split, index) => ({
       id: split.id ?? this.domainDependencies.ids.next(), categoryId: split.categoryId,
-      amount: parseMoney(split.amount, `Der Splitbetrag ${index + 1}`)
+      amount: input.direction !== undefined && input.splits.length === 1 ? amount : input.direction === undefined || /^[+-]/.test(split.amount) ? parseMoney(split.amount, `Der Splitbetrag ${index + 1}`) : parseDirectedMoney(split.amount, input.direction, `Der Splitbetrag ${index + 1}`)
     }));
     // Die geöffnete Revision bleibt erhalten, auch wenn sich der Listenstand ändert.
     const metadata = previous === undefined ? createAggregateMetadata(this.spaceId, this.domainDependencies) : reviseAggregate(previous, this.domainDependencies);
@@ -425,7 +429,7 @@ export class FinanceModel {
 }
 
 function AreaPicker({ context, disabled = false, request }: { readonly context: UnlockedAppContext; readonly disabled?: boolean; readonly request: (action: () => void, trigger: HTMLElement) => void }) { return <label className="area-picker">Bereich<select aria-label="Bereich" disabled={disabled} onChange={(event) => { const id = event.target.value; request(() => context.selectArea(id), event.currentTarget); }} value={context.activeArea.id}>{context.profile.areas.map((area) => <option key={area.id} value={area.id}>{area.label}</option>)}</select></label>; }
-function Overview({ model, onAccounts, onTransactions, onSchedules }: { readonly model: FinanceModel; readonly onAccounts: () => void; readonly onTransactions: () => void; readonly onSchedules: () => void }) {
+function Overview({ model, onAccounts, onTransactions, onSchedules, onAccount }: { readonly model: FinanceModel; readonly onAccounts: () => void; readonly onTransactions: (id?: UUID) => void; readonly onSchedules: () => void; readonly onAccount: (id: UUID) => void }) {
   if (model.allAccounts.length === 0) return <EmptyState title="Ihr erster Überblick" action={<Button variant="primary" icon={Plus} onClick={onAccounts}>Erstes Konto anlegen</Button>}>Legen Sie Ihr erstes Konto an. Danach sehen Sie hier Ihre Kontostände und die Buchungen dieses Monats.</EmptyState>;
   const balances = projectAccountBalances(model.transactions);
   const total = sumMoney(balances.map((item) => item.balance), 'Das Gesamtguthaben');
@@ -437,18 +441,43 @@ function Overview({ model, onAccounts, onTransactions, onSchedules }: { readonly
   const due = automation.schedules.filter(schedule => schedule.enabled).flatMap(schedule => dueDates(schedule, today() as never).filter(date => !automation.all.some(entry => entry.aggregateType === 'scheduleOccurrence' && (entry as OccurrenceAggregate).scheduleId === schedule.id && (entry as OccurrenceAggregate).dueDate === date)).map(date => ({ schedule, date }))).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
   return <section><p className="help-text">{monthLabel}</p><div className="overview-grid"><article><p>Kontostand gesamt</p><strong>{formatMoney(total)}</strong></article><article><p>Monatsausgaben</p><strong>{formatMoney(consumption.expense)}</strong></article><article><p>Monatseinnahmen</p><strong>{formatMoney(consumption.income)}</strong></article></div>
     {due.length > 0 ? <section><div className="section-heading"><h2>Fällige Zahlungsvorschläge</h2><Button variant="quiet" icon={CalendarClock} onClick={onSchedules}>Dauerzahlungen</Button></div><p className="help-text">Vorschläge verändern Ihren Kontostand erst nach Bestätigung.</p><ul className="plain-list">{due.map(({ schedule, date }) => <li key={`${schedule.id}:${date}`}><span>{schedule.template.note || 'Dauerzahlung'}<small>{displayDate(date)}</small></span><span className="money">{formatMoney(schedule.template.amount)}</span><Button onClick={onSchedules}>Vorschlag prüfen</Button></li>)}</ul></section> : null}
-    <section><div className="section-heading"><h2>Letzte Buchungen</h2><Button variant="quiet" icon={ChevronRight} onClick={onTransactions}>Alle Buchungen</Button></div>{recent.length === 0 ? <p className="help-text">Noch keine Buchungen. Erfassen Sie Ihre erste Zahlung über „Neue Buchung“.</p> : <ul className="plain-list">{recent.map(transaction => <li key={transaction.id}><span>{model.allPayees.find(payee => payee.id === transaction.payeeId)?.name ?? transaction.note ?? (transaction.kind === 'opening' ? 'Anfangsbestand' : 'Buchung')}<small>{displayDate(transaction.date)} · {model.allAccounts.find(account => account.id === transaction.accountId)?.name}</small></span><span className="money">{formatMoney(transaction.amount)}</span></li>)}</ul>}</section>
-    <section><div className="section-heading"><h2>Ihre Konten</h2><Button variant="quiet" icon={ChevronRight} onClick={onAccounts}>Konten öffnen</Button></div><AccountTable accounts={model.allAccounts} balances={balances} /></section>
+    <section><div className="section-heading"><h2>Letzte Buchungen</h2><Button variant="quiet" icon={ChevronRight} onClick={() => onTransactions()}>Alle Buchungen</Button></div>{recent.length === 0 ? <p className="help-text">Noch keine Buchungen. Erfassen Sie Ihre erste Zahlung über „Neue Buchung“.</p> : <ul className="plain-list">{recent.map(transaction => <li key={transaction.id}><span><button className="transaction-link" type="button" onClick={() => onTransactions(transaction.id)}>{model.allPayees.find(payee => payee.id === transaction.payeeId)?.name ?? transaction.note ?? (transaction.kind === 'opening' ? 'Anfangsbestand' : 'Buchung')}</button><small>{displayDate(transaction.date)} · {model.allAccounts.find(account => account.id === transaction.accountId)?.name}</small></span><span className="money">{formatMoney(transaction.amount)}</span></li>)}</ul>}</section>
+    <section><div className="section-heading"><h2>Ihre Konten</h2><Button variant="quiet" icon={ChevronRight} onClick={onAccounts}>Konten öffnen</Button></div><AccountTable accounts={model.allAccounts} balances={balances} onOpen={onAccount} /></section>
   </section>;
 }
 
-function Accounts({ model }: { readonly model: FinanceModel }) {
-  const [name, setName] = useState(''); const [type, setType] = useState<AccountAggregate['type']>('checking'); const [budget, setBudget] = useState(true); const [error, setError] = useState<string>();
-  async function submit(event: FormEvent) { event.preventDefault(); setError(undefined); try { await model.addAccount(name, type, budget); setName(''); } catch (reason) { setError(messageFor(reason, 'Das Konto wurde nicht gespeichert.')); } }
-  async function archive(id: UUID) { setError(undefined); try { await model.archiveAccount(id); } catch (reason) { setError(messageFor(reason, 'Das Konto wurde nicht archiviert.')); } }
+function Accounts({ model, saving, selectedId, onSelect, onNew }: { readonly model: FinanceModel; readonly saving: boolean; readonly selectedId?: UUID | undefined; readonly onSelect: (id?: UUID) => void; readonly onNew: (id: UUID) => void }) {
+  const [action, setAction] = useState<'create' | 'transfer' | 'reconcile'>();
+  const [error, setError] = useState<string>();
   const balances = projectAccountBalances(model.transactions);
-  return <section><form className="inline-form" onSubmit={(event) => void submit(event)}><label>Kontoname<input onChange={(event) => setName(event.target.value)} required value={name} /></label><label>Art<select onChange={(event) => setType(event.target.value as AccountAggregate['type'])} value={type}><option value="checking">Girokonto</option><option value="cash">Bargeld</option><option value="savings">Sparkonto</option><option value="credit">Kreditkarte</option><option value="other">Sonstiges</option></select></label><label><input checked={budget} onChange={(event) => setBudget(event.target.checked)} type="checkbox" /> Im Budget</label><button type="submit">Konto anlegen</button></form>{error === undefined ? null : <p className="field-error" role="alert">{error}</p>}{model.accounts.length === 0 ? <Empty title="Noch keine Konten" text="Der Anfangsbestand wird bei der ersten Buchung erfasst." /> : <><AccountTable accounts={model.accounts} balances={balances} onArchive={archive} /><p className="help-text">Archivierte Konten bleiben für ihre bestehenden Buchungen erhalten und erscheinen nicht mehr in neuen Auswahlen.</p><TransferForm model={model} /><ReconciliationForm model={model} /></>}{model.allAccounts.some((account) => account.archived) ? <section aria-labelledby="archivierte-konten"><h2 id="archivierte-konten">Archivierte Konten</h2><AccountTable accounts={model.allAccounts.filter((account) => account.archived)} balances={balances} archived /></section> : null}</section>;
+  const selected = model.allAccounts.find(account => account.id === selectedId);
+  async function archive(id: UUID) { try { await model.archiveAccount(id); } catch (reason) { setError(messageFor(reason, 'Das Konto wurde nicht archiviert.')); } }
+  return <section>
+    {selected === undefined ? <>
+      <div className="toolbar"><Button variant="primary" icon={Plus} onClick={() => setAction('create')}>Neues Konto</Button></div>
+      {model.accounts.length === 0 ? <EmptyState title="Noch keine Konten" action={<Button onClick={() => setAction('create')}>Erstes Konto anlegen</Button>}>Erfassen Sie ein Konto und optional seinen aktuellen Anfangsbestand.</EmptyState> : <AccountTable accounts={model.accounts} balances={balances} onOpen={onSelect} onArchive={archive} />}
+      {model.allAccounts.some(account => account.archived) ? <section><h2>Archivierte Konten</h2><AccountTable accounts={model.allAccounts.filter(account => account.archived)} balances={balances} archived onOpen={onSelect} /></section> : null}
+    </> : <>
+      <Button variant="quiet" onClick={() => onSelect(undefined)}>Zurück zu Konten</Button>
+      <div className="section-heading"><h2>{selected.name}</h2><strong className="money account-balance">{formatMoney(balances.find(balance => balance.accountId === selected.id)?.balance ?? 0)}</strong></div>
+      <p className="help-text">{accountTypeLabels[selected.type]} · {selected.onBudget ? 'Im Budget' : 'Außerhalb des Budgets'}{selected.archived ? ' · Archiviert' : ''}</p>
+      {selected.archived ? null : <div className="toolbar"><Button variant="primary" icon={Plus} onClick={() => onNew(selected.id)}>Neue Buchung</Button><Button icon={ArrowLeftRight} onClick={() => setAction('transfer')}>Umbuchen</Button><Button icon={Check} onClick={() => setAction('reconcile')}>Abgleichen</Button></div>}
+      <h2 className="section-title">Buchungen dieses Kontos</h2><TransactionList model={model} fixedAccountId={selected.id} />
+    </>}
+    {error === undefined ? null : <p role="alert" className="field-error">{error}</p>}
+    {action === 'create' ? <Dialog title="Konto anlegen" busy={saving} onClose={() => setAction(undefined)}><AccountForm model={model} onSaved={() => setAction(undefined)} /></Dialog> : null}
+    {action === 'transfer' ? <Dialog title="Umbuchung" busy={saving} onClose={() => setAction(undefined)}><TransferForm model={model} defaultAccountId={selected?.id} onSaved={() => setAction(undefined)} /></Dialog> : null}
+    {action === 'reconcile' ? <Dialog title="Konto abgleichen" busy={saving} onClose={() => setAction(undefined)}><ReconciliationForm model={model} defaultAccountId={selected?.id} onSaved={() => setAction(undefined)} /></Dialog> : null}
+  </section>;
 }
+function AccountForm({ model, onSaved }: { readonly model: FinanceModel; readonly onSaved: () => void }) {
+  const form = useRef<HTMLFormElement>(null); const saved = useFormDraft(form);
+  const [name, setName] = useState(''); const [type, setType] = useState<AccountAggregate['type']>('checking'); const [budget, setBudget] = useState(true);
+  const [opening, setOpening] = useState(''); const [date, setDate] = useState(today()); const [error, setError] = useState<string>(); const [busy, setBusy] = useState(false);
+  async function submit(event: FormEvent) { event.preventDefault(); if (busy) return; setBusy(true); setError(undefined); try { await model.addAccount(name, type, type === 'credit' ? false : budget, opening === '' ? undefined : { amount: opening, date }); saved(); onSaved(); } catch (reason) { setError(messageFor(reason, 'Das Konto wurde nicht gespeichert. Ihre Eingaben bleiben erhalten.')); } finally { setBusy(false); } }
+  return <form ref={form} className="inline-form" onSubmit={(event) => void submit(event)}><label>Kontoname<input autoFocus required value={name} onChange={(event) => setName(event.target.value)} /></label><label>Art<select value={type} onChange={(event) => setType(event.target.value as AccountAggregate['type'])}>{Object.entries(accountTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label><input type="checkbox" checked={type === 'credit' ? false : budget} disabled={type === 'credit'} onChange={(event) => setBudget(event.target.checked)} /> Im Budget</label><label>Anfangsbestand (optional)<input inputMode="decimal" value={opening} placeholder="z. B. 1000,00" onChange={(event) => setOpening(event.target.value)} /></label><label>Datum des Anfangsbestands<input type="date" required={opening !== ''} value={date} onChange={(event) => setDate(event.target.value)} /></label><p className="help-text">Der Anfangsbestand zählt zum Kontostand, nicht zu Ihren Einnahmen.</p><button type="submit" disabled={busy}>{busy ? 'Wird gespeichert …' : 'Konto anlegen'}</button>{error === undefined ? null : <p role="alert" className="field-error">{error}</p>}</form>;
+}
+
 function Categories({ model }: { readonly model: FinanceModel }) {
   const [groupName, setGroupName] = useState(''); const [kind, setKind] = useState<CategoryGroupAggregate['kind']>('expense'); const [name, setName] = useState(''); const [group, setGroup] = useState(''); const [error, setError] = useState<string>();
   async function groupSubmit(e: FormEvent) { e.preventDefault(); setError(undefined); try { await model.addGroup(groupName, kind); setGroupName(''); } catch (reason) { setError(messageFor(reason, 'Die Gruppe wurde nicht gespeichert.')); } }
@@ -472,7 +501,8 @@ function Payees({ model }: { readonly model: FinanceModel }) {
   }
   return <section><form className="inline-form" onSubmit={(e) => void submit(e)}><label>Empfänger<input onChange={(e) => setName(e.target.value)} required value={name} /></label><button type="submit">Empfänger anlegen</button></form>{error === undefined ? null : <p className="field-error" role="alert">{error}</p>}{model.payees.length === 0 ? <Empty title="Noch keine Empfänger" text="Empfänger sind optional und können später beim Erfassen ergänzt werden." /> : <><ul className="plain-list">{model.payees.map((payee) => <li key={payee.id}>{payee.name}</li>)}</ul>{model.payees.length < 2 ? null : <form className="inline-form merge-form" onSubmit={openMergeDialog}><h2>Empfänger zusammenführen</h2><p>Alle lokalen Buchungen des Quell-Empfängers werden atomar dem Ziel zugeordnet. Der Quell-Empfänger bleibt archiviert erhalten.</p><label>Quell-Empfänger<select onChange={(e) => setSource(e.target.value)} required value={source}><option value="">Auswählen</option>{model.payees.map((payee) => <option key={payee.id} value={payee.id}>{payee.name}</option>)}</select></label><label>Ziel-Empfänger<select onChange={(e) => setTarget(e.target.value)} required value={target}><option value="">Auswählen</option>{model.payees.filter((payee) => payee.id !== source).map((payee) => <option key={payee.id} value={payee.id}>{payee.name}</option>)}</select></label><button ref={mergeTrigger} type="submit">Zusammenführen und archivieren</button></form>}{dialogOpen ? <dialog aria-labelledby="merge-confirmation-title" className="confirmation-dialog" onClose={restoreMergeFocus} ref={mergeDialog}><h2 id="merge-confirmation-title">Empfänger zusammenführen?</h2><p>Die lokalen Buchungsreferenzen werden atomar auf den Ziel-Empfänger übertragen. Der Quell-Empfänger bleibt archiviert erhalten.</p><form className="dialog-actions" method="dialog"><button type="submit">Abbrechen</button><button onClick={() => void merge()} type="button">Zusammenführen</button></form></dialog> : null}</>}</section>;
 }
-function AccountTable({ accounts, balances, onArchive, archived = false }: { readonly accounts: readonly AccountAggregate[]; readonly balances: readonly { readonly accountId: UUID; readonly balance: number }[]; readonly onArchive?: (id: UUID) => Promise<void>; readonly archived?: boolean }) { return <div className="table-wrap" role="region" aria-label={archived ? 'Archivierte Konten' : 'Kontoliste'} tabIndex={0}><table className="account-table"><thead><tr><th>Konto</th><th>Art</th><th className="money">Guthaben</th>{archived ? <th>Status</th> : null}{onArchive === undefined ? null : <th><span className="visually-hidden">Aktion</span></th>}</tr></thead><tbody>{accounts.map((account) => <tr key={account.id}><td>{account.name}</td><td>{account.type}</td><td className="money">{formatMoney(balances.find((balance) => balance.accountId === account.id)?.balance ?? 0)}</td>{archived ? <td>Archiviert</td> : null}{onArchive === undefined ? null : <td><button className="quiet small-action" onClick={() => void onArchive(account.id)} type="button">Archivieren</button></td>}</tr>)}</tbody></table></div>; }
+const accountTypeLabels = { checking: 'Girokonto', cash: 'Bargeld', savings: 'Sparkonto', credit: 'Kreditkarte', other: 'Sonstiges' } as const;
+function AccountTable({ accounts, balances, onArchive, onOpen, archived = false }: { readonly accounts: readonly AccountAggregate[]; readonly balances: readonly { readonly accountId: UUID; readonly balance: number }[]; readonly onOpen?: (id: UUID) => void; readonly onArchive?: (id: UUID) => Promise<void>; readonly archived?: boolean }) { return <div className="table-wrap" role="region" aria-label={archived ? 'Archivierte Konten' : 'Kontoliste'} tabIndex={0}><table className="account-table"><thead><tr><th>Konto</th><th>Art</th><th className="money">Guthaben</th>{archived ? <th>Status</th> : null}{onArchive === undefined ? null : <th><span className="visually-hidden">Aktion</span></th>}</tr></thead><tbody>{accounts.map((account) => <tr key={account.id}><td>{onOpen === undefined ? account.name : <button className="transaction-link" type="button" onClick={() => onOpen(account.id)}>{account.name}</button>}<small>{account.onBudget ? 'Im Budget' : 'Außerhalb des Budgets'}</small></td><td>{accountTypeLabels[account.type]}</td><td className="money">{formatMoney(balances.find((balance) => balance.accountId === account.id)?.balance ?? 0)}</td>{archived ? <td>Archiviert</td> : null}{onArchive === undefined ? null : <td><button className="quiet small-action" onClick={() => void onArchive(account.id)} type="button">Archivieren</button></td>}</tr>)}</tbody></table></div>; }
 function Empty({ title, text }: { readonly title: string; readonly text: string }) { return <section className="empty"><h2>{title}</h2><p>{text}</p></section>; }
 function titleFor(view: View) { return ({ overview: 'Übersicht', accounts: 'Konten', categories: 'Kategorien', payees: 'Empfänger', transactions: 'Buchungen', import: 'Import', automation: 'Regeln', schedules: 'Dauerzahlungen', settings: 'Einstellungen', more: 'Mehr', help: 'Hilfe' })[view]; }
 export function formatMoney(cents: number) { return new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' }).format(cents / 100); }

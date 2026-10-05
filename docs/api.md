@@ -120,3 +120,7 @@ Das Beispiel kürzt `encryptedBundles`; eine reale Antwort enthält unverändert
 | 500/503 | INTERNAL_ERROR, STORAGE_UNAVAILABLE | Request-ID; keine internen Details, sichere Wiederholung |
 
 Serverergebnisse betreffen nur Hülle, Signatur, Autorisierung und CAS; Finanzfehler entstehen ausschließlich auf entschlüsselnden Clients. HTTP 400 betrifft einen ungültigen Batchumschlag; Auth-/Bereichsfehler den gesamten Request. Nach Entschlüsselung ungültiger Inhalt wird quarantänisiert und nicht automatisch angewandt. Uploadgrenzen und Sitzungsregeln stehen in Betrieb/Sicherheit.
+
+## Atomarer lokaler Kontoeinstieg
+
+`createAccountWithOpening` erzeugt unter `account.save` eine vollständige Änderungsmenge für ein neues Konto und optional eine validierte Anfangsbuchung. Beide neuen IDs benötigen erwartete Revision 0; bestehende Konten sind ausgeschlossen. Die Anfangsbuchung zählt nicht als Konsum. Dies ist ein Clientfachbefehl, kein neuer Serverendpunkt. `parseDirectedMoney` normalisiert die gewählte Ausgabe-/Einnahmerichtung im Fachkern; ausdrücklich vorzeichenbehaftete Splits erlauben weiterhin Gegenposten.

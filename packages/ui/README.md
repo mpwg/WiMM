@@ -12,7 +12,7 @@ Beim Zusammenführen von Empfängern werden die gespeicherten Buchungsreferenzen
 
 Navigation und Stammdaten verwenden gemeinsame Layout- und Farbregeln für Web und Desktop-Frontend. Bei 320 CSS-Pixeln umbrechen Navigation und lange Namen; von 768 bis 1023 Pixeln steht eine kompakte Seitenleiste neben einspaltigen Formularen, ab 1024 Pixeln die volle Seitenleiste. Breite Tabellen scrollen ausschließlich in ihrem beschrifteten Arbeitsbereich; Beträge bleiben vollständig und einzeilig. Bedienelemente sind mindestens 44 × 44 CSS-Pixel groß, die Schrift ist die Systemschrift.
 
-Die Auswahl „Farbschema“ in der Seitenleiste bietet „System“, „Hell“ und „Dunkel“. „System“ folgt auch laufenden Änderungen des Betriebssystemfarbschemas. Eine manuelle Auswahl überschreibt das System in den Finanzansichten und bleibt lokal über ein erneutes Laden und Entsperren hinweg erhalten. Bei nicht verfügbarem Browserspeicher gilt sie für die aktuelle Sitzung.
+Die Auswahl „Farbschema“ unter Einstellungen bietet „System“, „Hell“ und „Dunkel“. „System“ folgt auch laufenden Änderungen des Betriebssystemfarbschemas. Eine manuelle Auswahl überschreibt das System in den Finanzansichten und bleibt lokal über ein erneutes Laden und Entsperren hinweg erhalten. Bei nicht verfügbarem Browserspeicher gilt sie für die aktuelle Sitzung.
 
 Navigation, Bereichswechsel sowie das Anlegen von Konten, Kategorien und Empfängern sind vollständig per Tabulator, Umschalt+Tabulator, Enter und Escape erreichbar. Der sichtbare Fokus bleibt auf jedem fokussierten Bedienelement erhalten. Das Zusammenführen von Empfängern verlangt eine bestätigende Rückfrage; Escape oder „Abbrechen“ schließen sie ohne Änderung und geben den Fokus an „Zusammenführen und archivieren“ zurück.
 
@@ -127,3 +127,5 @@ Die ergänzende P5-Browserabnahme verwendet `tests/ui/p5-browsers.config.ts` geg
 ## UX-Neugestaltung
 
 Die freigegebene Neugestaltung verwendet semantische Indigo-/Hell-/Dunkeltokens, Systemschrift und gemeinsame Buttons, Arbeitsdialoge, Leer- und Statuszustände. Dekorative Trennlinien und zugängliche Eingabegrenzen sind getrennt. Lucide React 1.45.0 (ISC, Herkunft: npm-Paket `lucide-react`, unverändert) liefert Icons; [Fremdlizenz](licenses/lucide-react.txt) bleibt erhalten. Die bestehenden Abhängigkeits-Reifevorgaben werden eingehalten.
+
+Buchungen zeigen zuerst die Liste. „Neue Buchung“ und Cmd/Ctrl+N öffnen denselben Arbeitsdialog mit Ausgabe-/Einnahmerichtung, optionaler Notiz und Aufteilung. Kontoanlage bietet einen optionalen Anfangsbestand; der Fachkern erstellt beide Aggregate in einem atomaren Batch. Kontodetails begrenzen die Buchungsliste auf das gewählte Konto und öffnen Umbuchung beziehungsweise geführten Abgleich.
