@@ -2,7 +2,7 @@
 
 ## Ergebnis
 
-UX-01: Konzept und synthetische Entwürfe festgeschrieben. Umsetzung UX-02–UX-06 folgt in Reihenfolge.
+UX-01–UX-05 implementiert: Gestaltung, Navigation, Liste zuerst, Erfassungs-/Kontodialoge, Verwaltung und vierstufiger Import. UX-06 prüft den aktuellen Gesamtstand.
 
 ## Kriterienmatrix
 
@@ -10,9 +10,10 @@ UX-01: Konzept und synthetische Entwürfe festgeschrieben. Umsetzung UX-02–UX-
 | --- | --- | --- |
 | Konzept und Freigabe | erfüllt | [UX-Konzept](../ux-redesign.md), Nutzerauftrag 5. Oktober 2026 |
 | Desktop-/Mobilentwürfe | erfüllt | [Synthetische Entwürfe](../assets/ux-wireframes.svg) |
-| Implementierung und aktuelle Abnahme | offen | UX-02–UX-06 |
+| Implementierung UX-02–UX-05 | erfüllt | Quellstand und sieben Chromium-UX-Tests |
+| Aktuelle Gesamtabnahme | offen | UX-06: vollständige Regression und Plattformmatrix |
 | Native und physische Geräteprüfung | offen | Verfügbarkeit je Plattform feststellen |
 
 ## Nächster Schritt
 
-UX-02: gemeinsame Gestaltung und Komponenten implementieren. P6–P10 bleiben nicht freigegeben.
+UX-06: aktuelle Gesamtabnahme und Regression der geänderten Bedienabläufe. P6–P10 bleiben nicht freigegeben.

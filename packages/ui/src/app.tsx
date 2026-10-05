@@ -264,7 +264,7 @@ function CreateVault({ notice, title, screen, store, onScreen, onNotice }: {
   }
 
   if (screen.recoveryCode !== undefined) {
-    return <main className="auth"><p className="eyebrow">{title}</p><h1>Rettungscode sichern</h1>
+    return <main className="auth"><p className="eyebrow">{title} · Schritt 2 von 3</p><h1>Rettungscode sichern</h1>
       <p>Dieser Code ist der zweite Weg zu Ihren Finanzschlüsseln. Er wird nicht erneut angezeigt und nie an einen Server gesendet.</p>
       <output className="recovery-code" aria-label="Rettungscode">{screen.recoveryCode}</output>
       {notice === undefined ? undefined : <p role="alert">{notice}</p>}
@@ -272,7 +272,7 @@ function CreateVault({ notice, title, screen, store, onScreen, onNotice }: {
         <button disabled={!recoveryConfirmed || busy} type="submit">Lokalen Bereich eröffnen</button></form>
     </main>;
   }
-  return <main className="auth"><p className="eyebrow">{title}</p><h1>Lokalen Tresor anlegen</h1>
+  return <main className="auth"><p className="eyebrow">{title} · Schritt 1 von 3</p><h1>Lokalen Tresor anlegen</h1>
     <p>Die App funktioniert ohne Konto und Server. Die Entsperrpassphrase bleibt auf diesem Gerät.</p>
     {notice === undefined ? undefined : <p role="alert">{notice}</p>}
     <form onSubmit={(event) => { void submit(event); }}><label>Entsperrpassphrase<input autoComplete="new-password" minLength={12} onChange={(event) => setPassphrase(event.target.value)} required type="password" value={passphrase} /></label>

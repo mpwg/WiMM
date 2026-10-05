@@ -171,3 +171,16 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); ou
 .history-actions button { font-size: 0.875rem; }
 .appearance { margin-top: 2rem; max-width: 24rem; }
 .appearance h2 { display: flex; align-items: center; gap: 0.5rem; }
+.section-title { margin-top: 2rem; }
+.account-balance { font-size: 1.75rem; letter-spacing: -0.025em; }
+.schedule-entry { padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+@media (max-width: 767px) {
+  .account-table { min-width: 0 !important; }
+  .account-table thead { display: none; }
+  .account-table tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; border-bottom: 1px solid var(--border); padding: 0.75rem 0; }
+  .account-table td { border: 0; padding: 0.25rem 0; min-width: 0 !important; }
+  .account-table td:first-child { grid-column: 1; }
+  .account-table td:first-child button { white-space: normal; }
+  .account-table td:nth-child(2) { grid-column: 1; color: var(--muted); font-size: 0.875rem; }
+  .account-table td.money { grid-column: 1 / -1; text-align: left !important; }
+}
