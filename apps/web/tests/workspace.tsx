@@ -3,7 +3,7 @@
 import { createRoot } from 'react-dom/client';
 import { FinanceWorkspace, type UnlockedAppContext, type WorkspaceStorage } from '@wimm/ui';
 import { IndexedDbStorageAdapter, toStoredAggregate, type StoredAggregate } from '@wimm/storage';
-import type { UUID } from '@wimm/contracts';
+import type { AtomicBatch, UUID } from '@wimm/contracts';
 import type { AccountAggregate, CategoryGroupAggregate, CategoryAggregate, P2Aggregate, TransactionAggregate } from '@wimm/domain';
 import '../src/styles.css';
 
@@ -23,7 +23,13 @@ for (let index = 0; index < count; index += 1) initial.push({
   date: '2026-10-04', clearance: count === 3 && index === 2 ? 'reconciled' : 'uncleared',
   note: `Buchung ${String(index).padStart(5, '0')}`, splits: [{ id: id(100000 + index), categoryId, amount: -100 }]
 } as TransactionAggregate);
-await adapter.applyAtomicBatch({ expectedRevisions: [], aggregates: initial.map(toStoredAggregate), outbox: [], projections: [] });
+if (parameters.get('p44') === 'true') {
+  initial.splice(3);
+  initial.push({ ...meta(6), aggregateType: 'account', name: 'Zielkonto', type: 'cash', onBudget: true, archived: false } as AccountAggregate);
+  initial.push({ ...meta(7), aggregateType: 'account', name: 'Extern', type: 'savings', onBudget: false, archived: false } as AccountAggregate);
+  initial.push({ ...meta(8), aggregateType: 'transaction', accountId, date: '2026-10-05', amount: 100000, kind: 'opening', clearance: 'uncleared', splits: [] } as TransactionAggregate);
+}
+if ((await adapter.query({ spaceId })).length === 0) await adapter.applyAtomicBatch({ expectedRevisions: [], aggregates: initial.map(toStoredAggregate), outbox: [], projections: [] });
 let mode = 'normal'; let release: (() => void) | undefined;
 const storage: WorkspaceStorage = {
   query: (query) => adapter.query(query),
@@ -31,6 +37,12 @@ const storage: WorkspaceStorage = {
     if (mode === 'delay') await new Promise<void>((resolve) => { release = resolve; });
     if (mode === 'quota') throw new DOMException('QuotaExceededError', 'QuotaExceededError');
     if (mode === 'disk') throw new Error('SQLite disk full');
+    if (mode === 'partial') {
+      // Der letzte Put besitzt einen ungültigen Schlüssel: Dexie muss auch die
+      // vorher geschriebenen Transfer-/Abgleichzeilen in derselben Transaktion zurückrollen.
+      const invalid = { ...batch, aggregates: batch.aggregates.map((entry, index) => index === batch.aggregates.length - 1 ? { ...entry, handle: undefined } : entry) } as unknown as AtomicBatch<StoredAggregate, never, never>;
+      await adapter.applyAtomicBatch(invalid); return;
+    }
     await adapter.applyAtomicBatch(batch);
   }
 };

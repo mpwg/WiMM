@@ -24,7 +24,7 @@ Die Übersicht zeigt Monatsausgaben und Monatseinnahmen aus der gemeinsamen Fach
 
 Splits werden mit expliziten Beträgen erfasst: Die erste Kategorie und „Split-Kategorie (optional)“ eröffnen zwei Zeilen; „Split hinzufügen“ ergänzt weitere Zeilen, deren Entfernen die übrigen Werte erhält. Die Splitsumme muss exakt dem Buchungsbetrag entsprechen. F02 mit -100 EUR und -60/-40 EUR ist gültig; -60/-39 EUR verändert keine gespeicherten Daten.
 
-„Details“ öffnet eine vollständige Buchung einschließlich Notiz, Empfänger, Splitbeträgen und Abgleichstatus. „Bearbeiten“ ändert dieselbe Buchung mit der beim Öffnen festgehaltenen Revision. Ein zwischenzeitlich geänderter Stand wird abgewiesen und nachgeladen; der eigene Entwurf bleibt erhalten. „Löschen“ verlangt eine eigene Bestätigung; Abbrechen oder Escape verändert nichts. Löschmarkierungen bleiben im Speicher, während Liste und Fachprojektionen die gelöschten Buchungen ausschließen. Abgeglichene Buchungen bieten keine Bearbeitungs-/Löschaktion; Umbuchungsseiten bleiben dem atomaren Umbuchungsvorgang vorbehalten.
+„Details“ öffnet eine vollständige Buchung einschließlich Notiz, Empfänger, Splitbeträgen und Abgleichstatus. „Bearbeiten“ ändert dieselbe Buchung mit der beim Öffnen festgehaltenen Revision. Ein zwischenzeitlich geänderter Stand wird abgewiesen und nachgeladen; der eigene Entwurf bleibt erhalten. „Löschen“ verlangt eine eigene Bestätigung; Abbrechen oder Escape verändert nichts. Löschmarkierungen bleiben im Speicher, während Liste und Fachprojektionen die gelöschten Buchungen ausschließen. Abgeglichene Buchungen bieten erst nach bestätigter Entsperrung eine Bearbeitungs-/Löschaktion; Umbuchungen werden stets mit beiden Seiten gepflegt.
 
 Die Liste kombiniert Notiz-/Empfängersuche mit Konto- und inklusiven Datumsfiltern. „Filter zurücksetzen“ entfernt alle Einschränkungen. Ohne Daten und ohne passende Treffer erscheinen unterschiedliche Leerzustände. Unter 768 Pixeln werden Buchungen als kompakte Listeneinträge mit vollständigem Betrag und Detailaktion dargestellt. Die Detailansicht zeigt lange Inhalte vollständig.
 
@@ -32,12 +32,27 @@ Die scrollbare Liste rendert höchstens 16 Buchungszeilen plus zwei unsichtbare 
 
 Während eines Speicherbefehls sind Formularfelder, Navigation und Bereichswechsel gesperrt und ein Wartezustand sichtbar. Dadurch kann der ausstehende Commit nicht seine Daten in einen inzwischen gewechselten Bereich einblenden. Ein Fehler erhält sämtliche Werte; ein Wiederholversuch speichert genau einmal. Nach dem Commit wird der bestätigte Batch direkt in die Ansicht übernommen, damit ein nachgelagerter Lesefehler keine zweite Neuanlage auslöst. Die Tests injizieren Verzögerung, Quota und Disk-full ausschließlich über eine separate Testseite mit echtem IndexedDB-Adapter; die Produktionsapp enthält keine Fehlersteuerung. Native Disk-full-Prüfung folgt in P4.6.6.
 
+## Umbuchung, Abgleich und Historie P4.4
+
+Die Kontenansicht bietet „Umbuchung“ mit Quellkonto, Zielkonto, positivem Betrag und Kalenderdatum. F03 mit 1.000 EUR auf Giro und 0 EUR auf Bargeld, danach 200 EUR Umbuchung, ergibt 800/200 EUR und weiterhin 1.000 EUR Gesamtvermögen; Monatsverbrauch und Einnahmen bleiben null. Beim Budgetabgang ist eine Ausgabenkategorie erforderlich, beim Budgeteintritt die Checkbox „Vorhandenes Geld für das Budget freigeben“. Transferdetails erlauben die gemeinsame Änderung oder bestätigte Löschung beider Seiten.
+
+„Abgleich“ enthält Konto, Auszugssaldo, Auszugsdatum und die ausdrückliche Auswahl offener Bewegungen bis zu diesem Datum. Bereits abgeglichene Buchungen bilden den Ausgangssaldo. Die sichtbare Differenz stammt aus dem Fachkern; nur null und eine nicht leere Auswahl erlauben die Bestätigung. Eine Differenz erzeugt keine Buchung. „Korrektur vorschlagen“ öffnet eine eigene Vorschau mit Betrag und Konto, editierbarem Datum und Kategorie. Erst „Korrekturbuchung anlegen“ speichert eine normale, noch nicht abgeglichene Buchung. Wählen Sie diese anschließend zusätzlich aus und prüfen Sie den Abgleich erneut.
+
+Gesperrte Details bieten „Abgleich entsperren“. Erst „Entsperren bestätigen“ hebt den ganzen zugehörigen Abgleich auf. Bei Transferpaaren werden beide Seiten und transitiv verbundene Abgleiche atomar behandelt; eine bereits freie Gegenseite behält ihren Status. Escape oder „Abbrechen“ verändert keine gespeicherten Daten. Danach sind Bearbeitung und Löschung möglich.
+
+„Rückgängig“ und „Wiederholen“ betreffen erfolgreiche Erfassungen, Änderungen, Löschungen, Umbuchungen, Korrekturbuchungen, Abgleiche und Entsperrungen. Die Fachgegenbefehle stellen Finanzfelder und vorherige Abgleichstatus wieder her, erhöhen Revisionen und bewahren Tombstones. Fremdänderungen oder fehlgeschlagene Commits verändern weder gespeicherte Daten noch die Historie. Neue Aktionen verwerfen den Redozweig; Bereichswechsel, Sperren und Stammdatenaktionen leeren die flüchtige Historie. Native Menü-/Shortcutanbindung folgt P4.5.
+
+Geänderte Buchungs-, Transfer- und Abgleichformulare bleiben bei Navigation, Bereichswechsel, Sperren, Abbrechen oder Escape erhalten, bis „Eingaben verwerfen“ ausdrücklich bestätigt wird. „Weiter bearbeiten“ beziehungsweise Escape in der Rückfrage bewahrt Werte und gibt den Fokus an den Auslöser zurück. Ein unverändertes Formular schließt ohne Rückfrage. Beim Browserneustart warnt die gewöhnliche `beforeunload`-Rückfrage vor dem Verlust offener Eingaben; Entwürfe werden durch P4.4 nicht dauerhaft gespeichert. Nach erfolgreichem Commit sind die verbleibenden Standardauswahlen ein sauberer Formularstand.
+
 ## Prüfung
 
 Im Repository ausführen:
 
 ```sh
 pnpm --filter @wimm/ui test
+pnpm exec playwright test tests/ui/p4-4.spec.ts
+WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-4.spec.ts --config tests/ui/desktop.config.ts
+pnpm exec playwright test tests/workspace/p4-4.spec.ts --config tests/workspace/config.ts
 pnpm exec playwright test tests/ui/p4-3.spec.ts
 WIMM_CLIENT=desktop pnpm exec playwright test tests/ui/p4-3.spec.ts --config tests/ui/desktop.config.ts
 pnpm test:ui:integration
@@ -68,3 +83,5 @@ P4.3.1 prüft F01 und Feldfehler jeweils mit Tastatur und Touch (390 × 844) in 
 P4.3 prüft F02, Ergänzen/Entfernen einer dritten Zeile, normale und Splitbearbeitung, Löschabbruch/-bestätigung sowie die kombinierten Filter. Die Bestätigungsaktionen werden mit tatsächlichem Tabulator/Enter beziehungsweise Touch bei 320 × 568 ausgeführt. Die Speicherintegration prüft den gesamten unveränderten Datenstand bei Fehlern und eine veraltete Revision; die separate Vite-Testseite wird nicht in den Produktionsbuild aufgenommen.
 
 Der Neustarttest beendet Chromium vollständig und verwendet dasselbe dauerhafte Profil erneut. Web/PWA startet dabei mit bereits vor dem Neuaufruf abgeschaltetem Netzwerk aus dem Service Worker. Das Desktop-Frontend lädt seine Assets vom lokalen Testserver und prüft anschließend denselben fachlichen Datenstand ohne Netzwerk; es ersetzt keinen Offline-Neustart der installierten Tauri-App. Die native Wiederholung bleibt P4.6.6 zugeordnet.
+
+P4.4 prüft F03 und Budgetgrenzen, explizite Buchungsauswahl, Differenz/Korrektur, Entsperrabbruch/-bestätigung, Transferpflege, Undo/Redo mit Fremdänderungen und Entwurfsschutz in Chromium. Die gemeinsame Speicherintegration nutzt echtes IndexedDB; ein ungültiger letzter Put lässt die vorangehenden Transfer-/Abgleichzeilen derselben Dexie-Transaktion zurückrollen. Der Auswahlabgleich wird zusätzlich nach vollständig beendetem und mit demselben Profil neu gestartetem Chromium geprüft. Das Desktop-Frontend der Produktionsapp und die separat bezeichnete Desktop-Komposition der Testseite sind Browserprüfungen, keine nativen Tauri-Belege. Touch ist Emulation bei 390 × 844. Native Menüs, Betriebssystem-Kurzbefehle und Geräteprüfungen bleiben P4.5/P4.6.

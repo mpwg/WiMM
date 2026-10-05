@@ -71,6 +71,7 @@ test('veraltete Bearbeitung überschreibt keine Fremdänderung, gesperrte Buchun
   await expect(dialog.getByLabel('Notiz')).toHaveValue('Mein offener Entwurf');
   expect(((await read(page)).find((entry) => entry.id === id) as unknown as TransactionAggregate).note).toBe('Zwischenzeitlich geändert');
   await dialog.getByRole('button', { name: 'Abbrechen' }).click();
+  await page.getByRole('dialog', { name: 'Ungespeicherte Eingaben verwerfen?' }).getByRole('button', { name: 'Eingaben verwerfen' }).click();
   await rows(page).filter({ hasText: 'Buchung 00002' }).getByRole('button', { name: 'Details' }).click();
   await expect(dialog).toContainText('Abgeglichen – gesperrt');
   await expect(dialog.getByRole('button', { name: 'Bearbeiten', exact: true })).toHaveCount(0);

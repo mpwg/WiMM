@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { UUID } from '@wimm/contracts';
 import { createChangeSet, reviseAggregate, type DomainChangeSet, type DomainDependencies, type P2Aggregate, type RevisionExpectation } from './commands.js';
+import { subtractMoney } from './money.js';
 import { DomainValidationError } from './errors.js';
 import type { AccountAggregate, CategoryAggregate, CategoryGroupAggregate } from './master-data.js';
 import { deleteTransaction, saveTransaction, type TransactionAggregate } from './transactions.js';
@@ -19,6 +20,9 @@ export function unlockFinanceSelection(spaceId: UUID, selectedId: UUID, aggregat
       if (transaction.transferId !== undefined) {
         const transfer = heads.get(transaction.transferId) as TransferAggregate | undefined;
         if (transfer === undefined || transfer.aggregateType !== 'transfer' || transfer.deletedAt !== undefined) throw new DomainValidationError('INVALID_AGGREGATE', 'Die vollständige Umbuchung fehlt.');
+        const source = transactions.find((entry) => entry.id === transfer.sourceTransactionId);
+        const target = transactions.find((entry) => entry.id === transfer.targetTransactionId);
+        if (source === undefined || target === undefined || source.kind !== 'transfer' || target.kind !== 'transfer' || source.transferId !== transfer.id || target.transferId !== transfer.id || source.accountId !== transfer.sourceAccountId || target.accountId !== transfer.targetAccountId || source.date !== transfer.date || target.date !== transfer.date || source.amount !== subtractMoney(0, transfer.amount) || target.amount !== transfer.amount) throw new DomainValidationError('INVALID_AGGREGATE', 'Die vollständigen Umbuchungsseiten passen nicht zum Abgleich.');
         for (const id of [transfer.sourceTransactionId, transfer.targetTransactionId]) if (!ids.has(id)) { ids.add(id); expanded = true; }
       }
     }

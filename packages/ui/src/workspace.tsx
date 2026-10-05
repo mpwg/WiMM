@@ -16,6 +16,9 @@ import {
   mergePayees,
   saveTransfer,
   confirmReconciliation,
+  reconciliationDifference,
+  unlockFinanceSelection,
+  deleteTransfer,
   saveTransaction,
   deleteTransaction,
   saveAccount,
@@ -36,6 +39,9 @@ import {
 import { toStoredAggregate, type PendingOperation, type StoredAggregate, type StoredProjection } from '@wimm/storage';
 
 import type { UnlockedAppContext } from './app.js';
+import { DraftProtection, useDraftGuard } from './drafts.js';
+import { FinanceHistory } from './history.js';
+import { TransferForm, ReconciliationForm } from './account-actions.js';
 import { Transactions } from './transactions.js';
 
 type ColorScheme = 'system' | 'light' | 'dark';
@@ -66,13 +72,21 @@ export interface WorkspaceStorage {
 
 export type WorkspaceStorageFactory = (profileId: UUID) => WorkspaceStorage;
 
-export function FinanceWorkspace({ context, storageForProfile, desktop = false }: { readonly context: UnlockedAppContext; readonly storageForProfile: WorkspaceStorageFactory; readonly desktop?: boolean }) {
+export function FinanceWorkspace(props: { readonly context: UnlockedAppContext; readonly storageForProfile: WorkspaceStorageFactory; readonly desktop?: boolean }) {
+  const [view, setView] = useState<View>('overview');
+  return <DraftProtection><WorkspaceContent view={view} setView={setView} key={`${props.context.profile.profileId}:${props.context.activeArea.id}`} {...props} /></DraftProtection>;
+}
+function WorkspaceContent({ context, storageForProfile, desktop = false, view, setView }: { readonly context: UnlockedAppContext; readonly storageForProfile: WorkspaceStorageFactory; readonly desktop?: boolean; readonly view: View; readonly setView: (view: View) => void }) {
+  const guard = useDraftGuard();
+  const [history] = useState(() => new FinanceHistory());
+  const aggregatesRef = useRef<readonly StoredAggregate[]>([]);
+  const busy = useRef(false);
+  const [historyVersion, setHistoryVersion] = useState(0);
   const [colorScheme, setColorScheme] = useState<ColorScheme>(storedColorScheme);
   const changeColorScheme = (value: ColorScheme) => {
     setColorScheme(value);
     try { localStorage.setItem('wimm:color-scheme', value); } catch { /* Die Auswahl bleibt für diese Sitzung nutzbar. */ }
   };
-  const [view, setView] = useState<View>('overview');
   const [aggregates, setAggregates] = useState<readonly StoredAggregate[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [saving, setSaving] = useState(false);
@@ -80,7 +94,7 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
   const storage = useMemo(() => storageForProfile(context.profile.profileId as UUID), [storageForProfile, context.profile.profileId]);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const reload = useCallback(async () => {
-    try { setState('loading'); setAggregates(await storage.query({ spaceId: context.activeArea.id as UUID })); setState('ready'); }
+    try { setState('loading'); const loaded = await storage.query({ spaceId: context.activeArea.id as UUID }); aggregatesRef.current = loaded; setAggregates(loaded); setState('ready'); }
     catch { setMessage('Die lokalen Daten konnten nicht gelesen werden.'); setState('error'); }
   }, [storage, context.activeArea.id]);
   useEffect(() => {
@@ -95,7 +109,10 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
     };
   }, [storage, reload]);
 
-  const execute = useCallback(async (changeSet: DomainChangeSet) => {
+  const execute = useCallback(async (changeSet: DomainChangeSet, record = true) => {
+    if (busy.current) throw new Error('Bitte warten Sie auf die laufende Speicherung.');
+    busy.current = true;
+    const before = aggregatesRef.current;
     setSaving(true); setMessage(undefined);
     try {
       await storage.applyAtomicBatch({
@@ -106,36 +123,47 @@ export function FinanceWorkspace({ context, storageForProfile, desktop = false }
       });
       // Den bestätigten Batch direkt übernehmen: ein nachgelagerter Lesefehler
       // darf keinen erneuten Schreibversuch derselben Neuanlage auslösen.
-      setAggregates((current) => {
-        const changed = new Map(changeSet.aggregates.map((entry) => [entry.id, toStoredAggregate(entry)]));
-        return [...current.filter((entry) => !changed.has(entry.id)), ...changed.values()];
-      });
+      const changed = new Map(changeSet.aggregates.map((entry) => [entry.id, toStoredAggregate(entry)]));
+      aggregatesRef.current = [...before.filter((entry) => !changed.has(entry.id)), ...changed.values()];
+      setAggregates(aggregatesRef.current);
+      if (record) history.record(changeSet, before);
+      setHistoryVersion((version) => version + 1);
       setMessage('Lokal gespeichert.');
     } catch (error) {
       setMessage('Die Eingaben wurden nicht gespeichert.');
       if (error instanceof Error && /revision|stale/i.test(error.message)) {
-        try { setAggregates(await storage.query({ spaceId: context.activeArea.id as UUID })); }
+        try { const loaded = await storage.query({ spaceId: context.activeArea.id as UUID }); aggregatesRef.current = loaded; setAggregates(loaded); }
         catch { /* Der ursprüngliche Schreibfehler und der Entwurf bleiben erhalten. */ }
       }
       throw error;
     }
-    finally { setSaving(false); }
-  }, [storage, context.activeArea.id]);
+    finally { busy.current = false; setSaving(false); }
+  }, [storage, context.activeArea.id, history]);
+  // Der Konstruktor speichert den Callback; Refzugriffe erfolgen erst bei Benutzeraktionen.
+  // oxlint-disable-next-line react/refs
   const model = useMemo(() => new FinanceModel(context.activeArea.id as UUID, aggregates, execute), [aggregates, context.activeArea.id, execute]);
 
-  return <div className={`app-shell${desktop ? ' desktop-shell' : ''}`} data-color-scheme={colorScheme}>
-    <aside className="sidebar"><p className="product">WhereIsMyMoney</p><AreaPicker context={context} disabled={saving} />
+  async function moveHistory(direction: 'undo' | 'redo') {
+    if (busy.current) return;
+    try {
+      await history.move(direction, aggregatesRef.current, model.domainDependencies, (change) => execute(change, false));
+      setHistoryVersion((version) => version + 1);
+    } catch (error) { setMessage(messageFor(error, 'Die Aktion wurde nicht ausgeführt.')); }
+  }
+  return <div data-history-version={historyVersion} className={`app-shell${desktop ? ' desktop-shell' : ''}`} data-color-scheme={colorScheme}>
+    <aside className="sidebar"><p className="product">WhereIsMyMoney</p><AreaPicker context={context} disabled={saving} request={(action, trigger) => guard.request(action, undefined, trigger)} />
       <nav aria-label="Hauptnavigation">{([['overview', 'Übersicht'], ['transactions', 'Buchungen'], ['accounts', 'Konten'], ['categories', 'Kategorien'], ['payees', 'Empfänger']] as const).map(([id, label]) =>
-        <button disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => setView(id)} type="button">{label}</button>
-      )}</nav><button disabled={saving} className="quiet" onClick={() => void context.createHousehold()} type="button">+ Haushalt anlegen</button><button className="quiet" onClick={() => void context.lock()} type="button">Tresor sperren</button>
+        <button disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => guard.request(() => setView(id))} type="button">{label}</button>
+      )}</nav><button disabled={saving} className="quiet" onClick={() => guard.request(() => { void context.createHousehold(); })} type="button">+ Haushalt anlegen</button><button disabled={saving} className="quiet" onClick={() => guard.request(() => { void context.lock(); })} type="button">Tresor sperren</button>
       <label className="area-picker">Farbschema<select value={colorScheme} onChange={(event) => changeColorScheme(event.target.value as ColorScheme)}><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
     </aside>
     <main className="finance-main" key={context.activeArea.id}><header><div><p className="eyebrow">{context.activeArea.kind === 'private' ? 'Privatbereich' : 'Gemeinsamer Bereich'}</p><h1>{titleFor(view)}</h1></div><span aria-live="polite" className="local-status">{saving ? "Wird lokal gespeichert …" : "● Lokaler Stand"}</span></header>
       {message === undefined ? null : <p aria-live="polite" className="notice">{message}</p>}
       {state === 'loading' ? <p aria-live="polite">Lokale Daten werden geladen …</p> : null}
       {state === 'error' ? <p role="alert">Die Daten bleiben unverändert. Bitte entsperren Sie den Tresor erneut oder starten Sie die App neu.</p> : null}
+      <div className="dialog-actions"><button disabled={saving || !history.canUndo} type="button" onClick={() => void moveHistory('undo')}>Rückgängig</button><button disabled={saving || !history.canRedo} type="button" onClick={() => void moveHistory('redo')}>Wiederholen</button></div>
       <fieldset className="workspace-content" disabled={saving}>
-      {state === 'ready' && view === 'overview' ? <Overview model={model} onNew={() => setView('transactions')} /> : null}
+      {state === 'ready' && view === 'overview' ? <Overview model={model} onNew={() => guard.request(() => setView('transactions'))} /> : null}
       {state === 'ready' && view === 'accounts' ? <Accounts model={model} /> : null}
       {state === 'ready' && view === 'categories' ? <Categories model={model} /> : null}
       {state === 'ready' && view === 'payees' ? <Payees model={model} /> : null}
@@ -155,7 +183,7 @@ export class FinanceModel {
   readonly payees: readonly PayeeAggregate[];
   readonly transactions: readonly TransactionAggregate[];
   private readonly heads = new Map<UUID, P2Aggregate>();
-  private readonly dependencies: DomainDependencies = { ids: { next: () => crypto.randomUUID() as UUID }, clock: { now: () => new Date().toISOString() as never } };
+  readonly domainDependencies: DomainDependencies = { ids: { next: () => crypto.randomUUID() as UUID }, clock: { now: () => new Date().toISOString() as never } };
   constructor(private readonly spaceId: UUID, aggregates: readonly StoredAggregate[], private readonly execute: (changeSet: DomainChangeSet) => Promise<void>) {
     aggregates.forEach((aggregate) => this.heads.set(aggregate.id, aggregate));
     this.allAccounts = aggregates.filter((aggregate): aggregate is StoredAggregate & AccountAggregate => aggregate.aggregateType === 'account' && aggregate.deletedAt === undefined);
@@ -168,39 +196,39 @@ export class FinanceModel {
     this.transactions = aggregates.filter((aggregate): aggregate is StoredAggregate & TransactionAggregate => aggregate.aggregateType === 'transaction' && aggregate.deletedAt === undefined);
   }
   async addAccount(name: string, type: AccountAggregate['type'], onBudget: boolean) {
-    const aggregate: AccountAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), aggregateType: 'account', name, type, onBudget, archived: false };
-    await this.execute(saveAccount({ commandType: 'account.save', spaceId: this.spaceId, expectedRevisions: [{ id: aggregate.id, expectedRevision: 0 }], mutations: [{ aggregate }] }, this, this.dependencies));
+    const aggregate: AccountAggregate = { ...createAggregateMetadata(this.spaceId, this.domainDependencies), aggregateType: 'account', name, type, onBudget, archived: false };
+    await this.execute(saveAccount({ commandType: 'account.save', spaceId: this.spaceId, expectedRevisions: [{ id: aggregate.id, expectedRevision: 0 }], mutations: [{ aggregate }] }, this, this.domainDependencies));
   }
   async addGroup(name: string, kind: CategoryGroupAggregate['kind']) {
-    const aggregate: CategoryGroupAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), aggregateType: 'categoryGroup', name, kind, sortOrder: this.groups.length, archived: false };
-    await this.execute(saveCategoryGroup({ commandType: 'categoryGroup.save', spaceId: this.spaceId, expectedRevisions: [{ id: aggregate.id, expectedRevision: 0 }], mutations: [{ aggregate }] }, this, this.dependencies));
+    const aggregate: CategoryGroupAggregate = { ...createAggregateMetadata(this.spaceId, this.domainDependencies), aggregateType: 'categoryGroup', name, kind, sortOrder: this.groups.length, archived: false };
+    await this.execute(saveCategoryGroup({ commandType: 'categoryGroup.save', spaceId: this.spaceId, expectedRevisions: [{ id: aggregate.id, expectedRevision: 0 }], mutations: [{ aggregate }] }, this, this.domainDependencies));
   }
   async addCategory(name: string, groupId: UUID) {
     const group = this.groups.find((entry) => entry.id === groupId); if (group === undefined) throw new TypeError('Bitte zuerst eine Kategoriegruppe anlegen.');
-    const aggregate: CategoryAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), aggregateType: 'category', groupId, name, sortOrder: this.categories.filter((entry) => entry.groupId === groupId).length, archived: false };
-    await this.execute(saveCategory({ commandType: 'category.save', spaceId: this.spaceId, expectedRevisions: [{ id: aggregate.id, expectedRevision: 0 }, { id: group.id, expectedRevision: group.revision }], mutations: [{ aggregate }] }, this, this.dependencies));
+    const aggregate: CategoryAggregate = { ...createAggregateMetadata(this.spaceId, this.domainDependencies), aggregateType: 'category', groupId, name, sortOrder: this.categories.filter((entry) => entry.groupId === groupId).length, archived: false };
+    await this.execute(saveCategory({ commandType: 'category.save', spaceId: this.spaceId, expectedRevisions: [{ id: aggregate.id, expectedRevision: 0 }, { id: group.id, expectedRevision: group.revision }], mutations: [{ aggregate }] }, this, this.domainDependencies));
   }
   async addPayee(name: string) {
-    const aggregate: PayeeAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), aggregateType: 'payee', name, aliases: [], archived: false };
-    await this.execute(savePayee({ commandType: 'payee.save', spaceId: this.spaceId, expectedRevisions: [{ id: aggregate.id, expectedRevision: 0 }], mutations: [{ aggregate }] }, this, this.dependencies));
+    const aggregate: PayeeAggregate = { ...createAggregateMetadata(this.spaceId, this.domainDependencies), aggregateType: 'payee', name, aliases: [], archived: false };
+    await this.execute(savePayee({ commandType: 'payee.save', spaceId: this.spaceId, expectedRevisions: [{ id: aggregate.id, expectedRevision: 0 }], mutations: [{ aggregate }] }, this, this.domainDependencies));
   }
   async archiveAccount(id: UUID) {
     const account = this.accounts.find((entry) => entry.id === id);
     if (account === undefined) throw new TypeError('Dieses Konto ist nicht mehr aktiv.');
-    const archived = reviseAggregate({ ...account, archived: true }, this.dependencies);
+    const archived = reviseAggregate({ ...account, archived: true }, this.domainDependencies);
     await this.execute(archiveAccount({
       commandType: 'account.archive',
       spaceId: this.spaceId,
       expectedRevisions: [{ id: account.id, expectedRevision: account.revision }],
       mutations: [{ aggregate: archived }]
-    }, this, this.dependencies));
+    }, this, this.domainDependencies));
   }
   async archiveCategory(id: UUID) {
     const category = this.categories.find((entry) => entry.id === id);
     if (category === undefined) throw new TypeError('Diese Kategorie ist nicht mehr aktiv.');
     const group = this.groups.find((entry) => entry.id === category.groupId);
     if (group === undefined) throw new TypeError('Die Kategoriegruppe ist nicht mehr verfügbar.');
-    const archived = reviseAggregate({ ...category, archived: true }, this.dependencies);
+    const archived = reviseAggregate({ ...category, archived: true }, this.domainDependencies);
     await this.execute(archiveCategory({
       commandType: 'category.archive',
       spaceId: this.spaceId,
@@ -209,7 +237,7 @@ export class FinanceModel {
         { id: group.id, expectedRevision: group.revision }
       ],
       mutations: [{ aggregate: archived }]
-    }, this, this.dependencies));
+    }, this, this.domainDependencies));
   }
   async mergePayees(targetId: UUID, sourceId: UUID) {
     const target = this.payees.find((entry) => entry.id === targetId);
@@ -222,16 +250,16 @@ export class FinanceModel {
       target,
       sources: [source],
       transactions: this.transactions.filter((transaction) => transaction.payeeId === source.id)
-    }, this, this.dependencies));
+    }, this, this.domainDependencies));
   }
   async storeTransaction(input: TransactionInput, previous?: TransactionAggregate) {
     const amount = parseMoney(input.amount, 'Der Betrag');
     const splits = input.opening ? [] : input.splits.map((split, index) => ({
-      id: split.id ?? this.dependencies.ids.next(), categoryId: split.categoryId,
+      id: split.id ?? this.domainDependencies.ids.next(), categoryId: split.categoryId,
       amount: parseMoney(split.amount, `Der Splitbetrag ${index + 1}`)
     }));
     // Die geöffnete Revision bleibt erhalten, auch wenn sich der Listenstand ändert.
-    const metadata = previous === undefined ? createAggregateMetadata(this.spaceId, this.dependencies) : reviseAggregate(previous, this.dependencies);
+    const metadata = previous === undefined ? createAggregateMetadata(this.spaceId, this.domainDependencies) : reviseAggregate(previous, this.domainDependencies);
     const { payeeId: _oldPayee, note: _oldNote, ...base } = metadata as TransactionAggregate;
     const aggregate: TransactionAggregate = {
       ...base, aggregateType: 'transaction', accountId: input.accountId, date: parseFinanceDate(input.date), amount,
@@ -240,37 +268,58 @@ export class FinanceModel {
       ...(input.note.trim() === '' ? {} : { note: input.note.trim() }), splits
     };
     await this.execute(saveTransaction({ commandType: 'transaction.save', spaceId: this.spaceId,
-      expectedRevisions: this.transactionRevisions(aggregate, previous?.revision ?? 0), mutations: [{ aggregate }] }, this, this.dependencies));
+      expectedRevisions: this.transactionRevisions(aggregate, previous?.revision ?? 0), mutations: [{ aggregate }] }, this, this.domainDependencies));
   }
   async removeTransaction(transaction: TransactionAggregate) {
     await this.execute(deleteTransaction({ commandType: 'transaction.delete', spaceId: this.spaceId,
-      expectedRevisions: this.transactionRevisions(transaction, transaction.revision), mutations: [{ aggregate: transaction }] }, this, this.dependencies));
+      expectedRevisions: this.transactionRevisions(transaction, transaction.revision), mutations: [{ aggregate: transaction }] }, this, this.domainDependencies));
   }
   private transactionRevisions(transaction: TransactionAggregate, revision: number) {
     return [{ id: transaction.id, expectedRevision: revision },
       ...[...new Set([transaction.accountId, ...transaction.splits.map((split) => split.categoryId), ...(transaction.payeeId === undefined ? [] : [transaction.payeeId])])]
         .map((id) => { const head = this.heads.get(id); if (head === undefined) throw new TypeError('Eine Buchungsreferenz ist nicht mehr verfügbar.'); return { id, expectedRevision: head.revision }; })];
   }
-  async addTransfer(sourceAccountId: UUID, targetAccountId: UUID, value: string, date: string) {
+  async addTransfer(sourceAccountId: UUID, targetAccountId: UUID, value: string, date: string, budgetCategoryId?: UUID, budgetRelease = false, previous?: TransferAggregate) {
     const amount = parseMoney(value, 'Der Umbuchungsbetrag');
     const sourceAccount = this.accounts.find((account) => account.id === sourceAccountId); const targetAccount = this.accounts.find((account) => account.id === targetAccountId);
     if (sourceAccount === undefined || targetAccount === undefined) throw new TypeError('Quell- und Zielkonto müssen ausgewählt werden.');
-    const transfer: TransferAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), aggregateType: 'transfer', date: date as never, sourceAccountId, targetAccountId, sourceTransactionId: this.dependencies.ids.next(), targetTransactionId: this.dependencies.ids.next(), amount };
-    const source: TransactionAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), id: transfer.sourceTransactionId, aggregateType: 'transaction', accountId: sourceAccountId, date: transfer.date, amount: subtractMoney(0 as never, amount), kind: 'transfer', clearance: 'uncleared', transferId: transfer.id, splits: [] };
-    const target: TransactionAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), id: transfer.targetTransactionId, aggregateType: 'transaction', accountId: targetAccountId, date: transfer.date, amount, kind: 'transfer', clearance: 'uncleared', transferId: transfer.id, splits: [] };
-    await this.execute(saveTransfer({ spaceId: this.spaceId, transfer, source, target, sourceAccount, targetAccount }, this, this.dependencies));
+    const { budgetCategoryId: _oldCategory, budgetRelease: _oldRelease, ...metadata } = previous === undefined ? createAggregateMetadata(this.spaceId, this.domainDependencies) as TransferAggregate : reviseAggregate(previous, this.domainDependencies);
+    const transfer: TransferAggregate = { ...metadata, aggregateType: 'transfer', date: parseFinanceDate(date), sourceAccountId, targetAccountId, sourceTransactionId: previous?.sourceTransactionId ?? this.domainDependencies.ids.next(), targetTransactionId: previous?.targetTransactionId ?? this.domainDependencies.ids.next(), amount, ...(budgetCategoryId === undefined ? {} : { budgetCategoryId }), ...(budgetRelease ? { budgetRelease: true } : {}) };
+    const source: TransactionAggregate = { ...(previous === undefined ? createAggregateMetadata(this.spaceId, this.domainDependencies) : reviseAggregate(this.heads.get(previous.sourceTransactionId) as TransactionAggregate, this.domainDependencies)), id: transfer.sourceTransactionId, aggregateType: 'transaction', accountId: sourceAccountId, date: transfer.date, amount: subtractMoney(0 as never, amount), kind: 'transfer', clearance: previous === undefined ? 'uncleared' : (this.heads.get(transfer.sourceTransactionId) as TransactionAggregate).clearance, transferId: transfer.id, splits: [] };
+    const target: TransactionAggregate = { ...(previous === undefined ? createAggregateMetadata(this.spaceId, this.domainDependencies) : reviseAggregate(this.heads.get(previous.targetTransactionId) as TransactionAggregate, this.domainDependencies)), id: transfer.targetTransactionId, aggregateType: 'transaction', accountId: targetAccountId, date: transfer.date, amount, kind: 'transfer', clearance: previous === undefined ? 'uncleared' : (this.heads.get(transfer.targetTransactionId) as TransactionAggregate).clearance, transferId: transfer.id, splits: [] };
+    await this.execute(saveTransfer({ spaceId: this.spaceId, transfer, source, target, sourceAccount, targetAccount, ...this.budgetReferences(transfer) }, this, this.domainDependencies));
   }
-  async reconcile(accountId: UUID, value: string, date: string) {
-    const transactions = this.transactions.filter((transaction) => transaction.accountId === accountId && transaction.clearance !== 'reconciled');
-    const reconciliation: ReconciliationAggregate = { ...createAggregateMetadata(this.spaceId, this.dependencies), aggregateType: 'reconciliation', accountId, statementDate: date as never, statementBalance: parseMoney(value, 'Der Auszugssaldo'), transactionIds: transactions.map((transaction) => transaction.id) };
-    const result = confirmReconciliation({ spaceId: this.spaceId, reconciliation, transactions }, this, this.dependencies);
+  private budgetReferences(transfer: TransferAggregate) {
+    const budgetCategory = this.allCategories.find((entry) => entry.id === transfer.budgetCategoryId);
+    const budgetGroup = this.groups.find((entry) => entry.id === budgetCategory?.groupId);
+    return { ...(budgetCategory === undefined ? {} : { budgetCategory }), ...(budgetGroup === undefined ? {} : { budgetGroup }) };
+  }
+  transferFor(transaction: TransactionAggregate) { return this.heads.get(transaction.transferId!) as TransferAggregate | undefined; }
+  async removeTransfer(transfer: TransferAggregate) {
+    await this.execute(deleteTransfer({ spaceId: this.spaceId, transfer, source: this.heads.get(transfer.sourceTransactionId) as TransactionAggregate, target: this.heads.get(transfer.targetTransactionId) as TransactionAggregate, sourceAccount: this.heads.get(transfer.sourceAccountId) as AccountAggregate, targetAccount: this.heads.get(transfer.targetAccountId) as AccountAggregate, ...this.budgetReferences(transfer) }, this, this.domainDependencies));
+  }
+  async unlock(transaction: TransactionAggregate) {
+    if (this.heads.get(transaction.id)?.revision !== transaction.revision) throw new Error('REVISION_CONFLICT: Die Buchung wurde inzwischen geändert.');
+    await this.execute(unlockFinanceSelection(this.spaceId, transaction.id, [...this.heads.values()], this.domainDependencies));
+  }
+  reconciliationInput(accountId: UUID, value: string, date: string, ids: readonly UUID[]) {
+    const transactions = ids.map((id) => {
+      const transaction = this.transactions.find((entry) => entry.id === id);
+      if (transaction === undefined || transaction.clearance === 'reconciled') throw new TypeError('Eine ausgewählte Buchung ist nicht mehr für den Abgleich verfügbar.');
+      return transaction;
+    });
+    const reconciliation: ReconciliationAggregate = { ...createAggregateMetadata(this.spaceId, this.domainDependencies), aggregateType: 'reconciliation', accountId, statementDate: parseFinanceDate(date), statementBalance: parseMoney(value, 'Der Auszugssaldo'), transactionIds: [...ids] };
+    return { spaceId: this.spaceId, reconciliation, transactions, previousTransactions: this.transactions.filter((transaction) => transaction.accountId === accountId && transaction.clearance === 'reconciled' && transaction.date <= date) };
+  }
+  difference(accountId: UUID, value: string, date: string, ids: readonly UUID[]) { return reconciliationDifference(this.reconciliationInput(accountId, value, date, ids)); }
+  async reconcile(accountId: UUID, value: string, date: string, ids: readonly UUID[]) {
+    const result = confirmReconciliation(this.reconciliationInput(accountId, value, date, ids), this, this.domainDependencies);
     await this.execute(result.changeSet);
-    return result.difference;
   }
   get(id: UUID) { const aggregate = this.heads.get(id); return aggregate === undefined ? undefined : { id: aggregate.id, spaceId: aggregate.spaceId, revision: aggregate.revision, aggregateType: aggregate.aggregateType }; }
 }
 
-function AreaPicker({ context, disabled = false }: { readonly context: UnlockedAppContext; readonly disabled?: boolean }) { return <label className="area-picker">Bereich<select disabled={disabled} onChange={(event) => context.selectArea(event.target.value)} value={context.activeArea.id}>{context.profile.areas.map((area) => <option key={area.id} value={area.id}>{area.label}</option>)}</select></label>; }
+function AreaPicker({ context, disabled = false, request }: { readonly context: UnlockedAppContext; readonly disabled?: boolean; readonly request: (action: () => void, trigger: HTMLElement) => void }) { return <label className="area-picker">Bereich<select aria-label="Bereich" disabled={disabled} onChange={(event) => { const id = event.target.value; request(() => context.selectArea(id), event.currentTarget); }} value={context.activeArea.id}>{context.profile.areas.map((area) => <option key={area.id} value={area.id}>{area.label}</option>)}</select></label>; }
 function Overview({ model, onNew }: { readonly model: FinanceModel; readonly onNew: () => void }) {
   const balances = projectAccountBalances(model.transactions);
   const total = sumMoney(balances.map((item) => item.balance), 'Das Gesamtguthaben');
@@ -285,8 +334,6 @@ function Accounts({ model }: { readonly model: FinanceModel }) {
   const balances = projectAccountBalances(model.transactions);
   return <section><form className="inline-form" onSubmit={(event) => void submit(event)}><label>Kontoname<input onChange={(event) => setName(event.target.value)} required value={name} /></label><label>Art<select onChange={(event) => setType(event.target.value as AccountAggregate['type'])} value={type}><option value="checking">Girokonto</option><option value="cash">Bargeld</option><option value="savings">Sparkonto</option><option value="credit">Kreditkarte</option><option value="other">Sonstiges</option></select></label><label><input checked={budget} onChange={(event) => setBudget(event.target.checked)} type="checkbox" /> Im Budget</label><button type="submit">Konto anlegen</button></form>{error === undefined ? null : <p className="field-error" role="alert">{error}</p>}{model.accounts.length === 0 ? <Empty title="Noch keine Konten" text="Der Anfangsbestand wird bei der ersten Buchung erfasst." /> : <><AccountTable accounts={model.accounts} balances={balances} onArchive={archive} /><p className="help-text">Archivierte Konten bleiben für ihre bestehenden Buchungen erhalten und erscheinen nicht mehr in neuen Auswahlen.</p><TransferForm model={model} /><ReconciliationForm model={model} /></>}{model.allAccounts.some((account) => account.archived) ? <section aria-labelledby="archivierte-konten"><h2 id="archivierte-konten">Archivierte Konten</h2><AccountTable accounts={model.allAccounts.filter((account) => account.archived)} balances={balances} archived /></section> : null}</section>;
 }
-function TransferForm({ model }: { readonly model: FinanceModel }) { const [source, setSource] = useState(''); const [target, setTarget] = useState(''); const [amount, setAmount] = useState(''); const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); const [error, setError] = useState<string>(); async function submit(event: FormEvent) { event.preventDefault(); setError(undefined); try { await model.addTransfer(source as UUID, target as UUID, amount, date); setAmount(''); } catch (reason) { setError(reason instanceof Error ? reason.message : 'Die Umbuchung wurde nicht gespeichert.'); } } return <section className="transfer"><h2>Umbuchung</h2><p>Quell- und Zielseite werden gemeinsam gespeichert oder gar nicht.</p><form className="inline-form" onSubmit={(event) => void submit(event)}><label>Von<select onChange={(event) => setSource(event.target.value)} required value={source}><option value="">Auswählen</option>{model.accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label><label>Nach<select onChange={(event) => setTarget(event.target.value)} required value={target}><option value="">Auswählen</option>{model.accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select></label><label>Betrag<input inputMode="decimal" onChange={(event) => setAmount(event.target.value)} required value={amount} /></label><label>Datum<input onChange={(event) => setDate(event.target.value)} required type="date" value={date} /></label><button type="submit">Umbuchung speichern</button></form>{error === undefined ? null : <p className="field-error" role="alert">{error}</p>}</section>; }
-function ReconciliationForm({ model }: { readonly model: FinanceModel }) { const [account, setAccount] = useState(''); const [balance, setBalance] = useState(''); const [date, setDate] = useState(new Date().toISOString().slice(0, 10)); const [result, setResult] = useState<string>(); async function submit(event: FormEvent) { event.preventDefault(); try { const difference = await model.reconcile(account as UUID, balance, date); setResult(`Abgleich gespeichert. Differenz: ${formatMoney(difference)}`); } catch (reason) { setResult(reason instanceof Error ? reason.message : 'Der Abgleich wurde nicht gespeichert.'); } } return <section className="transfer"><h2>Abgleich</h2><p>Die Differenz wird vor einer Korrekturbuchung ausdrücklich angezeigt; diese Oberfläche erzeugt keine Korrekturbuchung.</p><form className="inline-form" onSubmit={(event) => void submit(event)}><label>Konto<select onChange={(event) => setAccount(event.target.value)} required value={account}><option value="">Auswählen</option>{model.accounts.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}</select></label><label>Auszugssaldo<input inputMode="decimal" onChange={(event) => setBalance(event.target.value)} required value={balance} /></label><label>Auszugsdatum<input onChange={(event) => setDate(event.target.value)} required type="date" value={date} /></label><button type="submit">Abgleich bestätigen</button></form>{result === undefined ? null : <p aria-live="polite">{result}</p>}</section>; }
 function Categories({ model }: { readonly model: FinanceModel }) {
   const [groupName, setGroupName] = useState(''); const [kind, setKind] = useState<CategoryGroupAggregate['kind']>('expense'); const [name, setName] = useState(''); const [group, setGroup] = useState(''); const [error, setError] = useState<string>();
   async function groupSubmit(e: FormEvent) { e.preventDefault(); setError(undefined); try { await model.addGroup(groupName, kind); setGroupName(''); } catch (reason) { setError(messageFor(reason, 'Die Gruppe wurde nicht gespeichert.')); } }

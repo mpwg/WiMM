@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import type { UUID } from '@wimm/contracts';
-import { parseFinanceDate, parseMoney, type TransactionAggregate } from '@wimm/domain';
+import { parseFinanceDate, parseMoney, type TransactionAggregate, type TransferAggregate } from '@wimm/domain';
+import { TransferForm } from './account-actions.js';
+import { useDraftGuard, useFormDraft } from './drafts.js';
 import { FinanceModel, formatMoney } from './workspace.js';
 
 // Nur Textformatierung; Betragsprüfung und Splitsummen bleiben im Fachkern.
@@ -22,6 +24,7 @@ export function Transactions({ model }: { readonly model: FinanceModel }) {
 }
 
 function TransactionForm({ model, previous, onSaved, onBusy }: { readonly model: FinanceModel; readonly previous?: TransactionAggregate; readonly onSaved?: () => void; readonly onBusy?: (value: boolean) => void }) {
+  const form = useRef<HTMLFormElement>(null); const saved = useFormDraft(form);
   const [accountId, setAccountId] = useState(previous?.accountId ?? '');
   const [categoryId, setCategoryId] = useState(previous?.splits[0]?.categoryId ?? '');
   const [secondCategoryId, setSecondCategoryId] = useState(previous?.splits[1]?.categoryId ?? '');
@@ -53,11 +56,11 @@ function TransactionForm({ model, previous, onSaved, onBusy }: { readonly model:
         ...extra.map((split) => ({ id: split.id as UUID, categoryId: split.categoryId as UUID, amount: split.amount }))
       ];
       await model.storeTransaction({ accountId: accountId as UUID, ...(payeeId === '' ? {} : { payeeId: payeeId as UUID }), amount, date, note, opening, splits }, previous);
-      setAmount(''); setNote(''); setFirstAmount(''); setSecondAmount(''); setExtra([]); setSecondCategoryId(''); setOpening(false); onSaved?.();
+      setAmount(''); setNote(''); setFirstAmount(''); setSecondAmount(''); setExtra([]); setSecondCategoryId(''); setOpening(false); saved(); onSaved?.();
     } catch (reason) { setError(errorText(reason)); }
     finally { submitting.current = false; setSaving(false); onBusy?.(false); }
   }
-  return <><form className="transaction-form" onSubmit={(event) => void submit(event)} aria-label={previous === undefined ? 'Buchung erfassen' : 'Buchung bearbeiten'}>
+  return <><form ref={form} className="transaction-form" onSubmit={(event) => void submit(event)} aria-label={previous === undefined ? 'Buchung erfassen' : 'Buchung bearbeiten'}>
     <fieldset disabled={saving} className="transaction-fields">
       <label className="amount-field"><span>Betrag</span><input aria-label="Betrag" aria-describedby={`${prefix}-amount-help${amountError === undefined ? '' : ` ${prefix}-amount-error`}`} aria-invalid={amountError !== undefined} ref={amountField} inputMode="decimal" onInvalid={(event) => { event.preventDefault(); setAmountError('Bitte geben Sie einen gültigen Betrag ein.'); amountField.current?.focus(); }} onChange={(e) => { setAmount(e.target.value); setAmountError(undefined); }} placeholder="z. B. -12,50" required value={amount} /><small id={`${prefix}-amount-help`}>Ausgabe mit Minus, Einnahme mit Plus oder ohne Vorzeichen.</small>{amountError === undefined ? null : <span className="field-error" id={previous === undefined ? 'transaction-amount-error' : `${prefix}-amount-error`} role="alert">{amountError}</span>}</label>
       <label>Datum<input aria-label="Datum" aria-describedby={dateError === undefined ? undefined : previous === undefined ? 'transaction-date-error' : `${prefix}-date-error`} aria-invalid={dateError !== undefined} ref={dateField} onInvalid={(event) => { event.preventDefault(); setDateError('Bitte wählen Sie einen gültigen Kalendertag.'); dateField.current?.focus(); }} onChange={(e) => { setDate(e.target.value); setDateError(undefined); }} required type="date" value={date} />{dateError === undefined ? null : <span className="field-error" id={previous === undefined ? 'transaction-date-error' : `${prefix}-date-error`} role="alert">{dateError}</span>}</label>
@@ -76,11 +79,14 @@ function TransactionForm({ model, previous, onSaved, onBusy }: { readonly model:
 }
 
 export function TransactionList({ model }: { readonly model: FinanceModel }) {
+  const guard = useDraftGuard();
   const [filter, setFilter] = useState(''); const [account, setAccount] = useState(''); const [from, setFrom] = useState(''); const [to, setTo] = useState('');
   const [scrollTop, setScrollTop] = useState(0); const [mobile, setMobile] = useState(() => matchMedia('(max-width: 767px)').matches);
   const scroller = useRef<HTMLDivElement>(null); const trigger = useRef<HTMLButtonElement | null>(null);
+  const [selectedModel, setSelectedModel] = useState(model);
+  const [selectedTransfer, setSelectedTransfer] = useState<TransferAggregate>();
   const [selected, setSelected] = useState<TransactionAggregate>();
-  const [action, setAction] = useState<'details' | 'edit' | 'delete'>('details');
+  const [action, setAction] = useState<'details' | 'edit' | 'delete' | 'unlock'>('details');
   const [editingBusy, setEditingBusy] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null); const [error, setError] = useState<string>(); const [deleting, setDeleting] = useState(false); const deleteBusy = useRef(false);
   const accountNames = useMemo(() => new Map(model.allAccounts.map((entry) => [entry.id, entry.name])), [model]);
@@ -104,11 +110,12 @@ export function TransactionList({ model }: { readonly model: FinanceModel }) {
   const end = Math.min(start + windowSize, visible.length);
   function resetScroll() { setScrollTop(0); if (scroller.current !== null) scroller.current.scrollTop = 0; }
   function close() { if (deleteBusy.current) return; setSelected(undefined); setError(undefined); }
-  function open(transaction: TransactionAggregate, element: HTMLButtonElement) { trigger.current = element; setAction('details'); setError(undefined); setSelected(transaction); }
+  function requestClose() { guard.request(() => { dialog.current?.close(); close(); }, dialog.current?.querySelector('form') ?? undefined); }
+  function open(transaction: TransactionAggregate, element: HTMLButtonElement) { trigger.current = element; setAction('details'); setError(undefined); setSelectedModel(model); setSelectedTransfer(model.transferFor(transaction)); setSelected(transaction); }
   async function remove() {
     if (selected === undefined || deleteBusy.current) return;
     deleteBusy.current = true; setDeleting(true); setError(undefined);
-    try { await model.removeTransaction(selected); deleteBusy.current = false; close(); }
+    try { if (action === 'unlock') await selectedModel.unlock(selected); else if (selected.kind === 'transfer') await selectedModel.removeTransfer(selectedTransfer!); else await model.removeTransaction(selected); deleteBusy.current = false; close(); }
     catch (reason) { setError(errorText(reason)); }
     finally { deleteBusy.current = false; setDeleting(false); }
   }
@@ -125,15 +132,16 @@ export function TransactionList({ model }: { readonly model: FinanceModel }) {
           {end === visible.length ? null : <tr aria-hidden="true" className="virtual-spacer"><td colSpan={6} style={{ height: (visible.length - end) * height }} /></tr>}
         </tbody></table>
       </div>}
-    {selected === undefined ? null : <dialog className="confirmation-dialog transaction-dialog" aria-labelledby="transaction-details-title" ref={dialog} onCancel={(event) => { if (deleting || editingBusy) event.preventDefault(); }} onClose={close}>
-      <h2 id="transaction-details-title">{action === 'edit' ? 'Buchung bearbeiten' : action === 'delete' ? 'Buchung löschen?' : 'Buchungsdetails'}</h2>
-      {action === 'edit' ? <TransactionForm key={selected.id} model={model} previous={selected} onBusy={setEditingBusy} onSaved={() => { dialog.current?.close(); close(); }} /> : <>
+    {selected === undefined ? null : <dialog className="confirmation-dialog transaction-dialog" aria-labelledby="transaction-details-title" ref={dialog} onCancel={(event) => { event.preventDefault(); if (!deleting && !editingBusy) requestClose(); }} onClose={close}>
+      <h2 id="transaction-details-title">{action === 'edit' ? 'Buchung bearbeiten' : action === 'unlock' ? 'Abgleich entsperren?' : action === 'delete' ? 'Buchung löschen?' : 'Buchungsdetails'}</h2>
+      {action === 'edit' && selected.kind === 'transfer' ? <TransferForm model={selectedModel} previous={selectedTransfer!} onBusy={setEditingBusy} onSaved={() => { dialog.current?.close(); close(); }} /> : action === 'edit' ? <TransactionForm key={selected.id} model={model} previous={selected} onBusy={setEditingBusy} onSaved={() => { dialog.current?.close(); close(); }} /> : <>
         <dl><dt>Betrag</dt><dd className="money">{formatMoney(selected.amount)}</dd><dt>Datum</dt><dd>{selected.date}</dd><dt>Konto</dt><dd>{accountNames.get(selected.accountId)}</dd><dt>Empfänger</dt><dd>{payeeNames.get(selected.payeeId!) ?? 'Ohne Empfänger'}</dd><dt>Notiz</dt><dd>{selected.note ?? 'Ohne Notiz'}</dd><dt>Status</dt><dd>{selected.clearance === 'reconciled' ? 'Abgeglichen – gesperrt' : selected.clearance === 'cleared' ? 'Bestätigt' : 'Nicht abgeglichen'}</dd>{selected.splits.map((split) => <div key={split.id}><dt>{categoryNames.get(split.categoryId)}</dt><dd>{formatMoney(split.amount)}</dd></div>)}</dl>
         {action === 'delete' ? <p>Erst die Bestätigung entfernt diese Buchung aus Liste und Saldo. Die Löschmarkierung bleibt dauerhaft erhalten.</p> : null}
-        {selected.kind === 'transfer' ? <p>Umbuchungsseiten werden gemeinsam über den Umbuchungsvorgang gepflegt.</p> : selected.clearance === 'reconciled' ? <p>Vor dem Ändern oder Löschen muss diese Buchung ausdrücklich entsperrt werden.</p> : action === 'details' ? <div className="dialog-actions"><button type="button" onClick={() => setAction('edit')}>Bearbeiten</button><button type="button" onClick={() => setAction('delete')}>Löschen</button></div> : <button disabled={deleting} type="button" onClick={() => void remove()}>{deleting ? 'Wird gelöscht …' : 'Löschen bestätigen'}</button>}
+        {action === 'unlock' ? <><p>Der gesamte zugehörige Abgleich wird aufgehoben. Bei Umbuchungen werden beide Seiten und alle verbundenen Abgleiche atomar entsperrt. Beträge und Kontostände bleiben erhalten.</p><button disabled={deleting} type="button" onClick={() => void remove()}>Entsperren bestätigen</button></> : selected.clearance === 'reconciled' || (selected.kind === 'transfer' && model.transactions.some((entry) => entry.transferId === selected.transferId && entry.clearance === 'reconciled')) ? <><p>Vor dem Ändern oder Löschen muss diese Buchung ausdrücklich entsperrt werden.</p><button type="button" onClick={() => setAction('unlock')}>Abgleich entsperren</button></> : action === 'details' ? <div className="dialog-actions"><button type="button" onClick={() => setAction('edit')}>Bearbeiten</button><button type="button" onClick={() => setAction('delete')}>Löschen</button></div> : <button disabled={deleting} type="button" onClick={() => void remove()}>{deleting ? 'Wird gelöscht …' : 'Löschen bestätigen'}</button>}
+
       </>}
       {error === undefined ? null : <p role="alert">{error}</p>}
-      <form method="dialog" className="dialog-actions"><button disabled={deleting || editingBusy} type="submit">{action === 'details' ? 'Schließen' : 'Abbrechen'}</button></form>
+      <div className="dialog-actions"><button disabled={deleting || editingBusy} type="button" onClick={requestClose}>{action === 'details' ? 'Schließen' : 'Abbrechen'}</button></div>
     </dialog>}
   </section>;
 }
