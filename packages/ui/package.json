@@ -12,9 +12,10 @@
     "@wimm/contracts": "workspace:*",
     "@wimm/crypto": "workspace:*",
     "@wimm/domain": "workspace:*",
+    "@wimm/importers": "workspace:*",
     "@wimm/storage": "workspace:*",
-    "react": "19.3.0",
-    "@wimm/importers": "workspace:*"
+    "lucide-react": "1.45.0",
+    "react": "19.3.0"
   },
   "devDependencies": {
     "vitest": "5.0.2"
