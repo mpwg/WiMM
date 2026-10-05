@@ -123,7 +123,7 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 
 ## D6 — Pull-Request-Pflicht und Schutz von `main`
 
-- Status: in Arbeit.
+- Status: in Arbeit (PR [#14](https://github.com/mpwg/WiMM/pull/14) offen).
 - Freigabe: ausdrücklicher Nutzerauftrag vom 5. Oktober 2026 zur Dokumentation einer neuen Grundregel.
 - Voraussetzungen: bestehende Commit-, Push- und GitHubregeln in AGENTS.md, Agentenleitfaden und Entwicklungsleitfaden abgeglichen.
 - Schritte: PR-Pflicht und Verbot direkter Commits/Pushes auf `main` in zentralen Arbeitsregeln, Agentenhilfen und PR-Vorlage konsistent festhalten; ADR dokumentieren.
@@ -131,7 +131,7 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 - Verträge: ADR-034, `AGENTS.md`, Agentenleitfaden, Entwicklungsleitfaden, Copilot-Anweisungen, `wimm-workflow` und GitHub-PR-Vorlage.
 - Abnahme: keine verbindliche Anleitung erlaubt direkte Integration auf `main`; Hinweise zum Themenbranch-Push und zur nötigen GitHub-Branchschutzkonfiguration sind eindeutig.
 - Prüfungen: Dokumentationsstruktur, relative Links und Whitespace; Repositoryeinstellungen separat verifizieren, falls autorisiert.
-- Prüfbelege: `git diff --check` bestanden; die verbindlichen Arbeitsanweisungen und PR-Vorlage wurden auf konsistente PR-Pflicht, Themenbranch-Pushes und das Verbot direkter Commits/Pushes auf `main` abgeglichen. PR-Erstellung und Repository-Branchschutz sind noch ausstehend.
+- Prüfbelege: `git diff --check` bestanden; die verbindlichen Arbeitsanweisungen und PR-Vorlage wurden auf konsistente PR-Pflicht, Themenbranch-Pushes und das Verbot direkter Commits/Pushes auf `main` abgeglichen. PR #14 ist offen. Repository-Branchschutz ist nicht geprüft oder geändert.
 - Einschränkungen: GitHub-Branchschutz ist hier nicht geprüft oder geändert.
 
 ## P1 — Projektgrundlage
