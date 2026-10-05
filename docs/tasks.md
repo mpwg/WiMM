@@ -121,6 +121,19 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 - Prüfbelege: Dokumentationsvalidator und Whitespaceprüfung bestanden. Zehn Teilpläne mit 62 eindeutigen fortlaufenden IDs, jeweils neun vollständigen Aufgabenfeldern, offenen Statuswerten, noch leeren Implementierungsnachweisen und Vorgängervoraussetzungen geprüft; alle P2–P11-Pakete weiterhin offen und verlinkt. Manueller Abgleich mit Fach-/Speicher-/E2EE-/UI-/Betriebsverträgen und F-/S-/C-Abnahmekriterien bestanden. Veralteten Einstieg vor P1 aktualisiert. Zwischencommit `ba05fb5` legt die Teilpläne an; Abschlusscommit integriert Index/Übergabe und präzisiert früh benötigte Snapshot-/Entwurfsexportgrundlagen. Keine Anwendungstests, Builds, Installationen, Infrastruktur, Pushes oder Veröffentlichungen ausgeführt; ausschließlich Dokumentationsarbeit.
 - Nächster Schritt: [P2.1 — Exakte Geld- und Kalenderprimitive](p2-domain.md#p21--exakte-geld--und-kalenderprimitive) nach ausdrücklicher Implementierungsfreigabe übernehmen.
 
+## D6 — Pull-Request-Pflicht und Schutz von `main`
+
+- Status: in Arbeit.
+- Freigabe: ausdrücklicher Nutzerauftrag vom 5. Oktober 2026 zur Dokumentation einer neuen Grundregel.
+- Voraussetzungen: bestehende Commit-, Push- und GitHubregeln in AGENTS.md, Agentenleitfaden und Entwicklungsleitfaden abgeglichen.
+- Schritte: PR-Pflicht und Verbot direkter Commits/Pushes auf `main` in zentralen Arbeitsregeln, Agentenhilfen und PR-Vorlage konsistent festhalten; ADR dokumentieren.
+- Ergebnis: sämtliche Repositoryänderungen werden über Pull Requests integriert; Themenbranch-Pushes dienen ausschließlich dem jeweiligen Pull Request.
+- Verträge: ADR-034, `AGENTS.md`, Agentenleitfaden, Entwicklungsleitfaden, Copilot-Anweisungen, `wimm-workflow` und GitHub-PR-Vorlage.
+- Abnahme: keine verbindliche Anleitung erlaubt direkte Integration auf `main`; Hinweise zum Themenbranch-Push und zur nötigen GitHub-Branchschutzkonfiguration sind eindeutig.
+- Prüfungen: Dokumentationsstruktur, relative Links und Whitespace; Repositoryeinstellungen separat verifizieren, falls autorisiert.
+- Prüfbelege: `git diff --check` bestanden; die verbindlichen Arbeitsanweisungen und PR-Vorlage wurden auf konsistente PR-Pflicht, Themenbranch-Pushes und das Verbot direkter Commits/Pushes auf `main` abgeglichen. PR-Erstellung und Repository-Branchschutz sind noch ausstehend.
+- Einschränkungen: GitHub-Branchschutz ist hier nicht geprüft oder geändert.
+
 ## P1 — Projektgrundlage
 
 - Status: erledigt (3. Oktober 2026). Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn mit P1.1. Voraussetzung: D0 erledigt.
