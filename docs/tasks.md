@@ -176,14 +176,14 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 
 ## P5 — Import und Automatisierung
 
-- Status: offen. Voraussetzung: P4.
+- Status: in Arbeit. Voraussetzung: P4; Nutzerauftrag vom 5. Oktober 2026 erlaubt P5.1 vor Abschluss der offenen P4-Abnahmen und verschiebt Windows-/Linux-Prüfungen. P4 bleibt offen.
 - Teilaufgaben: [P5.1–P5.6](p5-import.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: etablierte CSV/XML/OFX-Parser auswählen/lizenzprüfen; normalisierte Zwischenform; Mappingvorlagen und Vorschau; Dublettenentscheidungen; gruppierte Übernahme/Wiederaufnahme; Regeln mit Priorität und Stop; Schedule/Fälligkeiten/Bestätigung und Zuordnung importierter Zahlungen.
 - Ergebnis: alltagstauglicher Import ohne Bankanbieter und deterministische wiederkehrende Vorschläge.
 - Verträge: Formate, rule/schedule-Befehle, Quellreferenzen, Importbatchstatus.
 - Abnahme: CSV/CAMT/OFX/QFX-Referenzfixtures; keine automatische Übernahme ungültiger Zeilen; Wiederimport/Bestätigung ohne Doppelbuchung; Monatsende ohne Drift; Vorschläge verändern keine Salden.
 - Prüfungen: F14, Parser-/Dubletten-/Limitsuite, Replay/Abbruch eines Großimports, UI bleibt interaktiv.
-- Prüfbelege: noch keine.
+- Prüfbelege: P5.1-Parsergrundlage und normalisierte Zwischenform auf macOS arm64 abgenommen: 32 Importertests, 53 Fachtests, echter Chromium-Worker mit aktivem Abbruch und erneutem Auftrag, TypeScript, Lint, Paketgraph, gesperrte Installation und Dokumentationsprüfungen bestanden. [Kriterienmatrix](handoffs/p5-1.md) und [Paket-README](../packages/importers/README.md) nennen Herkunft, Limits und Grenzen. Windows-/Linux-Ausführung folgt später; P5.2–P5.6 bleiben offen.
 
 ## P6 — Budget, Ziele und Berichte
 
