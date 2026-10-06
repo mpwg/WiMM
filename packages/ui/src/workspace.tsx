@@ -87,6 +87,7 @@ export function FinanceWorkspace(props: { readonly context: UnlockedAppContext; 
 }
 function WorkspaceContent({ context, storageForProfile, desktop = false, view, setView }: { readonly context: UnlockedAppContext; readonly storageForProfile: WorkspaceStorageFactory; readonly desktop?: boolean; readonly view: View; readonly setView: (view: View) => void }) {
   const guard = useDraftGuard();
+  const { isProfileChanging } = context;
   const [mobile, setMobile] = useState(() => matchMedia('(max-width: 767px)').matches);
   useEffect(() => {
     const media = matchMedia('(max-width: 767px)');
@@ -122,7 +123,8 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   };
   const [aggregates, setAggregates] = useState<readonly StoredAggregate[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
-  const [saving, setSaving] = useState(false);
+  const [financeSaving, setSaving] = useState(false);
+  const saving = financeSaving || context.profileChanging;
   const [message, setMessage] = useState<string>();
   const storage = useMemo(() => storageForProfile(context.profile.profileId as UUID), [storageForProfile, context.profile.profileId]);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -143,7 +145,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   }, [storage, reload]);
 
   const execute = useCallback(async (changeSet: DomainChangeSet, record = true) => {
-    if (busy.current) throw new Error('Bitte warten Sie auf die laufende Speicherung.');
+    if (busy.current || isProfileChanging()) throw new Error('Bitte warten Sie auf die laufende Speicherung oder den Bereichswechsel.');
     busy.current = true;
     const before = aggregatesRef.current;
     setSaving(true); setMessage(undefined);
@@ -171,13 +173,13 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
       throw error;
     }
     finally { busy.current = false; setSaving(false); }
-  }, [storage, context.activeArea.id, history]);
+  }, [storage, context.activeArea.id, isProfileChanging, history]);
   // Der Konstruktor speichert den Callback; Refzugriffe erfolgen erst bei Benutzeraktionen.
   // oxlint-disable-next-line react/refs
   const model = useMemo(() => new FinanceModel(context.activeArea.id as UUID, aggregates, execute), [aggregates, context.activeArea.id, execute]);
 
   async function moveHistory(direction: 'undo' | 'redo') {
-    if (busy.current) return;
+    if (busy.current || isProfileChanging()) return;
     try {
       await history.move(direction, aggregatesRef.current, model.domainDependencies, (change) => execute(change, false));
       setHistoryVersion((version) => version + 1);
@@ -190,12 +192,13 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   }, [focusRequest, state, view]);
   useEffect(() => {
     function command(id: string, native = false) {
+      if (isProfileChanging()) return;
       const editing = isTextEditing(document.activeElement);
       if ((id === 'undo' || id === 'redo') && editing) {
         if (native) document.execCommand(id);
         return;
       }
-      if (saving || state !== 'ready' || document.querySelector('dialog[open]') !== null) return;
+      if (busy.current || state !== 'ready' || document.querySelector('dialog[open]') !== null) return;
       if (id === 'undo' || id === 'redo') { guard.request(() => { void moveHistory(id); }); return; }
       if (id === 'new-transaction' || id === 'search') {
         const action = () => { if (id === 'new-transaction') setNewBooking({}); else setView('transactions'); setFocusRequest((value) => ({ target: id === 'search' ? 'search' : 'amount', version: (value?.version ?? 0) + 1 })); };
@@ -228,8 +231,8 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   useEffect(() => {
     if (state === 'ready' && matchMedia('(max-width: 767px)').matches) document.querySelector<HTMLElement>('.finance-main')?.scrollIntoView({ block: 'start' });
   }, [view, state]);
-  const openNew = () => guard.request(() => setNewBooking({}));
-  const go = (next: View) => guard.request(() => navigate(next));
+  const openNew = () => { if (!isProfileChanging()) guard.request(() => setNewBooking({})); };
+  const go = (next: View) => { if (!isProfileChanging()) guard.request(() => navigate(next)); };
   const settingsView = ['settings', 'categories', 'payees', 'automation', 'schedules'].includes(view);
   const navItems = [['overview', 'Übersicht', LayoutDashboard], ['transactions', 'Buchungen', ArrowLeftRight], ['accounts', 'Konten', Landmark]] as const;
   const links = (items: typeof navItems) => items.map(([id, label, Icon]) => <Button variant="quiet" icon={Icon} disabled={saving} aria-current={view === id ? 'page' : undefined} key={id} onClick={() => go(id)}>{label}</Button>);
@@ -240,8 +243,8 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
       </div>}
       <nav aria-label="Hauptnavigation">{links(navItems)}</nav>
       <div className="sidebar-footer"><Button variant="quiet" icon={Settings} disabled={saving} aria-current={settingsView ? 'page' : undefined} onClick={() => go('settings')}>Einstellungen</Button>
-        <Button variant="quiet" icon={CircleHelp} onClick={() => go('help')}>Hilfe</Button>
-        <Button variant="quiet" icon={LockKeyhole} disabled={saving} onClick={() => guard.request(() => { void context.lock(); })}>Tresor sperren</Button><span className="local-status">Lokal auf diesem Gerät</span>
+        <Button variant="quiet" icon={CircleHelp} disabled={saving} onClick={() => go('help')}>Hilfe</Button>
+        <Button variant="quiet" icon={LockKeyhole} disabled={financeSaving} onClick={() => guard.request(() => { void context.lock(); })}>Tresor sperren</Button><span className="local-status">Lokal auf diesem Gerät</span>
       </div>
     </aside>
     <nav ref={mobileNavigation} className="mobile-navigation" aria-label="Mobile Hauptnavigation">
@@ -261,7 +264,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
           {model.accounts.length > 0 ? <Button variant="primary" icon={Plus} disabled={saving} onClick={openNew}>Neue Buchung</Button> : null}
         </> : null}</div>
       </header>
-      <div className="workspace-status"><span role="status" className="local-status"><Check size={14} aria-hidden="true" />{saving ? 'Wird lokal gespeichert …' : message === 'Lokal gespeichert.' ? message : 'Lokal gespeichert'}</span>
+      <div className="workspace-status"><span role="status" className="local-status"><Check size={14} aria-hidden="true" />{context.profileChanging ? 'Bereich wird vorbereitet …' : saving ? 'Wird lokal gespeichert …' : message === 'Lokal gespeichert.' ? message : 'Lokal gespeichert'}</span>
         <div className="toolbar history-actions"><Button variant="quiet" icon={Undo2} disabled={saving || !history.canUndo} onClick={() => void moveHistory('undo')}>Rückgängig</Button><Button variant="quiet" icon={Redo2} disabled={saving || !history.canRedo} onClick={() => void moveHistory('redo')}>Wiederholen</Button></div>
       </div>
       {message === undefined || message === 'Lokal gespeichert.' ? null : <p role="alert" className="notice error">{message}</p>}
@@ -281,7 +284,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
             {(view === 'more' ? [['settings', 'Einstellungen', 'Kategorien, Empfänger und Automatisierung', Settings]] as const : [
               ['categories', 'Kategorien', 'Ausgaben und Einnahmen ordnen', Tags], ['payees', 'Empfänger', 'Empfänger verwalten und zusammenführen', Users], ['automation', 'Regeln', 'Importierte Buchungen automatisch zuordnen', ListFilter], ['schedules', 'Dauerzahlungen', 'Wiederkehrende Zahlungen und fällige Vorschläge', CalendarClock]
             ] as const).map(([id, label, description, Icon]) => <button type="button" key={id} onClick={() => go(id)}><span><Icon size={20} aria-hidden="true" /><span>{label}<small>{description}</small></span></span><ChevronRight size={18} aria-hidden="true" /></button>)}
-            {view === 'more' ? <><Button icon={CircleHelp} onClick={() => go('help')}>Hilfe<ChevronRight size={18} aria-hidden="true" /></Button><Button icon={LockKeyhole} onClick={() => guard.request(() => { void context.lock(); })}>Tresor sperren</Button></> : null}
+            {view === 'more' ? <><Button icon={CircleHelp} disabled={saving} onClick={() => go('help')}>Hilfe<ChevronRight size={18} aria-hidden="true" /></Button><Button icon={LockKeyhole} onClick={() => guard.request(() => { void context.lock(); })}>Tresor sperren</Button></> : null}
           </div> : <Button variant="quiet" icon={Settings} onClick={() => go('settings')}>Alle Einstellungen</Button>}
           {view === 'settings' ? <section className="appearance"><h2><Palette size={18} aria-hidden="true" /> Erscheinungsbild</h2><label>Farbschema<select value={colorScheme} onChange={(event) => changeColorScheme(event.target.value as ColorScheme)}><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label></section> : null}
         </> : null}

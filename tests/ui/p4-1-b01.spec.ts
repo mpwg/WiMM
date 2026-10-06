@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { createAccount, navigate } from '../helpers/ui.js';
 import type { LocalProfile } from '../../packages/ui/src/app.js';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -112,4 +113,34 @@ test('B01/A01: Ersteinrichtung ohne Web Locks erklärt die fehlende Speicherkoor
   await expect(page.getByRole('heading', { name: 'Rettungscode sichern' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Alles im Blick.' })).toHaveCount(0);
   await page.screenshot({ path: info.outputPath('fehlende-speicherkoordination.png'), mask: [page.getByRole('status', { name: 'Rettungscode' })] });
+});
+
+test('B01/A01: wartender Bereichswechsel sperrt Finanzaktionen und Kurzbefehle bis zum Commit', async ({ page }) => {
+  await create(page);
+  await createAccount(page, 'Synthetisches Privatkonto');
+  await page.getByRole('button', { name: 'Haushalt anlegen', exact: true }).click();
+  await expect(page.getByLabel('Bereich', { exact: true })).toHaveText(/Haushalt 1/);
+  await page.getByLabel('Bereich', { exact: true }).selectOption({ label: 'Privater Bereich' });
+  await navigate(page, 'Buchungen');
+  await expect(page.getByRole('button', { name: 'Neue Buchung', exact: true })).toBeEnabled();
+  const before = await profileValue(page);
+  await page.evaluate((storageKey) => {
+    void navigator.locks.request(`wimm:profile:${storageKey}`, () => new Promise<void>((resolve) => {
+      (window as unknown as { releaseProfileLock: () => void }).releaseProfileLock = resolve;
+    }));
+  }, key);
+  await expect.poll(() => page.evaluate(() => 'releaseProfileLock' in window)).toBe(true);
+  await page.getByLabel('Bereich', { exact: true }).selectOption({ label: 'Haushalt 1' });
+  await expect(page.getByRole('button', { name: 'Neue Buchung', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Importieren', exact: true })).toBeDisabled();
+  await expect(page.getByLabel('Bereich', { exact: true })).toBeDisabled();
+  await page.keyboard.press('Control+n');
+  await expect(page.getByRole('dialog', { name: 'Neue Buchung', exact: true })).toHaveCount(0);
+  expect(await profileValue(page)).toBe(before);
+  await page.evaluate(() => (window as unknown as { releaseProfileLock: () => void }).releaseProfileLock());
+  await expect.poll(async () => (await readProfile(page)).revision).toBe((JSON.parse(before!) as LocalProfile).revision + 1);
+  await expect(page.getByLabel('Bereich', { exact: true })).toBeEnabled();
+  await expect(page.getByText('Gemeinsamer Bereich', { exact: true })).toBeVisible();
+  await page.getByLabel('Bereich', { exact: true }).selectOption({ label: 'Privater Bereich' });
+  await expect(page.getByRole('button', { name: 'Neue Buchung', exact: true })).toBeEnabled();
 });
