@@ -97,5 +97,5 @@ window.workspaceTest = {
   }
 };
 const area = { id: spaceId, kind: 'private', label: 'Synthetischer Bereich' } as const;
-const context = { platform: createBrowserPlatformServices(), activeArea: area, profile: { profileId, areas: [area] }, selectArea: () => undefined, createHousehold: async () => undefined, lock: async () => undefined } as unknown as UnlockedAppContext;
+const context = { profileChanging: false, isProfileChanging: () => false, platform: createBrowserPlatformServices(), activeArea: area, profile: { profileId, areas: [area] }, selectArea: () => undefined, createHousehold: async () => undefined, lock: async () => undefined } as unknown as UnlockedAppContext;
 createRoot(document.getElementById('root')!).render(<FinanceWorkspace context={context} storageForProfile={() => storage} desktop={parameters.get('desktop') === 'true'} />);

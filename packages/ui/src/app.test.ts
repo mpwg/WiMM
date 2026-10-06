@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 
-import { createLocalHousehold, createLocalProfile, createMemoryProfileStore, selectLocalArea, type LocalProfile } from './app.js';
+import { changeLocalProfile, createLocalHousehold, createLocalProfile, createMemoryProfileStore, selectLocalArea, type LocalProfile } from './app.js';
 import { lockUserVault, unlockUserVaultWithPassphrase, unlockUserVaultWithRecoveryCode } from '@wimm/crypto';
 
 const profile = {
@@ -21,12 +21,12 @@ describe('lokale Profilkomposition', () => {
     expect(next.areas).toEqual(profile.areas);
   });
 
-  it('lehnt fremde Bereiche ab und gibt keine veränderbare Profilreferenz heraus', () => {
+  it('lehnt fremde Bereiche ab und gibt keine veränderbare Profilreferenz heraus', async () => {
     expect(() => selectLocalArea(profile, '00000000-0000-4000-8000-000000000099')).toThrow('gehört nicht');
     const store = createMemoryProfileStore(profile);
-    const loaded = store.load()!;
+    const loaded = (await store.load())!;
     ((loaded.areas as unknown) as { label: string }[])[0]!.label = 'Verändert';
-    expect(store.load()!.areas[0]!.label).toBe('Privater Bereich');
+    expect((await store.load())!.areas[0]!.label).toBe('Privater Bereich');
   });
 
   it('legt einen standalone-fähigen, verschlüsselten Bereich an und entsperrt ihn per Passphrase oder Rettungscode', async () => {
@@ -45,7 +45,7 @@ describe('lokale Profilkomposition', () => {
     const unlocked = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
     const household = await createLocalHousehold(created.profile, unlocked);
     const store = createMemoryProfileStore(household.profile);
-    const restarted = store.load()!;
+    const restarted = (await store.load())!;
 
     expect(restarted.areas).toHaveLength(2);
     expect(restarted.areas[1]!.kind).toBe('household');
@@ -67,4 +67,47 @@ describe('lokale Profilkomposition', () => {
     expect((await unlockUserVaultWithPassphrase(created.profile.vault, passphrase)).spaces)
       .toHaveLength(1);
   }, 30_000);
+  it('erhält Haushalte beider veralteter Sitzungen und ihre Recovery-Schlüssel', async () => {
+    const passphrase = 'synthetische-zwei-tab-passphrase';
+    const created = await createLocalProfile(passphrase);
+    const store = createMemoryProfileStore(created.profile);
+    const first = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
+    const second = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
+    await Promise.all([
+      changeLocalProfile(store, created.profile, first),
+      changeLocalProfile(store, created.profile, second)
+    ]);
+    await changeLocalProfile(store, created.profile, first, created.profile.selectedAreaId);
+    const restarted = (await store.load())!;
+    expect(restarted.areas).toHaveLength(3);
+    expect(restarted.revision).toBe(3);
+    const unlocked = await unlockUserVaultWithPassphrase(restarted.vault, passphrase);
+    expect(unlocked.spaces.map((space) => space.spaceId).sort()).toEqual(restarted.areas.map((area) => area.id).sort());
+    const recovered = await unlockUserVaultWithRecoveryCode(restarted.vault, created.recoveryCode);
+    expect(recovered.spaces.map((space) => space.spaceId).sort()).toEqual(restarted.areas.map((area) => area.id).sort());
+  }, 30_000);
+
+  it('rollt fehlgeschlagene Speicheränderungen zurück, ohne die bestehende Sitzung zu sperren', async () => {
+    const passphrase = 'synthetischer-profil-quota-fehler';
+    const created = await createLocalProfile(passphrase);
+    const session = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
+    const store = createMemoryProfileStore(created.profile);
+    const failing = { load: () => store.load(), change: async (update: Parameters<typeof store.change>[0]) => {
+      await update(created.profile);
+      throw new Error('Synthetischer Quota-Fehler');
+    } };
+    await expect(changeLocalProfile(failing, created.profile, session)).rejects.toThrow('Quota');
+    expect(await store.load()).toEqual(created.profile);
+    await changeLocalProfile(store, created.profile, session);
+    expect((await store.load())!.areas).toHaveLength(2);
+  }, 30_000);
+
+  it('weist veraltete Revisionen ab und lässt die nächste Änderung nach Callbackfehler zu', async () => {
+    const store = createMemoryProfileStore({ ...profile, revision: 1 });
+    await expect(store.change(async () => ({ ...profile, revision: 0 }))).rejects.toThrow('inzwischen geändert');
+    expect((await store.load())!.revision).toBe(1);
+    const saved = await store.change(async (current) => selectLocalArea(current!, profile.selectedAreaId));
+    expect(saved.revision).toBe(2);
+  });
+
 });

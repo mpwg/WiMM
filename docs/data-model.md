@@ -88,3 +88,9 @@ Fachfremdschlüssel werden in clientseitigem SQLite aktiviert, in IndexedDB durc
 ## Schemaentwicklung
 
 Storage-Schemaversion, Fachvertragsversion, Exportformatversion und Sync-Epoche sind unabhängig. Migrationen sind fortlaufend nummeriert und nur vorwärts; vor destruktiven Änderungen Sicherung. Konkrete SQL-DDL und Dexie-Stores entstehen in P3/P8 aus diesem Modell; gemeinsam überprüfte Vertragsschemas in P1/P2 sind die spätere maschinenlesbare Quelle.
+
+## Lokales Profil und Profilrevision
+
+Das lokale `LocalProfile` enthält `profileId`, `revision`, `areas`, `selectedAreaId` und den verschlüsselten `UserVault`. Die Profilrevision ist unabhängig von Finanzaggregatrevisionen. Ein Altprofil ohne Revision wird beim Lesen als Revision null behandelt; erst eine erfolgreiche Änderung persistiert die nächste sichere Ganzzahl. Bereich, Schlüsselbestand und Auswahl bilden einen einzigen dauerhaft gespeicherten Datensatz.
+
+Der asynchrone `ProfileStore.change` liest den aktuellen Stand unter einem profilweiten Web Lock, berechnet die Änderung gegen diesen Stand und erhöht die Revision nach erfolgreichem CAS. Zusätzlich wird der unveränderte Originalwert unmittelbar vor dem Schreiben geprüft. Eine Neuanlage ist nur bei fehlendem Profil möglich. Ohne Web Locks werden Änderungen verständlich abgewiesen; es gibt keinen unkoordinierten Schreibfallback. Fehler und Konflikte verändern den gespeicherten Ausgangsstand nicht.

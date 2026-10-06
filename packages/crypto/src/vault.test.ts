@@ -6,6 +6,7 @@ import {
   createUserVault,
   lockUserVault,
   persistUnlockedUserVault,
+  refreshUnlockedUserVault,
   createEncryptedJsonSnapshotProtector,
   unlockUserVaultWithPassphrase,
   unlockUserVaultWithRecoveryCode,
@@ -95,6 +96,22 @@ describe('lokaler UserVault', () => {
       .toContain('00000000-0000-4000-8000-000000000012');
     await lockUserVault(updatedVault);
     await expect(persistUnlockedUserVault(updatedVault, updated)).rejects.toBeInstanceOf(VaultUnlockError);
+  });
+
+  it('lädt bestätigte Bereichsschlüssel in eine unabhängige Sitzung und weist fremde oder gesperrte Tresore ab', async () => {
+    const created = await createUserVault(passphrase);
+    const original = await unlockUserVaultWithPassphrase(created.record, passphrase);
+    const writer = await unlockUserVaultWithRecoveryCode(created.record, created.recoveryCode);
+    const updated = await addIndependentSpaceKey(writer, '00000000-0000-4000-8000-000000000013');
+    const record = await persistUnlockedUserVault(updated, created.record);
+    const refreshed = await refreshUnlockedUserVault(original, record);
+    expect(refreshed.spaces[0]!.key).toEqual(updated.spaces[0]!.key);
+    await lockUserVault(refreshed);
+    expect((await refreshUnlockedUserVault(original, record)).spaces).toHaveLength(1);
+    const foreign = await createUserVault(passphrase);
+    await expect(refreshUnlockedUserVault(original, foreign.record)).rejects.toBeInstanceOf(VaultUnlockError);
+    await lockUserVault(original);
+    await expect(refreshUnlockedUserVault(original, record)).rejects.toBeInstanceOf(VaultUnlockError);
   });
 
   it('schützt Snapshots gegen Manipulation', async () => {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { isTextEditing } from './platform.js';
 import type { PlatformServices } from '@wimm/contracts';
 
@@ -10,11 +10,16 @@ import {
   lockUserVault,
   persistUnlockedUserVault,
   reencryptUserVault,
+  refreshUnlockedUserVault,
   unlockUserVaultWithPassphrase,
   unlockUserVaultWithRecoveryCode,
   type EncryptedUserVault,
   type UnlockedUserVault
 } from '@wimm/crypto';
+
+import { ProfileConflictError, ProfileCoordinationError, type ProfileStore } from './profile-store.js';
+export { createBrowserProfileStore, createMemoryProfileStore } from './profile-store.js';
+export type { ProfileStore } from './profile-store.js';
 
 export type AreaKind = 'private' | 'household';
 
@@ -26,14 +31,10 @@ export interface LocalArea {
 
 export interface LocalProfile {
   readonly profileId: string;
+  readonly revision: number;
   readonly areas: readonly LocalArea[];
   readonly selectedAreaId: string;
   readonly vault: EncryptedUserVault;
-}
-
-export interface ProfileStore {
-  load(): LocalProfile | undefined;
-  save(profile: LocalProfile): void;
 }
 
 export interface AppShellProps {
@@ -46,6 +47,8 @@ export interface AppShellProps {
 export interface UnlockedAppContext {
   readonly profile: LocalProfile;
   readonly activeArea: LocalArea;
+  readonly profileChanging: boolean;
+  readonly isProfileChanging: () => boolean;
   readonly selectArea: (areaId: string) => void;
   readonly createHousehold: () => Promise<void>;
   readonly lock: () => Promise<void>;
@@ -69,31 +72,6 @@ type Screen =
   | { readonly kind: 'unlocked'; readonly profile: LocalProfile; readonly vault: UnlockedUserVault };
 
 const initialAreaLabel = 'Privater Bereich';
-
-export function createBrowserProfileStore(key = 'wimm/local-profile/v1'): ProfileStore {
-  return {
-    load() {
-      try {
-        const raw = window.localStorage.getItem(key);
-        return raw === null ? undefined : parseLocalProfile(raw);
-      } catch {
-        return undefined;
-      }
-    },
-    save(profile) {
-      window.localStorage.setItem(key, JSON.stringify(profile));
-    }
-  };
-}
-
-/** Test- und Plattformport ohne Browserpersistenz; niemals als Produktstandard verwenden. */
-export function createMemoryProfileStore(initial?: LocalProfile): ProfileStore {
-  let profile = initial;
-  return {
-    load: () => profile === undefined ? undefined : structuredClone(profile),
-    save(next) { profile = structuredClone(next); }
-  };
-}
 
 export function selectLocalArea(profile: LocalProfile, areaId: string): LocalProfile {
   if (!profile.areas.some((area) => area.id === areaId)) throw new TypeError('Der Bereich gehört nicht zum lokalen Profil.');
@@ -121,6 +99,36 @@ export async function createLocalHousehold(
   }
 }
 
+/** Veraltete Sitzungen lesen und entschlüsseln zuerst den aktuellen bestätigten Schlüsselbestand. */
+export async function changeLocalProfile(
+  store: ProfileStore,
+  profile: LocalProfile,
+  session: UnlockedUserVault,
+  areaId?: string,
+  isCurrent: () => boolean = () => true
+): Promise<CreatedHouseholdArea> {
+  let updated: UnlockedUserVault | undefined;
+  try {
+    const saved = await store.change(async (current) => {
+      if (!isCurrent() || current === undefined || current.profileId !== profile.profileId) throw new ProfileConflictError();
+      updated = await refreshUnlockedUserVault(session, current.vault);
+      let next = current;
+      if (areaId === undefined) {
+        const created = await createLocalHousehold(current, updated);
+        updated = created.vault;
+        next = created.profile;
+      } else next = selectLocalArea(current, areaId);
+      if (!isCurrent()) throw new ProfileConflictError();
+      return next;
+    });
+    if (!isCurrent()) throw new ProfileConflictError();
+    return { profile: saved, vault: updated! };
+  } catch (error) {
+    if (updated !== undefined) await lockUserVault(updated);
+    throw error;
+  }
+}
+
 /** Erzeugt den verschlüsselten lokalen Anfangszustand ohne eine Serveranmeldung. */
 export async function createLocalProfile(passphrase: string): Promise<CreatedLocalProfile> {
   const created = await createUserVault(passphrase);
@@ -129,6 +137,7 @@ export async function createLocalProfile(passphrase: string): Promise<CreatedLoc
   return {
     recoveryCode: created.recoveryCode,
     profile: {
+      revision: 0,
       profileId: crypto.randomUUID(),
       areas: [{ id: privateAreaId, kind: 'private', label: initialAreaLabel }],
       selectedAreaId: privateAreaId,
@@ -140,14 +149,19 @@ export async function createLocalProfile(passphrase: string): Promise<CreatedLoc
 export function AppShell({ title, store, platform, children }: AppShellProps) {
   const [screen, setScreen] = useState<Screen>({ kind: 'loading' });
   const [notice, setNotice] = useState<string>();
+  const generation = useRef(0);
+  const changing = useRef(false);
+  const [profileChanging, setProfileChanging] = useState(false);
+  const isProfileChanging = useCallback(() => changing.current, []);
 
   useEffect(() => {
-    void initializeCrypto().then(
-      () => setScreen((current) => current.kind === 'loading'
-        ? (store.load() === undefined ? { kind: 'create' } : { kind: 'unlock', profile: store.load()! })
-        : current),
-      () => setNotice('Die Client-Kryptografie konnte nicht vorbereitet werden.')
-    );
+    let disposed = false;
+    void (async () => {
+      await initializeCrypto();
+      const profile = await store.load();
+      if (!disposed) setScreen(profile === undefined ? { kind: 'create' } : { kind: 'unlock', profile });
+    })().catch(() => { if (!disposed) setNotice('Die Client-Kryptografie oder das lokale Profil konnten nicht vorbereitet werden.'); });
+    return () => { disposed = true; generation.current += 1; };
   }, [store]);
 
   useEffect(() => {
@@ -156,6 +170,31 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
     void platform.onMenuCommand((id) => { if ((id === 'undo' || id === 'redo') && isTextEditing(document.activeElement)) document.execCommand(id); }).then((unlisten) => { if (disposed) unlisten(); else stop = unlisten; }).catch(() => setNotice('Die Systemmenüs konnten nicht verbunden werden.'));
     return () => { disposed = true; stop?.(); };
   }, [platform, screen.kind]);
+
+  const updateProfile = useCallback(async (areaId?: string) => {
+    if (screen.kind !== 'unlocked') return;
+    if (changing.current) return;
+    changing.current = true;
+    setProfileChanging(true);
+    const started = generation.current;
+    setNotice(undefined);
+    try {
+      const created = await changeLocalProfile(store, screen.profile, screen.vault, areaId, () => generation.current === started);
+      await lockUserVault(screen.vault);
+      if (generation.current !== started) { await lockUserVault(created.vault); return; }
+      setScreen({ kind: 'unlocked', ...created });
+    } catch (error) {
+      if (generation.current === started) setNotice((error instanceof ProfileConflictError || error instanceof ProfileCoordinationError) ? error.message : 'Die Profiländerung konnte nicht dauerhaft gespeichert werden. Der bestehende Bereich bleibt unverändert.');
+    } finally { changing.current = false; setProfileChanging(false); }
+  }, [screen, store]);
+
+  const lockProfile = useCallback(async () => {
+    if (screen.kind !== 'unlocked') return;
+    generation.current += 1;
+    await lockUserVault(screen.vault);
+    const profile = await store.load();
+    setScreen({ kind: 'unlock', profile: profile ?? screen.profile });
+  }, [screen, store]);
 
   if (screen.kind === 'loading') {
     return notice === undefined
@@ -171,32 +210,22 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
   }
 
   const activeArea = screen.profile.areas.find((area) => area.id === screen.profile.selectedAreaId) ?? screen.profile.areas[0]!;
-  const updateProfile = (profile: LocalProfile, vault = screen.vault) => {
-    store.save(profile);
-    setScreen({ kind: 'unlocked', profile, vault });
-  };
   const context: UnlockedAppContext = {
     profile: screen.profile,
     activeArea,
-    selectArea(areaId) {
-      updateProfile(selectLocalArea(screen.profile, areaId));
-    },
-    async createHousehold() {
-      try {
-        const created = await createLocalHousehold(screen.profile, screen.vault);
-        updateProfile(created.profile, created.vault);
-      } catch {
-        setNotice('Der Haushalt konnte nicht dauerhaft angelegt werden. Der bestehende Bereich bleibt unverändert.');
-      }
-    },
-    async lock() {
-      await lockUserVault(screen.vault);
-      setScreen({ kind: 'unlock', profile: screen.profile });
-    }
-    , platform
+    profileChanging,
+    isProfileChanging,
+    selectArea(areaId) { void updateProfile(areaId); },
+    async createHousehold() { await updateProfile(); },
+    lock: lockProfile,
+    platform
   };
 
-  return children === undefined ? <LocalStart context={context} title={title} /> : <>{children(context)}</>;
+  return <>{notice === undefined ? undefined : <p role="alert">{notice}</p>}<AppContent context={context} title={title} render={children} /></>;
+}
+
+function AppContent({ context, title, render }: { readonly context: UnlockedAppContext; readonly title: string; readonly render: AppShellProps['children'] }) {
+  return render === undefined ? <LocalStart context={context} title={title} /> : <>{render(context)}</>;
 }
 
 function LocalStart({ context, title }: { readonly context: UnlockedAppContext; readonly title: string }) {
@@ -253,15 +282,20 @@ function CreateVault({ notice, title, screen, store, onScreen, onNotice }: {
       if (area === undefined) throw new Error('Bereich fehlt');
       const record = await reencryptUserVault(screen.vault, passphrase, screen.recoveryCode);
       const profile: LocalProfile = {
+        revision: 0,
         profileId: crypto.randomUUID(),
         areas: [{ id: area.spaceId, kind: 'private', label: initialAreaLabel }],
         selectedAreaId: area.spaceId,
         vault: record
       };
-      store.save(profile);
-      onScreen({ kind: 'unlock', profile });
-    } catch {
-      onNotice('Der Tresor konnte nicht dauerhaft vorbereitet werden.');
+      const saved = await store.change(async (current) => {
+        if (current !== undefined) throw new ProfileConflictError();
+        return profile;
+      });
+      await lockUserVault(screen.vault);
+      onScreen({ kind: 'unlock', profile: saved });
+    } catch (error) {
+      onNotice(error instanceof ProfileCoordinationError || error instanceof ProfileConflictError ? error.message : 'Der Tresor konnte nicht dauerhaft vorbereitet werden.');
     } finally {
       setBusy(false);
     }
@@ -317,12 +351,4 @@ function UnlockVault({ notice, title, profile, onUnlocked, onNotice }: {
 
 function Problem({ title, message }: { readonly title: string; readonly message: string }) {
   return <main className="auth"><h1>{title}</h1><p role="alert">{message}</p></main>;
-}
-
-function parseLocalProfile(value: string): LocalProfile | undefined {
-  try {
-    const profile = JSON.parse(value) as LocalProfile;
-    if (!profile.profileId || !profile.vault || !Array.isArray(profile.areas) || profile.areas.length === 0) return undefined;
-    return profile;
-  } catch { return undefined; }
 }

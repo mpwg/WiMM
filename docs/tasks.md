@@ -298,3 +298,20 @@ Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen
 - Freigabe vom 5. Oktober 2026: Gestaltung und vorhandene Funktionen nach `docs/assets/ux-flow-konzept.html`; Budget, Teilen und Familienausgleich bleiben spätere Fachpakete.
 - Ergebnis: Grünakzent und warme Flächen in gemeinsamer UI, „WiMM.“, geführter Einstieg, Bereichskopf und reale Übersichtskennzahlen. Bestehende Bedien- und Fehlerprüfungen an Dialoge und Navigation angepasst; UX-Suite in reguläre Prüfung und CI aufgenommen.
 - Status: Umsetzung bereit zur PR-Prüfung; UX-06 Gesamtabnahme weiterhin offen. [Aktuelle Kriterienmatrix](handoffs/ux.md#umsetzung-des-freigegebenen-ux-flows-am-5-oktober-2026) enthält konkrete Belege und fehlende Plattform-/Geräte-/Zoomprüfungen. [Laufzeitansichten](assets/ux-flow-runtime/README.md) verwenden ausschließlich synthetische Daten.
+
+## B01 — Profilpersistenz aus Audit vom 6. Oktober 2026
+
+- Status: in Arbeit; A01 (#24) behoben und gezielt geprüft, A02 (#25) folgt separat.
+- Voraussetzung/Freigabe: ausdrücklicher Nutzerauftrag vom 6. Oktober 2026 für B01 aus [Auditübersicht #44](https://github.com/mpwg/WiMM/issues/44), pro Einzelissue ein Pull Request. Keine Freigabe für weitere Auditpakete oder P6–P11.
+- Ergebnis A01: asynchroner atomarer Profiländerungsport mit Profilrevision, aktuellem Tresorstand, CAS, Doppelausführungs- und Sitzungsschutz; Altprofile behalten ihre Schlüssel.
+- Verträge: [Profilrevision](data-model.md#lokales-profil-und-profilrevision), [Profilerweiterung](encryption.md#atomare-lokale-profilerweiterung), [B01-Prüfungen](testing.md#b01--lokale-profilpersistenz).
+- Abnahme/Nachweise: Regression vor Behebung verliert zwei Bereiche; nach Behebung erhalten Zwei-Tab-/Recovery-, Speicherfehler- und veraltete Wechseltests alle bestätigten Bereiche. Aktuelle Befehle und Grenzen in [B01-Übergabe](handoffs/b01.md).
+- Nächster Schritt: A02 mit getrennten Ladefehlerzuständen und vollständiger Profilvalidierung; eigener auf A01 aufbauender PR.
+
+### B01 — PR-45-Review und CI-Nachprüfung
+
+- Freigabe: Nutzerauftrag vom 6. Oktober 2026 zur Behebung der PR-45-Kommentare und des fehlgeschlagenen CI-/Buildlaufs; umfasst den hierfür notwendigen Q01-Fixturefix.
+- Ergebnis: verständlicher Fehler bei fehlender Profilkoordination; feste Abgleichfixturezeit, ausdrücklich gefülltes Buchungsdatum und separater Zukunftsbuchungs-Negativfall. Keine Änderung an Geld-, Abgleich- oder Kryptoregeln.
+- Prüfung: 18 UI-/Profilporttests, vier B01-Webfälle und alle 28 P4.4-Web-/Desktopfrontendfälle bestanden. Gesamtnachprüfung: 166 Vitesttests, fünf Rusttests, 42 Web-/40 Desktop-Frontendfälle, alle 62 Speicherintegrationen und 24 Layout-/Leistungsfälle bestanden. Lokale UX-Serie: Chromium/WebKit 14 bestanden, sieben Firefoxstarts durch Profilfehler blockiert. Produktionsbuilds, zwei gebaute PWA-Offlinefälle und Importworker ebenfalls bestanden. Aktueller Ubuntu-CI-Status in [PR #45](https://github.com/mpwg/WiMM/pull/45); aktuelle Details in [B01-Übergabe](handoffs/b01.md#pr-45--review-und-fehlgeschlagene-ci-korrigiert).
+
+- Weiterer PR-45-Reviewfix: wartende Profiländerungen sperren Finanzaktionen und Kurzbefehle bis zum tatsächlichen Commit; keine neuen Entwürfe während eines Bereichswechsels. Je fünf B01-Fälle auf Web/Desktopfrontend bestanden. Wiederholte Gesamtnachprüfung: 166 Vitesttests, fünf Rusttests, 43 Web-/41 Desktop-Frontendfälle, 62 Speicherintegrationen, 24 Layout-/Leistungsfälle, Produktionsbuilds, Offline und Worker bestanden. Nur lokale Firefoxstarts weiterhin blockiert; aktueller Ubuntu-CI-Status beim PR.
