@@ -56,6 +56,19 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 - Einschränkungen: Fremddeklarationsprüfung bleibt vorläufig eingeschränkt; keine fiktiven Remote-CI-Belege.
 - Nächster Schritt: P4.2.5 bleibt der nächste begrenzte Produktauftrag; T1 erweitert dessen Freigabe nicht.
 
+## T2 — Befehle zum Aufräumen des Workspace
+
+- Status: erledigt (5. Oktober 2026).
+- Freigabe: ausdrücklicher Nutzerauftrag, Aufräumbefehle für den großen Workspace hinzuzufügen.
+- Voraussetzungen: vorhandener pnpm-Workspace und lokale Build-/Prüfartefakte.
+- Schritte: Speicherverbrauch prüfen; getrennte Clean-Befehle mit Vorschau ergänzen; Löschgrenzen testen und Bedienung dokumentieren.
+- Ergebnis: `clean`, `clean:preview`, `clean:tests`, `clean:deps` und `clean:all`; Standard entfernt insbesondere den rund 15 GB großen Desktop-Rust-Buildordner. Die vorhandenen Build-/Prüfartefakte wurden nur in der Vorschau erfasst.
+- Verträge: [Entwicklungsanleitung](development.md#workspace-aufräumen); keine Änderung an Anwendung, Fachverträgen oder Datenformaten.
+- Abnahme: Vorschau verändert nichts; Build-, Test- und Abhängigkeitsbereinigung getrennt verfügbar; Quellcode, Lockfiles, Git und Finanzdaten bleiben erhalten; versionierte Ziele und Symlink-Eltern führen vor Löschungen zum Abbruch.
+- Prüfungen: fünf synthetische Clean-Tests innerhalb der Arbeitskopie, Vorschau im echten Workspace, Dokumentationsvalidator, Lint und Whitespaceprüfung.
+- Prüfbelege: `pnpm test:clean` besteht mit fünf Tests auf macOS arm64; tatsächliche Löschung nur in temporären Testverzeichnissen. `pnpm clean:preview` zeigt ausschließlich erwartete Artefakte. `pnpm check:docs`, `pnpm lint` und `git diff --check` bestanden.
+- Einschränkungen: Windows/Linux nicht ausgeführt. Testergebnisse einschließlich lokaler Abnahmebelege werden nur mit `clean:tests` oder `clean:all` entfernt; vorher sichern. Nach Abhängigkeitsbereinigung ist eine erneute gesperrte Installation nötig.
+
 ## D0 — Dokumentationsübergabe
 
 - Status: erledigt (2. Oktober 2026).
