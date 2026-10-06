@@ -47,6 +47,8 @@ export interface AppShellProps {
 export interface UnlockedAppContext {
   readonly profile: LocalProfile;
   readonly activeArea: LocalArea;
+  readonly profileChanging: boolean;
+  readonly isProfileChanging: () => boolean;
   readonly selectArea: (areaId: string) => void;
   readonly createHousehold: () => Promise<void>;
   readonly lock: () => Promise<void>;
@@ -149,6 +151,8 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
   const [notice, setNotice] = useState<string>();
   const generation = useRef(0);
   const changing = useRef(false);
+  const [profileChanging, setProfileChanging] = useState(false);
+  const isProfileChanging = useCallback(() => changing.current, []);
 
   useEffect(() => {
     let disposed = false;
@@ -171,6 +175,7 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
     if (screen.kind !== 'unlocked') return;
     if (changing.current) return;
     changing.current = true;
+    setProfileChanging(true);
     const started = generation.current;
     setNotice(undefined);
     try {
@@ -180,7 +185,7 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
       setScreen({ kind: 'unlocked', ...created });
     } catch (error) {
       if (generation.current === started) setNotice((error instanceof ProfileConflictError || error instanceof ProfileCoordinationError) ? error.message : 'Die Profiländerung konnte nicht dauerhaft gespeichert werden. Der bestehende Bereich bleibt unverändert.');
-    } finally { changing.current = false; }
+    } finally { changing.current = false; setProfileChanging(false); }
   }, [screen, store]);
 
   const lockProfile = useCallback(async () => {
@@ -208,6 +213,8 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
   const context: UnlockedAppContext = {
     profile: screen.profile,
     activeArea,
+    profileChanging,
+    isProfileChanging,
     selectArea(areaId) { void updateProfile(areaId); },
     async createHousehold() { await updateProfile(); },
     lock: lockProfile,
