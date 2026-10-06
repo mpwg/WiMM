@@ -17,9 +17,9 @@ import {
   type UnlockedUserVault
 } from '@wimm/crypto';
 
-import { ProfileConflictError, type ProfileStore } from './profile-store.js';
+import { ProfileConflictError, ProfileLoadError, type ProfileLoadResult, type ProfileStore } from './profile-store.js';
 export { createBrowserProfileStore, createMemoryProfileStore } from './profile-store.js';
-export type { ProfileStore } from './profile-store.js';
+export type { ProfileStore, ProfileLoadResult } from './profile-store.js';
 
 export type AreaKind = 'private' | 'household';
 
@@ -65,6 +65,7 @@ export interface CreatedHouseholdArea {
 
 type Screen =
   | { readonly kind: 'loading' }
+  | { readonly kind: 'profile-error'; readonly error: ProfileLoadError }
   | { readonly kind: 'create'; readonly recoveryCode?: string; readonly vault?: UnlockedUserVault }
   | { readonly kind: 'unlock'; readonly profile: LocalProfile }
   | { readonly kind: 'unlocked'; readonly profile: LocalProfile; readonly vault: UnlockedUserVault };
@@ -110,6 +111,7 @@ export async function changeLocalProfile(
     const saved = await store.change(async (current) => {
       if (!isCurrent() || current === undefined || current.profileId !== profile.profileId) throw new ProfileConflictError();
       updated = await refreshUnlockedUserVault(session, current.vault);
+      assertVaultAreas(current, updated);
       let next = current;
       if (areaId === undefined) {
         const created = await createLocalHousehold(current, updated);
@@ -149,14 +151,14 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
   const [notice, setNotice] = useState<string>();
   const generation = useRef(0);
   const changing = useRef(false);
+  const initialLoad = useRef<{ store: ProfileStore; promise: Promise<ProfileLoadResult> } | undefined>(undefined);
 
   useEffect(() => {
     let disposed = false;
-    void (async () => {
-      await initializeCrypto();
-      const profile = await store.load();
-      if (!disposed) setScreen(profile === undefined ? { kind: 'create' } : { kind: 'unlock', profile });
-    })().catch(() => { if (!disposed) setNotice('Die Client-Kryptografie oder das lokale Profil konnten nicht vorbereitet werden.'); });
+    if (initialLoad.current?.store !== store) initialLoad.current = { store, promise: initializeCrypto().then(() => store.load()) };
+    void initialLoad.current.promise.then((result) => {
+      if (!disposed) setScreen(screenForProfile(result));
+    }).catch(() => { if (!disposed) setNotice('Die Client-Kryptografie oder das lokale Profil konnten nicht vorbereitet werden.'); });
     return () => { disposed = true; generation.current += 1; };
   }, [store]);
 
@@ -187,8 +189,8 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
     if (screen.kind !== 'unlocked') return;
     generation.current += 1;
     await lockUserVault(screen.vault);
-    const profile = await store.load();
-    setScreen({ kind: 'unlock', profile: profile ?? screen.profile });
+    try { setScreen(screenForProfile(await store.load())); }
+    catch { setScreen({ kind: 'profile-error', error: new ProfileLoadError('unreadable') }); }
   }, [screen, store]);
 
   if (screen.kind === 'loading') {
@@ -196,6 +198,8 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
       ? <main className="startup"><p>WhereIsMyMoney wird vorbereitet …</p></main>
       : <Problem title="Start nicht möglich" message={notice} />;
   }
+
+  if (screen.kind === 'profile-error') return <Problem title="Lokales Profil nicht verfügbar" message={screen.error.message} />;
 
   if (screen.kind === 'create') {
     return <CreateVault notice={notice} title={title} screen={screen} store={store} onScreen={setScreen} onNotice={setNotice} />;
@@ -215,6 +219,23 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
   };
 
   return <>{notice === undefined ? undefined : <p role="alert">{notice}</p>}<AppContent context={context} title={title} render={children} /></>;
+}
+
+function assertVaultAreas(profile: LocalProfile, vault: UnlockedUserVault) {
+  const pairs = new Set<string>();
+  if (vault.identityPublicKey.length !== 32 || vault.identityPrivateKey.length !== 64 || vault.encryptionPublicKey.length !== 32 || vault.encryptionPrivateKey.length !== 32) throw new ProfileLoadError('corrupt');
+  for (const space of vault.spaces) {
+    const pair = `${space.spaceId}:${space.keyVersion}`;
+    if (!profile.areas.some((area) => area.id === space.spaceId) || !Number.isSafeInteger(space.keyVersion) || space.keyVersion < 1 || space.key.length !== 32 || pairs.has(pair)) throw new ProfileLoadError('corrupt');
+    pairs.add(pair);
+  }
+  if (profile.areas.some((area) => !vault.spaces.some((space) => space.spaceId === area.id))) throw new ProfileLoadError('corrupt');
+}
+
+function screenForProfile(result: ProfileLoadResult): Screen {
+  if (result.kind === 'missing') return { kind: 'create' };
+  if (result.kind === 'loaded') return { kind: 'unlock', profile: result.profile };
+  return { kind: 'profile-error', error: new ProfileLoadError(result.kind) };
 }
 
 function AppContent({ context, title, render }: { readonly context: UnlockedAppContext; readonly title: string; readonly render: AppShellProps['children'] }) {
@@ -327,11 +348,14 @@ function UnlockVault({ notice, title, profile, onUnlocked, onNotice }: {
     onNotice(undefined);
     try {
       setBusy(true);
-      onUnlocked(recovery
+      const unlocked = recovery
         ? await unlockUserVaultWithRecoveryCode(profile.vault, secret)
-        : await unlockUserVaultWithPassphrase(profile.vault, secret));
-    } catch {
-      onNotice('Der Tresor konnte nicht entsperrt werden. Passphrase oder Rettungscode prüfen.');
+        : await unlockUserVaultWithPassphrase(profile.vault, secret);
+      try { assertVaultAreas(profile, unlocked); }
+      catch (error) { await lockUserVault(unlocked); throw error; }
+      onUnlocked(unlocked);
+    } catch (error) {
+      onNotice(error instanceof ProfileLoadError ? error.message : 'Der Tresor konnte nicht entsperrt werden. Passphrase oder Rettungscode prüfen.');
     } finally { setBusy(false); }
   }
   return <main className="auth"><p className="product auth-brand" aria-label={title}>Wi<span>MM.</span></p><h1>Tresor entsperren</h1><p>Eine Serveranmeldung ist hierfür nicht erforderlich.</p>

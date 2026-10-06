@@ -301,9 +301,10 @@ Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen
 
 ## B01 — Profilpersistenz aus Audit vom 6. Oktober 2026
 
-- Status: in Arbeit; A01 (#24) behoben und gezielt geprüft, A02 (#25) folgt separat.
+- Status: A01 (#24) und A02 (#25) behoben und gezielt geprüft; abschließende Gesamtsuite läuft. Getrennte PRs: [A01 #45](https://github.com/mpwg/WiMM/pull/45), A02 baut darauf auf.
 - Voraussetzung/Freigabe: ausdrücklicher Nutzerauftrag vom 6. Oktober 2026 für B01 aus [Auditübersicht #44](https://github.com/mpwg/WiMM/issues/44), pro Einzelissue ein Pull Request. Keine Freigabe für weitere Auditpakete oder P6–P11.
 - Ergebnis A01: asynchroner atomarer Profiländerungsport mit Profilrevision, aktuellem Tresorstand, CAS, Doppelausführungs- und Sitzungsschutz; Altprofile behalten ihre Schlüssel.
 - Verträge: [Profilrevision](data-model.md#lokales-profil-und-profilrevision), [Profilerweiterung](encryption.md#atomare-lokale-profilerweiterung), [B01-Prüfungen](testing.md#b01--lokale-profilpersistenz).
 - Abnahme/Nachweise: Regression vor Behebung verliert zwei Bereiche; nach Behebung erhalten Zwei-Tab-/Recovery-, Speicherfehler- und veraltete Wechseltests alle bestätigten Bereiche. Aktuelle Befehle und Grenzen in [B01-Übergabe](handoffs/b01.md).
-- Nächster Schritt: A02 mit getrennten Ladefehlerzuständen und vollständiger Profilvalidierung; eigener auf A01 aufbauender PR.
+- Ergebnis A02: fehlend, geladen, beschädigt und nicht lesbar getrennt; vollständige öffentliche Profil-/Hüllenprüfung und authentifizierte Schlüsselzugehörigkeit. Genau einmal laden, kein ersetzender Erststart bei vorhandenen Fehlerständen.
+- Nächster Schritt: aktuelle Gesamtsuite auswerten und A02-PR erstellen; weitere Auditpakete benötigen einen gesonderten Auftrag.

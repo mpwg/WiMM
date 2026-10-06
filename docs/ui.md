@@ -67,3 +67,7 @@ Semantische Tabellen, beschriftete Formulare, Fokusreihenfolge, sichtbarer Fokus
 ## Visuelle Abnahme
 
 Screenshotmatrix aus [Tests](testing.md), keine überlappenden Texte, gequetschten langen deutschen Wörter oder abgeschnittenen Beträge. Desktop-Menüs/Dialoge müssen auf echten Plattformen geprüft werden; Playwright allein bestätigt keine native Tauri-Integration. Screenshots enthalten nur synthetische Daten.
+
+## Fehler beim Laden des lokalen Profils
+
+Der Start liest das lokale Profil einmal und unterscheidet fehlend, geladen, beschädigt und nicht lesbar. Ausschließlich ein wirklich fehlender Datensatz öffnet „Lokalen Tresor anlegen“. Ein vorhandenes beschädigtes oder nicht lesbares Profil zeigt „Lokales Profil nicht verfügbar“ mit verständlichem Fehler und Hinweis auf Sicherung beziehungsweise Speicherzugriff. Der Originaldatensatz bleibt erhalten; die Ansicht bietet keinen ersetzenden Erststart oder automatischen Reset an. Der Rettungscode entsperrt einen gültigen verschlüsselten Tresor und ist kein Reparaturwerkzeug für beschädigte Originalbytes.
