@@ -67,3 +67,5 @@ Semantische Tabellen, beschriftete Formulare, Fokusreihenfolge, sichtbarer Fokus
 ## Visuelle Abnahme
 
 Screenshotmatrix aus [Tests](testing.md), keine überlappenden Texte, gequetschten langen deutschen Wörter oder abgeschnittenen Beträge. Desktop-Menüs/Dialoge müssen auf echten Plattformen geprüft werden; Playwright allein bestätigt keine native Tauri-Integration. Screenshots enthalten nur synthetische Daten.
+
+Bei fehlender sicherer lokaler Speicherkoordination erklärt die Ersteinrichtung die Ursache und nennt einen aktuellen unterstützten Browser beziehungsweise eine aktualisierte Desktop-App als nächsten Schritt. Der Fehler wird auch bei einer Profiländerung verständlich angezeigt. Allgemeine Speicher-/Kryptografiefehler bleiben generisch, damit keine internen Daten in die Meldung gelangen. Es gibt keinen unkoordinierten Schreibfallback.
