@@ -80,3 +80,9 @@ Die Annahme einer vertrauenswürdigen Clientlaufzeit wird ausdrücklich dokument
 ## Releaseabnahme
 
 Interoperable Crypto-Testvektoren, Nonce-/AAD-/Signaturtampering, falscher Empfänger, Schlüsselaustausch, Geräteaufnahme, viewer-Schreibfälschung, Rotation, Offlinealtversionen, Recovery und Serverdump ohne Finanzklartext sind Pflicht. Vor öffentlicher Freigabe unabhängige Prüfung des Protokolls/Bindings einplanen; keine Behauptung eines bereits erfolgten Audits. Details in [Tests](testing.md), Pakete P1/P3/P8/P9/P10/P11 in [Aufgaben](tasks.md).
+
+## Atomare lokale Profilerweiterung
+
+Haushaltsanlagen lesen unter profilweiter Koordination zuerst das aktuelle bestätigte Profil. Die bestehende entsperrte Sitzung authentifiziert und entschlüsselt dessen Tresor mit dem flüchtigen Tresorschlüssel; keine manuelle Vereinigung veralteter Schlüsselbestände. Bereich und neu erzeugter Schlüssel werden zusammen mit der erhöhten Profilrevision gespeichert. Passphrase- und Rettungscodehüllen bleiben unverändert; eine Bereichsergänzung rotiert keine vorhandenen Schlüssel.
+
+Auch ein Bereichswechsel schreibt ausschließlich gegen den aktuellen Profilstand und übernimmt dessen Schlüsselbestand. Vorbereitete Schlüssel liegen in einer unabhängigen Sitzung; ein fehlgeschlagener Commit verwirft diese, ohne die bisherige Sitzung zu sperren. Sitzungsgeneration und Doppelausführungsschutz verhindern, dass eine wartende Profiländerung nach Sperren oder Unmount erneut entsperrt oder unbestätigte Schlüssel persistiert. Altprofile ohne Profilrevision bleiben über beide bisherigen Entsperrwege erreichbar.

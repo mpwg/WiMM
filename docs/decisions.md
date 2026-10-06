@@ -135,3 +135,15 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 - Entscheidung: Grünakzent, warme Flächen und Systemschrift gemäß zusätzlichem Nutzerauftrag vom 5. Oktober 2026 für den [UX-Flow](assets/ux-flow-konzept.html), Listen zuerst, kontextbezogene Dialoge und eigene mobile Mehr-Ansicht gemäß [UX-Konzept](ux-redesign.md). Kontosumme heißt „Kontostand gesamt“ und führt die Übersicht. Die Budgetzahl des synthetischen Konzepts wird bis P6 nicht übernommen.
 - Folgen: bestehende UI-Defaults werden gemeinsam aktualisiert. Native Bedienung, Fachkern und E2EE-Grenzen bleiben verbindlich.
 - Migration und Tests: interne Ansichtsänderung ohne Datenmigration; atomarer Kontoeinstieg und vollständige UI-Regression. P6–P10 bleiben später.
+
+## ADR-036 — Atomare lokale Profiländerungen
+
+- Datum: 6. Oktober 2026. Status: angenommen.
+- Herkunft: ausdrücklicher B01-Behebungsauftrag für Audit A01 (#24).
+- Problem: veraltete Tabs überschreiben vollständige Profil-/Schlüsselbestände; Finanzbereichskoordination schützt das gemeinsame Profil nicht.
+- Entscheidung: Der gemeinsame asynchrone ProfileStore liest und ändert unter einem profilweiten Web Lock. Profilrevision und Originalwert-CAS schützen den Commit. Haushaltsanlagen entschlüsseln den aktuellen bestätigten Tresor mit dem flüchtigen Sitzungsschlüssel, ergänzen Bereich und Schlüssel und speichern beide atomar. Bereichswechsel verwendet ebenfalls den aktuellen Stand. Ohne Web Locks gibt es keinen unkoordinierten Schreibfallback.
+- Alternativen: vollständiges Zurückschreiben eines UI-Snapshots und manuelles Zusammenführen veralteter Schlüsselbestände werden wegen Verlust-/Konsistenzrisiken verworfen.
+- Folgen: AppShell wartet auf dauerhafte Speicherung, zeigt Fehler und verhindert Doppelausführung sowie Fortsetzung einer gesperrten Sitzung. Der Port bleibt von Finanzspeicher und Servertransport getrennt.
+- Betroffene Verträge: [Lokales Profil](data-model.md#lokales-profil-und-profilrevision), [Tresorerweiterung](encryption.md#atomare-lokale-profilerweiterung), [B01-Prüfungen](testing.md#b01--lokale-profilpersistenz).
+- Migration und Kompatibilität: fehlende Altprofilrevision wird lesend als null initialisiert; erst erfolgreicher Commit schreibt die nächste Revision. Passphrase-/Recoveryhüllen und vorhandene Bereichsschlüssel bleiben unverändert. Die Koordination gilt für Clients mit diesem Port; alte parallel laufende Appversionen besitzen diesen Schutz nicht.
+- Prüfung: Zwei-Tab-/Neustart-/Recovery-, Quota-, CAS-, Altprofil- und Sitzungsgenerationstests; getrennte A02-Fehlerzustände folgen im nächsten PR.

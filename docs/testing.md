@@ -112,3 +112,7 @@ Nutzerexport nach Import/Restore mit kanonischem Snapshot vergleichen; Kontostä
 Ein Paket gilt erst als erledigt, wenn Ergebnis und seine Abnahmekriterien erfüllt sind, relevante Tests bestanden haben und Dokumentation/Verträge angepasst sind. Prüfbelege nennen Befehl/Testgruppe, Plattform, Ergebnis und Einschränkungen. Keine generelle hundertprozentige Coveragepflicht; Fachinvarianten, Autorisierung und Restore haben obligatorische Verhaltensabdeckung.
 
 Vor P11 AGPL-Lizenzmetadaten, passendes Quellarchiv, Fremdhinweise/Buildanleitungen und C01–C14 prüfen. Fehlende Paketcodesignierung kann Plattformdistribution verhindern, aber weder Anmeldung noch E2EE-Zugang anderer authentifizierter Clients. Ungeprüftes E2EE-Protokoll verhindert die öffentliche Sicherheitsabnahme.
+
+## B01 — Lokale Profilpersistenz
+
+A01 prüft konkurrierende Haushaltsanlagen aus zwei echten Browser-Tabs, einen veralteten Bereichswechsel und Neustart mit Passphrase sowie Rettungscode. Die gespeicherten Bereiche und entschlüsselten Schlüssel müssen vollständig übereinstimmen. Weitere Regressionen prüfen Quota mit unveränderten Originalbytes, unverändert nutzbarer Sitzung, Doppelklick, Sperren während einer wartenden Änderung, CAS-Abweisung, Altprofile ohne Revision und fehlende Web Locks. Gemeinsame Abläufe laufen gegen Web und Desktop-Frontend; dies ist kein neuer nativer SQLite-/Systemdialognachweis.

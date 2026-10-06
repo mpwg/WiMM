@@ -241,6 +241,27 @@ export async function persistUnlockedUserVault(
   return { ...record, vault: await encryptVault(vault, vaultKey.key) };
 }
 
+/** Lädt den aktuellen bestätigten Tresor mit einer bestehenden Sitzung, ohne Schlüsselbestände zu verschmelzen. */
+export async function refreshUnlockedUserVault(
+  session: UnlockedUserVault,
+  record: EncryptedUserVault
+): Promise<UnlockedUserVault> {
+  await initializeCrypto();
+  assertRecordVersion(record);
+  const state = unlockedVaultKeys.get(session);
+  if (state === undefined || state.locked) throw new VaultUnlockError();
+  const key = new Uint8Array(state.key);
+  try {
+    const vault = await decryptVault(record.vault, key);
+    if (state.locked) { await lockUserVault(vault); throw new VaultUnlockError(); }
+    unlockedVaultKeys.set(vault, { key, locked: false });
+    return vault;
+  } catch {
+    sodium.memzero(key);
+    throw new VaultUnlockError();
+  }
+}
+
 /** Löscht geladene Schlüssel so weit JavaScript/WASM dies zulässt. */
 export async function lockUserVault(vault: UnlockedUserVault): Promise<void> {
   await initializeCrypto();
