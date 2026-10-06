@@ -181,6 +181,29 @@ export async function unlockUserVaultWithRecoveryCode(
   }
 }
 
+/** Prüft die mathematische Zugehörigkeit der Identitäts- und Verschlüsselungsschlüssel. */
+export async function validateUserVaultKeyPairs(vault: UnlockedUserVault): Promise<void> {
+  await initializeCrypto();
+  if (vault.identityPublicKey.length !== sodium.crypto_sign_PUBLICKEYBYTES
+    || vault.identityPrivateKey.length !== sodium.crypto_sign_SECRETKEYBYTES
+    || vault.encryptionPublicKey.length !== sodium.crypto_scalarmult_BYTES
+    || vault.encryptionPrivateKey.length !== sodium.crypto_scalarmult_SCALARBYTES) throw new VaultUnlockError();
+  // sk_to_pk würde nur den eingebetteten öffentlichen Anteil extrahieren.
+  // Aus dem Seed neu ableiten und auch den vollständigen 64-Byte-Sk prüfen.
+  const seed = sodium.crypto_sign_ed25519_sk_to_seed(vault.identityPrivateKey);
+  let identity: { publicKey: Uint8Array; privateKey: Uint8Array } | undefined;
+  try {
+    identity = sodium.crypto_sign_seed_keypair(seed);
+    const encryptionPublicKey = sodium.crypto_scalarmult_base(vault.encryptionPrivateKey);
+    if (!sodium.memcmp(identity.publicKey, vault.identityPublicKey)
+      || !sodium.memcmp(identity.privateKey, vault.identityPrivateKey)
+      || !sodium.memcmp(encryptionPublicKey, vault.encryptionPublicKey)) throw new VaultUnlockError();
+  } finally {
+    sodium.memzero(seed);
+    if (identity !== undefined) sodium.memzero(identity.privateKey);
+  }
+}
+
 export async function addIndependentSpaceKey(
   vault: UnlockedUserVault,
   spaceId: string,

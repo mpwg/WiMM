@@ -11,6 +11,7 @@ import {
   persistUnlockedUserVault,
   reencryptUserVault,
   refreshUnlockedUserVault,
+  validateUserVaultKeyPairs,
   unlockUserVaultWithPassphrase,
   unlockUserVaultWithRecoveryCode,
   type EncryptedUserVault,
@@ -113,7 +114,7 @@ export async function changeLocalProfile(
     const saved = await store.change(async (current) => {
       if (!isCurrent() || current === undefined || current.profileId !== profile.profileId) throw new ProfileConflictError();
       updated = await refreshUnlockedUserVault(session, current.vault);
-      assertVaultAreas(current, updated);
+      await assertVaultAreas(current, updated);
       let next = current;
       if (areaId === undefined) {
         const created = await createLocalHousehold(current, updated);
@@ -228,9 +229,10 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
   return <>{notice === undefined ? undefined : <p role="alert">{notice}</p>}<AppContent context={context} title={title} render={children} /></>;
 }
 
-function assertVaultAreas(profile: LocalProfile, vault: UnlockedUserVault) {
+async function assertVaultAreas(profile: LocalProfile, vault: UnlockedUserVault) {
   const pairs = new Set<string>();
-  if (vault.identityPublicKey.length !== 32 || vault.identityPrivateKey.length !== 64 || vault.encryptionPublicKey.length !== 32 || vault.encryptionPrivateKey.length !== 32) throw new ProfileLoadError('corrupt');
+  try { await validateUserVaultKeyPairs(vault); }
+  catch { throw new ProfileLoadError('corrupt'); }
   for (const space of vault.spaces) {
     const pair = `${space.spaceId}:${space.keyVersion}`;
     if (!profile.areas.some((area) => area.id === space.spaceId) || !Number.isSafeInteger(space.keyVersion) || space.keyVersion < 1 || space.key.length !== 32 || pairs.has(pair)) throw new ProfileLoadError('corrupt');
@@ -358,7 +360,7 @@ function UnlockVault({ notice, title, profile, onUnlocked, onNotice }: {
       const unlocked = recovery
         ? await unlockUserVaultWithRecoveryCode(profile.vault, secret)
         : await unlockUserVaultWithPassphrase(profile.vault, secret);
-      try { assertVaultAreas(profile, unlocked); }
+      try { await assertVaultAreas(profile, unlocked); }
       catch (error) { await lockUserVault(unlocked); throw error; }
       onUnlocked(unlocked);
     } catch (error) {

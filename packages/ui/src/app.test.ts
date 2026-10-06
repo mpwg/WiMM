@@ -3,7 +3,7 @@ import type { ProfileStore } from './profile-store.js';
 import { describe, expect, it } from 'vitest';
 
 import { changeLocalProfile, createLocalHousehold, createLocalProfile, createMemoryProfileStore, selectLocalArea, type LocalProfile } from './app.js';
-import { lockUserVault, unlockUserVaultWithPassphrase, unlockUserVaultWithRecoveryCode } from '@wimm/crypto';
+import { persistUnlockedUserVault, lockUserVault, unlockUserVaultWithPassphrase, unlockUserVaultWithRecoveryCode } from '@wimm/crypto';
 
 async function loadedProfile(store: ProfileStore) {
   const result = await store.load();
@@ -129,6 +129,27 @@ describe('lokale Profilkomposition', () => {
     const valid = createMemoryProfileStore(created.profile);
     await changeLocalProfile(valid, created.profile, session);
     expect((await loadedProfile(valid)).areas).toHaveLength(2);
+  }, 30_000);
+
+  it.each(['identityPublicKey', 'identityPrivateKey', 'encryptionPublicKey', 'encryptionPrivateKey'] as const)('B01/A02: verwirft authentisch entschlüsselte, aber inkonsistente %s ohne Profiländerung', async (field) => {
+    const passphrase = 'synthetische-inkonsistente-schluesselpaare';
+    const created = await createLocalProfile(passphrase);
+    const producer = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
+    const index = field === 'identityPrivateKey' ? 63 : 1;
+    producer[field][index] = (producer[field][index] ?? 0) ^ 1;
+    // Authentische AEAD-Hülle mit semantisch beschädigtem, rein synthetischem Inhalt.
+    const damaged = { ...created.profile, vault: await persistUnlockedUserVault(producer, created.profile.vault) };
+    const store = createMemoryProfileStore(damaged);
+    for (const session of [
+      await unlockUserVaultWithPassphrase(created.profile.vault, passphrase),
+      await unlockUserVaultWithRecoveryCode(created.profile.vault, created.recoveryCode)
+    ]) {
+      const result = await changeLocalProfile(store, damaged, session).then(() => 'akzeptiert', (error: unknown) => error instanceof Error ? error.message : 'Unbekannter Fehler');
+      expect(result).toContain('Originaldatensatz bleibt erhalten');
+      expect(await loadedProfile(store)).toEqual(damaged);
+      await lockUserVault(session);
+    }
+    await lockUserVault(producer);
   }, 30_000);
 
 });
