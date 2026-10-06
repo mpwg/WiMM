@@ -15,7 +15,7 @@ async function createAndUnlock(page: Page): Promise<void> {
   await page.getByRole('button', { name: 'Lokalen Bereich eröffnen' }).click();
   await page.getByLabel('Entsperrpassphrase').fill(passphrase);
   await page.getByRole('button', { name: 'Entsperren' }).click();
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Alles im Blick.' })).toBeVisible();
 }
 
 test('öffnet vor bestätigtem Rettungscode keinen Bereich und persistiert weder Code noch Profil', async ({ page }) => {
@@ -34,7 +34,7 @@ test('öffnet vor bestätigtem Rettungscode keinen Bereich und persistiert weder
   const recoveryCode = await page.getByRole('status', { name: 'Rettungscode' }).textContent();
   expect(recoveryCode).toBeTruthy();
   await expect(page.getByRole('button', { name: 'Lokalen Bereich eröffnen' })).toBeDisabled();
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Alles im Blick.' })).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => Object.keys(localStorage).map((key) => localStorage.getItem(key)))).not.toContain(recoveryCode);
   expect(consoleMessages).not.toContain(recoveryCode);
 });
@@ -54,12 +54,12 @@ test('verwirft eine abgebrochene Tresoranlage ohne dauerhaftes Profil', async ({
 
 test('bewahrt den Haushaltsschlüssel bei Sperren und standalone Neustart', async ({ page, context }) => {
   await createAndUnlock(page);
-  await page.getByRole('button', { name: '+ Haushalt anlegen' }).click();
+  await page.getByRole('button', { name: 'Haushalt anlegen' }).click();
   await expect(page.getByText('Gemeinsamer Bereich')).toBeVisible();
 
   await page.getByRole('button', { name: 'Tresor sperren' }).click();
   await expect(page.getByRole('heading', { name: 'Tresor entsperren' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Übersicht' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Alles im Blick.' })).toHaveCount(0);
   await page.getByLabel('Entsperrpassphrase').fill(passphrase);
   await page.getByRole('button', { name: 'Entsperren' }).click();
   await expect(page.getByLabel('Bereich')).toHaveValue(/.+/);

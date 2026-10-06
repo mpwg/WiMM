@@ -48,3 +48,11 @@ Der ergänzende AX-Treiber füllt synthetische Textfelder mit Systemtastatureing
 ## Importabnahme P5
 
 Die [native P5-Teilmatrix](../../docs/handoffs/p5-native.md) belegt Systemmenü, echten Öffnendialog, Worker unter unveränderter Produktions-CSP, SQLite-Gruppencommit, erhaltene Empfängernamen sowie echten Offline-Neustart und Sperrprüfung auf macOS arm64. Der Prüf-Identifier und Profilstore trennen synthetische Daten vom Produktprofil. Zusätzlich sind 10.000-Zeilen-Vorschau, Teilübernahme, tatsächliche Disk-full mit unverändertem gesamten SQLite-Stand und Wiederaufnahme nach Offline-Neustart geprüft. Weitere Plattformen und physische Geräte bleiben in der [Gesamtmatrix](../../docs/handoffs/p5.md) offen; Browserprüfungen ersetzen diese Belege nicht.
+
+## Oberfläche nach dem UX-Flow
+
+Die gemeinsame Oberfläche übernimmt Grünakzent, warme Flächen, die Wortmarke „WiMM.“ und ruhige Listen aus dem freigegebenen klickbaren Konzept. „Alles im Blick.“ zeigt den echten **Kontostand gesamt**, letzte Buchungen, fällige Zahlungsvorschläge und Monatswerte. Desktop verwendet eine Seitenleiste mit separatem Bereichskopf; mobil bleiben Übersicht, Buchungen und die eigene Mehr-Ansicht erreichbar. Einstellungen enthalten Verwaltung und Farbschema. Tresor, Rettungscode und erstes Konto bilden den geführten lokalen Einstieg.
+
+Buchungen und Konten werden über geschützte Dialoge bearbeitet; mobil füllen diese den Bildschirm. Import führt durch vier ausdrücklich bestätigte Schritte. Budget, Teilen und Familienausgleich sind weiterhin spätere Fachpakete. Es werden keine simulierten Konzeptdaten übernommen. Prüfung: `pnpm test:ux`; aktuelle Belege und offene Plattformprüfungen stehen in der UX-Übergabe.
+
+Aktuelle UX-Abnahme vom 5. Oktober 2026: [Kriterien und Prüfbelege](../../docs/handoffs/ux.md). Die Umsetzung ist bereit zur Prüfung; Die Ubuntu-CI besteht einschließlich Firefox; vollständige Geräte-/Screenreader- und weitere native Plattformbelege sowie die gesamte Zoommatrix sind noch offen.

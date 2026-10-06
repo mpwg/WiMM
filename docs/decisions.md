@@ -132,6 +132,6 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 - Datum: 5. Oktober 2026. Status: angenommen.
 - Herkunft: Nutzerwahl „Klar und markant“, Desktop und Mobil; ausdrücklicher Implementierungsauftrag UX-01–UX-06.
 - Problem: dauerhaft offene Formulare und gleichrangige Verwaltung verdrängen Finanzarbeit; Kontosumme suggeriert Budgetverfügbarkeit.
-- Entscheidung: Indigo-/Systemschriftgestaltung, Listen zuerst, kontextbezogene Dialoge und eigene mobile Mehr-Ansicht gemäß [UX-Konzept](ux-redesign.md). Kontosumme heißt „Kontostand gesamt“.
+- Entscheidung: Grünakzent, warme Flächen und Systemschrift gemäß zusätzlichem Nutzerauftrag vom 5. Oktober 2026 für den [UX-Flow](assets/ux-flow-konzept.html), Listen zuerst, kontextbezogene Dialoge und eigene mobile Mehr-Ansicht gemäß [UX-Konzept](ux-redesign.md). Kontosumme heißt „Kontostand gesamt“ und führt die Übersicht. Die Budgetzahl des synthetischen Konzepts wird bis P6 nicht übernommen.
 - Folgen: bestehende UI-Defaults werden gemeinsam aktualisiert. Native Bedienung, Fachkern und E2EE-Grenzen bleiben verbindlich.
 - Migration und Tests: interne Ansichtsänderung ohne Datenmigration; atomarer Kontoeinstieg und vollständige UI-Regression. P6–P10 bleiben später.

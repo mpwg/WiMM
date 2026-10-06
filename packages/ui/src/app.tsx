@@ -210,6 +210,10 @@ function LocalStart({ context, title }: { readonly context: UnlockedAppContext; 
   </main>;
 }
 
+function EntrySteps({ current }: { readonly current: number }) {
+  return <ol className="stepper" aria-label="Lokaler Einstieg">{['Tresor anlegen', 'Rettungscode sichern', 'Erstes Konto'].map((label, index) => <li key={label} aria-current={index === current ? 'step' : undefined}>{index + 1}. {label}</li>)}</ol>;
+}
+
 function CreateVault({ notice, title, screen, store, onScreen, onNotice }: {
   readonly notice?: string | undefined;
   readonly title: string;
@@ -264,7 +268,7 @@ function CreateVault({ notice, title, screen, store, onScreen, onNotice }: {
   }
 
   if (screen.recoveryCode !== undefined) {
-    return <main className="auth"><p className="eyebrow">{title} · Schritt 2 von 3</p><h1>Rettungscode sichern</h1>
+    return <main className="auth"><p className="product auth-brand" aria-label={title}>Wi<span>MM.</span></p><EntrySteps current={1} /><h1>Rettungscode sichern</h1>
       <p>Dieser Code ist der zweite Weg zu Ihren Finanzschlüsseln. Er wird nicht erneut angezeigt und nie an einen Server gesendet.</p>
       <output className="recovery-code" aria-label="Rettungscode">{screen.recoveryCode}</output>
       {notice === undefined ? undefined : <p role="alert">{notice}</p>}
@@ -272,7 +276,7 @@ function CreateVault({ notice, title, screen, store, onScreen, onNotice }: {
         <button disabled={!recoveryConfirmed || busy} type="submit">Lokalen Bereich eröffnen</button></form>
     </main>;
   }
-  return <main className="auth"><p className="eyebrow">{title} · Schritt 1 von 3</p><h1>Lokalen Tresor anlegen</h1>
+  return <main className="auth"><p className="product auth-brand" aria-label={title}>Wi<span>MM.</span></p><EntrySteps current={0} /><h1>Lokalen Tresor anlegen</h1>
     <p>Die App funktioniert ohne Konto und Server. Die Entsperrpassphrase bleibt auf diesem Gerät.</p>
     {notice === undefined ? undefined : <p role="alert">{notice}</p>}
     <form onSubmit={(event) => { void submit(event); }}><label>Entsperrpassphrase<input autoComplete="new-password" minLength={12} onChange={(event) => setPassphrase(event.target.value)} required type="password" value={passphrase} /></label>
@@ -303,7 +307,7 @@ function UnlockVault({ notice, title, profile, onUnlocked, onNotice }: {
       onNotice('Der Tresor konnte nicht entsperrt werden. Passphrase oder Rettungscode prüfen.');
     } finally { setBusy(false); }
   }
-  return <main className="auth"><p className="eyebrow">{title}</p><h1>Tresor entsperren</h1><p>Eine Serveranmeldung ist hierfür nicht erforderlich.</p>
+  return <main className="auth"><p className="product auth-brand" aria-label={title}>Wi<span>MM.</span></p><h1>Tresor entsperren</h1><p>Eine Serveranmeldung ist hierfür nicht erforderlich.</p>
     {notice === undefined ? undefined : <p role="alert">{notice}</p>}
     <form onSubmit={(event) => { void submit(event); }}><label>{recovery ? 'Rettungscode' : 'Entsperrpassphrase'}<input autoComplete="current-password" onChange={(event) => setSecret(event.target.value)} required type="password" value={secret} /></label>
       <label><input checked={recovery} onChange={(event) => setRecovery(event.target.checked)} type="checkbox" /> Rettungscode verwenden</label>

@@ -16,5 +16,5 @@ for (const mobile of [false, true]) test(`Navigation und richtige Kontosumme ${m
   await expect(page.getByRole('heading', { name: 'Kategorien', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Alle Einstellungen' }).click();
   await page.getByLabel('Farbschema').selectOption('dark');
-  await expect(page.locator('.app-shell')).toHaveCSS('background-color', 'rgb(20, 22, 28)');
+  await expect(page.locator('.app-shell')).toHaveCSS('background-color', 'rgb(23, 29, 27)');
 });
