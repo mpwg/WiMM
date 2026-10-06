@@ -5,8 +5,9 @@ import { navigate, openAccountAction, openBooking } from '../helpers/ui.js';
 const rows = (page: Page) => page.locator('[data-transaction-id]');
 const read = (page: Page) => page.evaluate(() => window.workspaceTest.read());
 const live = async (page: Page) => (await read(page)).filter((entry) => entry.aggregateType === 'transaction' && entry.deletedAt === undefined) as unknown as TransactionAggregate[];
-async function open(page: Page, desktop: boolean) { await page.goto(`/tests/workspace.html?p44=true&desktop=${desktop}`); await navigate(page, 'Konten'); }
+async function open(page: Page, desktop: boolean) { await page.clock.setFixedTime(new Date('2026-10-05T12:00:00Z')); await page.goto(`/tests/workspace.html?p44=true&desktop=${desktop}`); await navigate(page, 'Konten'); }
 async function activate(page: Page, button: Locator, touch: boolean) {
+  await expect(button).toBeEnabled();
   if (touch) return button.tap();
   for (let i = 0; i < 150; i += 1) { if (await button.evaluate((element) => element === document.activeElement)) { await page.keyboard.press('Enter'); return; } await page.keyboard.press('Tab'); }
   throw new Error('Befehl per Tastatur nicht erreichbar');
@@ -67,7 +68,7 @@ for (const touch of [false, true]) {
     });
     test('Normale abgeglichene Buchung bleibt bis zur bestätigten Entsperrung gesperrt und ist danach bearbeitbar', async ({ page }, info) => {
       await open(page, info.project.name.startsWith('Desktop')); await view(page, 'Buchungen');
-      const booking = await openBooking(page); await booking.locator('summary').filter({ hasText: /^Notiz$/ }).click(); await booking.getByLabel('Betrag', { exact: true }).fill('-10'); await booking.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: 'Testkonto' }); await booking.getByRole('combobox', { name: 'Kategorie', exact: true }).selectOption({ label: 'Testkategorie' }); await booking.getByLabel('Notiz').fill('Abgeglichener Einkauf');
+      const booking = await openBooking(page); await booking.locator('summary').filter({ hasText: /^Notiz$/ }).click(); await booking.getByLabel('Betrag', { exact: true }).fill('-10'); await booking.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: 'Testkonto' }); await booking.getByRole('combobox', { name: 'Kategorie', exact: true }).selectOption({ label: 'Testkategorie' }); await booking.getByLabel('Notiz').fill('Abgeglichener Einkauf'); await booking.getByLabel('Datum', { exact: true }).fill('2026-10-05');
       await activate(page, booking.getByRole('button', { name: 'Lokal speichern' }), touch); await expect(booking).toHaveCount(0);
       await view(page, 'Konten'); const form = await reconcile(page, '990'); await activate(page, form.getByRole('button', { name: 'Abgleich bestätigen' }), touch); await expect(form).toHaveCount(0); await view(page, 'Konten');
       let dialog = await detail(page, 'Testkonto', /Abgeglichener Einkauf/); await expect(dialog.getByRole('button', { name: 'Bearbeiten', exact: true })).toHaveCount(0); await expect(dialog.getByRole('button', { name: 'Löschen', exact: true })).toHaveCount(0);
@@ -75,6 +76,29 @@ for (const touch of [false, true]) {
       dialog = await detail(page, 'Testkonto', /Abgeglichener Einkauf/); await activate(page, dialog.getByRole('button', { name: 'Abgleich entsperren', exact: true }), touch); await activate(page, page.getByRole('dialog').getByRole('button', { name: 'Entsperren bestätigen' }), touch); await expect(page.getByRole('dialog')).toHaveCount(0);
       dialog = await detail(page, 'Testkonto', /Abgeglichener Einkauf/); await activate(page, dialog.getByRole('button', { name: 'Bearbeiten', exact: true }), touch); const editor = page.getByRole('dialog'); await editor.getByLabel('Betrag', { exact: true }).fill('-15'); await activate(page, editor.getByRole('button', { name: 'Änderung speichern' }), touch); await expect(editor).toHaveCount(0);
       expect((await live(page)).find((entry) => entry.note === 'Abgeglichener Einkauf')).toMatchObject({ amount: -1500, clearance: 'cleared' });
+    });
+    test('Buchung nach dem Auszugsdatum bleibt vom Abgleich ausgeschlossen', async ({ page }, info) => {
+      await open(page, info.project.name.startsWith('Desktop'));
+      await view(page, 'Buchungen');
+      const booking = await openBooking(page);
+      await booking.locator('summary').filter({ hasText: /^Notiz$/ }).click();
+      await booking.getByLabel('Betrag', { exact: true }).fill('-10');
+      await booking.getByLabel('Datum', { exact: true }).fill('2026-10-06');
+      await booking.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: 'Testkonto' });
+      await booking.getByRole('combobox', { name: 'Kategorie', exact: true }).selectOption({ label: 'Testkategorie' });
+      await booking.getByLabel('Notiz').fill('Künftiger Einkauf');
+      await activate(page, booking.getByRole('button', { name: 'Lokal speichern' }), touch);
+      await expect(booking).toHaveCount(0);
+      const before = await read(page);
+      await view(page, 'Konten');
+      const form = await reconcile(page, '990');
+      await expect(form).toContainText(/Differenz: -€\s*10,00/);
+      await expect(form.getByRole('button', { name: 'Abgleich bestätigen' })).toBeDisabled();
+      await form.getByRole('button', { name: 'Zurück', exact: true }).click();
+      await expect(form.getByRole('checkbox')).toHaveCount(1);
+      await expect(form).not.toContainText('Künftiger Einkauf');
+      expect(await read(page)).toEqual(before);
+      expect((await live(page)).find((entry) => entry.note === 'Künftiger Einkauf')).toMatchObject({ date: '2026-10-06', clearance: 'uncleared' });
     });
     test('Schützt geänderte Buchungs-, Transfer- und Abgleichdialoge mit Escape, Abbrechen und Fokus', async ({ page }, info) => {
       await open(page, info.project.name.startsWith('Desktop'));

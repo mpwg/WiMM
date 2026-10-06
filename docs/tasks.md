@@ -307,3 +307,9 @@ Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen
 - Verträge: [Profilrevision](data-model.md#lokales-profil-und-profilrevision), [Profilerweiterung](encryption.md#atomare-lokale-profilerweiterung), [B01-Prüfungen](testing.md#b01--lokale-profilpersistenz).
 - Abnahme/Nachweise: Regression vor Behebung verliert zwei Bereiche; nach Behebung erhalten Zwei-Tab-/Recovery-, Speicherfehler- und veraltete Wechseltests alle bestätigten Bereiche. Aktuelle Befehle und Grenzen in [B01-Übergabe](handoffs/b01.md).
 - Nächster Schritt: A02 mit getrennten Ladefehlerzuständen und vollständiger Profilvalidierung; eigener auf A01 aufbauender PR.
+
+### B01 — PR-45-Review und CI-Nachprüfung
+
+- Freigabe: Nutzerauftrag vom 6. Oktober 2026 zur Behebung der PR-45-Kommentare und des fehlgeschlagenen CI-/Buildlaufs; umfasst den hierfür notwendigen Q01-Fixturefix.
+- Ergebnis: verständlicher Fehler bei fehlender Profilkoordination; feste Abgleichfixturezeit, ausdrücklich gefülltes Buchungsdatum und separater Zukunftsbuchungs-Negativfall. Keine Änderung an Geld-, Abgleich- oder Kryptoregeln.
+- Prüfung: 18 UI-/Profilporttests, vier B01-Webfälle und alle 28 P4.4-Web-/Desktopfrontendfälle bestanden. Vollständige Nachprüfung läuft; aktuelle Details in [B01-Übergabe](handoffs/b01.md#pr-45--review-und-fehlgeschlagene-ci-korrigiert).
