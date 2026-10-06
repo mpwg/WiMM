@@ -22,6 +22,14 @@ export interface ProfileStore {
   change(update: (current: LocalProfile | undefined) => Promise<LocalProfile>): Promise<LocalProfile>;
 }
 
+/** Verständlicher Hinweis für einen Laufzeitkontext ohne sichere Profilkoordination. */
+export class ProfileCoordinationError extends Error {
+  constructor() {
+    super('Dieser Browser oder diese WebView unterstützt keine sichere lokale Speicherkoordination. Öffnen Sie WiMM in einem aktuellen unterstützten Browser oder aktualisieren Sie die Desktop-App. Es wurde keine Profiländerung gespeichert.');
+    this.name = 'ProfileCoordinationError';
+  }
+}
+
 export class ProfileConflictError extends Error {
   constructor() { super('Das lokale Profil wurde inzwischen geändert. Bitte erneut entsperren und die Änderung wiederholen.'); }
 }
@@ -31,7 +39,7 @@ export function createBrowserProfileStore(key = 'wimm/local-profile/v1'): Profil
     async load() { return readBrowserProfile(key).result; },
     async change(update) {
       // Kein unsicherer Read-modify-write-Fallback ohne tabübergreifende Koordination.
-      if (navigator.locks === undefined) throw new Error('Profiländerungen benötigen die lokale Speicherkoordination.');
+      if (navigator.locks === undefined) throw new ProfileCoordinationError();
       return navigator.locks.request(`wimm:profile:${key}`, async () => {
         const { raw, result } = readBrowserProfile(key);
         if (result.kind === 'corrupt' || result.kind === 'unreadable') throw new ProfileLoadError(result.kind);

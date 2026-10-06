@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ProfileStore } from './profile-store.js';
-import { createBrowserProfileStore } from './profile-store.js';
+import { createBrowserProfileStore, ProfileCoordinationError, type ProfileStore } from './profile-store.js';
 import { createLocalProfile, changeLocalProfile } from './app.js';
 import { unlockUserVaultWithPassphrase, unlockUserVaultWithRecoveryCode } from '@wimm/crypto';
 
@@ -53,7 +52,9 @@ describe('atomarer Browser-Profilport', () => {
     const original = JSON.stringify(created.profile);
     const storage = browser(original);
     vi.stubGlobal('navigator', {});
-    await expect(createBrowserProfileStore().change(async () => created.profile)).rejects.toThrow('Speicherkoordination');
+    const update = vi.fn<() => Promise<typeof created.profile>>(async () => created.profile);
+    await expect(createBrowserProfileStore().change(update)).rejects.toBeInstanceOf(ProfileCoordinationError);
+    expect(update).not.toHaveBeenCalled();
     expect(storage.read()).toBe(original);
   }, 30_000);
 });

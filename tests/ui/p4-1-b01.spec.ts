@@ -97,3 +97,19 @@ test('B01/A01: Sperren während wartender Profiländerung verhindert Commit und 
   await expect(page.getByRole('heading', { name: 'Alles im Blick.' })).toHaveCount(0);
   await unlock(page);
 });
+
+test('B01/A01: Ersteinrichtung ohne Web Locks erklärt die fehlende Speicherkoordination und schreibt kein Profil', async ({ page }, info) => {
+  await page.addInitScript(() => Object.defineProperty(navigator, 'locks', { configurable: true, value: undefined }));
+  await page.goto('/');
+  await page.getByLabel('Entsperrpassphrase', { exact: true }).fill(passphrase);
+  await page.getByLabel('Passphrase wiederholen').fill(passphrase);
+  await page.getByRole('button', { name: 'Tresor anlegen' }).click();
+  await page.getByLabel('Ich habe den Rettungscode sicher abgelegt.').check();
+  await page.getByRole('button', { name: 'Lokalen Bereich eröffnen' }).click();
+  await expect(page.getByRole('alert')).toContainText('unterstützt keine sichere lokale Speicherkoordination');
+  await expect(page.getByRole('alert')).toContainText('aktuellen unterstützten Browser');
+  expect(await profileValue(page)).toBeNull();
+  await expect(page.getByRole('heading', { name: 'Rettungscode sichern' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Alles im Blick.' })).toHaveCount(0);
+  await page.screenshot({ path: info.outputPath('fehlende-speicherkoordination.png'), mask: [page.getByRole('status', { name: 'Rettungscode' })] });
+});

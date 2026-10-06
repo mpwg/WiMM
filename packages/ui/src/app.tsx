@@ -17,7 +17,7 @@ import {
   type UnlockedUserVault
 } from '@wimm/crypto';
 
-import { ProfileConflictError, ProfileLoadError, type ProfileLoadResult, type ProfileStore } from './profile-store.js';
+import { ProfileConflictError, ProfileCoordinationError, ProfileLoadError, type ProfileLoadResult, type ProfileStore } from './profile-store.js';
 export { createBrowserProfileStore, createMemoryProfileStore } from './profile-store.js';
 export type { ProfileStore, ProfileLoadResult } from './profile-store.js';
 
@@ -181,7 +181,7 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
       if (generation.current !== started) { await lockUserVault(created.vault); return; }
       setScreen({ kind: 'unlocked', ...created });
     } catch (error) {
-      if (generation.current === started) setNotice(error instanceof ProfileConflictError ? error.message : 'Die Profiländerung konnte nicht dauerhaft gespeichert werden. Der bestehende Bereich bleibt unverändert.');
+      if (generation.current === started) setNotice((error instanceof ProfileConflictError || error instanceof ProfileCoordinationError) ? error.message : 'Die Profiländerung konnte nicht dauerhaft gespeichert werden. Der bestehende Bereich bleibt unverändert.');
     } finally { changing.current = false; }
   }, [screen, store]);
 
@@ -308,8 +308,8 @@ function CreateVault({ notice, title, screen, store, onScreen, onNotice }: {
       });
       await lockUserVault(screen.vault);
       onScreen({ kind: 'unlock', profile: saved });
-    } catch {
-      onNotice('Der Tresor konnte nicht dauerhaft vorbereitet werden.');
+    } catch (error) {
+      onNotice(error instanceof ProfileCoordinationError || error instanceof ProfileConflictError ? error.message : 'Der Tresor konnte nicht dauerhaft vorbereitet werden.');
     } finally {
       setBusy(false);
     }
