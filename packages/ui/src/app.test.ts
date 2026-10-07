@@ -1,8 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import type { ProfileStore } from './profile-store.js';
 import { describe, expect, it } from 'vitest';
 
 import { changeLocalProfile, createLocalHousehold, createLocalProfile, createMemoryProfileStore, selectLocalArea, type LocalProfile } from './app.js';
-import { lockUserVault, unlockUserVaultWithPassphrase, unlockUserVaultWithRecoveryCode } from '@wimm/crypto';
+import { persistUnlockedUserVault, lockUserVault, unlockUserVaultWithPassphrase, unlockUserVaultWithRecoveryCode } from '@wimm/crypto';
+
+async function loadedProfile(store: ProfileStore) {
+  const result = await store.load();
+  if (result.kind !== 'loaded') throw new Error('Testprofil fehlt');
+  return result.profile;
+}
 
 const profile = {
   profileId: '00000000-0000-4000-8000-000000000001',
@@ -24,9 +31,9 @@ describe('lokale Profilkomposition', () => {
   it('lehnt fremde Bereiche ab und gibt keine veränderbare Profilreferenz heraus', async () => {
     expect(() => selectLocalArea(profile, '00000000-0000-4000-8000-000000000099')).toThrow('gehört nicht');
     const store = createMemoryProfileStore(profile);
-    const loaded = (await store.load())!;
+    const loaded = (await loadedProfile(store));
     ((loaded.areas as unknown) as { label: string }[])[0]!.label = 'Verändert';
-    expect((await store.load())!.areas[0]!.label).toBe('Privater Bereich');
+    expect((await loadedProfile(store)).areas[0]!.label).toBe('Privater Bereich');
   });
 
   it('legt einen standalone-fähigen, verschlüsselten Bereich an und entsperrt ihn per Passphrase oder Rettungscode', async () => {
@@ -45,7 +52,7 @@ describe('lokale Profilkomposition', () => {
     const unlocked = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
     const household = await createLocalHousehold(created.profile, unlocked);
     const store = createMemoryProfileStore(household.profile);
-    const restarted = (await store.load())!;
+    const restarted = (await loadedProfile(store));
 
     expect(restarted.areas).toHaveLength(2);
     expect(restarted.areas[1]!.kind).toBe('household');
@@ -78,7 +85,7 @@ describe('lokale Profilkomposition', () => {
       changeLocalProfile(store, created.profile, second)
     ]);
     await changeLocalProfile(store, created.profile, first, created.profile.selectedAreaId);
-    const restarted = (await store.load())!;
+    const restarted = (await loadedProfile(store));
     expect(restarted.areas).toHaveLength(3);
     expect(restarted.revision).toBe(3);
     const unlocked = await unlockUserVaultWithPassphrase(restarted.vault, passphrase);
@@ -97,17 +104,52 @@ describe('lokale Profilkomposition', () => {
       throw new Error('Synthetischer Quota-Fehler');
     } };
     await expect(changeLocalProfile(failing, created.profile, session)).rejects.toThrow('Quota');
-    expect(await store.load()).toEqual(created.profile);
+    expect(await loadedProfile(store)).toEqual(created.profile);
     await changeLocalProfile(store, created.profile, session);
-    expect((await store.load())!.areas).toHaveLength(2);
+    expect((await loadedProfile(store)).areas).toHaveLength(2);
   }, 30_000);
 
   it('weist veraltete Revisionen ab und lässt die nächste Änderung nach Callbackfehler zu', async () => {
     const store = createMemoryProfileStore({ ...profile, revision: 1 });
     await expect(store.change(async () => ({ ...profile, revision: 0 }))).rejects.toThrow('inzwischen geändert');
-    expect((await store.load())!.revision).toBe(1);
+    expect((await loadedProfile(store)).revision).toBe(1);
     const saved = await store.change(async (current) => selectLocalArea(current!, profile.selectedAreaId));
     expect(saved.revision).toBe(2);
   });
+
+  it('B01/A02: weist einen Bereich ohne authentifizierten Schlüssel vor jeder Profiländerung ab', async () => {
+    const passphrase = 'synthetischer-unpassender-schluesselbestand';
+    const created = await createLocalProfile(passphrase);
+    const changed = { ...created.profile, areas: [...created.profile.areas, { id: crypto.randomUUID(), kind: 'household' as const, label: 'Synthetischer Fehlerhaushalt' }] };
+    const store = createMemoryProfileStore(changed);
+    const session = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
+    await expect(changeLocalProfile(store, changed, session)).rejects.toThrow('Originaldatensatz');
+    expect(await loadedProfile(store)).toEqual(changed);
+    // Das Verwerfen der Prüfsitzung entwertet die ursprüngliche Sitzung nicht.
+    const valid = createMemoryProfileStore(created.profile);
+    await changeLocalProfile(valid, created.profile, session);
+    expect((await loadedProfile(valid)).areas).toHaveLength(2);
+  }, 30_000);
+
+  it.each(['identityPublicKey', 'identityPrivateKey', 'encryptionPublicKey', 'encryptionPrivateKey'] as const)('B01/A02: verwirft authentisch entschlüsselte, aber inkonsistente %s ohne Profiländerung', async (field) => {
+    const passphrase = 'synthetische-inkonsistente-schluesselpaare';
+    const created = await createLocalProfile(passphrase);
+    const producer = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
+    const index = field === 'identityPrivateKey' ? 63 : 1;
+    producer[field][index] = (producer[field][index] ?? 0) ^ 1;
+    // Authentische AEAD-Hülle mit semantisch beschädigtem, rein synthetischem Inhalt.
+    const damaged = { ...created.profile, vault: await persistUnlockedUserVault(producer, created.profile.vault) };
+    const store = createMemoryProfileStore(damaged);
+    for (const session of [
+      await unlockUserVaultWithPassphrase(created.profile.vault, passphrase),
+      await unlockUserVaultWithRecoveryCode(created.profile.vault, created.recoveryCode)
+    ]) {
+      const result = await changeLocalProfile(store, damaged, session).then(() => 'akzeptiert', (error: unknown) => error instanceof Error ? error.message : 'Unbekannter Fehler');
+      expect(result).toContain('Originaldatensatz bleibt erhalten');
+      expect(await loadedProfile(store)).toEqual(damaged);
+      await lockUserVault(session);
+    }
+    await lockUserVault(producer);
+  }, 30_000);
 
 });

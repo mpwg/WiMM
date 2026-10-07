@@ -301,12 +301,14 @@ Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen
 
 ## B01 — Profilpersistenz aus Audit vom 6. Oktober 2026
 
-- Status: in Arbeit; A01 (#24) behoben und gezielt geprüft, A02 (#25) folgt separat.
+- Status: A01 (#24) und A02 (#25) behoben und anhand ihrer Einzelissue-Kriterien gezielt geprüft. Die erste Gesamtsuite traf vier Q01-Fehler (#34), die durch den nachfolgenden PR-45-CI-Auftrag behoben sind; lokale Firefoxprüfung weiterhin am Profilstart blockiert. Aktuelle Nachprüfung unten. Getrennte PRs: [A01 #45](https://github.com/mpwg/WiMM/pull/45), [A02 #46](https://github.com/mpwg/WiMM/pull/46) baut darauf auf.
 - Voraussetzung/Freigabe: ausdrücklicher Nutzerauftrag vom 6. Oktober 2026 für B01 aus [Auditübersicht #44](https://github.com/mpwg/WiMM/issues/44), pro Einzelissue ein Pull Request. Keine Freigabe für weitere Auditpakete oder P6–P11.
 - Ergebnis A01: asynchroner atomarer Profiländerungsport mit Profilrevision, aktuellem Tresorstand, CAS, Doppelausführungs- und Sitzungsschutz; Altprofile behalten ihre Schlüssel.
 - Verträge: [Profilrevision](data-model.md#lokales-profil-und-profilrevision), [Profilerweiterung](encryption.md#atomare-lokale-profilerweiterung), [B01-Prüfungen](testing.md#b01--lokale-profilpersistenz).
 - Abnahme/Nachweise: Regression vor Behebung verliert zwei Bereiche; nach Behebung erhalten Zwei-Tab-/Recovery-, Speicherfehler- und veraltete Wechseltests alle bestätigten Bereiche. Aktuelle Befehle und Grenzen in [B01-Übergabe](handoffs/b01.md).
-- Nächster Schritt: A02 mit getrennten Ladefehlerzuständen und vollständiger Profilvalidierung; eigener auf A01 aufbauender PR.
+- Ergebnis A02: fehlend, geladen, beschädigt und nicht lesbar getrennt; vollständige öffentliche Profil-/Hüllenprüfung und authentifizierte Schlüsselzugehörigkeit. Genau einmal laden, kein ersetzender Erststart bei vorhandenen Fehlerständen.
+- Erste Prüfbelege vor dem Review-/CI-Fix: 171 Vitesttests, fünf Rusttests, 45 Web-/43 Desktop-Frontendabläufe, Builds, 24 Layout-/Leistungsfälle, zwei gebaute PWA-Offlinefälle und Importworker bestanden. Speicherintegration 54 bestanden/vier Q01-Fehler; B01 Chromium/WebKit 14 bestanden, Firefoxstart lokal nicht möglich. Details und synthetischer Screenshot in [B01-Übergabe](handoffs/b01.md#aktuelle-gesamtnachprüfung-beider-b01-fixes).
+- Nächster Schritt: A01-PR #45 prüfen/integrieren, danach A02-PR #46 auf main umstellen; weitere Auditpakete benötigen einen gesonderten Auftrag.
 
 ### B01 — PR-45-Review und CI-Nachprüfung
 
@@ -315,3 +317,10 @@ Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen
 - Prüfung: 18 UI-/Profilporttests, vier B01-Webfälle und alle 28 P4.4-Web-/Desktopfrontendfälle bestanden. Gesamtnachprüfung: 166 Vitesttests, fünf Rusttests, 42 Web-/40 Desktop-Frontendfälle, alle 62 Speicherintegrationen und 24 Layout-/Leistungsfälle bestanden. Lokale UX-Serie: Chromium/WebKit 14 bestanden, sieben Firefoxstarts durch Profilfehler blockiert. Produktionsbuilds, zwei gebaute PWA-Offlinefälle und Importworker ebenfalls bestanden. Aktueller Ubuntu-CI-Status in [PR #45](https://github.com/mpwg/WiMM/pull/45); aktuelle Details in [B01-Übergabe](handoffs/b01.md#pr-45--review-und-fehlgeschlagene-ci-korrigiert).
 
 - Weiterer PR-45-Reviewfix: wartende Profiländerungen sperren Finanzaktionen und Kurzbefehle bis zum tatsächlichen Commit; keine neuen Entwürfe während eines Bereichswechsels. Je fünf B01-Fälle auf Web/Desktopfrontend bestanden. Wiederholte Gesamtnachprüfung: 166 Vitesttests, fünf Rusttests, 43 Web-/41 Desktop-Frontendfälle, 62 Speicherintegrationen, 24 Layout-/Leistungsfälle, Produktionsbuilds, Offline und Worker bestanden. Nur lokale Firefoxstarts weiterhin blockiert; aktueller Ubuntu-CI-Status beim PR.
+
+### B01 — PR-46-Review zur Schlüsselzugehörigkeit
+
+- Freigabe: Nutzerfrage vom 6. Oktober 2026 zum eigenen PR-46-Review-Kommentar; bestätigt und im zugehörigen A02-Branch behoben.
+- Ergebnis: mathematische Ed25519-/X25519-Schlüsselzugehörigkeit mit libsodium vor Profilfreigabe und Profiländerung prüfen; auch den eingebetteten öffentlichen Ed25519-Anteil validieren. Originalbytes und gültige Sitzungsschlüssel erhalten; keine Suite-/KDF-/Formatänderung.
+- Prüfung: vier Repros vor Behebung fehlgeschlagen, danach bestanden. Typecheck, Lint, 20 Cryptotests, 27 UI-/Profilporttests und je acht neue echte AppShell-Fälle auf Web/Desktopfrontend bestanden. Vollständige Nachprüfung des erweiterten A02-Stands folgt. [Nachweise](handoffs/b01.md#pr-46--mathematische-schlüsselzugehörigkeit-prüfen).
+- PR #45: aktueller [Ubuntu-Lauf 37517001103](https://github.com/mpwg/WiMM/actions/runs/37517001103) vollständig erfolgreich; beide Review-Threads beantwortet und aufgelöst.

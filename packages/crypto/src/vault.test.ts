@@ -7,6 +7,7 @@ import {
   lockUserVault,
   persistUnlockedUserVault,
   refreshUnlockedUserVault,
+  validateUserVaultKeyPairs,
   createEncryptedJsonSnapshotProtector,
   unlockUserVaultWithPassphrase,
   unlockUserVaultWithRecoveryCode,
@@ -112,6 +113,31 @@ describe('lokaler UserVault', () => {
     await expect(refreshUnlockedUserVault(original, foreign.record)).rejects.toBeInstanceOf(VaultUnlockError);
     await lockUserVault(original);
     await expect(refreshUnlockedUserVault(original, record)).rejects.toBeInstanceOf(VaultUnlockError);
+  });
+
+  it('prüft beide mathematischen Schlüsselpaare ohne die gültigen Sitzungsschlüssel zu verändern', async () => {
+    const created = await createUserVault(passphrase);
+    for (const vault of [
+      await unlockUserVaultWithPassphrase(created.record, passphrase),
+      await unlockUserVaultWithRecoveryCode(created.record, created.recoveryCode)
+    ]) {
+      const before = structuredClone(vault);
+      await expect(validateUserVaultKeyPairs(vault)).resolves.toBeUndefined();
+      expect(vault).toEqual(before);
+      await lockUserVault(vault);
+    }
+  });
+
+  it.each(['identityPublicKey', 'identityPrivateKey', 'encryptionPublicKey', 'encryptionPrivateKey'] as const)('weist mathematisch inkonsistente %s trotz korrekter Länge ab', async (field) => {
+    const created = await createUserVault(passphrase);
+    const vault = await unlockUserVaultWithPassphrase(created.record, passphrase);
+    const damaged = structuredClone(vault);
+    const index = field === 'identityPrivateKey' ? 63 : 1;
+    damaged[field][index] = (damaged[field][index] ?? 0) ^ 1;
+    await expect(validateUserVaultKeyPairs(damaged)).rejects.toBeInstanceOf(VaultUnlockError);
+    await validateUserVaultKeyPairs(vault);
+    await lockUserVault(vault);
+    await lockUserVault(damaged);
   });
 
   it('schützt Snapshots gegen Manipulation', async () => {
