@@ -19,6 +19,7 @@ import {
 /** Referenzimplementierung der Transaktionssemantik für die Adapterkonformitätssuite. */
 export class MemoryStorageAdapter implements LocalStorageAdapter {
   readonly profileId: UUID;
+  private writes: Promise<void> = Promise.resolve();
   private aggregates = new Map<UUID, StoredAggregate>();
   private confirmed = new Map<UUID, ConfirmedAggregate>();
   private pending = new Map<UUID, PendingOperation>();
@@ -39,7 +40,11 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
       .map((aggregate) => clone(aggregate)!);
   }
 
-  async applyAtomicBatch(batch: AtomicBatch<StoredAggregate, PendingOperation, StoredProjection>): Promise<void> {
+  applyAtomicBatch(batch: AtomicBatch<StoredAggregate, PendingOperation, StoredProjection>): Promise<void> {
+    return this.serialize(() => this.applyAtomicBatchExclusive(batch));
+  }
+
+  private async applyAtomicBatchExclusive(batch: AtomicBatch<StoredAggregate, PendingOperation, StoredProjection>): Promise<void> {
     const next = this.copy();
     assertBatch(next.aggregates, batch.expectedRevisions);
     for (const aggregate of batch.aggregates) next.aggregates.set(aggregate.handle, clone(aggregate)!);
@@ -57,7 +62,11 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
     return [...this.pending.values()].filter((entry) => entry.spaceId === spaceId).map((entry) => clone(entry)!);
   }
 
-  async saveSyncPage(page: SyncPage): Promise<void> {
+  saveSyncPage(page: SyncPage): Promise<void> {
+    return this.serialize(() => this.saveSyncPageExclusive(page));
+  }
+
+  private async saveSyncPageExclusive(page: SyncPage): Promise<void> {
     if (page.state.profileId !== this.profileId) throw new StorageWriteError('Das Profil der Syncseite passt nicht.');
     const next = this.copy();
     for (const entry of page.confirmed) next.confirmed.set(entry.aggregate.handle, clone(entry)!);
@@ -90,7 +99,11 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
     };
   }
 
-  async replaceSnapshot(snapshot: LocalSnapshot): Promise<void> {
+  replaceSnapshot(snapshot: LocalSnapshot): Promise<void> {
+    return this.serialize(() => this.replaceSnapshotExclusive(snapshot));
+  }
+
+  private async replaceSnapshotExclusive(snapshot: LocalSnapshot): Promise<void> {
     if (snapshot.profileId !== this.profileId) throw new StorageWriteError('Der Snapshot gehört zu einem anderen Profil.');
     const next = this.copy();
     next.clearSpace(snapshot.spaceId);
@@ -103,8 +116,18 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
     this.replace(next);
   }
 
-  async rebuildProjections(spaceId: UUID): Promise<void> {
+  rebuildProjections(spaceId: UUID): Promise<void> {
+    return this.serialize(() => this.rebuildProjectionsExclusive(spaceId));
+  }
+
+  private async rebuildProjectionsExclusive(spaceId: UUID): Promise<void> {
     for (const [key, projection] of this.projections) if (projection.spaceId === spaceId) this.projections.delete(key);
+  }
+
+  private serialize(action: () => Promise<void>): Promise<void> {
+    const result = this.writes.then(action);
+    this.writes = result.catch(() => {});
+    return result;
   }
 
   private copy(): MemoryStorageAdapter {

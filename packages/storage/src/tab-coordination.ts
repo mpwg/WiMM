@@ -27,10 +27,11 @@ export class BrowserAreaCoordinator {
     const previous = localLocks.get(name) ?? Promise.resolve();
     let release: (() => void) | undefined;
     const current = new Promise<void>((resolve) => { release = resolve; });
-    localLocks.set(name, previous.then(() => current));
+    const queued = previous.then(() => current);
+    localLocks.set(name, queued);
     await previous;
     try { this.channel?.postMessage(spaceId); return await action(); }
-    finally { release?.(); if (localLocks.get(name) === current) localLocks.delete(name); }
+    finally { release?.(); if (localLocks.get(name) === queued) localLocks.delete(name); }
   }
 
   close(): void { this.channel?.close(); }

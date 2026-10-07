@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
 
-import { MemoryStorageAdapter, StorageRevisionConflictError, toStoredAggregate } from './index.js';
+import { MemoryStorageAdapter, StorageRevisionConflictError, toStoredAggregate, type StoredAggregate } from './index.js';
 
 const profileId = '00000000-0000-4000-8000-000000000001' as const;
 const spaceId = '00000000-0000-4000-8000-000000000002' as const;
@@ -63,4 +63,24 @@ describe('MemoryStorageAdapter', () => {
     })).rejects.toThrow('Quota');
     expect(await adapter.readAggregate(accountId)).toBeUndefined();
   });
+});
+
+it('serialisiert konkurrierende CAS-Writes und erhält unabhängige Writes', async () => {
+  const adapter = new MemoryStorageAdapter(profileId);
+  const batch = (aggregate: StoredAggregate = account(), expectedRevision = 0) => ({ expectedRevisions: [{ handle: aggregate.handle, expectedRevision }], aggregates: [aggregate], outbox: [], projections: [] });
+  await adapter.applyAtomicBatch(batch());
+  const results = await Promise.allSettled([adapter.applyAtomicBatch(batch(account(2), 1)), adapter.applyAtomicBatch(batch(account(2), 1))]);
+  expect(results.filter(r => r.status === 'fulfilled')).toHaveLength(1);
+  const otherId = '00000000-0000-4000-8000-000000000006';
+  await Promise.all([adapter.applyAtomicBatch(batch(account(3), 2)), adapter.applyAtomicBatch(batch({ ...account(), id: otherId, handle: otherId }))]);
+  expect(await adapter.query({ spaceId })).toHaveLength(2);
+});
+
+it('ein verzögerter Fehler rollt nur den eigenen Write zurück und gibt die Warteschlange frei', async () => {
+  let rejectFirst = true;
+  const adapter = new MemoryStorageAdapter(profileId, { async beforeCommit() { await Promise.resolve(); if (rejectFirst) { rejectFirst = false; throw new Error('Quota'); } } });
+  const batch = { expectedRevisions: [{ handle: accountId, expectedRevision: 0 }], aggregates: [account()], outbox: [], projections: [] };
+  const results = await Promise.allSettled([adapter.applyAtomicBatch(batch), adapter.applyAtomicBatch(batch)]);
+  expect(results.map(r => r.status)).toEqual(['rejected', 'fulfilled']);
+  expect(await adapter.readAggregate(accountId)).toMatchObject({ revision: 1 });
 });

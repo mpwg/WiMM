@@ -324,3 +324,11 @@ Status und Nachweise aktualisieren, relevante Docs anpassen, gezielte Prüfungen
 - Ergebnis: mathematische Ed25519-/X25519-Schlüsselzugehörigkeit mit libsodium vor Profilfreigabe und Profiländerung prüfen; auch den eingebetteten öffentlichen Ed25519-Anteil validieren. Originalbytes und gültige Sitzungsschlüssel erhalten; keine Suite-/KDF-/Formatänderung.
 - Prüfung: vier Repros vor Behebung fehlgeschlagen, danach bestanden. Typecheck, Lint, 20 Cryptotests, 27 UI-/Profilporttests und je acht neue echte AppShell-Fälle auf Web/Desktopfrontend bestanden. Vollständige Nachprüfung des erweiterten A02-Stands folgt. [Nachweise](handoffs/b01.md#pr-46--mathematische-schlüsselzugehörigkeit-prüfen).
 - PR #45: aktueller [Ubuntu-Lauf 37517001103](https://github.com/mpwg/WiMM/actions/runs/37517001103) vollständig erfolgreich; beide Review-Threads beantwortet und aufgelöst.
+
+## Auditbehebung — Gesamtauftrag vom 7. Oktober 2026
+
+- Freigabe: ausdrücklicher Nutzerauftrag, alle GitHub-Issues systematisch zu beheben; direkte Arbeit und Zwischencommits auf `main` sind für diesen Auftrag erlaubt. Diese aktuelle Freigabe ersetzt die bisherige PR-Pflicht für diesen Auftrag. Bestehende Fach- und Abnahmekriterien gelten weiterhin; offene Plattformnachweise werden nicht fingiert.
+- Umfang: alle 21 Issues geprüft; #24/#25 bereits geschlossen. Offene Einzelbefunde #26–#43 und Übersicht #44 werden anhand ihrer Kriterien bearbeitet. Noch nicht implementierte P6–P11 sind keine Auditfehler.
+- A12 (#33): gemeinsame Warteschlange für alle Mutationen des Memory-Referenzadapters; konkurrierende CAS-Writes, unabhängige Writes und Fehlerfreigabe geprüft. Regression vor Fix: beide CAS-Writes erfolgreich; danach genau einer erfolgreich. Keine Änderung der Produktionsspeicherformate.
+- Q05 (#38): Cleanup vergleicht das tatsächlich gespeicherte Warteschlangenpromise; Fallbackserialisierung, Fehlerfreigabe und Entfernung des letzten Eintrags geprüft.
+- Prüfbelege: `pnpm test:storage` — 12 Tests bestanden; `pnpm typecheck` und `pnpm lint` bestanden. Vollständige Gesamtabnahme folgt nach den weiteren Fixpaketen.
