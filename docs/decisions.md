@@ -117,7 +117,7 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 ## ADR-034 — Pull-Request-Pflicht und geschützter Hauptbranch
 
 - Datum: 5. Oktober 2026.
-- Status: angenommen.
+- Status: ersetzt durch ADR-038 am 7. Oktober 2026.
 - Herkunft: ausdrücklicher Nutzerauftrag.
 - Problem: Verbindliche Arbeitsanweisungen verlangten Zwischencommits, untersagten aber nicht eindeutig direkte Commits oder Pushes auf `main` und machten Pull Requests nur zur Empfehlung.
 - Entscheidung: Sämtliche Repositoryänderungen werden ausschließlich über Pull Requests integriert. Direkte Commits und Pushes auf `main` sind verboten. Zwischencommits liegen auf einem Themenbranch; Pushes auf Themenbranches dienen ausschließlich dem Erstellen oder Aktualisieren des zugehörigen Pull Requests. Änderungen gelangen erst über dessen Merge nach `main`.
@@ -159,3 +159,14 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 - Betroffene Verträge/Pakete: [Verschlüsselung](encryption.md), lokaler Profilport, `packages/crypto`, Audit B05.
 - Migration und Kompatibilität: fehlende Hüllenversion **und** fehlende Parameter bedeuten exakt Legacy 2/64 MiB mit bisheriger AAD. Nach erfolgreicher Passphraseentsperrung und semantischer Profilprüfung wird nur die Passphrasehülle unter Profilkoordination/CAS ersetzt. Tresorchiffrat, Tresorschlüssel, Bereiche und Recoveryhülle bleiben unverändert. Recoveryentsperrung schreibt nichts; die Härtung erfolgt beim nächsten Passphraseentsperren. Fehler/Abbruch/CAS bewahren das Originalprofil.
 - Prüfung: Legacy und neue Hüllen über beide Wege, authentifizierte Header, Parameterabweisung vor KDF, Originalstand bei Migrationsfehler/Abbruch und Profil-CAS; echte Web-/Desktopfrontendabläufe.
+
+## ADR-038 — Direkte Hauptbrancharbeit nach erneuter Nutzerfreigabe
+
+- Datum: 7. Oktober 2026. Status: angenommen.
+- Herkunft: ausdrücklicher Nutzerauftrag, direkte Arbeit auf `main` wieder zu erlauben und alle GitHub-Issues systematisch zu beheben.
+- Problem: ADR-034 und abgeleitete Kurzregeln widersprechen der aktuellen Nutzerfreigabe.
+- Entscheidung: direkte Hauptbrancharbeit einschließlich eigener Zwischencommits und normaler Pushes ist wieder erlaubt. Themenbranches/PRs bleiben bei entsprechendem Auftrag möglich. Aktuelle Gitregeln stehen in AGENTS.md; Freigaben/Paketstatus ausschließlich in docs/tasks.md und im Nutzerauftrag.
+- Folgen: keine ungefragte Änderung von GitHub-Schutzregeln, kein Force-Push, kein Überschreiben fremder Änderungen; zielgerichtete Prüfungen und wahrheitsgemäße Abnahme bleiben verbindlich.
+- Betroffene Verträge/Pakete: Agenten-/Entwicklungsleitfäden, Workflow-Skill, Copilot- und PR-Vorlage; Audit Q06.
+- Migration und Kompatibilität: keine Produkt-/Datenmigration. ADR-034 bleibt als ersetzte Historie erhalten.
+- Prüfung: Dokumentationsvalidator, Links und konsistente zentrale Freigabeverweise.

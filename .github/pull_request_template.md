@@ -17,7 +17,7 @@ Nicht verfügbare Prüfungen oder verbleibende Einschränkungen:
 
 ## Abschluss
 
-- [ ] Änderung wird ausschließlich über diesen Pull Request integriert; kein direkter Commit oder Push auf `main`.
+- [ ] Integrationsweg entspricht der aktuellen Gitfreigabe aus AGENTS.md und dem Nutzerauftrag.
 - [ ] Paketstatus und betroffene Dokumentation aktualisiert.
 - [ ] Passende Fach-, Crypto-, Zugriffs- oder UI-Abnahme erfüllt; nicht relevante Gruppen benannt.
 - [ ] Keine realen Finanzdaten, Secrets oder privaten Schlüssel enthalten.

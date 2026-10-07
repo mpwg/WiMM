@@ -10,11 +10,11 @@ Führe Dateisuche, Lesen, Bearbeiten, Git-Befehle, Builds, Tests, Linter, Typech
 
 Lies [AGENTS.md](../../../AGENTS.md), [Agentenleitfaden](../../../docs/agent-guide.md) und den aktuellen [Paketstatus](../../../docs/tasks.md). Regeln und Spezifikation stehen dort; dupliziere sie nicht in einem zweiten Plan.
 
-1. Prüfe den tatsächlichen Auftrag und vorhandene Änderungen. Dokumentation/Skills/Editorvorlagen sind derzeit freigegeben; P1–P11 benötigen einen späteren ausdrücklichen Implementierungsauftrag.
+1. Prüfe den tatsächlichen Auftrag und vorhandene Änderungen. Aktuelle Freigaben ausschließlich aus `docs/tasks.md` und dem Nutzerauftrag ableiten.
 2. Wähle das erste freigegebene offene Paket mit erfüllten Voraussetzungen. Lies nur die für den Auftrag nötigen Fachreferenzen.
 3. Nutze die [Aufgabenvorlage](../../../docs/templates/task.md) für neue Teilaufgaben; bestehende Paketfelder beibehalten. Architekturänderungen mit [ADR-Vorlage](../../../docs/templates/decision.md) und betroffenen Verträgen gleichzeitig festhalten.
 4. Skaliere Prüfungen nach Risiko; dokumentiere ausgeführte und nicht verfügbare Prüfungen getrennt. Keine fingierten Test-/Auditbelege oder bloß aus einer Checkliste behauptete Freigaben.
-5. Erstelle nach jedem abgeschlossenen Abschnitt einen Zwischencommit mit zusammengehörigen Dateien auf dem Themenbranch. Niemals fremde Änderungen einbeziehen. Alle Änderungen werden per Pull Request integriert; direkte Commits oder Pushes auf `main` sind verboten. Themenbranch-Pushes sind ausschließlich zum Erstellen/Aktualisieren des zugehörigen Pull Requests vorgesehen; Merge nur über den Pull Request.
+5. Erstelle nach jedem abgeschlossenen Abschnitt einen Zwischencommit mit zusammengehörigen eigenen Dateien gemäß der aktuellen Gitfreigabe in `AGENTS.md`. Niemals fremde Änderungen einbeziehen; einen bestehenden Branch nicht ungefragt wechseln.
 6. Halte Paketstatus aktuell und übergib den nächsten konkreten Schritt mit [Übergabevorlage](../../../docs/templates/handoff.md). Für jeden Pull Request die vorhandene GitHub-Vorlage verwenden.
 
 Versionskontrolle ist die Quelle; GitHub-Issues verlinken auf Paket/ADR, ersetzen aber nicht die Fachspezifikation. Ein Issue oder dieses Skill verleiht keine zusätzlichen Veröffentlichungsrechte.

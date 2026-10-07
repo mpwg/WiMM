@@ -4,7 +4,7 @@
 
 [AGENTS.md](../AGENTS.md) enthält globale Regeln. [Dokumentationsindex](README.md) führt zur Fachspezifikation; [Aufgaben](tasks.md) enthalten Paketstatus; [Entscheidungen](decisions.md) begründen Defaults. Diese Quellen werden gemeinsam gepflegt. Issues und Skills sind Arbeitsmittel, keine abweichenden Fachspezifikationen.
 
-Freigegeben sind Dokumentation, Agenten-Skills, Guides und GitHub-/VS-Codevorlagen. P1 bis P3 sind abgeschlossen; P4 und P5 sind in Arbeit, P6–P11 bleiben offen. P5.1–P5.6 sind durch Nutzerauftrag vom 5. Oktober 2026 freigegeben und implementiert; [P5-Kriterienmatrix](handoffs/p5.md) nennt bestandene Fach-/Browser-/Offline-/native macOS-Prüfungen und offene Firefox-, Geräte- und Screenreaderprüfungen. Windows-/Linux-Läufe folgen später; P4-Abnahmelücken bleiben offen. Nach jedem abgeschlossenen Abschnitt ist ein Zwischencommit mit zusammengehörigen Änderungen verpflichtend. Alle Änderungen werden über Pull Requests integriert; direkte Commits und Pushes auf `main` sind verboten. Themenbranch-Pushes dienen nur dem zugehörigen Pull Request.
+Aktueller Auftrag, Implementierungsfreigaben und Paketstatus stehen in [Aufgaben](tasks.md); Arbeits- und Gitregeln ausschließlich in [AGENTS.md](../AGENTS.md). Nach jedem abgeschlossenen Abschnitt zusammengehörige eigene Änderungen als Zwischencommit festhalten. Abnahmelücken bleiben in den jeweiligen Kriterienmatrizen sichtbar.
 
 Für neue Mitwirkende: [kompakter Einstieg](getting-started.md), [Teilaufgabenübersicht P1–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) und [Referenzhaushalt mit durchgängigem Ablauf](reference-household.md). Die erneuten Einzelabnahmen [P4.1.1–P4.1.8](p4-ui.md#p411--gemeinsame-dienste-und-plattformports-prüfen) sowie [P4.2.1–P4.2.7](p4-ui.md#p421--navigation-und-bereichstrennung-prüfen) sind abgeschlossen; ebenso [P4.3.1–P4.3.8](handoffs/p4-3.md) und [P4.4.1–P4.4.7](handoffs/p4-4.md) sowie [P4.5.1–P4.5.6](handoffs/p4-5.md). [P4.5.7](p4-ui.md#p457--native-systemintegration-je-zielsystem-prüfen) benötigt noch Windows-/Linux-/macOS-x86_64-Nachweise; P4.6 ist ausdrücklich freigegeben und teilweise geprüft; verbleibende Browser-, Screenreader- und Plattformnachweise stehen in der [Kriterienmatrix](handoffs/p4-6.md). Vorhandene Implementierungen nur bei festgestellter Lücke ändern. Die [Klärungsmatrix](getting-started.md#entscheidung-oder-rückfrage) unterscheidet verbindliche Festlegungen, technische Ermittlungen und Nutzerentscheidungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
 
@@ -39,7 +39,7 @@ Die folgenden Skills liegen versioniert in `.agents/skills`. Sie sind für alle 
 
 Codex unterstützt Repository-Skills unter `.agents/skills` und lädt deren ausführlichen Inhalt nach Bedarf. [Offizielle Skill-Dokumentation](https://learn.chatgpt.com/docs/build-skills). Andere Agenten öffnen SKILL.md direkt, falls automatische Discovery fehlt. `.github/copilot-instructions.md` verweist VS-Code-/GitHub-Copilot auf dieselben Quellen. Keine parallelen Regelkopien pro Modell erstellen.
 
-Externe Skills sind für die aktuelle Dokumentationsarbeit nicht erforderlich. Die CI-Konfiguration und das Crypto-Binding sind seit P1 vorhanden; ein Remote-CI-Lauf ist noch nicht belegt. Figma-Design, Bankintegration und Clouddeployment sind nicht eingerichtet. Bei späterem Bedarf eine eng passende, geprüfte Erweiterung hinzufügen; keine pauschale Sammlung globaler Plugins. Kryptografische Bibliotheken ersetzen Skills nicht.
+Die CI-Konfiguration und das Crypto-Binding sind seit P1 vorhanden. Der [Ubuntu-CI-Lauf vom 7. Oktober 2026](https://github.com/mpwg/WiMM/actions/runs/37655652042) auf `4e6d714` ist erfolgreich; aktuelle Änderungen benötigen eigene Nachweise. Figma-Design, Bankintegration und Clouddeployment sind nicht eingerichtet. Skills nach konkretem Bedarf wählen; Kryptobibliotheken ersetzen sie nicht.
 
 ## Konsistente Formate
 
@@ -53,16 +53,16 @@ Externe Skills sind für die aktuelle Dokumentationsarbeit nicht erforderlich. D
 
 ## GitHub und Commits
 
-Projekt wird auf GitHub gehostet, Entwicklung in VS Code. Remoteadresse/Owner nicht erfinden; vor einem Themenbranch-Push die echte `git remote`-Konfiguration prüfen. Alle Repositoryänderungen werden über Pull Requests integriert. Direkte Commits und Pushes auf `main` sind verboten; Pushes auf Themenbranches sind ausschließlich für den zugehörigen Pull Request vorgesehen. Merge nur über den Pull Request. Templates liegen bereits lokal und funktionieren nach Veröffentlichung; sie veröffentlichen selbst keine Issues/PRs.
+Projekt wird auf GitHub gehostet, Entwicklung in VS Code. Die tatsächliche Remoteadresse vor Push prüfen. Integrationsweg und direkte Arbeit auf `main` richten sich ausschließlich nach [AGENTS.md](../AGENTS.md) und dem aktuellen Nutzerauftrag. Templates veröffentlichen selbst keine Issues/PRs.
 
 Neue Arbeitsbranches heißen `codex/<paket>-<thema>`, z. B. `codex/p3-speicheradapter`. Bestehende Branches nicht ungefragt wechseln; vorhandenen Arbeitsstand erhalten. Nach jedem abgeschlossenen Abschnitt einen zusammenhängenden Zwischencommit erstellen; keine mechanisch leeren Commits und keine fremden Dateien.
 
 Neue Commitnachrichten folgen Conventional Commits mit deutschem Inhalt: `docs(agents): Ergänze projektspezifische Leitfäden`, `feat(budget): Ergänze monatliche Umschlagzuweisung`, `fix(sync): Erhalte Entwürfe bei Schlüsselrotation`, `test(finance): Prüfe Restcent bei Erstattungen`. Vorhandene ältere Commitnachrichten werden nicht umgeschrieben. Scopes möglichst aus domain/crypto/storage/sync/import/ui/server/docs/agents/ci wählen.
 
-Paketabschluss verleiht kein Release-Recht. Änderungen werden ausschließlich durch Pull Request integriert; nötige Repositoryeinstellungen wie Schutz vor direkten Pushes auf `main` müssen im echten Repository eingerichtet werden. Reviews und erforderliche Checks sind zu nutzen, soweit sie eingerichtet sind. Keine CODEOWNERS-Datei mit erfundenem Benutzer.
+Paketabschluss verleiht kein Release-Recht. Vorhandenen Repositoryschutz und erforderliche Checks berücksichtigen; GitHub-Einstellungen nicht ungefragt ändern. Keine CODEOWNERS-Datei mit erfundenem Benutzer.
 
 ## Prüfung und Übergabe
 
-In der aktuellen Dokumentationsphase: relative Links, JSON/YAML, Skillfrontmatter/-metadaten, Status und widersprüchliche E2EE-/Lizenzannahmen prüfen. Markdownlint-Konfiguration liegt im Repository; eine installierte VS-Code-Erweiterung kann sie verwenden. Keine angeblich bestehenden Appbefehle oder CI-Ergebnisse melden.
+Bei Dokumentationsänderungen: relative Links, JSON/YAML, Skillfrontmatter/-metadaten, Status und widersprüchliche E2EE-/Lizenzannahmen prüfen. Markdownlint-Konfiguration liegt im Repository; eine installierte VS-Code-Erweiterung kann sie verwenden. Keine angeblich bestehenden Appbefehle oder CI-Ergebnisse melden.
 
-Später Prüfungen nach [Testplan](testing.md), nicht nach einer für jedes Paket identischen Vollcheckliste. Bei Geld-/Key-/Rechteänderungen sind die entsprechenden Referenzfälle verpflichtend. Fehlende Plattformen klar nennen. Detaillierte Umsetzung bleibt in Tasks/Docs; die Nutzerantwort fasst Ergebnis und wichtige Grenzen kurz zusammen.
+Bei Implementierungsänderungen Prüfungen nach [Testplan](testing.md), nicht nach einer für jedes Paket identischen Vollcheckliste. Bei Geld-/Key-/Rechteänderungen sind die entsprechenden Referenzfälle verpflichtend. Fehlende Plattformen klar nennen. Detaillierte Umsetzung bleibt in Tasks/Docs; die Nutzerantwort fasst Ergebnis und wichtige Grenzen kurz zusammen.

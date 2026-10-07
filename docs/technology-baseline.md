@@ -1,6 +1,6 @@
 # Versions- und Lizenzbasis
 
-Stand: 4. Oktober 2026. Dieses Dokument hält den Auswahlstand aus P1.1 und die aktuellen Abweichungen der tatsächlichen Manifeste fest. Paketmanifeste und Lockfiles sperren die installierten Versionen; vollständige Fremdhinweise bleiben vor einer Distribution erforderlich. Die Auswahlübersichten nach dem T1-Abschnitt sind historische P1.1-Belege.
+Stand: 7. Oktober 2026. Dieses Dokument hält den Auswahlstand aus P1.1 und die aktuellen Abweichungen der tatsächlichen Manifeste fest. Paketmanifeste und Lockfiles sperren die installierten Versionen; vollständige Fremdhinweise bleiben vor einer Distribution erforderlich. Die Auswahlübersichten nach dem T1-Abschnitt sind historische P1.1-Belege.
 
 ## Tatsächlicher Manifeststand und Toolmodernisierung T1
 
@@ -9,9 +9,9 @@ Die Auswahlübersichten unten dokumentieren P1.1; die tatsächlichen Installatio
 | Bestandteil | Auswahlübersicht P1.1 | Tatsächlich gesperrt |
 | --- | --- | --- |
 | Tauri-CLI | 2.11.5 | 2.12.0; notwendige Korrektur der veralteten STATIC_VCRUNTIME-Übergabe |
-| tauri-build | 2.6.3 | 2.7.0 |
+| tauri-build | 2.6.3 | 2.7.1 |
 | Dexie | 4.4.6 | 4.2.1 |
-| rusqlite | 0.40.2 | 0.37.0 |
+| rusqlite | 0.40.2 | 0.40.2 |
 | better-sqlite3 | 13.0.3 für den späteren Server | Noch keine Abhängigkeit des aktuellen Servers |
 
 T1 ergänzt [Oxlint 1.85.0](https://registry.npmjs.org/oxlint/1.85.0) und [oxlint-tsgolint 7.0.2003](https://registry.npmjs.org/oxlint-tsgolint/7.0.2003), beide MIT. Registry-Veröffentlichungen: 21. beziehungsweise 24. September 2026; beide erfüllen am 4. Oktober die sieben Tage Reifezeit. Oxlint verlangt Node `^20.19.0 || >=22.12.0` und oxlint-tsgolint mindestens 7.0.2001; die gewählten Versionen erfüllen dies. Tauri-CLI [2.12.0](https://registry.npmjs.org/@tauri-apps%2fcli/2.12.0) erschien am 26. September 2026 und erfüllt ebenfalls die Reifezeit; Rust-Core und JS-API bleiben unverändert. Neue plattformspezifische Pakete sind einschließlich Integrität im pnpm-Lockfile gesperrt. TypeScript bleibt 7.0.2, das Sprachziel wird ES2025. Rust bleibt 1.99.0 und ist nun einschließlich Clippy/rustfmt versioniert festgelegt.
@@ -83,8 +83,12 @@ Für jede aufgelöste direkte oder transitive Abhängigkeit werden mindestens Na
 
 ## P4.5 — Native Systemports
 
-Zusätzlich exakt gesperrt: `tauri-plugin-dialog` 2.7.1 und `tauri-plugin-opener` 2.5.5, jeweils Apache-2.0 oder MIT; `url` 2.5.8 (MIT oder Apache-2.0) und `tempfile` 3.27.0 (MIT oder Apache-2.0). Die offiziellen [Dialog-](https://v2.tauri.app/plugin/dialog/) und [Opener-APIs](https://v2.tauri.app/plugin/opener/) werden ausschließlich innerhalb der begrenzten Rust-Appcommands verwendet. Die neueren Dialog-/Opener-Versionen verlangen Tauri 2.12 und passen nicht zum gesperrten Core 2.11.6. Es wurde kein Upstreamquellcode kopiert. Checksummen und transitive Auflösung stehen in `apps/desktop/src-tauri/Cargo.lock`; vollständige Distributionhinweise bleiben P11.
+Zusätzlich exakt gesperrt: `tauri-plugin-dialog` 2.7.3 und `tauri-plugin-opener` 2.5.5, jeweils Apache-2.0 oder MIT; `url` 2.5.8 (MIT oder Apache-2.0) und `tempfile` 3.27.0 (MIT oder Apache-2.0). Die offiziellen [Dialog-](https://v2.tauri.app/plugin/dialog/) und [Opener-APIs](https://v2.tauri.app/plugin/opener/) werden ausschließlich innerhalb der begrenzten Rust-Appcommands verwendet. Diese tatsächlich gesperrte Kombination ist mit Core 2.11.6 gebaut und geprüft; die frühere Versionsbehauptung wird nicht als aktueller Kompatibilitätsbeleg weitergeführt. Es wurde kein Upstreamquellcode kopiert. Checksummen und transitive Auflösung stehen in `apps/desktop/src-tauri/Cargo.lock`; vollständige Distributionhinweise bleiben P11.
 
 ## Auditbehebung: AST-Paketgraphprüfung
 
 Für die Entwicklungsprüfung wird `@babel/parser` exakt auf 8.0.6 gesperrt (MIT, Veröffentlichung 18. September 2026; sieben Tage Reifezeit erfüllt). [Offizielle Parserdokumentation](https://babeljs.io/docs/babel-parser) beschreibt TS/JSX und dynamische Imports. Die vorhandene TypeScript-7-Installation stellt keine `createSourceFile`-JavaScript-API bereit. Der Parser ergänzt ausschließlich das Entwicklungswerkzeug; keine neue Produktabhängigkeit oder Änderung erlaubter Paketrichtungen.
+
+## Auditbehebung: Entwicklungsabhängigkeiten
+
+`source-map-js` wird bei Versionen unter 1.2.2 durch einen eng begrenzten Override auf 1.2.2 korrigiert (BSD-3-Clause, Veröffentlichung 30. September 2026). [GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q) nennt 1.2.2 als korrigierte Version. `pnpm audit` meldet am 7. Oktober nach Aktualisierung keinen Treffer; Typecheck, Toolchainnegativtests, Vite- und Tauri-Build bestehen.

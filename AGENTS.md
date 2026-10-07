@@ -8,10 +8,10 @@
 ## Auftrag und Sprache
 
 - Verwende deutsche Sprache und deutsche Umlaute in Dokumentation, Benutzeroberfläche und verständlichen Meldungen. Technische Bezeichner bleiben englisch.
-- Der aktuelle Auftrag umfasst Dokumentation und Agenten-/Editor-/GitHubhilfen, Pakete D0/D1 sowie die Einstiegsergänzung D2. Beginne P1 oder Anwendungscode erst nach einem späteren ausdrücklichen Implementierungsauftrag. Das Zitieren des gesamten Plans innerhalb des Dokumentationsauftrags ist keine zusätzliche Freigabe für P1 bis P11.
+- Aktueller Auftrag, Implementierungsfreigaben und Paketstatus stehen ausschließlich in [Aufgaben](docs/tasks.md). Neue Produktpakete beginnen erst nach ausdrücklichem Implementierungsauftrag; ein vollständiges Planzitat erteilt keine zusätzliche Freigabe.
 - Lies vor Arbeit [Dokumentationsindex](docs/README.md), [Fachmodell](docs/domain.md), [Architektur](docs/architecture.md), [Entscheidungen](docs/decisions.md) und [Aufgaben](docs/tasks.md).
-- Aktuell zusätzlich freigegeben: Agenten-Skills/Guides und GitHub-/VS-Codevorlagen. Dies startet keine App-Implementierung. Nutze den [Agentenleitfaden](docs/agent-guide.md) und passende Skills unter `.agents/skills`; weitere Produktregeln nicht in Kopien pro Agent verteilen.
-- Alle Änderungen am Repository werden über Pull Requests eingebracht. Direkte Commits oder Pushes auf `main` sind verboten. Arbeite auf einem Themenbranch; dessen Push ist nur zum Erstellen/Aktualisieren des zugehörigen Pull Requests vorgesehen. Änderungen gelangen erst durch Merge des Pull Requests nach `main`.
+- Nutze den [Agentenleitfaden](docs/agent-guide.md) und passende Skills unter `.agents/skills`; weitere Produktregeln nicht in Kopien pro Agent verteilen.
+- Seit ausdrücklicher Nutzerfreigabe vom 7. Oktober 2026 ist direkte Arbeit einschließlich Commits und Pushes auf `main` wieder erlaubt. Themenbranches und Pull Requests bleiben bei entsprechendem Auftrag möglich. Bestehende Branches, fremde Änderungen und GitHub-Repositoryschutz bewahren; niemals Force-Push.
 - Bewahre vorhandene Änderungen anderer Beteiligter. Erstelle die verpflichtenden Zwischencommits nur für eigene abgeschlossene Abschnitte; keine Veröffentlichungen oder Zurücksetzungen.
 
 ## Architektur
@@ -32,7 +32,7 @@
 - Schließe ein Paket erst ab, wenn seine Abnahmekriterien erfüllt sind. Dokumentiere verbleibende Einschränkungen konkret.
 - Führe risikogerechte Prüfungen gemäß `docs/testing.md` aus. Bestehende Fach-, Adapter- und Zugriffsinvarianten sind verbindlich.
 - Dokumentiere nötige Architekturänderungen in `docs/decisions.md` und passe betroffene Verträge gleichzeitig an. Bei Widersprüchen zwischen verbindlichen Quellen benenne den Widerspruch und korrigiere betroffene Quellen gemeinsam vor abhängiger Implementierung; bei unklarer Produktabsicht rückfragen.
-- Verwende konsistente Task-/ADR-/Übergabevorlagen aus `docs/templates`; GitHub-PR-Vorlage und Editorformatregeln gelten ebenfalls. Erstelle nach jedem abgeschlossenen Abschnitt einen Zwischencommit mit zusammengehörigen Änderungen auf dem Themenbranch; keine fremden Dateien einschließen. Änderungen werden ausschließlich per Pull Request integriert; nie direkt auf `main` committen oder pushen. Neue Commitnachrichten nach Conventional Commits mit deutschem Inhalt.
+- Verwende konsistente Task-/ADR-/Übergabevorlagen aus `docs/templates`; bei Pull Requests gilt die GitHub-Vorlage, Editorformatregeln gelten stets. Erstelle nach jedem abgeschlossenen Abschnitt einen Zwischencommit mit zusammengehörigen eigenen Änderungen gemäß aktueller Gitfreigabe; keine fremden Dateien einschließen. Neue Commitnachrichten nach Conventional Commits mit deutschem Inhalt.
 - Übernimm Actual-Code nur nach Herkunfts- und Lizenzprüfung. Halte Herkunftscommit, lokale Änderungen und ursprüngliche Hinweise fest.
 - Projektlizenz ist AGPL-3.0-or-later. Verwende diesen SPDX-Bezeichner für eigene Pakete und Quelldateien; erhalte Fremdlizenzen. Releases und Serveroberflächen müssen den zugehörigen Quellcode anbieten. Keine Umstellung auf MIT.
 - Verwende etablierte Parser und Standards; keine eigene Kryptografie, XML- oder CSV-Parser.
