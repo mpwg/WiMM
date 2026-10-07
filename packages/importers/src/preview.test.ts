@@ -43,3 +43,8 @@ it('bewahrt reguläre CAMT-Sammelbuchungen mit 300 Details unter dem Ausgabebudg
   const rows = bank(camt(Array.from({ length: 300 }, (_, i) => detail('1.00', String(i))).join(''), '300.00'), 'camt053');
   expect(rows).toHaveLength(300); expect(rows.every(r => r.record?.amount === -100 && r.source.originalSourceRow === 1)).toBe(true);
 });
+
+it('erhält den vorhandenen CSV-Vertrag mit 99.999 Vorschauzeilen', () => {
+  const text = 'Datum;Betrag;Empfänger;Notiz;ID\n' + Array.from({ length: 99_999 }, (_, i) => `05.10.2026;-1,00;Bäckerei;Öl ${i};id-${i}`).join('\n');
+  expect(csv(text)).toHaveLength(99_999);
+});

@@ -40,7 +40,7 @@ function result(source: SourceRecord, raw: Parameters<typeof normalizeImportReco
 export function createImportPreview(parsed: ParseResult, mapping?: CsvMapping): PreviewRow[] {
   if (parsed.format === 'csv') { if (!mapping) throw new Error('Die CSV-Zuordnung fehlt.'); validateCsvMapping(mapping); }
   const rows: PreviewRow[] = [];
-  const outputBudget = createImportOutputBudget();
+  const outputBudget = parsed.format === 'camt053' ? createImportOutputBudget() : () => {};
   const push = (row: PreviewRow): void => { outputBudget(row); if (rows.length >= MAX_IMPORT_RECORDS) throw new ImportFailure({ code: 'RECORD_LIMIT', message: 'Mehr als 100.000 normalisierte Buchungen.' }); rows.push(row); };
   for (const source of parsed.records) {
     if (parsed.format === 'csv' && mapping?.header && source.sourceRow === 1) continue;
