@@ -102,5 +102,14 @@ it('begrenzt breite CAMT-Entries einschließlich unbekannter und fremder Felder'
 
 it('begrenzt die globale XML-Knotenzahl und die gespeicherte Ausgabe vor Rückgabe', () => {
   expect(() => parse('<Document>' + '<X/>'.repeat(2_000_001) + '</Document>', 'camt053')).toThrow('Ressourcenlimit');
-  expect(() => parse('<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.' + 'x'.repeat(1000) + '">' + '<Ntry/>'.repeat(25_000) + '</Document>', 'camt053')).toThrow('Ressourcenlimit');
+  expect(() => parse('<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.' + 'x'.repeat(1000) + '">' + '<Ntry/>'.repeat(100_000) + '</Document>', 'camt053')).toThrow('Ressourcenlimit');
 });
+
+it('erhält 100.000 reguläre CAMT-Buchungen einschließlich normalisierter Worker-Vorschau', () => {
+  const entry = '<Ntry><Amt Ccy="EUR">1.00</Amt><CdtDbtInd>CRDT</CdtDbtInd><BookgDt><Dt>2026-10-07</Dt></BookgDt><NtryRef>synthetisch</NtryRef></Ntry>';
+  const input = bytes('<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02">' + entry.repeat(MAX_IMPORT_RECORDS) + '</Document>');
+  expect(input.byteLength).toBeLessThan(MAX_IMPORT_BYTES);
+  const reply = handleWorkerRequest({ bytes: input, format: 'camt053', preview: true });
+  expect(reply.ok).toBe(true); if (!reply.ok) throw new Error(reply.issue.message);
+  expect(reply.result.preview).toHaveLength(MAX_IMPORT_RECORDS);
+}, 15_000);
