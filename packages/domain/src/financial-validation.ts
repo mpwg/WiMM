@@ -15,7 +15,7 @@ export function validateFinancialMutation(spaceId: UUID, changes: readonly P2Agg
   if (current.some(a => a.spaceId !== spaceId) || new Set(current.map(a => a.id)).size !== current.length) throw new DomainValidationError('INVALID_AGGREGATE', 'Der Finanzbestand ist nicht eindeutig im aktuellen Bereich.');
   const next = new Map(current.map(a => [a.id, a]));
   changes.forEach(a => next.set(a.id, a));
-  const txs = [...next.values()].filter((a): a is TransactionAggregate => a.aggregateType === 'transaction' && a.deletedAt === undefined).map(normalizeTransaction);
+  const txs = [...next.values()].filter((a): a is TransactionAggregate => a.aggregateType === 'transaction' && a.deletedAt === undefined).map(normalizeTransaction).sort((a, b) => a.id.localeCompare(b.id));
   const balances = projectAccountBalances(txs);
   sumMoney(balances.map(a => a.balance), 'Der Gesamtkontostand');
   const categories = [...next.values()].filter((a): a is CategoryAggregate => a.aggregateType === 'category');

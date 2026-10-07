@@ -36,7 +36,7 @@ export function projectAccountBalances(
   transactions: readonly TransactionAggregate[]
 ): readonly AccountBalanceProjection[] {
   const amounts = new Map<UUID, Money[]>();
-  for (const transaction of transactions) {
+  for (const transaction of transactions.toSorted((a, b) => a.id.localeCompare(b.id))) {
     if (transaction.deletedAt !== undefined) {
       continue;
     }
@@ -63,7 +63,7 @@ export function projectConsumption(
   let income = 0 as Money;
   let expenseRaw = 0 as Money;
 
-  for (const transaction of transactions) {
+  for (const transaction of transactions.toSorted((a, b) => a.id.localeCompare(b.id))) {
     if (transaction.deletedAt !== undefined || transaction.kind !== 'normal') {
       continue;
     }

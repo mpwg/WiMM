@@ -15,7 +15,12 @@ async function fixture() {
     await storage.applyAtomicBatch({ expectedRevisions: change.expectedRevisions.map(e => ({ handle: e.id, expectedRevision: e.expectedRevision })), aggregates: change.aggregates.map(toStoredAggregate), outbox: [], projections: [] });
     history.record(change, before);
   }
-  const model = async () => new FinanceModel(space, await read(), commit);
+  let nextId = 20;
+  const model = async () => {
+    const result = new FinanceModel(space, await read(), commit);
+    result.domainDependencies.ids.next = () => `00000000-0000-4000-8000-${String(nextId++).padStart(12, '0')}`;
+    return result;
+  };
   await (await model()).addAccount('A', 'checking', true);
   await (await model()).addAccount('B', 'checking', true);
   await (await model()).addGroup('Einnahmen', 'income');
