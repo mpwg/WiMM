@@ -20,7 +20,7 @@ export function ImportView({ model, platform }: { model: AutomationModel; platfo
   const [preview, setPreview] = useState<PreviewRow[]>([]); const [decisions, setDecisions] = useState<Record<number, ImportDecision>>({}); const [page, setPage] = useState(0);
   const [parsing, setParsing] = useState(false); const [hash, setHash] = useState(''); const [busy, setBusy] = useState(false); const [message, setMessage] = useState(''); const abort = useRef<AbortController | undefined>(undefined);
   const guard = useDraftGuard();
-  useEffect(() => guard.registerPending('import-preview', preview.length > 0 || busy), [guard, preview.length, busy]);
+  useEffect(() => guard.registerPending('import-preview', file !== undefined || preview.length > 0 || busy), [guard, file, preview.length, busy]);
   useEffect(() => () => abort.current?.abort(), []);
   async function choose() { try { const files = await platform.chooseImportFiles({ multiple: false, maxBytes: MAX_IMPORT_BYTES, maxFiles: 1, maxTotalBytes: MAX_IMPORT_BYTES, acceptedExtensions: ['csv', 'xml', 'ofx', 'qfx'], acceptedMediaTypes: [] }); const selected = files[0]; if (!selected) return; if (selected.bytes.byteLength > MAX_IMPORT_BYTES) throw new Error('Die Datei ist größer als 25 MiB.'); setFile({ name: selected.name, bytes: selected.bytes }); setPreview([]); setStep(1); setMessage('Datei lokal ausgewählt. Bitte Zuordnung prüfen und Vorschau erstellen.'); } catch (e) { setMessage(errorText(e)); } }
   async function parse() {
@@ -46,7 +46,7 @@ export function ImportView({ model, platform }: { model: AutomationModel; platfo
       await model.start(batch); setPreview([]); setFile(undefined); setStep(3); setMessage('Importentscheidungen gespeichert. Übernehmen Sie nun die erste Gruppe.');
     } catch (e) { setMessage(errorText(e)); } finally { setBusy(false); }
   }
-  async function next(batch: ImportBatchAggregate) { setBusy(true); setMessage('Gruppe wird vorbereitet …'); try { await model.next(batch); setMessage('Gruppe dauerhaft gespeichert. Bereits übernommene Gruppen bleiben bei Abbruch erhalten.'); } catch (e) { setMessage(`Die Gruppe wurde nicht gespeichert. ${errorText(e)}`); } finally { setBusy(false); } }
+  async function next(batch: ImportBatchAggregate) { if (busy) return; abort.current = new AbortController(); setBusy(true); setMessage('Gruppe wird vorbereitet …'); try { await model.next(batch, abort.current.signal); setMessage('Gruppe dauerhaft gespeichert. Bereits übernommene Gruppen bleiben bei Abbruch erhalten.'); } catch (e) { setMessage(`Die Gruppe wurde nicht gespeichert. ${errorText(e)}`); } finally { setBusy(false); } }
   async function saveMapping() { try { await model.saveMapping(mapping); setMessage('Mappingvorlage im aktuellen Bereich gespeichert.'); } catch (e) { setMessage(errorText(e)); } }
   const visible = preview.slice(page * 25, page * 25 + 25);
   const invalidCount = preview.filter(row => !row.record).length;

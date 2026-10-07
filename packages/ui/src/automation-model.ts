@@ -20,15 +20,28 @@ export class AutomationModel {
     await this.finance.commitAutomation(automationChange('importMapping.save', [aggregate], this.all, this.finance.domainDependencies));
   }
   async start(batch: ImportBatchAggregate) { await this.finance.commitAutomation(saveImportBatch(batch, this.all, this.finance.domainDependencies)); }
-  async next(batch: ImportBatchAggregate) {
+  async next(batch: ImportBatchAggregate, signal?: AbortSignal) {
+    if (signal?.aborted) throw new Error('Die Importgruppe wurde abgebrochen.');
     const all = this.all;
     const change = await new Promise<DomainChangeSet | null>((resolve, reject) => {
       const worker = new Worker(new URL('./commit-worker.ts', import.meta.url), { type: 'module' });
-      worker.onmessage = (event: MessageEvent<{ change?: DomainChangeSet | null; error?: string }>) => { worker.terminate(); if (event.data.error) reject(new Error(event.data.error)); else resolve(event.data.change ?? null); };
-      worker.onerror = () => { worker.terminate(); reject(new Error('Die Importgruppe konnte nicht vorbereitet werden.')); };
-      worker.onmessageerror = () => { worker.terminate(); reject(new Error('Die Importgruppe konnte nicht gelesen werden.')); };
-      worker.postMessage({ batch, all, occurredAt: this.finance.domainDependencies.clock.now() });
+      let settled = false;
+      const cleanup = () => { settled = true; clearTimeout(timeout); signal?.removeEventListener('abort', abort); worker.terminate(); };
+      const fail = (message: string) => { if (settled) return; cleanup(); reject(new Error(message)); };
+      const abort = () => fail('Die Importgruppe wurde abgebrochen.');
+      const timeout = setTimeout(() => fail('Die Importgruppe überschreitet das Zeitlimit.'), 30_000);
+      worker.onmessage = (event: MessageEvent<{ change?: DomainChangeSet | null; error?: string }>) => {
+        if (settled) return;
+        cleanup(); if (event.data.error) reject(new Error(event.data.error)); else resolve(event.data.change ?? null);
+      };
+      worker.onerror = () => fail('Die Importgruppe konnte nicht vorbereitet werden.');
+      worker.onmessageerror = () => fail('Die Importgruppe konnte nicht gelesen werden.');
+      signal?.addEventListener('abort', abort, { once: true });
+      if (signal?.aborted) { abort(); return; }
+      try { worker.postMessage({ batch, all, occurredAt: this.finance.domainDependencies.clock.now() }); }
+      catch { fail('Die Importgruppe konnte nicht an den Worker übergeben werden.'); }
     });
+    if (signal?.aborted) throw new Error('Die Importgruppe wurde abgebrochen.');
     if (change) await this.finance.commitAutomation(change);
   }
   async rule(rule: RuleAggregate) { await this.finance.commitAutomation(saveRule(rule, this.all, this.finance.domainDependencies)); }
