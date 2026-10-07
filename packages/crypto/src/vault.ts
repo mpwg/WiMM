@@ -36,6 +36,9 @@ export interface EncryptedVaultEnvelope {
 
 export interface PassphraseWrap {
   readonly algorithm: 'argon2id';
+  /** Fehlende Version und Parameter kennzeichnen ausschließlich Legacy 2/64 MiB. */
+  readonly version?: 2;
+  readonly kdf?: { readonly opslimit: number; readonly memlimit: number };
   readonly salt: string;
   readonly nonce: string;
   readonly ciphertext: string;
@@ -143,8 +146,8 @@ export async function unlockUserVaultWithPassphrase(
   try {
     await initializeCrypto();
     assertRecordVersion(record);
-    derivedKey = derivePassphraseKey(passphrase, fromBase64Url(record.passphraseWrap.salt));
-    vaultKey = await unwrapVaultKey(record.passphraseWrap, derivedKey);
+    derivedKey = derivePassphraseKey(passphrase, fromBase64Url(record.passphraseWrap.salt), passphraseParameters(record.passphraseWrap));
+    vaultKey = await unwrapVaultKey(record.passphraseWrap, derivedKey, passphraseAad(record.passphraseWrap));
     const vault = await decryptVault(record.vault, vaultKey);
     unlockedVaultKeys.set(vault, { key: vaultKey, locked: false });
     vaultKey = undefined;
@@ -321,24 +324,51 @@ async function decryptVault(envelope: EncryptedVaultEnvelope, vaultKey: Uint8Arr
 
 async function wrapWithPassphrase(vaultKey: Uint8Array, passphrase: string): Promise<PassphraseWrap> {
   const salt = sodium.randombytes_buf(sodium.crypto_pwhash_SALTBYTES);
-  const derivedKey = derivePassphraseKey(passphrase, salt);
+  const header = { algorithm: 'argon2id' as const, version: 2 as const, salt: toBase64Url(salt), kdf: { opslimit: 3, memlimit: 64 * 1024 * 1024 } };
+  const derivedKey = derivePassphraseKey(passphrase, salt, header.kdf);
   try {
-    const encrypted = await encryptXChaCha20Poly1305({ associatedData: vaultAad, key: derivedKey, plaintext: vaultKey });
-    return { algorithm: 'argon2id', salt: toBase64Url(salt), nonce: toBase64Url(encrypted.nonce), ciphertext: toBase64Url(encrypted.ciphertext) };
-  } finally {
-    sodium.memzero(derivedKey);
-  }
+    const encrypted = await encryptXChaCha20Poly1305({ associatedData: passphraseAad(header), key: derivedKey, plaintext: vaultKey });
+    return { ...header, nonce: toBase64Url(encrypted.nonce), ciphertext: toBase64Url(encrypted.ciphertext) };
+  } finally { sodium.memzero(derivedKey); }
 }
 
-function derivePassphraseKey(passphrase: string, salt: Uint8Array): Uint8Array {
-  return sodium.crypto_pwhash(
-    32,
-    passphrase,
-    salt,
-    sodium.crypto_pwhash_OPSLIMIT_INTERACTIVE,
-    sodium.crypto_pwhash_MEMLIMIT_INTERACTIVE,
-    sodium.crypto_pwhash_ALG_ARGON2ID13
-  );
+/** Öffentliche Parameterprüfung ohne KDFausführung, auch im Profil-Leseport. */
+export function validatePassphraseKdfParameters(value: unknown): boolean {
+  if (value === null || typeof value !== 'object') return false;
+  const wrap = value as Record<string, unknown>;
+  if (wrap.algorithm !== 'argon2id') return false;
+  if (wrap.version === undefined) return wrap.kdf === undefined;
+  if (wrap.version !== 2 || wrap.kdf === null || typeof wrap.kdf !== 'object') return false;
+  const kdf = wrap.kdf as Record<string, unknown>;
+  return typeof kdf.opslimit === 'number' && Number.isSafeInteger(kdf.opslimit) && kdf.opslimit >= 3 && kdf.opslimit <= 6
+    && typeof kdf.memlimit === 'number' && Number.isSafeInteger(kdf.memlimit) && kdf.memlimit >= 64 * 1024 * 1024 && kdf.memlimit <= 256 * 1024 * 1024;
+}
+function passphraseParameters(wrap: PassphraseWrap) {
+  if (!validatePassphraseKdfParameters(wrap)) throw new VaultUnlockError();
+  return wrap.version === undefined ? { opslimit: 2, memlimit: 64 * 1024 * 1024 } : wrap.kdf!;
+}
+function passphraseAad(wrap: Pick<PassphraseWrap, 'version' | 'algorithm' | 'kdf' | 'salt'>): Uint8Array {
+  return wrap.version === undefined ? vaultAad : encoder.encode(JSON.stringify(['wimm/v1/passphrase-wrap', wrap.version, wrap.algorithm, wrap.kdf!.opslimit, wrap.kdf!.memlimit, wrap.salt]));
+}
+function derivePassphraseKey(passphrase: string, salt: Uint8Array, parameters: { opslimit: number; memlimit: number }): Uint8Array {
+  if (salt.length !== sodium.crypto_pwhash_SALTBYTES) throw new VaultUnlockError();
+  return sodium.crypto_pwhash(32, passphrase, salt, parameters.opslimit, parameters.memlimit, sodium.crypto_pwhash_ALG_ARGON2ID13);
+}
+
+/** Nur nach erfolgreicher Entsperrung neu verpacken; persistiert niemals selbst. */
+export async function upgradeUserVaultPassphraseWrap(vault: UnlockedUserVault, record: EncryptedUserVault, passphrase: string): Promise<EncryptedUserVault> {
+  assertPassphrase(passphrase); await initializeCrypto(); assertRecordVersion(record);
+  const state = unlockedVaultKeys.get(vault);
+  if (state === undefined || state.locked) throw new VaultUnlockError();
+  let derived: Uint8Array | undefined; let confirmed: Uint8Array | undefined;
+  try {
+    derived = derivePassphraseKey(passphrase, fromBase64Url(record.passphraseWrap.salt), passphraseParameters(record.passphraseWrap));
+    confirmed = await unwrapVaultKey(record.passphraseWrap, derived, passphraseAad(record.passphraseWrap));
+    if (!sodium.memcmp(confirmed, state.key) || state.locked) throw new VaultUnlockError();
+    const passphraseWrap = await wrapWithPassphrase(state.key, passphrase);
+    if (state.locked) throw new VaultUnlockError();
+    return { ...record, passphraseWrap };
+  } finally { if (derived !== undefined) sodium.memzero(derived); if (confirmed !== undefined) sodium.memzero(confirmed); }
 }
 
 async function wrapWithRecoveryKey(vaultKey: Uint8Array, recoveryKey: Uint8Array): Promise<RecoveryWrap> {
@@ -346,8 +376,8 @@ async function wrapWithRecoveryKey(vaultKey: Uint8Array, recoveryKey: Uint8Array
   return { nonce: toBase64Url(encrypted.nonce), ciphertext: toBase64Url(encrypted.ciphertext) };
 }
 
-async function unwrapVaultKey(wrap: { readonly nonce: string; readonly ciphertext: string }, key: Uint8Array): Promise<Uint8Array> {
-  return decryptXChaCha20Poly1305({ associatedData: vaultAad, key, ciphertext: fromBase64Url(wrap.ciphertext), nonce: fromBase64Url(wrap.nonce) });
+async function unwrapVaultKey(wrap: { readonly nonce: string; readonly ciphertext: string }, key: Uint8Array, associatedData: Uint8Array = vaultAad): Promise<Uint8Array> {
+  return decryptXChaCha20Poly1305({ associatedData, key, ciphertext: fromBase64Url(wrap.ciphertext), nonce: fromBase64Url(wrap.nonce) });
 }
 
 function serializeVault(vault: UnlockedUserVault): Record<string, unknown> {
@@ -389,7 +419,7 @@ function assertPassphrase(passphrase: string): void {
 }
 
 function assertRecordVersion(record: EncryptedUserVault): void {
-  if (record.version !== vaultVersion || record.vault.version !== vaultVersion || record.passphraseWrap.algorithm !== 'argon2id') {
+  if (record.version !== vaultVersion || record.vault.version !== vaultVersion || !validatePassphraseKdfParameters(record.passphraseWrap)) {
     throw new VaultUnlockError();
   }
 }

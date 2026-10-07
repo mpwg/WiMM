@@ -151,3 +151,40 @@ describe('lokaler UserVault', () => {
     await expect(protector.unseal(changed)).rejects.toBeInstanceOf(VaultUnlockError);
   });
 });
+
+it('speichert die vereinbarten KDFparameter in einer versionierten neuen Passphrasehülle', async () => {
+  const created = await createUserVault(passphrase);
+  expect(created.record.passphraseWrap).toMatchObject({ version: 2, kdf: { opslimit: 3, memlimit: 64 * 1024 * 1024 } });
+});
+
+import sodium from 'libsodium-wrappers-sumo';
+import { vi } from 'vitest';
+import { upgradeUserVaultPassphraseWrap, initializeCrypto } from './index.js';
+import { legacyVaultRecord } from './legacy-vault.fixture.js';
+it('entsperrt Legacy über beide Wege und verpackt nur die Passphrasehülle kompatibel neu', async () => {
+  const created = await createUserVault(passphrase); const legacy = await legacyVaultRecord(created.record, created.recoveryCode, passphrase); const original = structuredClone(legacy);
+  const session = await unlockUserVaultWithPassphrase(legacy, passphrase); const recovery = await unlockUserVaultWithRecoveryCode(legacy, created.recoveryCode);
+  expect(session.identityPrivateKey).toEqual(recovery.identityPrivateKey);
+  const upgraded = await upgradeUserVaultPassphraseWrap(session, legacy, passphrase);
+  expect(upgraded.passphraseWrap).toMatchObject({ version: 2, kdf: { opslimit: 3, memlimit: 67108864 } });
+  expect(upgraded.vault).toEqual(legacy.vault); expect(upgraded.recoveryWrap).toEqual(legacy.recoveryWrap); expect(legacy).toEqual(original);
+  const newPassphrase = await unlockUserVaultWithPassphrase(upgraded, passphrase); const newRecovery = await unlockUserVaultWithRecoveryCode(upgraded, created.recoveryCode);
+  expect(newPassphrase.identityPrivateKey).toEqual(session.identityPrivateKey); expect(newRecovery.identityPrivateKey).toEqual(session.identityPrivateKey);
+  await Promise.all([session, recovery, newPassphrase, newRecovery].map(lockUserVault));
+});
+it('weist unzulässige KDFparameter vor crypto_pwhash ab', async () => {
+  const created = await createUserVault(passphrase); await initializeCrypto(); const derive = vi.spyOn(sodium, 'crypto_pwhash');
+  try {
+    for (const kdf of [{ opslimit: 2, memlimit: 67108864 }, { opslimit: 7, memlimit: 67108864 }, { opslimit: 3, memlimit: 2 ** 40 }, { opslimit: 3.5, memlimit: 67108864 }]) {
+      await expect(unlockUserVaultWithPassphrase({ ...created.record, passphraseWrap: { ...created.record.passphraseWrap, kdf } }, passphrase)).rejects.toBeInstanceOf(VaultUnlockError);
+    }
+    expect(derive).not.toHaveBeenCalled();
+  } finally { derive.mockRestore(); }
+});
+it('authentifiziert erlaubte Parameteränderungen und erkennt das Entfernen des Headers', async () => {
+  const created = await createUserVault(passphrase);
+  const tampered = { ...created.record, passphraseWrap: { ...created.record.passphraseWrap, kdf: { opslimit: 4, memlimit: 67108864 } } };
+  await expect(unlockUserVaultWithPassphrase(tampered, passphrase)).rejects.toBeInstanceOf(VaultUnlockError);
+  const { version: _version, kdf: _kdf, ...stripped } = created.record.passphraseWrap;
+  await expect(unlockUserVaultWithPassphrase({ ...created.record, passphraseWrap: stripped }, passphrase)).rejects.toBeInstanceOf(VaultUnlockError);
+});

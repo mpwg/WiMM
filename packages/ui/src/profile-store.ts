@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { LocalProfile } from './app.js';
+import { validatePassphraseKdfParameters } from '@wimm/crypto';
 import { uuidSchema } from '@wimm/contracts';
 
 export type ProfileLoadResult =
@@ -117,7 +118,7 @@ function parseLocalProfile(value: string): LocalProfile | undefined {
     const envelope = object(record?.vault);
     const passphrase = object(record?.passphraseWrap);
     const recovery = object(record?.recoveryWrap);
-    if (record?.version !== 1 || envelope?.version !== 1 || passphrase?.algorithm !== 'argon2id'
+    if (record?.version !== 1 || envelope?.version !== 1 || !validatePassphraseKdfParameters(passphrase)
       || !bytes(envelope?.nonce, 24) || !bytes(envelope?.ciphertext, undefined, 16)
       || !bytes(passphrase?.salt, 16) || !bytes(passphrase?.nonce, 24) || !bytes(passphrase?.ciphertext, 48)
       || !bytes(recovery?.nonce, 24) || !bytes(recovery?.ciphertext, 48)) return undefined;

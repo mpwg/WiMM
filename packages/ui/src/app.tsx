@@ -12,6 +12,7 @@ import {
   reencryptUserVault,
   refreshUnlockedUserVault,
   validateUserVaultKeyPairs,
+  upgradeUserVaultPassphraseWrap,
   unlockUserVaultWithPassphrase,
   unlockUserVaultWithRecoveryCode,
   type EncryptedUserVault,
@@ -211,7 +212,7 @@ export function AppShell({ title, store, platform, children }: AppShellProps) {
     return <CreateVault notice={notice} title={title} screen={screen} store={store} onScreen={setScreen} onNotice={setNotice} />;
   }
   if (screen.kind === 'unlock') {
-    return <UnlockVault notice={notice} title={title} profile={screen.profile} onUnlocked={(vault) => setScreen({ ...screen, kind: 'unlocked', vault })} onNotice={setNotice} />;
+    return <UnlockVault notice={notice} title={title} profile={screen.profile} store={store} onUnlocked={(vault, profile) => setScreen({ ...screen, profile, kind: 'unlocked', vault })} onNotice={setNotice} />;
   }
 
   const activeArea = screen.profile.areas.find((area) => area.id === screen.profile.selectedAreaId) ?? screen.profile.areas[0]!;
@@ -342,30 +343,43 @@ function CreateVault({ notice, title, screen, store, onScreen, onNotice }: {
   </main>;
 }
 
-function UnlockVault({ notice, title, profile, onUnlocked, onNotice }: {
+function UnlockVault({ notice, title, profile, store, onUnlocked, onNotice }: {
   readonly notice?: string | undefined;
   readonly title: string;
   readonly profile: LocalProfile;
-  readonly onUnlocked: (vault: UnlockedUserVault) => void;
+  readonly store: ProfileStore;
+  readonly onUnlocked: (vault: UnlockedUserVault, profile: LocalProfile) => void;
   readonly onNotice: (notice: string | undefined) => void;
 }) {
+  const active = useRef(true); const submitting = useRef(false);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   const [secret, setSecret] = useState('');
   const [recovery, setRecovery] = useState(false);
   const [busy, setBusy] = useState(false);
   async function submit(event: FormEvent) {
     event.preventDefault();
+    if (submitting.current) return; submitting.current = true;
     onNotice(undefined);
+    let migrating = false;
     try {
       setBusy(true);
       const unlocked = recovery
         ? await unlockUserVaultWithRecoveryCode(profile.vault, secret)
         : await unlockUserVaultWithPassphrase(profile.vault, secret);
-      try { await assertVaultAreas(profile, unlocked); }
-      catch (error) { await lockUserVault(unlocked); throw error; }
-      onUnlocked(unlocked);
+      let confirmed = profile;
+      try {
+        await assertVaultAreas(profile, unlocked);
+        if (!active.current) throw new ProfileConflictError();
+        if (!recovery && profile.vault.passphraseWrap.version === undefined) {
+          migrating = true;
+          confirmed = await upgradeLocalProfileKdf(store, profile, unlocked, secret, () => active.current);
+        }
+        if (!active.current) throw new ProfileConflictError();
+      } catch (error) { await lockUserVault(unlocked); throw error; }
+      setSecret(''); onUnlocked(unlocked, confirmed);
     } catch (error) {
-      onNotice(error instanceof ProfileLoadError ? error.message : 'Der Tresor konnte nicht entsperrt werden. Passphrase oder Rettungscode prüfen.');
-    } finally { setBusy(false); }
+      onNotice(error instanceof ProfileLoadError || error instanceof ProfileConflictError ? error.message : migrating ? 'Die Tresorhärtung konnte nicht gespeichert werden. Das Originalprofil bleibt erhalten. Bitte prüfen Sie den Speicherzugriff und versuchen Sie es erneut.' : 'Der Tresor konnte nicht entsperrt werden. Passphrase oder Rettungscode prüfen.');
+    } finally { submitting.current = false; setBusy(false); }
   }
   return <main className="auth"><p className="product auth-brand" aria-label={title}>Wi<span>MM.</span></p><h1>Tresor entsperren</h1><p>Eine Serveranmeldung ist hierfür nicht erforderlich.</p>
     {notice === undefined ? undefined : <p role="alert">{notice}</p>}
@@ -377,4 +391,14 @@ function UnlockVault({ notice, title, profile, onUnlocked, onNotice }: {
 
 function Problem({ title, message }: { readonly title: string; readonly message: string }) {
   return <main className="auth"><h1>{title}</h1><p role="alert">{message}</p></main>;
+}
+
+/** Die Legacyhärtung ersetzt unter Profil-CAS ausschließlich die Passphrasehülle. */
+export async function upgradeLocalProfileKdf(store: ProfileStore, profile: LocalProfile, vault: UnlockedUserVault, passphrase: string, isActive = () => true): Promise<LocalProfile> {
+  return store.change(async current => {
+    if (!isActive() || current === undefined || current.profileId !== profile.profileId || current.revision !== profile.revision || JSON.stringify(current.vault) !== JSON.stringify(profile.vault)) throw new ProfileConflictError();
+    const upgraded = await upgradeUserVaultPassphraseWrap(vault, current.vault, passphrase);
+    if (!isActive()) throw new ProfileConflictError();
+    return { ...current, vault: upgraded };
+  });
 }

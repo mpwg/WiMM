@@ -153,3 +153,20 @@ describe('lokale Profilkomposition', () => {
   }, 30_000);
 
 });
+
+import { upgradeLocalProfileKdf } from './app.js';
+import { legacyVaultRecord } from '../../crypto/src/legacy-vault.fixture.js';
+it('migriert eine Legacyhülle atomar und erhält bei Fehler, Abbruch oder CAS-Konflikt das Originalprofil', async () => {
+  const passphrase = 'synthetische-legacy-migration-2026'; const created = await createLocalProfile(passphrase);
+  const legacy = { ...created.profile, vault: await legacyVaultRecord(created.profile.vault, created.recoveryCode, passphrase) };
+  const session = await unlockUserVaultWithPassphrase(legacy.vault, passphrase);
+  const memory = createMemoryProfileStore(legacy);
+  const fail: ProfileStore = { load: () => memory.load(), change: update => memory.change(async current => { await update(current); throw new Error('Quota'); }) };
+  await expect(upgradeLocalProfileKdf(fail, legacy, session, passphrase)).rejects.toThrow('Quota'); expect(await loadedProfile(memory)).toEqual(legacy);
+  await expect(upgradeLocalProfileKdf(memory, legacy, session, passphrase, () => false)).rejects.toThrow('geändert'); expect(await loadedProfile(memory)).toEqual(legacy);
+  const saved = await upgradeLocalProfileKdf(memory, legacy, session, passphrase);
+  expect(saved.revision).toBe((legacy.revision ?? 0) + 1); expect(saved.vault.passphraseWrap.version).toBe(2); expect(saved.vault.vault).toEqual(legacy.vault.vault); expect(saved.vault.recoveryWrap).toEqual(legacy.vault.recoveryWrap);
+  await expect(upgradeLocalProfileKdf(memory, legacy, session, passphrase)).rejects.toThrow('geändert'); expect(await loadedProfile(memory)).toEqual(saved);
+  const recovered = await unlockUserVaultWithRecoveryCode(saved.vault, created.recoveryCode); expect(recovered.spaces[0]?.key).toEqual(session.spaces[0]?.key);
+  await lockUserVault(recovered); await lockUserVault(session);
+});

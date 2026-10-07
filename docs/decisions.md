@@ -147,3 +147,15 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 - Betroffene Verträge: [Lokales Profil](data-model.md#lokales-profil-und-profilrevision), [Tresorerweiterung](encryption.md#atomare-lokale-profilerweiterung), [B01-Prüfungen](testing.md#b01--lokale-profilpersistenz).
 - Migration und Kompatibilität: fehlende Altprofilrevision wird lesend als null initialisiert; erst erfolgreicher Commit schreibt die nächste Revision. Passphrase-/Recoveryhüllen und vorhandene Bereichsschlüssel bleiben unverändert. Die Koordination gilt für Clients mit diesem Port; alte parallel laufende Appversionen besitzen diesen Schutz nicht.
 - Prüfung: Zwei-Tab-/Neustart-/Recovery-, Quota-, CAS-, Altprofil- und Sitzungsgenerationstests; A02 ergänzt im separaten PR vollständig geprüfte öffentliche Profil-/Hüllenfelder, authentifizierte Bereichs-/Schlüsselzugehörigkeit und die Ergebnisse missing/loaded/corrupt/unreadable. Ausschließlich missing erlaubt Erststart; Fehlerstände bleiben erhalten und werden auch vom Änderungsport abgewiesen.
+
+## ADR-037 — Selbstbeschreibende Passphrasehüllen mit kompatibler Legacyhärtung
+
+- Datum: 7. Oktober 2026. Status: angenommen.
+- Herkunft: technischer Default zur Erfüllung des bestehenden Argon2id-Vertrags und des Gesamtbehebungsauftrags, Audit A10 (#31).
+- Problem: historische Passphrasehüllen speichern keine Parameter und verwenden libsodium INTERACTIVE (zwei Durchläufe/64 MiB); globales Ändern würde Altprofile aussperren.
+- Entscheidung: neue `PassphraseWrap`-Hüllen besitzen Version 2 und explizite `kdf.opslimit`/`kdf.memlimit` (initial 3/67.108.864 Byte). Unterstützte Parameter: ganze 3–6 Durchläufe und 64–256 MiB; Prüfung vor KDF. AAD ist das UTF-8-JSON-Array mit Domain `wimm/v1/passphrase-wrap`, Hüllenversion, Algorithmus, Durchläufen, Speicherbytes und Salt. Die Suite-/Signatur-/Transportverträge ändern sich nicht; XChaCha20-Poly1305 bleibt das AEAD.
+- Alternativen: blindes Erhöhen globaler INTERACTIVE-Konstanten verworfen; kein KDF-Downgradefallback bei fehlgeschlagener Authentifizierung.
+- Folgen: Hüllenparameter sind authentifiziert, Aufwand ist explizit begrenzt. Neue Clients lesen Legacy und Version 2; alte Clients können die neue Passphrasehülle nicht öffnen.
+- Betroffene Verträge/Pakete: [Verschlüsselung](encryption.md), lokaler Profilport, `packages/crypto`, Audit B05.
+- Migration und Kompatibilität: fehlende Hüllenversion **und** fehlende Parameter bedeuten exakt Legacy 2/64 MiB mit bisheriger AAD. Nach erfolgreicher Passphraseentsperrung und semantischer Profilprüfung wird nur die Passphrasehülle unter Profilkoordination/CAS ersetzt. Tresorchiffrat, Tresorschlüssel, Bereiche und Recoveryhülle bleiben unverändert. Recoveryentsperrung schreibt nichts; die Härtung erfolgt beim nächsten Passphraseentsperren. Fehler/Abbruch/CAS bewahren das Originalprofil.
+- Prüfung: Legacy und neue Hüllen über beide Wege, authentifizierte Header, Parameterabweisung vor KDF, Originalstand bei Migrationsfehler/Abbruch und Profil-CAS; echte Web-/Desktopfrontendabläufe.
