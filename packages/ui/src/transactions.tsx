@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import type { UUID } from '@wimm/contracts';
-import { parseFinanceDate, parseMoney, type TransactionAggregate, type TransferAggregate } from '@wimm/domain';
+import { parseFinanceDate, parseMoney, type TransactionAggregate } from '@wimm/domain';
 import { TransferForm } from './account-actions.js';
 import { useDraftGuard, useFormDraft } from './drafts.js';
 import { Button, EmptyState } from './components.js';
@@ -83,18 +83,22 @@ export function TransactionForm({ model, previous, onSaved, onBusy, defaultAccou
   </form>{saving ? <p role="status">Wird lokal gespeichert … Bitte warten.</p> : null}{error === undefined ? null : <p className="field-error" role="alert">{error}</p>}</>;
 }
 
+function transactionSelection(model: FinanceModel, transaction?: TransactionAggregate) {
+  try { return { model, transaction, transfer: transaction === undefined ? undefined : model.transferFor(transaction), error: undefined as string | undefined }; }
+  catch (reason) { return { model, transaction, transfer: undefined, error: errorText(reason) }; }
+}
+
 export function TransactionList({ model, fixedAccountId, initialSelection, onSelectionClosed }: { readonly model: FinanceModel; readonly fixedAccountId?: UUID; readonly initialSelection?: UUID | undefined; readonly onSelectionClosed?: (() => void) | undefined }) {
   const guard = useDraftGuard();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filter, setFilter] = useState(''); const [account, setAccount] = useState(''); const [from, setFrom] = useState(''); const [to, setTo] = useState('');
   const [scrollTop, setScrollTop] = useState(0); const [mobile, setMobile] = useState(() => matchMedia('(max-width: 767px)').matches);
   const scroller = useRef<HTMLDivElement>(null); const trigger = useRef<HTMLButtonElement | null>(null);
-  const [selectedModel, setSelectedModel] = useState(model);
-  const [selectedTransfer, setSelectedTransfer] = useState<TransferAggregate>();
-  const [selected, setSelected] = useState<TransactionAggregate | undefined>(() => model.transactions.find(transaction => transaction.id === initialSelection));
+  const [selection, setSelection] = useState(() => transactionSelection(model, model.transactions.find(transaction => transaction.id === initialSelection)));
+  const { model: selectedModel, transfer: selectedTransfer, transaction: selected } = selection;
   const [action, setAction] = useState<'details' | 'edit' | 'delete' | 'unlock'>('details');
   const [editingBusy, setEditingBusy] = useState(false);
-  const dialog = useRef<HTMLDialogElement>(null); const [error, setError] = useState<string>(); const [deleting, setDeleting] = useState(false); const deleteBusy = useRef(false);
+  const dialog = useRef<HTMLDialogElement>(null); const [error, setError] = useState<string | undefined>(selection.error); const [deleting, setDeleting] = useState(false); const deleteBusy = useRef(false);
   const accountNames = useMemo(() => new Map(model.allAccounts.map((entry) => [entry.id, entry.name])), [model]);
   const payeeNames = useMemo(() => new Map(model.allPayees.map((entry) => [entry.id, entry.name])), [model]);
   const categoryNames = useMemo(() => new Map(model.allCategories.map((entry) => [entry.id, entry.name])), [model]);
@@ -115,13 +119,13 @@ export function TransactionList({ model, fixedAccountId, initialSelection, onSel
   const start = Math.min(Math.max(0, Math.floor(scrollTop / height) - 4), Math.max(0, visible.length - windowSize));
   const end = Math.min(start + windowSize, visible.length);
   function resetScroll() { setScrollTop(0); if (scroller.current !== null) scroller.current.scrollTop = 0; }
-  function close() { if (deleteBusy.current) return; setSelected(undefined); setError(undefined); onSelectionClosed?.(); }
+  function close() { if (deleteBusy.current) return; setSelection(transactionSelection(model)); setError(undefined); onSelectionClosed?.(); }
   function requestClose() { if (editingBusy || deleting) return; guard.request(() => { dialog.current?.close(); close(); }, dialog.current?.querySelector('form') ?? undefined); }
-  function open(transaction: TransactionAggregate, element: HTMLButtonElement) { trigger.current = element; setAction('details'); setError(undefined); setSelectedModel(model); setSelectedTransfer(model.transferFor(transaction)); setSelected(transaction); }
+  function open(transaction: TransactionAggregate, element: HTMLButtonElement) { trigger.current = element; setAction('details'); const next = transactionSelection(model, transaction); setSelection(next); setError(next.error); }
   async function remove() {
     if (selected === undefined || deleteBusy.current) return;
     deleteBusy.current = true; setDeleting(true); setError(undefined);
-    try { if (action === 'unlock') await selectedModel.unlock(selected); else if (selected.kind === 'transfer') await selectedModel.removeTransfer(selectedTransfer!); else await model.removeTransaction(selected); deleteBusy.current = false; close(); }
+    try { if (action === 'unlock') await selectedModel.unlock(selected); else if (selected.kind === 'transfer') { if (selectedTransfer === undefined) throw new TypeError('Die vollständige vorhandene Umbuchung fehlt.'); await selectedModel.removeTransfer(selectedTransfer); } else await model.removeTransaction(selected); deleteBusy.current = false; close(); }
     catch (reason) { setError(errorText(reason)); }
     finally { deleteBusy.current = false; setDeleting(false); }
   }
@@ -149,7 +153,7 @@ export function TransactionList({ model, fixedAccountId, initialSelection, onSel
       {action === 'edit' && selected.kind === 'transfer' ? <TransferForm model={selectedModel} previous={selectedTransfer!} onBusy={setEditingBusy} onSaved={() => { dialog.current?.close(); close(); }} /> : action === 'edit' ? <TransactionForm key={selected.id} model={model} previous={selected} onBusy={setEditingBusy} onSaved={() => { dialog.current?.close(); close(); }} /> : <>
         <dl><dt>Betrag</dt><dd className="money">{formatMoney(selected.amount)}</dd><dt>Datum</dt><dd>{displayDate(selected.date)}</dd><dt>Konto</dt><dd>{accountNames.get(selected.accountId)}</dd><dt>Empfänger</dt><dd>{payeeNames.get(selected.payeeId!) ?? 'Ohne Empfänger'}</dd><dt>Notiz</dt><dd>{selected.note ?? 'Ohne Notiz'}</dd><dt>Status</dt><dd>{selected.clearance === 'reconciled' ? 'Abgeglichen – gesperrt' : selected.clearance === 'cleared' ? 'Bestätigt' : 'Nicht abgeglichen'}</dd>{selected.splits.map((split) => <div key={split.id}><dt>{categoryNames.get(split.categoryId)}</dt><dd>{formatMoney(split.amount)}</dd></div>)}</dl>
         {action === 'delete' ? <p>Erst die Bestätigung entfernt diese Buchung aus Liste und Saldo. Die Löschmarkierung bleibt dauerhaft erhalten.</p> : null}
-        {action === 'unlock' ? <><p>Der gesamte zugehörige Abgleich wird aufgehoben. Bei Umbuchungen werden beide Seiten und alle verbundenen Abgleiche atomar entsperrt. Beträge und Kontostände bleiben erhalten.</p><button disabled={deleting} type="button" onClick={() => void remove()}>Entsperren bestätigen</button></> : selected.clearance === 'reconciled' || (selected.kind === 'transfer' && model.transactions.some((entry) => entry.transferId === selected.transferId && entry.clearance === 'reconciled')) ? <><p>Vor dem Ändern oder Löschen muss diese Buchung ausdrücklich entsperrt werden.</p><button type="button" onClick={() => setAction('unlock')}>Abgleich entsperren</button></> : action === 'details' ? <div className="dialog-actions"><button type="button" onClick={() => setAction('edit')}>Bearbeiten</button><button className="danger" type="button" onClick={() => setAction('delete')}>Löschen</button></div> : <button className="danger" disabled={deleting} type="button" onClick={() => void remove()}>{deleting ? 'Wird gelöscht …' : 'Löschen bestätigen'}</button>}
+        {action === 'unlock' ? <><p>Der gesamte zugehörige Abgleich wird aufgehoben. Bei Umbuchungen werden beide Seiten und alle verbundenen Abgleiche atomar entsperrt. Beträge und Kontostände bleiben erhalten.</p><button disabled={deleting} type="button" onClick={() => void remove()}>Entsperren bestätigen</button></> : selected.clearance === 'reconciled' || (selected.kind === 'transfer' && model.transactions.some((entry) => entry.transferId === selected.transferId && entry.clearance === 'reconciled')) ? <><p>Vor dem Ändern oder Löschen muss diese Buchung ausdrücklich entsperrt werden.</p><button type="button" onClick={() => setAction('unlock')}>Abgleich entsperren</button></> : action === 'details' ? <div className="dialog-actions"><button type="button" onClick={() => { if (selected.kind === 'transfer' && selectedTransfer === undefined) setError(selection.error ?? 'Die vollständige vorhandene Umbuchung fehlt.'); else setAction('edit'); }}>Bearbeiten</button><button className="danger" type="button" onClick={() => setAction('delete')}>Löschen</button></div> : <button className="danger" disabled={deleting} type="button" onClick={() => void remove()}>{deleting ? 'Wird gelöscht …' : 'Löschen bestätigen'}</button>}
 
       </>}
       {error === undefined ? null : <p role="alert">{error}</p>}

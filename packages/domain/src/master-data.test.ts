@@ -242,7 +242,7 @@ describe('Empfängerzusammenführung', () => {
       createdAt: NOW,
       updatedAt: NOW,
       aggregateType: 'transaction',
-      payeeId: SOURCE
+      payeeId: SOURCE, clearance: 'uncleared'
     };
     const merged = mergePayees(
       {
@@ -272,7 +272,7 @@ describe('Empfängerzusammenführung', () => {
       createdAt: NOW,
       updatedAt: NOW,
       aggregateType: 'transaction',
-      payeeId: SOURCE
+      payeeId: SOURCE, clearance: 'uncleared'
     };
     const input = {
       spaceId: SPACE,
@@ -300,4 +300,27 @@ describe('Empfängerzusammenführung', () => {
       'INVALID_COMMAND'
     );
   });
+});
+
+it.each([
+  ['Markt', 'Markt', [], []],
+  ['Äpfel Markt', '  A\u0308PFEL   markt ', ['Bio'], ['BIO']],
+  ['Ziel', 'Quelle', ['Quelle', 'Bio'], ['BIO']]
+])('vereinigt Empfängernamen und Aliasse eindeutig: %s / %s', (targetName, sourceName, targetAliases, sourceAliases) => {
+  const target = payee(TARGET, 1, targetName, targetAliases); const source = payee(SOURCE, 1, sourceName, sourceAliases);
+  const result = mergePayees({ spaceId: SPACE, target, sources: [source], transactions: [] }, reader(target, source), dependencies());
+  const merged = result.aggregates.find(a => a.id === TARGET) as PayeeAggregate;
+  const normalize = (s: string) => s.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('de-AT');
+  expect(new Set(merged.aliases.map(normalize)).size).toBe(merged.aliases.length);
+  expect(merged.aliases.map(normalize)).not.toContain(normalize(merged.name));
+});
+
+it('weist abgeglichene Empfängerreferenzen vor Änderungen ab und erlaubt den entsperrten Stand', () => {
+  const target = payee(TARGET, 1, 'Ziel'); const source = payee(SOURCE, 1, 'Quelle');
+  const transaction = { id: TRANSACTION, spaceId: SPACE, revision: 1, createdAt: NOW, updatedAt: NOW, aggregateType: 'transaction' as const, payeeId: SOURCE, clearance: 'reconciled' as const };
+  const input = { spaceId: SPACE, target, sources: [source], transactions: [transaction] };
+  const original = structuredClone(input);
+  expect(() => mergePayees(input, reader(target, source, transaction), dependencies())).toThrow('entsperrt'); expect(input).toEqual(original);
+  const unlocked = { ...transaction, clearance: 'cleared' as const };
+  expect(mergePayees({ ...input, transactions: [unlocked] }, reader(target, source, unlocked), dependencies()).aggregates.find(a => a.id === TRANSACTION)).toMatchObject({ payeeId: TARGET, clearance: 'cleared' });
 });

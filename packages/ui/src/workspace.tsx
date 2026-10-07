@@ -421,7 +421,14 @@ export class FinanceModel {
     const budgetGroup = this.groups.find((entry) => entry.id === budgetCategory?.groupId);
     return { ...(budgetCategory === undefined ? {} : { budgetCategory }), ...(budgetGroup === undefined ? {} : { budgetGroup }) };
   }
-  transferFor(transaction: TransactionAggregate) { return this.heads.get(transaction.transferId!) as TransferAggregate | undefined; }
+  transferFor(transaction: TransactionAggregate) {
+    if (transaction.kind !== 'transfer') return undefined;
+    const transfer = this.heads.get(transaction.transferId!) as TransferAggregate | undefined;
+    const source = transfer === undefined ? undefined : this.heads.get(transfer.sourceTransactionId) as TransactionAggregate | undefined;
+    const target = transfer === undefined ? undefined : this.heads.get(transfer.targetTransactionId) as TransactionAggregate | undefined;
+    if (transfer?.aggregateType !== 'transfer' || transfer.deletedAt !== undefined || source?.aggregateType !== 'transaction' || target?.aggregateType !== 'transaction' || source.deletedAt !== undefined || target.deletedAt !== undefined || source.kind !== 'transfer' || target.kind !== 'transfer' || source.transferId !== transfer.id || target.transferId !== transfer.id || source.accountId !== transfer.sourceAccountId || target.accountId !== transfer.targetAccountId || source.date !== transfer.date || target.date !== transfer.date || source.amount !== subtractMoney(0, transfer.amount) || target.amount !== transfer.amount || ![source.id, target.id].includes(transaction.id)) throw new TypeError('Die vollständige vorhandene Umbuchung fehlt oder ist ungültig. Bitte öffnen Sie den aktuellen Stand erneut.');
+    return transfer;
+  }
   async removeTransfer(transfer: TransferAggregate) {
     await this.execute(deleteTransfer({ spaceId: this.spaceId, transfer, source: this.heads.get(transfer.sourceTransactionId) as TransactionAggregate, target: this.heads.get(transfer.targetTransactionId) as TransactionAggregate, sourceAccount: this.heads.get(transfer.sourceAccountId) as AccountAggregate, targetAccount: this.heads.get(transfer.targetAccountId) as AccountAggregate, ...this.budgetReferences(transfer) }, this, this.domainDependencies));
   }

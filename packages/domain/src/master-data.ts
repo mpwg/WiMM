@@ -58,7 +58,7 @@ export interface PayeeFields {
 export type PayeeAggregate = P2Aggregate<'payee', PayeeFields>;
 
 /** Vollständige Transaktion, die für eine Empfängerzusammenführung nur über ihre Referenz betrachtet wird. */
-export type PayeeTransactionReference = P2Aggregate<'transaction', { readonly payeeId?: UUID }>;
+export type PayeeTransactionReference = P2Aggregate<'transaction', { readonly payeeId?: UUID; readonly clearance: 'uncleared' | 'cleared' | 'reconciled' }>;
 
 export function saveAccount(
   input: FullCommandInput<'account.save', AccountAggregate>,
@@ -218,6 +218,7 @@ export function mergePayees(
         'Eine Transaktionsreferenz darf nur einmal zusammengeführt werden.'
       );
     }
+    if (transaction.clearance === 'reconciled') throw new DomainValidationError('INVALID_COMMAND', 'Abgeglichene Buchungen müssen vor der Empfängerzusammenführung ausdrücklich entsperrt werden.');
     transactionIds.add(transaction.id);
     return transaction;
   });
@@ -225,7 +226,7 @@ export function mergePayees(
   const aliases = normalizeAliases([
     ...target.aliases,
     ...sources.flatMap((source) => [source.name, ...source.aliases])
-  ], target.name);
+  ], target.name, true);
   const revisedTarget = reviseAggregate({ ...target, aliases }, dependencies);
   const archivedSources = sources.map((source) => reviseAggregate({ ...source, archived: true }, dependencies));
   const reassignedTransactions = transactions.map((transaction) =>
@@ -316,7 +317,7 @@ function normalizePayee(payee: PayeeAggregate): PayeeAggregate {
   return { ...payee, name, aliases: normalizeAliases(payee.aliases, name) };
 }
 
-function normalizeAliases(aliases: readonly string[], name: string): readonly string[] {
+function normalizeAliases(aliases: readonly string[], name: string, deduplicate = false): readonly string[] {
   const normalizedName = normalizeMatchText(name);
   const seen = new Set<string>();
   const normalized: string[] = [];
@@ -324,6 +325,7 @@ function normalizeAliases(aliases: readonly string[], name: string): readonly st
     const display = normalizeRequiredText(alias, 'Ein Empfängeralias');
     const key = normalizeMatchText(display);
     if (key === normalizedName || seen.has(key)) {
+      if (deduplicate) continue;
       throw new DomainValidationError(
         'DUPLICATE_REFERENCE',
         'Empfängeraliasse müssen eindeutig sein und dürfen nicht dem Empfängernamen entsprechen.'
@@ -358,6 +360,7 @@ function requireCategoryGroupRevision(
 
 function assertPayeeTransactionReference(value: PayeeTransactionReference): void {
   assertAggregateType(value, 'transaction', 'Die Transaktionsreferenz');
+  if (!['uncleared', 'cleared', 'reconciled'].includes(value.clearance)) throw new DomainValidationError('INVALID_AGGREGATE', 'Die Transaktionsreferenz benötigt ihren Abgleichstatus.');
   if (value.payeeId !== undefined) {
     assertUuid(value.payeeId, 'Die Empfänger-ID der Transaktionsreferenz');
   }
