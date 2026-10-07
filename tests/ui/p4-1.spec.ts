@@ -35,8 +35,8 @@ test('öffnet vor bestätigtem Rettungscode keinen Bereich und persistiert weder
   expect(recoveryCode).toBeTruthy();
   await expect(page.getByRole('button', { name: 'Lokalen Bereich eröffnen' })).toBeDisabled();
   await expect(page.getByRole('heading', { name: 'Alles im Blick.' })).toHaveCount(0);
-  await expect.poll(() => page.evaluate(() => Object.keys(localStorage).map((key) => localStorage.getItem(key)))).not.toContain(recoveryCode);
-  expect(consoleMessages).not.toContain(recoveryCode);
+  await expect.poll(() => page.evaluate(() => Object.keys(localStorage).map((key) => localStorage.getItem(key)).join('\n'))).not.toContain(recoveryCode);
+  expect(consoleMessages.join('\n')).not.toContain(recoveryCode);
 });
 
 test('verwirft eine abgebrochene Tresoranlage ohne dauerhaftes Profil', async ({ page }) => {
@@ -76,4 +76,11 @@ test('bewahrt den Haushaltsschlüssel bei Sperren und standalone Neustart', asyn
   await page.getByLabel('Entsperrpassphrase').fill(passphrase);
   await page.getByRole('button', { name: 'Entsperren' }).click();
   await expect(page.getByLabel('Bereich')).toHaveText(/Haushalt 1/);
+});
+
+
+test('Secretassertion erkennt einen in JSON eingebetteten synthetischen Code', () => {
+  const code = 'synthetischer-negativfixture-code';
+  const embedded = [JSON.stringify({ nested: { recovery: code } })].join('\n');
+  expect(() => expect(embedded).not.toContain(code)).toThrow();
 });

@@ -6,7 +6,7 @@ const zoom = process.env.WIMM_REAL_ZOOM === '1';
 const matrix = process.env.WIMM_MATRIX === '1' || zoom;
 const port = zoom ? 4177 : matrix ? 4175 : desktop ? 1420 : 4173;
 export default defineConfig({
-  testDir: '.', testMatch: zoom ? 'zoom.spec.ts' : matrix ? ['matrix.spec.ts', 'performance.spec.ts'] : 'browsers.spec.ts',
+  testDir: '.', testMatch: zoom ? ['zoom.spec.ts', 'p5-zoom.spec.ts'] : matrix ? ['matrix.spec.ts', 'performance.spec.ts'] : 'browsers.spec.ts',
   outputDir: `../../test-results/p4-6-${zoom ? 'zoom' : matrix ? 'matrix' : desktop ? 'desktop' : 'web'}`,
   forbidOnly: true, workers: 1, timeout: 120_000,
   reporter: [['list'], ['json', { outputFile: fileURLToPath(new URL(`../../test-results/p4-6-${zoom ? 'zoom' : matrix ? 'matrix' : desktop ? 'desktop' : 'web'}.json`, import.meta.url)) }]],

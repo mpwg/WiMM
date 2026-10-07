@@ -2,6 +2,7 @@
 import { chromium, expect, test } from '@playwright/test';
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp } from 'node:fs/promises';
+import { navigate } from '../helpers/ui.js';
 import { prepare, importPreview } from '../ui/p5-helpers.js';
 test('P5 bei echtem Browserzoom 200 Prozent: Vorschau, Fehler und Automatisierung erreichbar', async ({ baseURL }, info) => {
   if (baseURL === undefined) throw new Error('Clientadresse fehlt.');
@@ -20,10 +21,13 @@ test('P5 bei echtem Browserzoom 200 Prozent: Vorschau, Fehler und Automatisierun
     const row = view.locator('.import-preview > li').first(); await row.scrollIntoViewIfNeeded(); await expect(row).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath('p5-import-zoom-200.png'), fullPage: true });
+    await view.getByRole('button', { name: 'Übernahme prüfen' }).click();
     await view.getByRole('button', { name: 'Entscheidungen bestätigen' }).click(); await expect(view.getByRole('status')).toContainText('ausdrückliche Entscheidung');
+    await view.getByRole('button', { name: 'Zurück zur Vorschau' }).click();
     await view.getByRole('button', { name: 'Vorschau verwerfen' }).click();
-    const automation = page.getByRole('button', { name: 'Regeln und Dauerzahlungen', exact: true }); await automation.focus(); await page.keyboard.press('Enter');
-    await expect(page.getByRole('heading', { name: 'Dauerzahlungen', exact: true })).toBeVisible();
+    await navigate(page, 'Dauerzahlungen');
+    await page.getByRole('button', { name: 'Neue Dauerzahlung', exact: true }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
     const amount = page.getByLabel('Dauerzahlungsbetrag'); await amount.scrollIntoViewIfNeeded(); await expect(amount).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     await page.screenshot({ path: info.outputPath('p5-automatisierung-zoom-200.png'), fullPage: true });
