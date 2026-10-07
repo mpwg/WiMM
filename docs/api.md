@@ -124,3 +124,7 @@ Serverergebnisse betreffen nur Hülle, Signatur, Autorisierung und CAS; Finanzfe
 ## Atomarer lokaler Kontoeinstieg
 
 `createAccountWithOpening` erzeugt unter `account.save` eine vollständige Änderungsmenge für ein neues Konto und optional eine validierte Anfangsbuchung. Beide neuen IDs benötigen erwartete Revision 0; bestehende Konten sind ausgeschlossen. Die Anfangsbuchung zählt nicht als Konsum. Dies ist ein Clientfachbefehl, kein neuer Serverendpunkt. `parseDirectedMoney` normalisiert die gewählte Ausgabe-/Einnahmerichtung im Fachkern; ausdrücklich vorzeichenbehaftete Splits erlauben weiterhin Gegenposten.
+
+## Lokaler Finanzbestandsport
+
+`AggregateHeadReader.list(spaceId)` liefert für Finanzbefehle einen vollständigen unveränderlichen entschlüsselten Bereichsbestand aus derselben Lesesicht wie `get(id)`. Ein reiner Kopfstandsport genügt hierfür nicht; bei fehlendem Bestandsport wird eine Finanzmutation abgewiesen. Änderungsmengen können zusätzlich zu ihren fachlichen Zielaggregaten vollständige Konto-CAS-Anker enthalten. Der lokale Adapter speichert sie gemeinsam mit allen übrigen Änderungen; dies ergänzt keine Finanzprüfung auf dem E2EE-Server und ändert keine Transporthülle.

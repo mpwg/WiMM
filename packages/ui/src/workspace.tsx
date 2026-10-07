@@ -297,6 +297,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
 }
 
 export class FinanceModel {
+  list(spaceId: UUID) { return [...this.heads.values()].filter(a => a.spaceId === spaceId); }
   get allAggregates() { return [...this.heads.values()]; }
   get activeSpaceId() { return this.spaceId; }
   async commitAutomation(change: DomainChangeSet) { await this.execute(change); }

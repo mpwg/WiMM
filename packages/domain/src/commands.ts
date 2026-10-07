@@ -8,6 +8,8 @@ import {
 import type { Revision, UtcTimestamp, UUID } from '@wimm/contracts';
 
 import { DomainValidationError } from './errors.js';
+import type { AccountAggregate } from './master-data.js';
+import { validateFinancialMutation } from './financial-validation.js';
 
 export const p2AggregateTypes = [
   'account',
@@ -73,6 +75,7 @@ export interface AggregateHead {
 /** Der Fachkern erhält den Kopfstand als Port und kennt keine Speicherimplementierung. */
 export interface AggregateHeadReader {
   get(id: UUID): AggregateHead | undefined;
+  list?(spaceId: UUID): readonly P2Aggregate[];
 }
 
 export interface RevisionExpectation {
@@ -118,7 +121,7 @@ export interface DomainChangeSet<
   readonly commandType: TCommandType;
   readonly spaceId: UUID;
   readonly expectedRevisions: readonly RevisionExpectation[];
-  readonly aggregates: readonly TAggregate[];
+  readonly aggregates: readonly (TAggregate | AccountAggregate)[];
 }
 
 /** Erzeugt Metadaten für ein neues vollständiges Aggregat ohne Systemzeit- oder Zufallszugriff. */
@@ -181,14 +184,19 @@ export function createChangeSet<
   assertCommandInput(input);
   const expectedById = validateExpectations(input.expectedRevisions, input.spaceId, heads);
   const aggregates = validateMutations(input, expectedById, heads);
+  const financial = ['payee.merge', 'reconciliation.confirm', 'reconciliation.unlock'].includes(input.commandType) ? { aggregates, expectedRevisions: input.expectedRevisions } : validateFinancialMutation(input.spaceId, aggregates, input.expectedRevisions, heads, dependencies);
+  // Auch hinzugefügte CAS-Anker müssen dieselben Revisionsverträge erfüllen.
+  const finalized = { ...input, expectedRevisions: financial.expectedRevisions, mutations: financial.aggregates.map(aggregate => ({ aggregate })) };
+  const finalExpected = validateExpectations(finalized.expectedRevisions, input.spaceId, heads);
+  const finalAggregates = validateMutations(finalized, finalExpected, heads);
   const stamp = createCommandStamp(dependencies);
 
   return Object.freeze({
     ...stamp,
     commandType: input.commandType,
     spaceId: input.spaceId,
-    expectedRevisions: Object.freeze([...input.expectedRevisions]),
-    aggregates: Object.freeze(aggregates)
+    expectedRevisions: Object.freeze([...financial.expectedRevisions]),
+    aggregates: Object.freeze(finalAggregates) as readonly (TAggregate | AccountAggregate)[]
   });
 }
 

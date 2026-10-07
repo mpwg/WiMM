@@ -29,7 +29,7 @@ export function automationChange(commandType: P2CommandType, aggregates: readonl
   if (!aggregates.length) fail('Die Änderung ist leer.');
   const map = new Map(all.map(a => [a.id, a]));
   const ids = [...new Set([...aggregates.map(a => a.id), ...read])];
-  return createChangeSet({ commandType, spaceId: aggregates[0]!.spaceId, expectedRevisions: ids.map(id => ({ id, expectedRevision: map.get(id)?.revision ?? 0 })), mutations: aggregates.map(aggregate => ({ aggregate })) }, { get: id => map.get(id) }, deps);
+  return createChangeSet({ commandType, spaceId: aggregates[0]!.spaceId, expectedRevisions: ids.map(id => ({ id, expectedRevision: map.get(id)?.revision ?? 0 })), mutations: aggregates.map(aggregate => ({ aggregate })) }, { get: id => map.get(id), list: spaceId => all.filter(a => a.spaceId === spaceId) }, deps);
 }
 export function validateRule(rule: RuleAggregate, all: readonly P2Aggregate[]): void {
   if (!Number.isSafeInteger(rule.order) || rule.order < 0 || typeof rule.enabled !== 'boolean' || typeof rule.stopProcessing !== 'boolean' || !Array.isArray(rule.conditions) || !rule.conditions.length || !Array.isArray(rule.actions) || !rule.actions.length) fail('Die Regel ist unvollständig.');
@@ -94,7 +94,7 @@ function checkedTransaction(tx: TransactionAggregate, all: readonly P2Aggregate[
   const refs = [tx.accountId, ...tx.splits.map(s => s.categoryId), ...(tx.payeeId ? [tx.payeeId] : [])];
   references(all, tx.spaceId, tx.accountId, 'account'); tx.splits.forEach(s => references(all, tx.spaceId, s.categoryId, 'category')); if (tx.payeeId) references(all, tx.spaceId, tx.payeeId, 'payee');
   const map = new Map(all.map(a => [a.id, a]));
-  return saveTransaction({ commandType: 'transaction.save', spaceId: tx.spaceId, expectedRevisions: [...new Set([tx.id, ...refs])].map(id => ({ id, expectedRevision: map.get(id)?.revision ?? 0 })), mutations: [{ aggregate: tx }] }, { get: id => map.get(id) }, deps);
+  return saveTransaction({ commandType: 'transaction.save', spaceId: tx.spaceId, expectedRevisions: [...new Set([tx.id, ...refs])].map(id => ({ id, expectedRevision: map.get(id)?.revision ?? 0 })), mutations: [{ aggregate: tx }] }, { get: id => map.get(id), list: spaceId => all.filter(a => a.spaceId === spaceId) }, deps);
 }
 export function resolveOccurrence(schedule: ScheduleAggregate, date: IsoDate, state: 'confirmed' | 'skipped', all: readonly P2Aggregate[], deps: DomainDependencies, imported?: TransactionAggregate): DomainChangeSet | null {
   const currentSchedule = references(all, schedule.spaceId, schedule.id, 'schedule');

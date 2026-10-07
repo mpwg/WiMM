@@ -3,7 +3,7 @@ import { expect, it } from 'vitest';
 import { DomainValidationError, createAccountWithOpening, parseDirectedMoney, projectConsumption, projectAccountBalances, type AccountAggregate, type DomainDependencies } from './index.js';
 const account: AccountAggregate = { id: '00000000-0000-4000-8000-000000000002', spaceId: '00000000-0000-4000-8000-000000000001', revision: 1, createdAt: '2026-10-05T12:00:00Z', updatedAt: '2026-10-05T12:00:00Z', aggregateType: 'account', name: 'Girokonto', type: 'checking', onBudget: true, archived: false };
 function dependencies(): DomainDependencies { let counter = 10; return { ids: { next: () => `00000000-0000-4000-8000-${String(counter++).padStart(12, '0')}` }, clock: { now: () => account.createdAt } }; }
-const heads = { get: () => undefined };
+const heads = { get: () => undefined, list: () => [] };
 it('erstellt Konto und Anfangsbuchung zusammen, ohne Konsumeinnahme', () => {
   const change = createAccountWithOpening(account, { amount: '1234,56', date: '2026-10-05' }, heads, dependencies());
   expect(change.aggregates).toHaveLength(2);

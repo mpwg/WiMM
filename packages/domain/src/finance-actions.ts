@@ -9,7 +9,7 @@ import { confirmReconciliation, deleteTransfer, saveTransfer, unlockReconciliati
 
 /** Verbundene Abgleiche einschließlich beider Transferseiten gemeinsam entsperren. */
 export function unlockFinanceSelection(spaceId: UUID, selectedId: UUID, aggregates: readonly P2Aggregate[], dependencies: DomainDependencies): DomainChangeSet {
-  const heads = { get: (id: UUID) => aggregates.find((entry) => entry.id === id) };
+  const heads = { get: (id: UUID) => aggregates.find((entry) => entry.id === id), list: (spaceId: UUID) => aggregates.filter(a => a.spaceId === spaceId) };
   const transactions = aggregates.filter((entry): entry is TransactionAggregate => entry.aggregateType === 'transaction' && entry.deletedAt === undefined);
   const reconciliations = aggregates.filter((entry): entry is ReconciliationAggregate => entry.aggregateType === 'reconciliation' && entry.deletedAt === undefined);
   const ids = new Set([selectedId]); const groups = new Set<UUID>();
@@ -59,7 +59,7 @@ export interface FinanceInverse {
 export function reverseFinanceAction(inverse: FinanceInverse, aggregates: readonly P2Aggregate[], dependencies: DomainDependencies): DomainChangeSet {
   if (inverse.targets.some((entry) => entry.previous !== undefined && !['transaction', 'transfer', 'reconciliation'].includes(entry.previous.aggregateType))) throw new DomainValidationError('INVALID_COMMAND', 'Nur Finanzaktionen besitzen Gegenbefehle.');
   const current = new Map(aggregates.map((entry) => [entry.id, entry]));
-  const heads = { get: (id: UUID) => current.get(id) };
+  const heads = { get: (id: UUID) => current.get(id), list: (spaceId: UUID) => aggregates.filter(a => a.spaceId === spaceId) };
   const desired = new Map(inverse.targets.map(({ id, previous }) => {
     const head = current.get(id);
     if (head === undefined || !['transaction', 'transfer', 'reconciliation'].includes(head.aggregateType) || head.spaceId !== inverse.spaceId) throw new DomainValidationError('REVISION_CONFLICT', 'Die Aktion gehört nicht zum aktuellen Bereich.');

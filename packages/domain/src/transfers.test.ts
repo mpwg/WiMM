@@ -43,7 +43,11 @@ function head(id: UUID, revision: number, aggregateType: AggregateHead['aggregat
 
 function reader(...heads: readonly AggregateHead[]): AggregateHeadReader {
   const entries = new Map(heads.map((item) => [item.id, item]));
-  return { get: (id) => entries.get(id) };
+  return { get: (id) => entries.get(id) ?? (id === '00000000-0000-4000-8000-000000000999' ? { id, spaceId: SPACE, revision: 1, aggregateType: 'categoryGroup' as const } : undefined), list: () => [
+    ...heads.filter(h => h.aggregateType === 'account').map(h => ({ ...h, createdAt: NOW, updatedAt: NOW })),
+    ...heads.filter(h => h.aggregateType === 'category').map(h => ({ ...h, createdAt: NOW, updatedAt: NOW, groupId: '00000000-0000-4000-8000-000000000999' })),
+    { id: '00000000-0000-4000-8000-000000000999', spaceId: SPACE, revision: 1, createdAt: NOW, updatedAt: NOW, aggregateType: 'categoryGroup', kind: 'expense' }
+  ] };
 }
 
 function account(id: UUID, onBudget: boolean): AccountAggregate {
@@ -163,7 +167,7 @@ describe('Umbuchungen und Kontenabgleich', () => {
       reader(head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account'), head(CATEGORY, 1, 'category'), head(GROUP, 1, 'categoryGroup')),
       dependencies()
     );
-    expect(result.aggregates).toHaveLength(3);
+    expect(result.aggregates).toHaveLength(5);
     expect(result.aggregates).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: TRANSFER }),
@@ -258,7 +262,7 @@ describe('P4.4-Vertragsgrenzen', () => {
   it('verlangt die ausdrückliche Geldfreigabe beim Eintritt und verbietet die Abgangskategorie', () => {
     const heads = reader(head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account'));
     expectDomainError(() => saveTransfer(input(), heads, dependencies()), 'INVALID_AGGREGATE');
-    expect(saveTransfer({ ...input(), transfer: transfer({ budgetRelease: true }) }, heads, dependencies()).aggregates).toHaveLength(3);
+    expect(saveTransfer({ ...input(), transfer: transfer({ budgetRelease: true }) }, heads, dependencies()).aggregates).toHaveLength(5);
     expectDomainError(() => saveTransfer({ ...input(), transfer: transfer({ budgetRelease: true, budgetCategoryId: CATEGORY }) }, heads, dependencies()), 'INVALID_AGGREGATE');
   });
   it('weist nicht passende Ausgabenkategorie, ungültiges Datum und gesperrte Transferänderung ab', () => {

@@ -38,7 +38,11 @@ function dependencies(): DomainDependencies {
 
 function reader(...heads: readonly AggregateHead[]): AggregateHeadReader {
   const entries = new Map(heads.map((item) => [item.id, item]));
-  return { get: (id) => entries.get(id) };
+  return { get: (id) => entries.get(id) ?? (id === '00000000-0000-4000-8000-000000000999' ? { id, spaceId: SPACE, revision: 1, aggregateType: 'categoryGroup' as const } : undefined), list: () => [
+    ...heads.filter(h => h.aggregateType === 'account').map(h => ({ ...h, createdAt: NOW, updatedAt: NOW })),
+    ...heads.filter(h => h.aggregateType === 'category').map(h => ({ ...h, createdAt: NOW, updatedAt: NOW, groupId: '00000000-0000-4000-8000-000000000999' })),
+    { id: '00000000-0000-4000-8000-000000000999', spaceId: SPACE, revision: 1, createdAt: NOW, updatedAt: NOW, aggregateType: 'categoryGroup', kind: 'expense' }
+  ] };
 }
 
 function head(

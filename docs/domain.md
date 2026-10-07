@@ -96,3 +96,9 @@ Dauerzahlungen speichern Ausgangsdatum, Rhythmus, Intervall, optional Enddatum u
 Regeln besitzen Reihenfolge, Bedingungen, Aktionen und `stopProcessing`; Bedingungen für Datum, Betrag, Zahlungsempfänger und Verwendungszweck; Aktionen für Kategorie, Empfänger und Abgleichstatus. Keine ausführbaren Skripte. Sparziele: positiver Zielbetrag, Kategorie, optional Zieldatum; Monatsrate ist verbleibender Betrag aufgerundet geteilt durch Anzahl verbleibender Monate einschließlich Zielmonat, im Minimum ein Monat.
 
 Stammdaten werden bei Referenzen archiviert. Buchungen können nach Aufhebung des Abgleichs gelöscht werden; Tombstones bleiben bis zur neuen Synchronisierungsepoche erhalten. Historische Teilnehmer/Anteilsschlüssel und Zahlungszuordnungen werden nicht physisch gelöscht. Bereichslöschung ist eine gesonderte bestätigte Verwaltungsaktion, nicht eine Sammeloperation gewöhnlicher Buchungslöschungen.
+
+## Summenprüfung vor lokalen Finanzänderungen
+
+Finanzänderungen erhalten über `AggregateHeadReader.list(spaceId)` den vollständigen entschlüsselten Bereichsbestand. Buchungs-/Transferanlage, Änderung, Löschung, Import, Dauerzahlungsbestätigung und Gegenbefehle prüfen vor dem Write den resultierenden Bestand: Konto- und Gesamtsalden, Kategorie-/Verbrauchssummen und Monatssummen einschließlich sicherer Zwischenwerte. Ungültige Bestände werden kontrolliert abgewiesen; Geld wird nicht automatisch korrigiert.
+
+Betroffene bisherige und neue Konten werden als vollständige revidierte CAS-Anker atomar mitgeschrieben. Alle für die Summenberechnung gelesenen vorhandenen Konten und Kategorie-/Gruppenrevisionen werden erwartet. Ein konkurrierender Write macht damit den vorbereiteten Finanzbefehl veraltet. Gegenbefehle verändern die Kontofelder nicht; sie erzeugen neue Ankerrevisionen und prüfen die Finanzprojektionen erneut.
