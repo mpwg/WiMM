@@ -77,3 +77,9 @@ it('schützt zwei gleichzeitige erste Konten über eine gemeinsame Finanzrevisio
   expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
   expect((await storage.query({ spaceId: space })).filter(a => a.aggregateType === 'account')).toHaveLength(1);
 });
+it('reserviert die Finanzrevisions-ID vor jeder fachlichen Neuanlage ohne Teilwrite', async () => {
+  const storage = new MemoryStorageAdapter('00000000-0000-4000-8000-000000000002');
+  const m = new FinanceModel(space, [], async change => storage.applyAtomicBatch({ expectedRevisions: change.expectedRevisions.map(e => ({ handle: e.id, expectedRevision: e.expectedRevision })), aggregates: change.aggregates.map(toStoredAggregate), outbox: [], projections: [] }));
+  m.domainDependencies.ids.next = () => space;
+  await expect(m.addAccount('Reservierte ID', 'checking', true)).rejects.toThrow('reserviert'); expect(await storage.query({ spaceId: space })).toEqual([]);
+});

@@ -288,6 +288,7 @@ function validateMutations<TAggregate extends P2Aggregate>(
 
     const aggregate = mutation.aggregate;
     assertAggregate(aggregate);
+    if ((aggregate.id === input.spaceId) !== (aggregate.aggregateType === 'financialRevision')) throw new DomainValidationError('INVALID_AGGREGATE', 'Die Bereichs-ID ist ausschließlich für die lokale Finanzrevision reserviert.');
     if (aggregate.spaceId !== input.spaceId) {
       throw new DomainValidationError(
         'CROSS_SPACE_REFERENCE',
