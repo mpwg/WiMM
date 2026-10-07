@@ -43,6 +43,9 @@ export interface ImportFileRequest {
   readonly acceptedMediaTypes: readonly string[];
   readonly acceptedExtensions: readonly string[];
   readonly multiple: boolean;
+  readonly maxBytes?: number;
+  readonly maxFiles?: number;
+  readonly maxTotalBytes?: number;
 }
 
 export interface ImportedFile {
@@ -83,4 +86,25 @@ export interface OpaqueAggregateHead {
   readonly handle: UUID;
   readonly revision: Revision;
   readonly ciphertextHash: Base64Url;
+}
+
+/** Gleiche harte Auswahlgrenzen gelten für Browser und nativen Importport. */
+export const MAX_IMPORT_FILE_BYTES = 25 * 1024 * 1024;
+export const MAX_IMPORT_FILES = 10;
+export const MAX_IMPORT_TOTAL_BYTES = 50 * 1024 * 1024;
+export function importFileLimits(request: ImportFileRequest) {
+  const limits = { maxBytes: request.maxBytes ?? MAX_IMPORT_FILE_BYTES, maxFiles: request.maxFiles ?? MAX_IMPORT_FILES, maxTotalBytes: request.maxTotalBytes ?? MAX_IMPORT_TOTAL_BYTES };
+  for (const [key, value, ceiling] of [['maxBytes', limits.maxBytes, MAX_IMPORT_FILE_BYTES], ['maxFiles', limits.maxFiles, MAX_IMPORT_FILES], ['maxTotalBytes', limits.maxTotalBytes, MAX_IMPORT_TOTAL_BYTES]] as const) {
+    if (!Number.isSafeInteger(value) || value < 1 || value > ceiling) throw new TypeError(`Das Importlimit ${key} ist ungültig.`);
+  }
+  return { ...limits, maxFiles: request.multiple ? limits.maxFiles : 1 };
+}
+export function validateImportSelection(sizes: readonly number[], limits: ReturnType<typeof importFileLimits>): void {
+  if (sizes.length > limits.maxFiles) throw new TypeError('Die Dateiauswahl überschreitet die Anzahlgrenze.');
+  let total = 0;
+  for (const size of sizes) {
+    if (!Number.isSafeInteger(size) || size < 0 || size > limits.maxBytes) throw new TypeError('Die Datei überschreitet die Importgrenze von höchstens 25 MiB.');
+    total += size;
+    if (total > limits.maxTotalBytes) throw new TypeError('Die Dateiauswahl überschreitet die Gesamtgrenze.');
+  }
 }

@@ -22,7 +22,7 @@ export function ImportView({ model, platform }: { model: AutomationModel; platfo
   const guard = useDraftGuard();
   useEffect(() => guard.registerPending('import-preview', preview.length > 0 || busy), [guard, preview.length, busy]);
   useEffect(() => () => abort.current?.abort(), []);
-  async function choose() { try { const files = await platform.chooseImportFiles({ multiple: false, acceptedExtensions: ['csv', 'xml', 'ofx', 'qfx'], acceptedMediaTypes: [] }); const selected = files[0]; if (!selected) return; if (selected.bytes.byteLength > MAX_IMPORT_BYTES) throw new Error('Die Datei ist größer als 25 MiB.'); setFile({ name: selected.name, bytes: selected.bytes }); setPreview([]); setStep(1); setMessage('Datei lokal ausgewählt. Bitte Zuordnung prüfen und Vorschau erstellen.'); } catch (e) { setMessage(errorText(e)); } }
+  async function choose() { try { const files = await platform.chooseImportFiles({ multiple: false, maxBytes: MAX_IMPORT_BYTES, maxFiles: 1, maxTotalBytes: MAX_IMPORT_BYTES, acceptedExtensions: ['csv', 'xml', 'ofx', 'qfx'], acceptedMediaTypes: [] }); const selected = files[0]; if (!selected) return; if (selected.bytes.byteLength > MAX_IMPORT_BYTES) throw new Error('Die Datei ist größer als 25 MiB.'); setFile({ name: selected.name, bytes: selected.bytes }); setPreview([]); setStep(1); setMessage('Datei lokal ausgewählt. Bitte Zuordnung prüfen und Vorschau erstellen.'); } catch (e) { setMessage(errorText(e)); } }
   async function parse() {
     if (!file) return; setBusy(true); setParsing(true); setMessage('Datei wird lokal verarbeitet …'); abort.current = new AbortController();
     try {

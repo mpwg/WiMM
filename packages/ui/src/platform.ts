@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import type { PlatformServices } from '@wimm/contracts';
+import { importFileLimits, validateImportSelection, type PlatformServices } from '@wimm/contracts';
 
 export function validateExternalUrl(value: string): string {
   const url = new URL(value);
@@ -16,13 +16,15 @@ export function createBrowserPlatformServices(): PlatformServices {
   const tokens = new Map<string, Uint8Array>();
   return {
     chooseImportFiles: (request) => new Promise((resolve, reject) => {
+      const limits = importFileLimits(request);
       const input = document.createElement('input'); input.type = 'file'; input.multiple = request.multiple;
       input.accept = [...request.acceptedMediaTypes, ...request.acceptedExtensions.map((extension) => `.${extension.replace(/^\./, '')}`)].join(',');
       input.hidden = true; document.body.append(input);
       input.addEventListener('cancel', () => { input.remove(); resolve([]); }, { once: true });
       input.addEventListener('change', () => {
         const files = Array.from(input.files ?? []); input.remove();
-        void Promise.all(files.map(async (file) => ({ name: file.name, mediaType: file.type || undefined, bytes: new Uint8Array(await file.arrayBuffer()) }))).then(resolve, reject);
+        try { validateImportSelection(files.map(file => file.size), limits); } catch (error) { reject(error); return; }
+        void Promise.all(files.map(async (file) => ({ name: file.name, mediaType: file.type || undefined, bytes: new Uint8Array(await file.arrayBuffer()) }))).then(selected => { validateImportSelection(selected.map(file => file.bytes.byteLength), limits); resolve(selected); }).catch(reject);
       }, { once: true });
       input.click();
     }),

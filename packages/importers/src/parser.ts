@@ -2,7 +2,7 @@
 import Papa from 'papaparse';
 import { SaxesParser } from 'saxes';
 import { parseSync } from 'ofx-js';
-import { ImportFailure, MAX_IMPORT_BYTES, MAX_IMPORT_RECORDS } from './types.js';
+import { ImportFailure, MAX_IMPORT_BYTES, MAX_IMPORT_RECORDS, MAX_IMPORT_XML_NODES, MAX_IMPORT_ENTRY_NODES, MAX_IMPORT_OUTPUT_BYTES } from './types.js';
 import type { ImportNode, ParseRequest, ParseResult, SourceRecord } from './types.js';
 
 function fail(code: 'FILE_LIMIT' | 'RECORD_LIMIT' | 'ABORTED' | 'INVALID_FILE', message: string): never {
@@ -66,7 +66,10 @@ function csv(text: string, separator: string, signal?: AbortSignal): SourceRecor
 function xml(text: string, signal?: AbortSignal): SourceRecord[] {
   const parser = new SaxesParser({ xmlns: true });
   const records: SourceRecord[] = [];
-  const stack: ImportNode[] = [];
+  const stack: (ImportNode | undefined)[] = [];
+  const retained = new Set(['Ntry', 'Amt', 'CdtDbtInd', 'BookgDt', 'Dt', 'DtTm', 'NtryRef', 'NtryDtls', 'TxDtls', 'AmtDtls', 'TxAmt', 'Refs', 'AcctSvcrRef', 'RmtInf', 'Ustrd']);
+  let nodeCount = 0; let entryNodes = 0; let outputBytes = 0;
+  const output = (size: number): void => { outputBytes += size; if (outputBytes > MAX_IMPORT_OUTPUT_BYTES) fail('FILE_LIMIT', 'Die CAMT-Ausgabe überschreitet das Ressourcenlimit.'); };
   let depth = 0;
   let entryCount = 0;
   let detailCount = 0;
@@ -77,25 +80,31 @@ function xml(text: string, signal?: AbortSignal): SourceRecord[] {
   parser.on('error', () => fail('INVALID_FILE', 'Die XML-Datei ist syntaktisch ungültig.'));
   parser.on('opentag', tag => {
     checkAbort(signal);
+    if (++nodeCount > MAX_IMPORT_XML_NODES) fail('FILE_LIMIT', 'Die XML-Knotenzahl überschreitet das Ressourcenlimit.');
     if (++depth > 128) fail('INVALID_FILE', 'Die XML-Verschachtelung ist zu tief.');
     if (!stack.length && ['IBAN', 'AcctId'].includes(tag.local)) accountNode = tag.local;
-    if (tag.local === 'Ntry') { checkCount(++entryCount); line = parser.line + 1; }
+    if (tag.local === 'Ntry') { if (stack.length) fail('INVALID_FILE', 'Verschachtelte CAMT-Entries sind nicht erlaubt.'); entryNodes = 0; checkCount(++entryCount); line = parser.line + 1; }
     if (tag.local === 'TxDtls') checkCount(++detailCount);
     if (stack.length || tag.local === 'Ntry') {
+      if (++entryNodes > MAX_IMPORT_ENTRY_NODES) fail('FILE_LIMIT', 'Die CAMT-Entrygröße überschreitet das Ressourcenlimit.');
+      const parent = stack.at(-1);
+      if (!retained.has(tag.local) || (stack.length > 0 && (parent === undefined || tag.uri !== parent.namespace))) { stack.push(undefined); return; }
+      output(128 + tag.uri.length * 3 + tag.local.length * 3);
       const node: ImportNode = { name: tag.local, namespace: tag.uri, attributes: {}, text: '', children: [] };
-      for (const attribute of Object.values(tag.attributes)) node.attributes[attribute.name] = attribute.value;
-      stack.at(-1)?.children.push(node);
+      // Nur die für Finanznormalisierung erforderliche Währung erhalten.
+      for (const attribute of Object.values(tag.attributes)) if (attribute.name === 'Ccy' && attribute.uri === '') { output(attribute.value.length * 3); node.attributes.Ccy = attribute.value; }
+      parent?.children.push(node);
       stack.push(node);
     }
   });
-  const append = (textValue: string): void => { if (accountNode && !stack.length) accountHint += textValue.trim(); const node = stack.at(-1); if (node) node.text += textValue; };
+  const append = (textValue: string): void => { if (accountNode && !stack.length) { output(textValue.length * 3); accountHint += textValue.trim(); } const node = stack.at(-1); if (node) { output(textValue.length * 3); node.text += textValue; } };
   parser.on('text', append);
   parser.on('cdata', append);
   parser.on('closetag', () => {
     depth--;
     accountNode = '';
     const node = stack.pop();
-    if (node && !stack.length) records.push({ sourceRow: records.length + 1, line, node, accountHint, issues: [] });
+    if (node && !stack.length) { output(128 + accountHint.length * 3); records.push({ sourceRow: records.length + 1, line, node, accountHint, issues: [] }); }
   });
   for (let offset = 0; offset < text.length; offset += 65_536) { checkAbort(signal); parser.write(text.slice(offset, offset + 65_536)); }
   parser.close();

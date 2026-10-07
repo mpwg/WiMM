@@ -20,3 +20,26 @@ describe('P5.3 Bankformate', () => {
   it.each(['ofx', 'qfx'] as const)('normalisiert %s XML/SGML, FITID und Buchungsdatum ohne Zeitzonenverschiebung', format => { for (const close of [true, false]) { const text = `<OFX><BANKMSGSRSV1><STMTTRNRS><STMTRS><CURDEF>EUR${close ? '</CURDEF>' : '\n'}<BANKTRANLIST><STMTTRN><DTPOSTED>20280229233000.000[-5:EST]${close ? '</DTPOSTED>' : '\n'}<TRNAMT>-0.01${close ? '</TRNAMT>' : '\n'}<FITID>007${close ? '</FITID>' : '\n'}</STMTTRN></BANKTRANLIST><LEDGERBAL><BALAMT>999</BALAMT></LEDGERBAL></STMTRS></STMTTRNRS></BANKMSGSRSV1></OFX>`; expect(bank(text, format)[0]?.record).toMatchObject({ date: '2028-02-29', amount: -1, externalId: '007' }); expect(bank(text.replace('EUR', 'USD'), format)[0]?.record).toBeNull(); } });
   it('lehnt DTD und externe Entitäten vor Normalisierung ab', () => { expect(() => bank('<!DOCTYPE x SYSTEM "https://invalid.test/a">' + camt(), 'camt053')).toThrow('DTD'); });
 });
+
+it('CAMT verwendet ausschließlich CRDT/DBIT für die Richtung und verwirft negative Magnituden', () => {
+  expect(bank(camt('', '3.00').replace('DBIT', 'CRDT'), 'camt053')[0]?.record?.amount).toBe(300);
+  expect(bank(camt('', '3.00'), 'camt053')[0]?.record?.amount).toBe(-300);
+  for (const sign of ['CRDT', 'DBIT']) {
+    expect(bank(camt('', '-3.00').replace('DBIT', sign), 'camt053')[0]?.record).toBeNull();
+    expect(bank(camt(detail('-1.00', 'a') + detail('4.00', 'b'), '3.00').replace('DBIT', sign), 'camt053')[0]?.record).toBeNull();
+  }
+});
+it('CAMT bewahrt Originalentry und physische Zeile bei mehreren Vereinzelungen', () => {
+  const entry = (content: string) => camt(content, '3.00').replace(/^<Document[^>]*>/, '').replace('</Document>', '');
+  const input = '<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02">\n' + entry(detail('1.00', 'a') + detail('2.00', 'b')) + '\n' + entry(detail('1.00', 'c') + detail('2.00', 'd')) + '</Document>';
+  const rows = bank(input, 'camt053');
+  expect(rows.map(r => r.source.originalSourceRow)).toEqual([1, 1, 2, 2]);
+  expect(rows.map(r => r.source.sourceRow)).toEqual([1, 2, 3, 4]);
+  expect(rows.map(r => r.record?.sourceRow)).toEqual([1, 2, 3, 4]);
+  expect(rows[0]?.source.line).toBe(rows[1]?.source.line); expect(rows[2]?.source.line).toBe(rows[3]?.source.line); expect(rows[2]?.source.line).toBeGreaterThan(rows[0]!.source.line!);
+});
+
+it('bewahrt reguläre CAMT-Sammelbuchungen mit 300 Details unter dem Ausgabebudget', () => {
+  const rows = bank(camt(Array.from({ length: 300 }, (_, i) => detail('1.00', String(i))).join(''), '300.00'), 'camt053');
+  expect(rows).toHaveLength(300); expect(rows.every(r => r.record?.amount === -100 && r.source.originalSourceRow === 1)).toBe(true);
+});

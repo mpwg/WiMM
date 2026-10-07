@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { createImportOutputBudget } from './output-budget.js';
 import { sumMoney } from '@wimm/domain';
 import { normalizeImportRecord } from './normalize.js';
 import { MAX_IMPORT_RECORDS, ImportFailure } from './types.js';
@@ -27,6 +28,11 @@ function numberText(value: string, mapping: CsvMapping): string {
 function nodeChildren(node: ImportNode, name: string): ImportNode[] { return node.children.filter(child => child.name === name && child.namespace === node.namespace); }
 function descendants(node: ImportNode, name: string): ImportNode[] { return [...nodeChildren(node, name), ...node.children.filter(child => child.namespace === node.namespace).flatMap(child => descendants(child, name))]; }
 function value(node: ImportNode, name: string): string { return descendants(node, name)[0]?.text.trim() ?? ''; }
+function camtMagnitude(node: ImportNode, indicator: string): string {
+  const magnitude = node.text.trim();
+  if (!/^\+?\d+(?:\.\d{1,2})?$/.test(magnitude)) throw new Error('CAMT-Beträge benötigen eine nichtnegative Magnitude.');
+  return `${indicator === 'DBIT' ? '-' : ''}${magnitude.replace(/^\+/, '')}`;
+}
 function result(source: SourceRecord, raw: Parameters<typeof normalizeImportRecord>[0]): PreviewRow {
   const normalized = normalizeImportRecord(raw);
   return { source, raw, record: source.issues.length ? null : normalized.record, issues: [...source.issues, ...normalized.issues] };
@@ -34,6 +40,8 @@ function result(source: SourceRecord, raw: Parameters<typeof normalizeImportReco
 export function createImportPreview(parsed: ParseResult, mapping?: CsvMapping): PreviewRow[] {
   if (parsed.format === 'csv') { if (!mapping) throw new Error('Die CSV-Zuordnung fehlt.'); validateCsvMapping(mapping); }
   const rows: PreviewRow[] = [];
+  const outputBudget = createImportOutputBudget();
+  const push = (row: PreviewRow): void => { outputBudget(row); if (rows.length >= MAX_IMPORT_RECORDS) throw new ImportFailure({ code: 'RECORD_LIMIT', message: 'Mehr als 100.000 normalisierte Buchungen.' }); rows.push(row); };
   for (const source of parsed.records) {
     if (parsed.format === 'csv' && mapping?.header && source.sourceRow === 1) continue;
     try {
@@ -55,7 +63,7 @@ export function createImportPreview(parsed: ParseResult, mapping?: CsvMapping): 
           amount = d.record.amount ? `-${debit.replace(/^\+/, '')}` : credit;
         }
         if (mapping.sign === -1) amount = amount.startsWith('-') ? amount.slice(1) : `-${amount.replace(/^\+/, '')}`;
-        rows.push(result(source, { sourceRow: source.sourceRow, date, amount, currency: 'EUR', payee: cell(mapping.columns.payee), memo: cell(mapping.columns.memo), externalId: cell(mapping.columns.externalId) }));
+        push(result(source, { sourceRow: source.sourceRow, date, amount, currency: 'EUR', payee: cell(mapping.columns.payee), memo: cell(mapping.columns.memo), externalId: cell(mapping.columns.externalId) }));
       } else if (parsed.format === 'camt053') {
         const entry = source.node;
         if (!entry || !entry.namespace.startsWith('urn:iso:std:iso:20022:tech:xsd:camt.053.')) throw new Error('Der CAMT.053-Namespace ist ungültig.');
@@ -65,27 +73,31 @@ export function createImportPreview(parsed: ParseResult, mapping?: CsvMapping): 
         const booking = nodeChildren(entry, 'BookgDt')[0];
         const date = booking ? value(booking, 'Dt') || value(booking, 'DtTm').slice(0, 10) : '';
         const currency = amountNode.attributes.Ccy ?? '';
-        const amount = `${sign === 'DBIT' ? '-' : ''}${amountNode.text.trim()}`;
+        const amount = camtMagnitude(amountNode, sign!);
         const base = normalizeImportRecord({ sourceRow: source.sourceRow, date, amount, currency });
-        if (!base.record) { rows.push(result(source, { sourceRow: source.sourceRow, date, amount, currency })); continue; }
+        if (!base.record) { push(result(source, { sourceRow: source.sourceRow, date, amount, currency })); continue; }
         const details = descendants(entry, 'TxDtls');
         const detailAmounts = details.map(detail => {
           const txAmount = descendants(detail, 'TxAmt')[0];
           const node = txAmount ? nodeChildren(txAmount, 'Amt')[0] : nodeChildren(detail, 'Amt')[0];
-          return node ? normalizeImportRecord({ sourceRow: source.sourceRow, date, amount: `${sign === 'DBIT' ? '-' : ''}${node.text.trim()}`, currency: node.attributes.Ccy ?? currency }).record : null;
+          for (const amount of descendants(detail, 'Amt')) camtMagnitude(amount, sign!);
+          if (!node) return null;
+          const normalized = normalizeImportRecord({ sourceRow: source.sourceRow, date, amount: camtMagnitude(node, sign!), currency: node.attributes.Ccy ?? currency });
+          if (!normalized.record) throw new Error('Ein CAMT-Detailbetrag ist ungültig.');
+          return normalized.record;
         });
         if (details.some(detail => descendants(detail, 'Amt').some(node => node.attributes.Ccy && node.attributes.Ccy !== 'EUR'))) throw new Error('Nicht-EUR-Detailbeträge sind nicht erlaubt.');
         const split = details.length > 1 && detailAmounts.every(item => item !== null) && sumMoney(detailAmounts.map(item => item!.amount)) === base.record.amount;
-        if (split) details.forEach((detail, index) => rows.push({ source: { ...source, sourceRow: rows.length + 1 }, record: { ...detailAmounts[index]!, sourceRow: rows.length + 1, memo: descendants(detail, 'Ustrd').map(item => item.text).join(' '), externalId: value(detail, 'AcctSvcrRef') }, issues: [] }));
-        else rows.push({ source, record: { ...base.record, memo: `${details.length > 1 ? 'Sammelbuchung: ' : ''}${descendants(entry, 'Ustrd').map(item => item.text).join(' ')}`, externalId: value(entry, 'AcctSvcrRef') || nodeChildren(entry, 'NtryRef')[0]?.text || '' }, issues: [] });
+        if (split) details.forEach((detail, index) => push({ source, record: { ...detailAmounts[index]!, sourceRow: rows.length + 1, memo: descendants(detail, 'Ustrd').map(item => item.text).join(' '), externalId: value(detail, 'AcctSvcrRef') }, issues: [] }));
+        else push({ source, record: { ...base.record, memo: `${details.length > 1 ? 'Sammelbuchung: ' : ''}${descendants(entry, 'Ustrd').map(item => item.text).join(' ')}`, externalId: value(entry, 'AcctSvcrRef') || nodeChildren(entry, 'NtryRef')[0]?.text || '' }, issues: [] });
       } else {
         const fields = source.fields ?? {};
         const text = (key: string) => { const entry = fields[key]; if (entry === undefined) return ''; if (typeof entry !== 'string') throw new Error('Ein OFX-Feld muss Text enthalten.'); return entry; };
         const posted = text('DTPOSTED');
         if (!/^\d{8}(?:\d{6}(?:\.\d+)?(?:\[[^\]]+\])?)?$/.test(posted)) throw new Error('Das OFX-Buchungsdatum ist ungültig.');
-        rows.push(result(source, { sourceRow: source.sourceRow, date: `${posted.slice(0, 4)}-${posted.slice(4, 6)}-${posted.slice(6, 8)}`, amount: text('TRNAMT'), currency: source.currency ?? '', payee: text('NAME') || (typeof fields.PAYEE === 'string' ? fields.PAYEE : ''), memo: text('MEMO'), externalId: text('FITID') }));
+        push(result(source, { sourceRow: source.sourceRow, date: `${posted.slice(0, 4)}-${posted.slice(4, 6)}-${posted.slice(6, 8)}`, amount: text('TRNAMT'), currency: source.currency ?? '', payee: text('NAME') || (typeof fields.PAYEE === 'string' ? fields.PAYEE : ''), memo: text('MEMO'), externalId: text('FITID') }));
       }
-    } catch (error) { rows.push({ source, record: null, issues: [{ code: 'INVALID_RECORD', sourceRow: source.sourceRow, message: error instanceof Error ? error.message : 'Die Zeile ist ungültig.' }] }); }
+    } catch (error) { if (error instanceof ImportFailure) throw error; push({ source, record: null, issues: [{ code: 'INVALID_RECORD', sourceRow: source.sourceRow, message: error instanceof Error ? error.message : 'Die Zeile ist ungültig.' }] }); }
     if (rows.length > MAX_IMPORT_RECORDS) throw new ImportFailure({ code: 'RECORD_LIMIT', message: 'Mehr als 100.000 normalisierte Buchungen.' });
   }
   // Quellreferenzen müssen auch nach CAMT-Vereinzelung eindeutig sein.

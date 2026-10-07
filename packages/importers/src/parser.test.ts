@@ -35,7 +35,7 @@ describe('Lokale Parsergrundlage P5.1', () => {
   it('begrenzt XML-Entries und Details während SAX-Ereignissen', () => {
     expect(parse(`<Document>${'<Ntry/>'.repeat(MAX_IMPORT_RECORDS)}</Document>`, 'camt053').records).toHaveLength(MAX_IMPORT_RECORDS);
     expect(() => parse(`<Document>${'<Ntry/>'.repeat(MAX_IMPORT_RECORDS + 1)}</Document>`, 'camt053')).toThrow('100.000');
-    expect(() => parse(`<Document><Ntry>${'<TxDtls/>'.repeat(MAX_IMPORT_RECORDS + 1)}</Ntry></Document>`, 'camt053')).toThrow('100.000');
+    expect(() => parse(`<Document><Ntry>${'<TxDtls/>'.repeat(MAX_IMPORT_RECORDS + 1)}</Ntry></Document>`, 'camt053')).toThrow('Ressourcenlimit');
   });
   it('erhält XML-Namespace, Attribute und Centtexte ohne numerische Koerzierung', () => {
     const result = parse('<c:Document xmlns:c="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02"><c:Ntry><c:Amt Ccy="EUR">90071992547409.91</c:Amt></c:Ntry></c:Document>', 'camt053');
@@ -91,4 +91,16 @@ describe('Exakte Zwischenform ohne Speicheränderung', () => {
     const result = normalizeImportRecord({ ...canonical, date: '2027-02-29', amount: 'kaputt', currency: 'USD' });
     expect(result.record).toBeNull(); expect(result.issues).toHaveLength(3);
   });
+});
+
+it('begrenzt breite CAMT-Entries einschließlich unbekannter und fremder Felder', () => {
+  for (const node of ['<X/>', '<f:X xmlns:f="urn:fremd"/>']) {
+    const text = '<Document><Ntry>' + node.repeat(20_001) + '</Ntry></Document>';
+    expect(() => parse(text, 'camt053')).toThrow(/Limit|Grenze/i);
+  }
+});
+
+it('begrenzt die globale XML-Knotenzahl und die gespeicherte Ausgabe vor Rückgabe', () => {
+  expect(() => parse('<Document>' + '<X/>'.repeat(2_000_001) + '</Document>', 'camt053')).toThrow('Ressourcenlimit');
+  expect(() => parse('<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.' + 'x'.repeat(1000) + '">' + '<Ntry/>'.repeat(25_000) + '</Document>', 'camt053')).toThrow('Ressourcenlimit');
 });

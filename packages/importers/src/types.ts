@@ -3,6 +3,10 @@ import type { IsoDate, Money } from '@wimm/contracts';
 
 export const MAX_IMPORT_BYTES = 25 * 1024 * 1024;
 export const MAX_IMPORT_RECORDS = 100_000;
+export const MAX_IMPORT_XML_NODES = 2_000_000;
+export const MAX_IMPORT_ENTRY_NODES = 20_000;
+export const MAX_IMPORT_OUTPUT_BYTES = 64 * 1024 * 1024;
+export const IMPORT_WORKER_TIMEOUT_MS = 30_000;
 export type ImportFormat = 'csv' | 'camt053' | 'ofx' | 'qfx';
 export type ImportErrorCode = 'FILE_LIMIT' | 'RECORD_LIMIT' | 'ABORTED' | 'INVALID_FILE' | 'INVALID_RECORD' | 'UNSUPPORTED_CURRENCY' | 'WORKER_ERROR';
 export interface ImportIssue {

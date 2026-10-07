@@ -4,6 +4,19 @@ use std::{fs, io::Read};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 
+const MAX_IMPORT_BYTES: u64 = 25 * 1024 * 1024;
+const MAX_IMPORT_FILES: usize = 10;
+const MAX_IMPORT_TOTAL_BYTES: u64 = 50 * 1024 * 1024;
+fn default_import_bytes() -> u64 {
+    MAX_IMPORT_BYTES
+}
+fn default_import_files() -> usize {
+    MAX_IMPORT_FILES
+}
+fn default_import_total() -> u64 {
+    MAX_IMPORT_TOTAL_BYTES
+}
+
 const MAX_FILE_BYTES: u64 = 32 * 1024 * 1024;
 
 #[derive(Deserialize)]
@@ -12,6 +25,12 @@ pub struct ImportRequest {
     accepted_extensions: Vec<String>,
     accepted_media_types: Vec<String>,
     multiple: bool,
+    #[serde(default = "default_import_bytes")]
+    max_bytes: u64,
+    #[serde(default = "default_import_files")]
+    max_files: usize,
+    #[serde(default = "default_import_total")]
+    max_total_bytes: u64,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,22 +54,24 @@ pub struct MenuCommand {
     enabled: bool,
 }
 
-fn read_selected_file(path: &std::path::Path) -> Result<ImportedFile, String> {
+fn read_selected_file(path: &std::path::Path, max_bytes: u64) -> Result<ImportedFile, String> {
     let file =
         fs::File::open(path).map_err(|_| "Die ausgewählte Datei konnte nicht gelesen werden.")?;
-    if !file
+    let metadata = file
         .metadata()
-        .map_err(|_| "Die Datei konnte nicht geprüft werden.")?
-        .is_file()
-    {
+        .map_err(|_| "Die Datei konnte nicht geprüft werden.")?;
+    if !metadata.is_file() {
         return Err("Bitte wählen Sie eine gewöhnliche Datei.".into());
     }
+    if metadata.len() > max_bytes {
+        return Err("Die Datei überschreitet die Importgrenze von höchstens 25 MiB.".into());
+    }
     let mut bytes = Vec::new();
-    file.take(MAX_FILE_BYTES + 1)
+    file.take(max_bytes + 1)
         .read_to_end(&mut bytes)
         .map_err(|_| "Die Datei konnte nicht gelesen werden.")?;
-    if bytes.len() as u64 > MAX_FILE_BYTES {
-        return Err("Die Datei überschreitet die Grenze von 32 MiB.".into());
+    if bytes.len() as u64 > max_bytes {
+        return Err("Die Datei überschreitet die Importgrenze von höchstens 25 MiB.".into());
     }
     Ok(ImportedFile {
         name: path
@@ -68,6 +89,15 @@ pub async fn platform_choose_files(
     app: tauri::AppHandle,
     request: ImportRequest,
 ) -> Result<Vec<ImportedFile>, String> {
+    if request.max_bytes == 0
+        || request.max_bytes > MAX_IMPORT_BYTES
+        || request.max_files == 0
+        || request.max_files > MAX_IMPORT_FILES
+        || request.max_total_bytes == 0
+        || request.max_total_bytes > MAX_IMPORT_TOTAL_BYTES
+    {
+        return Err("Die Importlimits sind ungültig.".into());
+    }
     if request.accepted_extensions.iter().any(|extension| {
         extension.is_empty() || !extension.chars().all(|ch| ch.is_ascii_alphanumeric())
     }) {
@@ -93,16 +123,61 @@ pub async fn platform_choose_files(
         } else {
             dialog.blocking_pick_file().map(|path| vec![path])
         };
-        selected
+        let paths = selected
             .unwrap_or_default()
             .into_iter()
             .map(|path| {
-                read_selected_file(&path.into_path().map_err(|_| "Ungültige Dateiauswahl.")?)
+                path.into_path()
+                    .map_err(|_| "Ungültige Dateiauswahl.".to_string())
             })
-            .collect()
+            .collect::<Result<Vec<_>, _>>()?;
+        read_selected_files(&paths, &request)
     })
     .await
     .map_err(|_| "Die Dateiauswahl konnte nicht abgeschlossen werden.".to_string())?
+}
+
+fn read_selected_files(
+    paths: &[std::path::PathBuf],
+    request: &ImportRequest,
+) -> Result<Vec<ImportedFile>, String> {
+    let limit = if request.multiple {
+        request.max_files
+    } else {
+        1
+    };
+    if paths.len() > limit {
+        return Err("Die Dateiauswahl überschreitet die Anzahlgrenze.".into());
+    }
+    let mut total = 0u64;
+    // Alle Metadaten prüfen, bevor die erste Datei gelesen wird.
+    for path in paths {
+        let metadata = fs::metadata(path).map_err(|_| "Die Datei konnte nicht geprüft werden.")?;
+        if !metadata.is_file() || metadata.len() > request.max_bytes {
+            return Err(
+                "Die Datei überschreitet die Importgrenze oder ist keine gewöhnliche Datei.".into(),
+            );
+        }
+        total = total
+            .checked_add(metadata.len())
+            .ok_or("Die Dateiauswahl überschreitet die Gesamtgrenze.")?;
+        if total > request.max_total_bytes {
+            return Err("Die Dateiauswahl überschreitet die Gesamtgrenze.".into());
+        }
+    }
+    let mut files = Vec::new();
+    total = 0;
+    for path in paths {
+        let file = read_selected_file(path, request.max_bytes)?;
+        total = total
+            .checked_add(file.bytes.len() as u64)
+            .ok_or("Die Dateiauswahl überschreitet die Gesamtgrenze.")?;
+        if total > request.max_total_bytes {
+            return Err("Die Dateiauswahl überschreitet die Gesamtgrenze.".into());
+        }
+        files.push(file);
+    }
+    Ok(files)
 }
 
 #[tauri::command]
@@ -245,20 +320,55 @@ mod tests {
         assert!(write_selected_file(directory.path(), b"Fehlversuch").is_err());
     }
     #[test]
+    fn import_selection_budgets_and_exact_boundary() {
+        let directory = tempfile::tempdir().unwrap();
+        let first = directory.path().join("first.csv");
+        let second = directory.path().join("second.csv");
+        fs::File::create(&first)
+            .unwrap()
+            .set_len(MAX_IMPORT_BYTES)
+            .unwrap();
+        fs::write(&second, b"x").unwrap();
+        let request = ImportRequest {
+            accepted_extensions: vec![],
+            accepted_media_types: vec![],
+            multiple: true,
+            max_bytes: MAX_IMPORT_BYTES,
+            max_files: 2,
+            max_total_bytes: MAX_IMPORT_BYTES,
+        };
+        assert_eq!(
+            read_selected_files(std::slice::from_ref(&first), &request).unwrap()[0]
+                .bytes
+                .len() as u64,
+            MAX_IMPORT_BYTES
+        );
+        assert!(read_selected_files(&[first.clone(), second.clone()], &request).is_err());
+        assert!(
+            read_selected_files(&[second.clone(), second.clone(), second.clone()], &request)
+                .is_err()
+        );
+        fs::File::create(&first)
+            .unwrap()
+            .set_len(MAX_IMPORT_BYTES + 1)
+            .unwrap();
+        assert!(read_selected_files(&[second, first], &request).is_err());
+    }
+    #[test]
     fn selected_file_read_is_bounded_and_has_no_path_in_response() {
         let directory = std::env::temp_dir().join(format!("wimm-port-test-{}", std::process::id()));
         fs::create_dir_all(&directory).unwrap();
         let path = directory.join("synthetic.txt");
         fs::write(&path, b"Synthetische Portpruefung").unwrap();
         assert_eq!(
-            read_selected_file(&path).unwrap().bytes,
+            read_selected_file(&path, MAX_IMPORT_BYTES).unwrap().bytes,
             b"Synthetische Portpruefung"
         );
         fs::File::create(&path)
             .unwrap()
-            .set_len(MAX_FILE_BYTES + 1)
+            .set_len(MAX_IMPORT_BYTES + 1)
             .unwrap();
-        assert!(read_selected_file(&path).is_err());
+        assert!(read_selected_file(&path, MAX_IMPORT_BYTES).is_err());
         fs::remove_dir_all(directory).unwrap();
     }
 }

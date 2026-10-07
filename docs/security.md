@@ -47,3 +47,5 @@ WIMM-/Entwurfsexporte und Desktopbackups sind standardmäßig verschlüsselt, mi
 ## Abnahme
 
 [Zugriffstests](testing.md) decken Fremd-IDs, Rollenwechsel, private Veröffentlichungen, Sessionablauf, CSRF, OIDC-State-/Nonce-/Issuerfehler, Einladungsreplay und lokale Limits ab. Abhängigkeits-/Lizenzprüfung vor Release; Änderungen am Vertrauensmodell benötigen Nutzerentscheidung und ADR. AGPL-Quellcodeangebot ist eine Produkteigenschaft, keine Freigabe zum Offenlegen von Secrets oder Finanzdaten.
+
+Importauswahl prüft Byte-, Anzahl- und Gesamtbudget vor dem Lesen in Browser und nativer Brücke. CAMT besitzt globale/Entry-Knotenbudgets und ein begrenztes Ausgabevolumen, Worker eine feste Zeitgrenze; konkrete Grenzen stehen in [Dateiformate](formats.md#importgrenzen-vor-lesen-und-worker-rückgabe). Limitfehler enthalten keine Originalfinanztexte. Diese lokalen Ressourcenbefunde belegen weder einen Serverangriff noch einen Geheimnisabfluss.

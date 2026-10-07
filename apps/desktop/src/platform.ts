@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import type { ImportedFile, PlatformServices } from '@wimm/contracts';
+import { importFileLimits, validateImportSelection, type ImportedFile, type PlatformServices } from '@wimm/contracts';
 import { createBrowserPlatformServices, validateExternalUrl } from '@wimm/ui';
 
 export function createDesktopPlatformServices(): PlatformServices {
@@ -10,7 +10,9 @@ export function createDesktopPlatformServices(): PlatformServices {
   const tokens = new Map<string, Uint8Array>();
   return {
     chooseImportFiles: async (request) => {
-      const files = await invoke<readonly (Omit<ImportedFile, 'bytes' | 'mediaType'> & { mediaType: string | null; bytes: number[] })[]>('platform_choose_files', { request });
+      const limits = importFileLimits(request);
+      const files = await invoke<readonly (Omit<ImportedFile, 'bytes' | 'mediaType'> & { mediaType: string | null; bytes: number[] })[]>('platform_choose_files', { request: { ...request, ...limits } });
+      validateImportSelection(files.map(file => file.bytes.length), limits);
       return files.map((file) => ({ ...file, mediaType: file.mediaType ?? undefined, bytes: new Uint8Array(file.bytes) }));
     },
     writeExport: async (request) => invoke('platform_write_file', { request: { ...request, bytes: Array.from(request.bytes) } }),
