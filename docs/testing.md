@@ -124,3 +124,9 @@ Die Ersteinrichtung ohne Web Locks wird bis zur bestätigten Rettungscodesicheru
 Ein verzögerter Profil-Lock prüft den Bereichswechsel aus einer befüllten Buchungsansicht: Neue Buchung, Import und Bereichsauswahl bleiben bis zum Commit deaktiviert, Ctrl/Cmd+N öffnet keinen Entwurf, und die Profilbytes bleiben bis zum Commit unverändert. Nach erfolgreichem Bereichswechsel sind die Aktionen wieder erreichbar. Speicherfehler und Sperren während der Wartezeit bleiben Bestandteil derselben B01-Serie.
 
 Die Schlüsselzugehörigkeit verwendet authentische synthetische Tresorhüllen mit jeweils verändertem Ed25519-Public-Key, eingebettetem Ed25519-Public-Key im privaten Schlüssel, X25519-Public-Key oder X25519-Privatschlüssel. Passphrase und Rettungscode entschlüsseln diese Hüllen erfolgreich, die Profilvalidierung muss sie jedoch vor Freigabe beziehungsweise Änderung abweisen. Originalbytes bleiben unverändert. Gültige Schlüsselpaare müssen über beide Entsperrwege weiterhin funktionieren und dürfen durch die mathematische Prüfung nicht verändert werden.
+
+## Paketgraph und eingebettete Secrets
+
+Die Paketgraphprüfung verwendet den etablierten Babel-AST-Parser für TS/TSX und prüft statische Imports, dynamische String-/Templateimports, Reexports, Typeimports und `require`-Formen. Relative Kanten zwischen Projektpaketen folgen denselben erlaubten Richtungen. Kommentare, Stringinhalte und JSX-Texte erzeugen keine Kanten. `pnpm test:package-graph` ergänzt Negativfixtures und läuft in der zentralen CI-Serie; Syntaxfehler dürfen die Kontrolle nicht umgehen.
+
+Secretassertions durchsuchen die vollständigen gespeicherten beziehungsweise protokollierten Zeichenketten auf eingebettete synthetische Codes. Der Recoverytest verlangt vor dem Negativversuch ein vorhandenes Profil unter dem tatsächlichen Web-/Desktopfrontendkey und vergleicht danach dieselben Originalbytes.

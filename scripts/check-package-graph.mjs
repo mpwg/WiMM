@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { readdirSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, dirname, sep } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { parse } from '@babel/parser';
 
-const root = process.cwd();
 const packages = new Map([
   ['@wimm/contracts', 'packages/contracts'],
   ['@wimm/crypto', 'packages/crypto'],
@@ -27,37 +28,62 @@ const allowedDependencies = new Map([
   ['@wimm/desktop', ['@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/importers', '@wimm/storage', '@wimm/sync', '@wimm/ui']],
   ['@wimm/server', ['@wimm/contracts']]
 ]);
-const violations = [];
 
-function sourceFiles(directory) {
-  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+export function sourceFiles(directory) {
+  return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) return sourceFiles(path);
-    return path.endsWith('.ts') ? [path] : [];
+    return /\.tsx?$/.test(path) ? [path] : [];
   });
 }
 
-for (const [name, directory] of packages) {
-  const allowed = allowedDependencies.get(name);
-  const manifest = JSON.parse(readFileSync(resolve(root, directory, 'package.json'), 'utf8'));
-  const declared = Object.keys({ ...manifest.dependencies, ...manifest.devDependencies })
-    .filter((dependency) => dependency.startsWith('@wimm/'));
-
-  for (const dependency of declared) {
-    if (!allowed.includes(dependency)) violations.push(`${name} darf ${dependency} nicht deklarieren.`);
-  }
-
-  for (const file of sourceFiles(resolve(root, directory, 'src'))) {
-    const source = readFileSync(file, 'utf8');
-    for (const match of source.matchAll(/(?:from\s+|import\s*)['"](@wimm\/[^/'"]+)/g)) {
-      if (!allowed.includes(match[1])) violations.push(`${name} darf ${match[1]} nicht importieren (${file}).`);
+/** Syntaxkanten statt Texttreffer: Kommentare und Strings sind keine Imports. */
+export function importSpecifiers(source, filename) {
+  const ast = parse(source, { sourceType: 'module', createImportExpressions: true, plugins: filename.endsWith('.tsx') ? ['typescript', 'jsx'] : ['typescript'] });
+  const imports = []; const pending = [ast.program];
+  const literal = node => node?.type === 'StringLiteral' ? node.value : node?.type === 'TemplateLiteral' && node.expressions.length === 0 ? node.quasis[0].value.cooked : undefined;
+  while (pending.length) {
+    const node = pending.pop();
+    if (!node || typeof node !== 'object') continue;
+    let specifier;
+    if (['ImportDeclaration', 'ExportNamedDeclaration', 'ExportAllDeclaration', 'ImportExpression'].includes(node.type)) specifier = literal(node.source);
+    else if (node.type === 'TSImportType') specifier = literal(node.source ?? node.argument);
+    else if (node.type === 'TSExternalModuleReference') specifier = literal(node.expression);
+    else if (node.type === 'CallExpression' && (node.callee?.type === 'Import' || (node.callee?.type === 'Identifier' && node.callee.name === 'require'))) specifier = literal(node.arguments[0]);
+    if (specifier !== undefined) imports.push(specifier);
+    // Rückwärts stacken bewahrt die Quellreihenfolge.
+    for (const [key, value] of Object.entries(node).reverse()) {
+      if (['loc', 'comments', 'leadingComments', 'trailingComments', 'innerComments', 'extra'].includes(key)) continue;
+      if (Array.isArray(value)) for (const child of value.toReversed()) pending.push(child);
+      else if (value !== null && typeof value === 'object') pending.push(value);
     }
   }
+  return imports;
 }
 
-if (violations.length > 0) {
-  console.error(violations.join('\n'));
-  process.exit(1);
+export function checkPackageGraph(root = process.cwd(), directories = packages, allowedGraph = allowedDependencies) {
+  const violations = [];
+  for (const [name, directory] of directories) {
+    const allowed = allowedGraph.get(name) ?? [];
+    const manifest = JSON.parse(readFileSync(resolve(root, directory, 'package.json'), 'utf8'));
+    for (const dependency of Object.keys({ ...manifest.dependencies, ...manifest.devDependencies }).filter(dep => dep.startsWith('@wimm/'))) {
+      if (!allowed.includes(dependency)) violations.push(`${name} darf ${dependency} nicht deklarieren.`);
+    }
+    for (const file of sourceFiles(resolve(root, directory, 'src'))) {
+      try {
+        for (const specifier of importSpecifiers(readFileSync(file, 'utf8'), file)) {
+          const target = specifier.startsWith('.') ? resolve(dirname(file), specifier) : undefined;
+          const dependency = specifier.startsWith('@wimm/') ? specifier.split('/').slice(0, 2).join('/') : target === undefined ? undefined : [...directories].find(([, path]) => target.startsWith(resolve(root, path) + sep))?.[0];
+          if (dependency !== undefined && dependency !== name && !allowed.includes(dependency)) violations.push(`${name} darf ${dependency} nicht importieren (${file}).`);
+        }
+      } catch (error) { violations.push(`Die Quelle kann nicht auf Abhängigkeiten geprüft werden (${file}): ${error.message}`); }
+    }
+  }
+  return violations;
 }
 
-console.log('Paketgraph entspricht den erlaubten Abhängigkeitsrichtungen.');
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  const violations = checkPackageGraph();
+  if (violations.length) { console.error(violations.join('\n')); process.exitCode = 1; }
+  else console.log('Paketgraph entspricht den erlaubten Abhängigkeitsrichtungen.');
+}

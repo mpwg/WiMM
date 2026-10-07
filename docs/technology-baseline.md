@@ -84,3 +84,7 @@ Für jede aufgelöste direkte oder transitive Abhängigkeit werden mindestens Na
 ## P4.5 — Native Systemports
 
 Zusätzlich exakt gesperrt: `tauri-plugin-dialog` 2.7.1 und `tauri-plugin-opener` 2.5.5, jeweils Apache-2.0 oder MIT; `url` 2.5.8 (MIT oder Apache-2.0) und `tempfile` 3.27.0 (MIT oder Apache-2.0). Die offiziellen [Dialog-](https://v2.tauri.app/plugin/dialog/) und [Opener-APIs](https://v2.tauri.app/plugin/opener/) werden ausschließlich innerhalb der begrenzten Rust-Appcommands verwendet. Die neueren Dialog-/Opener-Versionen verlangen Tauri 2.12 und passen nicht zum gesperrten Core 2.11.6. Es wurde kein Upstreamquellcode kopiert. Checksummen und transitive Auflösung stehen in `apps/desktop/src-tauri/Cargo.lock`; vollständige Distributionhinweise bleiben P11.
+
+## Auditbehebung: AST-Paketgraphprüfung
+
+Für die Entwicklungsprüfung wird `@babel/parser` exakt auf 8.0.6 gesperrt (MIT, Veröffentlichung 18. September 2026; sieben Tage Reifezeit erfüllt). [Offizielle Parserdokumentation](https://babeljs.io/docs/babel-parser) beschreibt TS/JSX und dynamische Imports. Die vorhandene TypeScript-7-Installation stellt keine `createSourceFile`-JavaScript-API bereit. Der Parser ergänzt ausschließlich das Entwicklungswerkzeug; keine neue Produktabhängigkeit oder Änderung erlaubter Paketrichtungen.
