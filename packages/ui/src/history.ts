@@ -38,7 +38,7 @@ export class FinanceHistory {
   private inverse(change: DomainChangeSet, before: readonly P2Aggregate[]): HistoryEntry {
     const previous = new Map(before.map((aggregate) => [aggregate.id, aggregate]));
     const changed = new Map<UUID, P2Aggregate>(change.aggregates.map((aggregate) => [aggregate.id, aggregate]));
-    return { observed: change.aggregates, spaceId: change.spaceId, expectedRevisions: change.expectedRevisions.map((expectation) => ({ ...expectation, expectedRevision: changed.get(expectation.id)?.revision ?? expectation.expectedRevision })), targets: change.aggregates.filter(aggregate => aggregate.aggregateType !== 'account').map((aggregate) => {
+    return { observed: change.aggregates, spaceId: change.spaceId, expectedRevisions: change.expectedRevisions.map((expectation) => ({ ...expectation, expectedRevision: changed.get(expectation.id)?.revision ?? expectation.expectedRevision })), targets: change.aggregates.filter(aggregate => ['transaction', 'transfer', 'reconciliation'].includes(aggregate.aggregateType)).map((aggregate) => {
       const value = previous.get(aggregate.id); return { id: aggregate.id, ...(value === undefined ? {} : { previous: value }) };
     }) };
   }

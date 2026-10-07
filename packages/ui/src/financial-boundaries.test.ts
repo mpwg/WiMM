@@ -62,3 +62,18 @@ describe('Finanzgrenzen vor dem Commit', () => {
     expect((await f.model()).transactions).toHaveLength(2);
   });
 });
+
+it('serialisiert parallele Anfangsbestände auch bei neu angelegten Konten', async () => {
+  const f = await fixture(); const m = await f.model(); const opening = { amount: moneyDecimal(Number.MAX_SAFE_INTEGER), date: '2026-10-07' };
+  const results = await Promise.allSettled([m.addAccount('Neu A', 'checking', true, opening), m.addAccount('Neu B', 'checking', true, opening)]);
+  expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+  expect((await f.model()).transactions).toHaveLength(1);
+});
+it('schützt zwei gleichzeitige erste Konten über eine gemeinsame Finanzrevision', async () => {
+  const storage = new MemoryStorageAdapter('00000000-0000-4000-8000-000000000002');
+  const m = new FinanceModel(space, [], async change => storage.applyAtomicBatch({ expectedRevisions: change.expectedRevisions.map(e => ({ handle: e.id, expectedRevision: e.expectedRevision })), aggregates: change.aggregates.map(toStoredAggregate), outbox: [], projections: [] }));
+  const opening = { amount: moneyDecimal(Number.MAX_SAFE_INTEGER), date: '2026-10-07' };
+  const results = await Promise.allSettled([m.addAccount('Erstes A', 'checking', true, opening), m.addAccount('Erstes B', 'checking', true, opening)]);
+  expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1);
+  expect((await storage.query({ spaceId: space })).filter(a => a.aggregateType === 'account')).toHaveLength(1);
+});

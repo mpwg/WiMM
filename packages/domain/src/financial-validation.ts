@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { UUID } from '@wimm/contracts';
-import { reviseAggregate, type AggregateHeadReader, type DomainDependencies, type P2Aggregate, type RevisionExpectation } from './commands.js';
+import { reviseAggregate, type AggregateHeadReader, type DomainDependencies, type P2Aggregate, type RevisionExpectation, type FinancialRevisionAggregate } from './commands.js';
 import { DomainValidationError } from './errors.js';
 import { sumMoney } from './money.js';
 import { normalizeTransaction, type TransactionAggregate } from './transactions.js';
@@ -29,7 +29,16 @@ export function validateFinancialMutation(spaceId: UUID, changes: readonly P2Agg
     return old === undefined ? [tx.accountId] : [tx.accountId, old.accountId];
   }));
   const mutations = new Map(changes.map(a => [a.id, a]));
+  // Auch neue Konten ändern einen gemeinsamen Bestand, ohne einen bisherigen
+  // Kontokopf zu mutieren. Die reservierte lokale Bereichsrevision schließt diese Lücke.
+  const previousGuard = current.find(a => a.id === spaceId);
+  if ((previousGuard !== undefined && previousGuard.aggregateType !== 'financialRevision') || (mutations.has(spaceId) && mutations.get(spaceId)!.aggregateType !== 'financialRevision')) throw new DomainValidationError('INVALID_AGGREGATE', 'Die reservierte lokale Finanzrevision ist nicht verfügbar.');
+  const guard: FinancialRevisionAggregate = previousGuard === undefined
+    ? { id: spaceId, spaceId, aggregateType: 'financialRevision', revision: 1, createdAt: deps.clock.now(), updatedAt: deps.clock.now() }
+    : reviseAggregate(previousGuard as FinancialRevisionAggregate, deps);
+  if (!mutations.has(spaceId)) mutations.set(spaceId, guard);
   const revisions = new Map(expected.map(e => [e.id, e]));
+  revisions.set(spaceId, { id: spaceId, expectedRevision: previousGuard?.revision ?? 0 });
   for (const reference of current.filter(a => ['category', 'categoryGroup'].includes(a.aggregateType))) {
     if (!revisions.has(reference.id)) revisions.set(reference.id, { id: reference.id, expectedRevision: reference.revision });
   }

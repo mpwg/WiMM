@@ -167,7 +167,7 @@ describe('Umbuchungen und Kontenabgleich', () => {
       reader(head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account'), head(CATEGORY, 1, 'category'), head(GROUP, 1, 'categoryGroup')),
       dependencies()
     );
-    expect(result.aggregates).toHaveLength(5);
+    expect(result.aggregates).toHaveLength(6);
     expect(result.aggregates).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: TRANSFER }),
@@ -262,7 +262,7 @@ describe('P4.4-Vertragsgrenzen', () => {
   it('verlangt die ausdrückliche Geldfreigabe beim Eintritt und verbietet die Abgangskategorie', () => {
     const heads = reader(head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account'));
     expectDomainError(() => saveTransfer(input(), heads, dependencies()), 'INVALID_AGGREGATE');
-    expect(saveTransfer({ ...input(), transfer: transfer({ budgetRelease: true }) }, heads, dependencies()).aggregates).toHaveLength(5);
+    expect(saveTransfer({ ...input(), transfer: transfer({ budgetRelease: true }) }, heads, dependencies()).aggregates).toHaveLength(6);
     expectDomainError(() => saveTransfer({ ...input(), transfer: transfer({ budgetRelease: true, budgetCategoryId: CATEGORY }) }, heads, dependencies()), 'INVALID_AGGREGATE');
   });
   it('weist nicht passende Ausgabenkategorie, ungültiges Datum und gesperrte Transferänderung ab', () => {

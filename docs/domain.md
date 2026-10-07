@@ -104,3 +104,5 @@ Finanzänderungen erhalten über `AggregateHeadReader.list(spaceId)` den vollst�
 Betroffene bisherige und neue Konten werden als vollständige revidierte CAS-Anker atomar mitgeschrieben. Alle für die Summenberechnung gelesenen vorhandenen Konten und Kategorie-/Gruppenrevisionen werden erwartet. Ein konkurrierender Write macht damit den vorbereiteten Finanzbefehl veraltet. Gegenbefehle verändern die Kontofelder nicht; sie erzeugen neue Ankerrevisionen und prüfen die Finanzprojektionen erneut.
 
 Summenprüfungen und Konto-/Verbrauchsprojektionen verwenden dieselbe stabile Reihenfolge nach Buchungs-ID. Dadurch kann die unterschiedliche Rückgabereihenfolge von Memory, IndexedDB und SQLite keinen erst nach Speicherung erkannten Zwischenwertüberlauf erzeugen.
+
+Zusätzlich erhält jede lokale Geldmutation die Bereichs-CAS-Revision `financialRevision` (ADR-039). Damit werden auch neue Kontoaggregate und gleichzeitige erste Konten gegen denselben vollständigen Finanzbestand geprüft. Die Revision enthält keine Geldprojektion; sie bleibt lokal und ist kein Undo-/Redo-Ziel.

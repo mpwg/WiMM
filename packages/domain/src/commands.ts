@@ -13,6 +13,7 @@ import { validateFinancialMutation } from './financial-validation.js';
 
 export const p2AggregateTypes = [
   'account',
+  'financialRevision',
   'categoryGroup',
   'category',
   'payee',
@@ -63,6 +64,9 @@ export type P2Aggregate<
   TFields & {
     readonly aggregateType: TType;
   };
+
+/** Ausschließlich lokale CAS-Revision des vollständigen Finanzbestands; keine Geldprojektion. */
+export type FinancialRevisionAggregate = P2Aggregate<'financialRevision'>;
 
 /** Öffentlicher Kopfstand genügt der Revisionsprüfung, nicht jedoch einer Finanzberechnung. */
 export interface AggregateHead {
@@ -121,7 +125,7 @@ export interface DomainChangeSet<
   readonly commandType: TCommandType;
   readonly spaceId: UUID;
   readonly expectedRevisions: readonly RevisionExpectation[];
-  readonly aggregates: readonly (TAggregate | AccountAggregate)[];
+  readonly aggregates: readonly (TAggregate | AccountAggregate | FinancialRevisionAggregate)[];
 }
 
 /** Erzeugt Metadaten für ein neues vollständiges Aggregat ohne Systemzeit- oder Zufallszugriff. */
@@ -196,7 +200,7 @@ export function createChangeSet<
     commandType: input.commandType,
     spaceId: input.spaceId,
     expectedRevisions: Object.freeze([...financial.expectedRevisions]),
-    aggregates: Object.freeze(finalAggregates) as readonly (TAggregate | AccountAggregate)[]
+    aggregates: Object.freeze(finalAggregates) as readonly (TAggregate | AccountAggregate | FinancialRevisionAggregate)[]
   });
 }
 

@@ -170,3 +170,14 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 - Betroffene Verträge/Pakete: Agenten-/Entwicklungsleitfäden, Workflow-Skill, Copilot- und PR-Vorlage; Audit Q06.
 - Migration und Kompatibilität: keine Produkt-/Datenmigration. ADR-034 bleibt als ersetzte Historie erhalten.
 - Prüfung: Dokumentationsvalidator, Links und konsistente zentrale Freigabeverweise.
+
+## ADR-039 — Lokale Finanzrevision schützt neue Kontoaggregate
+
+- Datum: 7. Oktober 2026. Status: angenommen.
+- Herkunft: weiterer reproduzierter Parallelfall innerhalb Audit A03 und bestehender Summeninvariante.
+- Problem: zwei neue Konten mit Anfangsbeständen ändern keine bisherige Kontorevision. Auch bei Konto-CAS können beide vorbereiteten Writes dieselbe sichere Gesamtsumme lesen und zusammen einen unsicheren Bestand erzeugen; ohne bisherige Konten existiert noch kein Kontoanker.
+- Entscheidung: jede lokale Geldmutation schreibt atomar eine `financialRevision` des Bereichs mit erwarteter Revision. Deren lokale Aggregat-ID ist die reservierte Bereichs-ID; sie enthält ausschließlich Metadaten, keine Geldwerte. Neuanlage der Revision mit Erwartung null schließt auch parallele erste Konten ein. Zusätzlich bleiben Kontoanker und Folgebestandsprüfung bestehen.
+- Folgen: genau ein veralteter konkurrierender Gesamtbestandswrite kann committen; andere erhalten einen Revisionskonflikt und behalten ihren Entwurf. Die Revision ist kein sichtbares Konto und kein Gegenbefehlsziel.
+- Betroffene Verträge/Pakete: [Fachmodell](domain.md), [lokaler Fachport](api.md#lokaler-finanzbestandsport), [lokales Datenmodell](data-model.md), P2/P3/P4 und Audit B02.
+- Migration und Kompatibilität: vorhandene Bereiche erhalten die lokale Revision erst beim ersten erfolgreichen Finanzcommit; vorhandene Finanz-/Schlüsselaggregate werden nicht umgeschrieben. Die Revision bleibt lokal und darf bei späterem P9 nicht als gemeinsames Finanzaggregat oder globale Sync-CAS-Revision übertragen werden. Empfangene Finanzänderungen müssen weiterhin vor dem lokalen Commit als kombinierter Bestand geprüft werden. Alte parallel laufende Appversionen besitzen diesen Schutz nicht.
+- Prüfung: parallele Grenzwrites auf bestehenden Konten, neue Konten mit Anfangsbestand und zwei gleichzeitige erste Konten; genau ein vollständiger Erfolg, keine Teilwrites. Undo/Redo, Speicherfehler und echte Adapterintegration bleiben Pflicht.

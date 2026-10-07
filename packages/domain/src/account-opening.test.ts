@@ -6,8 +6,8 @@ function dependencies(): DomainDependencies { let counter = 10; return { ids: { 
 const heads = { get: () => undefined, list: () => [] };
 it('erstellt Konto und Anfangsbuchung zusammen, ohne Konsumeinnahme', () => {
   const change = createAccountWithOpening(account, { amount: '1234,56', date: '2026-10-05' }, heads, dependencies());
-  expect(change.aggregates).toHaveLength(2);
-  expect(change.expectedRevisions).toHaveLength(2);
+  expect(change.aggregates).toHaveLength(3);
+  expect(change.expectedRevisions).toHaveLength(3);
   const transactions = change.aggregates.filter(entry => entry.aggregateType === 'transaction');
   expect(projectAccountBalances(transactions)[0]?.balance).toBe(123456);
   expect(projectConsumption(transactions, [], [])).toMatchObject({ income: 0, expense: 0 });
