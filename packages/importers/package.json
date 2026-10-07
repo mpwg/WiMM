@@ -7,7 +7,7 @@
   "dependencies": {
     "@wimm/contracts": "workspace:*",
     "@wimm/domain": "workspace:*",
-    "ofx-js": "1.1.1",
+    "ofx-js": "1.1.2",
     "papaparse": "5.7.0",
     "saxes": "6.0.0"
   },

@@ -11,7 +11,7 @@
     "dev:frontend": "vite --host 127.0.0.1 --port 1420"
   },
   "dependencies": {
-    "@tauri-apps/api": "2.11.1",
+    "@tauri-apps/api": "2.12.0",
     "@wimm/contracts": "workspace:*",
     "@wimm/crypto": "workspace:*",
     "@wimm/domain": "workspace:*",
