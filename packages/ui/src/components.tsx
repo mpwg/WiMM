@@ -17,7 +17,7 @@ export function Dialog({ title, children, onClose, busy = false, className = '' 
   useEffect(() => {
     trigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     dialog.current?.showModal();
-    dialog.current?.querySelector<HTMLElement>('input:not([type=checkbox]), select, textarea')?.focus();
+    dialog.current?.querySelector<HTMLElement>('input:not([type=checkbox]):not([type=hidden]):not(:disabled), select:not(:disabled), textarea:not(:disabled)')?.focus();
     const element = dialog.current;
     return () => {
       element?.close();
