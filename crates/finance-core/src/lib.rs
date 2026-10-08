@@ -14,6 +14,7 @@ mod payee_merge;
 mod projections;
 mod reconciliation_commands;
 mod references;
+mod schedule_dates;
 mod state_validation;
 mod transfer_commands;
 pub use state_validation::{project_json, validate_json};
@@ -149,6 +150,9 @@ pub fn parse_money(text: &str) -> CoreResult<i64> {
 pub fn calculate_json(input: &str) -> String {
     output((|| {
         let decoded = decode(input)?;
+        if decoded["calculationType"] == "schedule.dueDates" {
+            return schedule_dates::calculate(decoded);
+        }
         let request: MoneyRequest = serde_json::from_value(decoded)
             .map_err(|_| ("INVALID_COMMAND", "Der Fachbefehl ist ungültig."))?;
         if request.contract_version != 1
