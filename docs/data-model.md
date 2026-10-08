@@ -83,7 +83,7 @@ Transaction samt Splits, Transfer samt beiden Seiten, SharedExpense samt Anteile
 
 Pflichtindizes: Transaktionen nach space/account/date/id, Kategorie/Datum und Importquell-ID; Budgets nach space/month/method; aktive Membership nach user/household; Teilnehmer nach space; Regeln nach space/order/id; Occurrences nach schedule/date; Change nach space/epoch/cursor; Outbox nach space/state/createdAt; Receipt nach space/epoch/operationId.
 
-Fachfremdschlüssel werden in clientseitigem SQLite aktiviert, in IndexedDB durch denselben Fachvalidator geprüft. Der CiphertextStore kann keine Finanzreferenzen prüfen. Referenzen auf gelöschte Objekte dürfen nicht neu erzeugt werden. Tombstones bleiben verschlüsselt erhalten; Epochwechsel nur durch clientgeprüften, signierten Snapshotersatz. Administrationsdaten gehören nicht in gewöhnliche Finanzsnapshots.
+Fachfremdschlüssel werden in clientseitigem SQLite aktiviert, in IndexedDB durch denselben Fachvalidator geprüft. Der CiphertextStore kann keine Finanzreferenzen prüfen. Neue oder umgestellte Konto-, Kategorien-, Kategoriegruppen-, Empfänger- und Transferreferenzen benötigen vollständige, nicht gelöschte Ziele im selben Bereich. Neue Splitreferenzen prüfen zusätzlich die Kategoriegruppe. Der Fachkern vergleicht hierfür den vollständigen Ausgangsbestand mit dem atomaren Folgebestand; reine Revisionsköpfe genügen nicht. Unveränderte historische Referenzen auf spätere Tombstones bleiben erhalten; Archivierung ist keine Löschung. Tombstones bleiben verschlüsselt erhalten; Epochwechsel nur durch clientgeprüften, signierten Snapshotersatz. Administrationsdaten gehören nicht in gewöhnliche Finanzsnapshots.
 
 ## Schemaentwicklung
 

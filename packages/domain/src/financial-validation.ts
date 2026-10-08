@@ -6,6 +6,7 @@ import { sumMoney } from './money.js';
 import { normalizeTransaction, type TransactionAggregate } from './transactions.js';
 import { projectAccountBalances, projectConsumption } from './projections.js';
 import type { CategoryAggregate, CategoryGroupAggregate } from './master-data.js';
+import { validateFinancialReferences } from './financial-references.js';
 
 /** Prüft den vollständigen Folgebestand und schützt sämtliche gelesenen Konten per CAS. */
 export function validateFinancialMutation(spaceId: UUID, changes: readonly P2Aggregate[], expected: readonly RevisionExpectation[], heads: AggregateHeadReader, deps: DomainDependencies) {
@@ -13,6 +14,7 @@ export function validateFinancialMutation(spaceId: UUID, changes: readonly P2Agg
   if (heads.list === undefined) throw new DomainValidationError('INVALID_COMMAND', 'Finanzänderungen benötigen den vollständigen aktuellen Fachbestand.');
   const current = heads.list(spaceId);
   if (current.some(a => a.spaceId !== spaceId) || new Set(current.map(a => a.id)).size !== current.length) throw new DomainValidationError('INVALID_AGGREGATE', 'Der Finanzbestand ist nicht eindeutig im aktuellen Bereich.');
+  validateFinancialReferences(changes, current);
   const next = new Map(current.map(a => [a.id, a]));
   changes.forEach(a => next.set(a.id, a));
   const txs = [...next.values()].filter((a): a is TransactionAggregate => a.aggregateType === 'transaction' && a.deletedAt === undefined).map(normalizeTransaction).sort((a, b) => a.id.localeCompare(b.id));

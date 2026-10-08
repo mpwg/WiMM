@@ -15,6 +15,7 @@ import {
 } from './commands.js';
 import { DomainValidationError } from './errors.js';
 import type { TransactionAggregate } from './transactions.js';
+import { validateFinancialReferences } from './financial-references.js';
 
 export const accountTypes = ['checking', 'cash', 'savings', 'credit', 'other'] as const;
 export type AccountType = (typeof accountTypes)[number];
@@ -97,8 +98,8 @@ export function saveCategory(
   dependencies: DomainDependencies
 ): DomainChangeSet<'category.save', CategoryAggregate> {
   const category = normalizeCategory(singleMutation(input, 'category.save'));
-  assertCategorySystemStatus(category, input.spaceId, heads);
   requireCategoryGroupRevision(input.expectedRevisions, category.groupId, heads);
+  assertCategorySystemStatus(category, input.spaceId, heads);
   return createChangeSet({ ...input, mutations: [{ aggregate: category }] }, heads, dependencies);
 }
 
@@ -126,7 +127,9 @@ function assertCategorySystemStatus(category: CategoryAggregate, spaceId: UUID, 
   if (heads.list === undefined) {
     throw new DomainValidationError('INVALID_COMMAND', 'Kategorieänderungen benötigen den vollständigen aktuellen Fachbestand.');
   }
-  const current = heads.list(spaceId).find((aggregate) => aggregate.id === category.id);
+  const currentAggregates = heads.list(spaceId);
+  validateFinancialReferences([category], currentAggregates);
+  const current = currentAggregates.find((aggregate) => aggregate.id === category.id);
   const stored = current?.aggregateType === 'category' ? current as CategoryAggregate : undefined;
   if (stored?.system === 'uncategorized') {
     if (category.system !== 'uncategorized' || category.archived || category.deletedAt !== undefined) {
@@ -183,7 +186,7 @@ export function mergePayees(
 ): DomainChangeSet<'payee.merge', P2Aggregate> {
   assertUuid(input.spaceId, 'Die Bereichs-ID der Empfängerzusammenführung');
   const target = normalizePayee(input.target);
-  if (target.spaceId !== input.spaceId || target.archived) {
+  if (target.spaceId !== input.spaceId || target.archived || target.deletedAt !== undefined) {
     throw new DomainValidationError(
       'INVALID_COMMAND',
       'Der Ziel-Empfänger muss aktiv sein und zum selben Bereich gehören.'
@@ -205,7 +208,7 @@ export function mergePayees(
   const sourceIds = new Set<UUID>();
   const sources = input.sources.map((source: PayeeAggregate) => {
     const normalized = normalizePayee(source);
-    if (normalized.spaceId !== input.spaceId || normalized.id === target.id || normalized.archived) {
+    if (normalized.spaceId !== input.spaceId || normalized.id === target.id || normalized.archived || normalized.deletedAt !== undefined) {
       throw new DomainValidationError(
         'INVALID_COMMAND',
         'Quell-Empfänger müssen aktiv, verschieden vom Ziel und im selben Bereich sein.'
@@ -227,6 +230,11 @@ export function mergePayees(
   const current = heads.list(input.spaceId);
   if (current.some((aggregate) => aggregate.spaceId !== input.spaceId) || new Set(current.map((aggregate) => aggregate.id)).size !== current.length) {
     throw new DomainValidationError('INVALID_AGGREGATE', 'Der Fachbestand für die Empfängerzusammenführung ist nicht eindeutig im aktuellen Bereich.');
+  }
+  for (const payee of [target, ...sources]) {
+    if (current.find((aggregate) => aggregate.id === payee.id)?.deletedAt !== undefined) {
+      throw new DomainValidationError('INVALID_AGGREGATE', 'Gelöschte Empfänger dürfen nicht zusammengeführt oder neu referenziert werden.');
+    }
   }
   const currentTransactions = current.filter((aggregate): aggregate is TransactionAggregate => {
     if (aggregate.aggregateType !== 'transaction' || aggregate.deletedAt !== undefined) return false;
@@ -280,6 +288,7 @@ export function mergePayees(
     ...archivedSources,
     ...reassignedTransactions
   ];
+  validateFinancialReferences(aggregates, current);
   const expectedRevisions = aggregates.map((aggregate) => ({
     id: aggregate.id,
     expectedRevision: aggregate.revision - 1
