@@ -12,14 +12,14 @@ Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungss
 
 ## K — Rust-Fachkern und SQL-Portabilität
 
-- Status: in Arbeit (Konzeptdokumentation und Issueanlage); Produktimplementierung K01–K11 offen, nicht freigegeben.
+- Status: erledigt (Konzeptdokumentation und Issueanlage, 8. Oktober 2026); Produktimplementierung K01–K11 offen, nicht freigegeben.
 - Freigabe: Nutzerauftrag vom 8. Oktober 2026 ausschließlich für das bestätigte Konzept und GitHub-Issues. Rust ist das Ziel des gemeinsamen Fachkerns; SQL-Austauschbarkeit betrifft den Server, lokale Clients behalten SQLite beziehungsweise IndexedDB.
 - Voraussetzungen: aktuelle aktive Arbeitskopie, bestehende Fach-/E2EE-Verträge und geprüfte GitHub-Duplikate; bestehende Freigaben für P1–P11 werden nicht erweitert.
-- Ergebnis: [Portabilitätskonzept](core-and-sql-portability.md), ADR-042–ADR-044, abgestimmte Architektur und GitHub-Tracking mit Voraussetzungen/Abnahmekriterien.
+- Ergebnis: [Portabilitätskonzept](core-and-sql-portability.md), ADR-042–ADR-044, abgestimmte Architektur und [Gesamtübersicht #91](https://github.com/mpwg/WiMM/issues/91) mit elf Einzelissues #92–#102 und deren Voraussetzungen/Abnahmekriterien.
 - Verträge: Architektur, Fachmodell, Datenmodell, E2EE, P8-/P9-Speicher- und Transportgrenzen. Bestehende lokale Speicherdeltas #77/#82/#85 behalten ihre Zuständigkeit.
 - Abnahme: gültige Dokumentationslinks und konsistente Unterscheidung von Bestand/Ziel; eine Gesamtübersicht und elf Einzelissues ohne Doppelanlage mit gegenseitigen Verweisen.
 - Prüfungen: Dokumentationsvalidator, Paketgraph, Whitespace-/Freigabeprüfung und Rücklesen der angelegten Issues.
-- Prüfbelege: noch keine; Abschlussbelege werden nach Issueanlage ergänzt.
+- Prüfbelege: Dokumentationsvalidator, drei Dokumentationsvalidatortests, Paketgraph und Whitespaceprüfung bestanden. Alle zwölf GitHub-Issues mit Titel, offenem Zustand, exaktem Inhalt, Freigabegrenzen und gegenseitigen Abhängigkeitslinks rückgelesen. Konzeptzwischencommit `2cb536d`; Trackingabschluss im nachfolgenden Dokumentationscommit. Keine Produktprüfbelege.
 - Einschränkungen: keine Produktänderungen, Rust-/WASM-/Binding- oder zusätzlichen SQL-Adapterprüfungen im Dokumentationsauftrag.
 
 ## Teilaufgaben und Bearbeitungsfolge

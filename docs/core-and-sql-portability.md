@@ -63,7 +63,21 @@ Die Rust-Migration ändert weder libsodium-Primitiven noch Cryptosuites oder kan
 
 ## Tracking und Abnahme
 
-GitHub führt Voraussetzungen, Einzelstatus, Fortschritt, Blockaden und Prüfbelege für K01–K11. Dieses Dokument enthält die Spezifikation, keine zweite laufend gepflegte Deltaliste. Die Gesamtübersicht und die Einzelissueverweise werden nach Anlage ergänzt.
+GitHub führt Voraussetzungen, Einzelstatus, Fortschritt, Blockaden und Prüfbelege für K01–K11 in der [Gesamtübersicht #91](https://github.com/mpwg/WiMM/issues/91). Dieses Dokument enthält die Spezifikation, keine zweite laufend gepflegte Deltaliste. Die folgende Zuordnung dient ausschließlich als Einstieg in die Issues; Bearbeitungsstand und Abhängigkeiten werden dort gepflegt.
+
+| ID | GitHub-Arbeitspaket |
+| --- | --- |
+| K01 | [Plattformfreie Anwendungs- und Speicherverträge festlegen #92](https://github.com/mpwg/WiMM/issues/92) |
+| K02 | [Clientabläufe aus der React-UI herauslösen #93](https://github.com/mpwg/WiMM/issues/93) |
+| K03 | [Rust-Fachkern und Sprachbindungen nachweisen #94](https://github.com/mpwg/WiMM/issues/94) |
+| K04 | [Implementierte Finanzregeln nach Rust migrieren #95](https://github.com/mpwg/WiMM/issues/95) |
+| K05 | [Web und Tauri auf die gemeinsame Rust-Fachengine umstellen #96](https://github.com/mpwg/WiMM/issues/96) |
+| K06 | [SQL-neutrale Serverpersistenz und Transaktionsverträge bereitstellen #97](https://github.com/mpwg/WiMM/issues/97) |
+| K07 | [Server-SQLite-Adapter bereitstellen #98](https://github.com/mpwg/WiMM/issues/98) |
+| K08 | [Server-PostgreSQL-Adapter bereitstellen #99](https://github.com/mpwg/WiMM/issues/99) |
+| K09 | [Server-MySQL-Adapter bereitstellen #100](https://github.com/mpwg/WiMM/issues/100) |
+| K10 | [Datenbankwahl und gesicherte Migration zwischen SQL-Systemen ermöglichen #101](https://github.com/mpwg/WiMM/issues/101) |
+| K11 | [Architektur- und Kompatibilitätsabnahme abschließen #102](https://github.com/mpwg/WiMM/issues/102) |
 
 Bestehende [#77](https://github.com/mpwg/WiMM/issues/77), [#82](https://github.com/mpwg/WiMM/issues/82) und [#85](https://github.com/mpwg/WiMM/issues/85) bleiben zuständig für den vollständigen lokalen SQLite-Adapter, lokale Migrationen und lokale Adapterkonformität. Bekannte Fachfehler [#73–#76](https://github.com/mpwg/WiMM/issues/87) werden nicht als Sollverhalten in Rust übernommen. Neue Serveradapterissues duplizieren keine lokalen Speicherdeltas.
 
