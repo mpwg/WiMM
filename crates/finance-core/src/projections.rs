@@ -104,7 +104,7 @@ impl<'a> SortTransactions<'a> for Vec<&'a Value> {
         self
     }
 }
-pub fn rebuild(all: &[Value]) -> CoreResult<Value> {
+pub fn balances(all: &[Value]) -> CoreResult<Vec<Value>> {
     let mut balances = BTreeMap::<&str, i64>::new();
     let transactions = all
         .iter()
@@ -129,5 +129,8 @@ pub fn rebuild(all: &[Value]) -> CoreResult<Value> {
         .into_iter()
         .map(|(id, balance)| json!({"accountId":id,"balance":balance}))
         .collect();
-    Ok(json!({"accountBalances":account_balances,"consumption":consumption(all)?}))
+    Ok(account_balances)
+}
+pub fn rebuild(all: &[Value]) -> CoreResult<Value> {
+    Ok(json!({"accountBalances":balances(all)?,"consumption":consumption(all)?}))
 }

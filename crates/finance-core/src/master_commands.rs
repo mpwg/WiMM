@@ -9,29 +9,29 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 const INVALID: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Expectation {
-    id: String,
-    expected_revision: i64,
+pub(crate) struct Expectation {
+    pub(crate) id: String,
+    pub(crate) expected_revision: i64,
 }
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Context {
-    operation_id: String,
-    occurred_at: String,
-    generated_ids: Vec<String>,
+pub(crate) struct Context {
+    pub(crate) operation_id: String,
+    pub(crate) occurred_at: String,
+    pub(crate) generated_ids: Vec<String>,
 }
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Request {
-    contract_version: u32,
-    domain_schema_version: u32,
-    space_id: String,
-    aggregates: Vec<Value>,
-    command: Value,
-    expected_revisions: Vec<Expectation>,
-    context: Context,
+pub(crate) struct Request {
+    pub(crate) contract_version: u32,
+    pub(crate) domain_schema_version: u32,
+    pub(crate) space_id: String,
+    pub(crate) aggregates: Vec<Value>,
+    pub(crate) command: Value,
+    pub(crate) expected_revisions: Vec<Expectation>,
+    pub(crate) context: Context,
 }
 fn fail(code: &'static str, message: &'static str) -> CoreResult<Value> {
     Err((code, message))
@@ -74,7 +74,7 @@ fn normalize(mut a: Value, ty: &str) -> CoreResult<Value> {
     }
     Ok(a)
 }
-fn expected(
+pub(crate) fn expected(
     request: &Request,
     current: &BTreeMap<&str, &Value>,
 ) -> CoreResult<BTreeMap<String, i64>> {
@@ -112,7 +112,7 @@ fn expected(
     }
     Ok(expected)
 }
-fn transition(
+pub(crate) fn transition(
     a: &Value,
     space: &str,
     expected: &BTreeMap<String, i64>,

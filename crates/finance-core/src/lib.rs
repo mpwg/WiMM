@@ -8,6 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use uuid::Uuid;
 mod aggregate_schema;
 pub mod calendar;
+mod financial_commands;
 mod master_commands;
 mod projections;
 mod references;
@@ -193,6 +194,11 @@ struct Request {
 pub fn execute_json(input: &str) -> String {
     output((|| {
         let decoded = decode(input)?;
+        if ["transaction.save", "transaction.delete"]
+            .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
+        {
+            return financial_commands::execute(decoded);
+        }
         if [
             "account.save",
             "account.archive",
