@@ -121,6 +121,9 @@ pub(crate) fn prepare_financial(
     mut expected: Vec<Expectation>,
     request: &Request,
 ) -> CoreResult<(Vec<Value>, Vec<Expectation>)> {
+    if !changes.iter().any(|a| kind(a) == "transaction") {
+        return Ok((changes, expected));
+    }
     let current = &request.aggregates;
     let space = &request.space_id;
     let time = &request.context.occurred_at;

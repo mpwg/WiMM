@@ -102,6 +102,7 @@ fn value(v: &Value, ty: &str) -> CoreResult<()> {
             &[],
         )
         .is_ok(),
+        "aggregate" => aggregate(v).is_ok(),
         "candidate" => candidate(v).is_ok(),
         "nullableCandidate" => v.is_null() || candidate(v).is_ok(),
         "row" => shape(
@@ -151,7 +152,7 @@ fn value(v: &Value, ty: &str) -> CoreResult<()> {
     };
     if valid { Ok(()) } else { Err(INVALID) }
 }
-fn candidate(v: &Value) -> CoreResult<()> {
+pub(crate) fn candidate(v: &Value) -> CoreResult<()> {
     shape(
         v,
         &[
@@ -330,4 +331,53 @@ pub fn aggregate(v: &Value) -> CoreResult<()> {
         }
     }
     Ok(())
+}
+
+pub fn command(v: &Value) -> CoreResult<()> {
+    let ty = v["commandType"].as_str().ok_or(INVALID)?;
+    let mut fields = vec![("commandType", "string")];
+    let mut optional = vec![];
+    match ty {
+        "account.save" | "categoryGroup.save" | "category.save" | "payee.save"
+        | "transaction.save" | "transfer.save" | "importMapping.save" | "importBatch.save"
+        | "rule.save" | "schedule.save" => {
+            fields.push(("aggregates", "[aggregate]"));
+            if array(&v["aggregates"])?.is_empty() {
+                return Err(INVALID);
+            }
+        }
+        "account.archive" | "category.archive" | "transaction.delete" | "transfer.delete"
+        | "rule.delete" => fields.push(("aggregateId", "uuid")),
+        "payee.merge" => {
+            fields.extend([
+                ("targetId", "uuid"),
+                ("sourceIds", "[uuid]"),
+                ("transactionIds", "[uuid]"),
+            ]);
+            if array(&v["sourceIds"])?.is_empty() {
+                return Err(INVALID);
+            }
+        }
+        "reconciliation.confirm" => {
+            fields.extend([
+                ("accountId", "uuid"),
+                ("statementDate", "date"),
+                ("statementBalance", "money"),
+                ("selectedTransactionIds", "[uuid]"),
+            ]);
+            if array(&v["selectedTransactionIds"])?.is_empty() {
+                return Err(INVALID);
+            }
+        }
+        "reconciliation.unlock" => fields.push(("reconciliationId", "uuid")),
+        "rule.reorder" => fields.push(("ruleIds", "[uuid]")),
+        "import.commit" => fields.push(("importId", "uuid")),
+        "schedule.confirm" => {
+            fields.extend([("scheduleId", "uuid"), ("dueDate", "date")]);
+            optional.push(("importedTransactionId", "uuid"));
+        }
+        "schedule.skip" => fields.extend([("scheduleId", "uuid"), ("dueDate", "date")]),
+        _ => return Err(INVALID),
+    }
+    shape(v, &fields, &optional)
 }

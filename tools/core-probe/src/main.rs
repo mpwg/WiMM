@@ -8,6 +8,8 @@ fn main() {
     for line in std::io::stdin().lock().lines() {
         let request = line.expect("Testanfrage kann nicht gelesen werden");
         let result = match mode.as_str() {
+            "cache" => wimm_finance_core::projection_cache::cache_json(&request),
+            "reverse" => wimm_finance_core::reverse_json(&request),
             "execute" => wimm_finance_core::execute_json(&request),
             "calculate" => wimm_finance_core::calculate_json(&request),
             "validate" => wimm_finance_core::validate_json(&request),

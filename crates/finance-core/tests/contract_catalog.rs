@@ -24,11 +24,12 @@ fn produktive_fachvertraege_entsprechen_dem_gesperrten_referenzkatalog() {
     for case in cases() {
         let input = wire(&case.request);
         let result = match case.method.as_str() {
+            "reverse" => wimm_finance_core::reverse_json(&input),
             "execute" => wimm_finance_core::execute_json(&input),
             "calculate" => wimm_finance_core::calculate_json(&input),
             "validate" => wimm_finance_core::validate_json(&input),
             "project" => wimm_finance_core::project_json(&input),
-            "primitive" | "roundtrip" => continue,
+            "primitive" | "roundtrip" | "cache" => continue,
             _ => panic!("Unbekannte Aktion im Referenzkatalog"),
         };
         let actual: Value = serde_json::from_str(&result).expect("Ungültiges JSON-Ergebnis");
@@ -47,6 +48,7 @@ fn technische_primitiv_und_feldtransportfaelle_entsprechen_dem_referenzkatalog()
     for case in cases() {
         let input = wire(&case.request);
         let result = match case.method.as_str() {
+            "cache" => wimm_finance_core::projection_cache::cache_json(&input),
             "primitive" => wimm_finance_core::primitive_json(&input),
             "roundtrip" => wimm_finance_core::roundtrip_json(&input),
             _ => continue,

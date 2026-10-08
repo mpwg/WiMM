@@ -41,6 +41,8 @@ for(const [name,all,amount] of [
  ['Kontosaldo Überlauf',[...base,{...tx,...meta(80),kind:'opening',splits:[],amount:Number.MAX_SAFE_INTEGER}],1],
  ['Gesamtsaldo Überlauf',[...base,{...tx,...meta(80),accountId:second.id,kind:'opening',splits:[],amount:Number.MAX_SAFE_INTEGER}],1]
 ] as const)scenarios.push({name,all:[...all],tx:{...tx,kind:'opening',splits:[],amount},expected:[{id:tx.id,expectedRevision:0},{id:account.id,expectedRevision:1}]});
+const maximumOpening={...tx,...meta(80),kind:'opening' as const,splits:[],amount:Number.MAX_SAFE_INTEGER};
+scenarios.push({name:'stabile Summenreihenfolge bei vorgezogener ID',all:[...base,maximumOpening,{...maximumOpening,...meta(90),amount:-1}],tx:{...tx,kind:'opening',splits:[],amount:1},expected:[{id:tx.id,expectedRevision:0},{id:account.id,expectedRevision:1}]});
 export function transactionCases(){return scenarios.map(s=>{
  const all=JSON.parse(JSON.stringify(s.all)) as P2Aggregate[],candidate=JSON.parse(JSON.stringify(s.tx)) as TransactionAggregate;
  const command=s.deleting?{commandType:'transaction.delete',aggregateId:candidate.id}:{commandType:'transaction.save',aggregates:[candidate]};

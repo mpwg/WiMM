@@ -5,6 +5,7 @@ use serde_json::{Value, json};
 fn bindings_geben_strukturierte_fehler_an_allen_produktiven_rusteinstiegen_zurueck() {
     for call in [
         wimm_core_bindings::execute_json,
+        wimm_core_bindings::reverse_json,
         wimm_core_bindings::calculate_json,
         wimm_core_bindings::validate_json,
         wimm_core_bindings::project_json,

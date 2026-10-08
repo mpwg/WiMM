@@ -28,6 +28,12 @@ fn add_expected(expected: &mut Vec<Expectation>, a: &Value) -> CoreResult<()> {
     Ok(())
 }
 pub fn execute(decoded: Value) -> CoreResult<Value> {
+    execute_with_record(decoded, None)
+}
+pub(crate) fn execute_with_record(
+    decoded: Value,
+    override_record: Option<Value>,
+) -> CoreResult<Value> {
     let request: Request = serde_json::from_value(decoded).map_err(|_| COMMAND)?;
     if request.contract_version != 1
         || request.domain_schema_version != 1
@@ -86,11 +92,16 @@ pub fn execute(decoded: Value) -> CoreResult<Value> {
             }
         }
         let account = read(&current, &request.command["accountId"], "account")?;
-        let id = request.context.generated_ids.first().ok_or((
-            "INVALID_GENERATOR",
-            "Die erzeugte Aggregat-ID ist ungültig.",
-        ))?;
-        let rec = json!({"id":id,"spaceId":space,"revision":1,"createdAt":time,"updatedAt":time,"aggregateType":"reconciliation","accountId":account["id"],"statementDate":request.command["statementDate"],"statementBalance":request.command["statementBalance"],"transactionIds":ids});
+        let rec = if let Some(record) = override_record.as_ref() {
+            record.clone()
+        } else {
+            let id = request.context.generated_ids.first().ok_or((
+                "INVALID_GENERATOR",
+                "Die erzeugte Aggregat-ID ist ungültig.",
+            ))?;
+            let rec = json!({"id":id,"spaceId":space,"revision":1,"createdAt":time,"updatedAt":time,"aggregateType":"reconciliation","accountId":account["id"],"statementDate":request.command["statementDate"],"statementBalance":request.command["statementBalance"],"transactionIds":ids});
+            rec
+        };
         let selected = ids
             .iter()
             .map(|id| read(&current, id, "transaction"))
@@ -192,9 +203,20 @@ pub fn execute(decoded: Value) -> CoreResult<Value> {
             .iter()
             .filter(|a| kind(a) == "reconciliation" && live(a))
             .collect();
-        let mut ids = BTreeSet::from([string(seed)?.to_string()]);
-        let mut groups = BTreeSet::new();
-        let mut expanded = true;
+        let mut ids = if override_record.is_some() {
+            initial
+                .iter()
+                .map(|id| Ok(string(id)?.to_string()))
+                .collect::<CoreResult<BTreeSet<_>>>()?
+        } else {
+            BTreeSet::from([string(seed)?.to_string()])
+        };
+        let mut groups = if override_record.is_some() {
+            BTreeSet::from([string(&rec["id"])?.to_string()])
+        } else {
+            BTreeSet::new()
+        };
+        let mut expanded = override_record.is_none();
         while expanded {
             expanded = false;
             for tx in txs
@@ -317,7 +339,7 @@ pub fn execute(decoded: Value) -> CoreResult<Value> {
         }
         for tx in txs
             .iter()
-            .filter(|a| ids.contains(a["id"].as_str().unwrap_or("")))
+            .filter(|a| override_record.is_none() && ids.contains(a["id"].as_str().unwrap_or("")))
         {
             let id = string(&tx["id"])?;
             if !changed_index.contains_key(id) {

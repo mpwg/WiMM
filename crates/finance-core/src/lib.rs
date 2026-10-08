@@ -7,10 +7,15 @@ use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 use uuid::Uuid;
 mod aggregate_schema;
+mod automation;
+mod automation_commands;
+mod inverse;
+pub use inverse::reverse_json;
 pub mod calendar;
 mod financial_commands;
 mod master_commands;
 mod payee_merge;
+pub mod projection_cache;
 mod projections;
 mod reconciliation_commands;
 mod references;
@@ -150,6 +155,11 @@ pub fn parse_money(text: &str) -> CoreResult<i64> {
 pub fn calculate_json(input: &str) -> String {
     output((|| {
         let decoded = decode(input)?;
+        if ["rule.apply", "import.classify"]
+            .contains(&decoded["calculationType"].as_str().unwrap_or(""))
+        {
+            return automation::calculate(decoded);
+        }
         if decoded["calculationType"] == "schedule.dueDates" {
             return schedule_dates::calculate(decoded);
         }
@@ -201,6 +211,28 @@ struct Request {
 pub fn execute_json(input: &str) -> String {
     output((|| {
         let decoded = decode(input)?;
+        let current = aggregate_schema::array(&decoded["aggregates"])
+            .map_err(|_| ("INVALID_COMMAND", "Der Fachbefehl ist ungültig."))?;
+        for a in current {
+            aggregate_schema::aggregate(a)
+                .map_err(|_| ("INVALID_COMMAND", "Der Fachbefehl ist ungültig."))?;
+        }
+        aggregate_schema::command(&decoded["command"])
+            .map_err(|_| ("INVALID_COMMAND", "Der Fachbefehl ist ungültig."))?;
+        if [
+            "rule.save",
+            "rule.delete",
+            "schedule.save",
+            "schedule.confirm",
+            "schedule.skip",
+            "importMapping.save",
+            "importBatch.save",
+            "import.commit",
+        ]
+        .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
+        {
+            return automation_commands::execute(decoded);
+        }
         if decoded["command"]["commandType"] == "payee.merge" {
             return payee_merge::execute(decoded);
         }

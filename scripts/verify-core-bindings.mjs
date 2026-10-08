@@ -17,7 +17,7 @@ const tools = [
 ];
 const results = [];
 for (const [name, command, args] of tools) {
-  for (const method of ['execute', 'calculate', 'roundtrip', 'primitive', 'validate', 'project']) {
+  for (const method of ['execute', 'calculate', 'roundtrip', 'primitive', 'validate', 'project', 'reverse', 'cache']) {
     const selected = cases.filter((test) => test.method === method);
     const result = spawnSync(command, [...args, method], { input: selected.map((test) => (typeof test.request === 'string' ? test.request : JSON.stringify(test.request))).join('\n') + '\n', encoding: 'utf8' });
     assert.equal(result.status, 0, `${name}: ${result.stderr}`);
@@ -29,7 +29,7 @@ for (const [name, command, args] of tools) {
   results.push({ client: name, passed: cases.length });
 }
 for (const test of cases) {
-  const method = { execute: 'execute_json', calculate: 'calculate_json', roundtrip: 'roundtrip_json', primitive: 'primitive_json', validate: 'validate_json', project: 'project_json' }[test.method];
+  const method = { cache:'cache_json', reverse:'reverse_json', execute: 'execute_json', calculate: 'calculate_json', roundtrip: 'roundtrip_json', primitive: 'primitive_json', validate: 'validate_json', project: 'project_json' }[test.method];
   assert.deepEqual(JSON.parse(wasm[method]((typeof test.request === 'string' ? test.request : JSON.stringify(test.request)))), test.expected, `WASM: ${test.name}`);
 }
 results.push({ client: 'echtes WASM/Node', passed: cases.length });

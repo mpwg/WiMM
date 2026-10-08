@@ -28,7 +28,7 @@ const payee = { ...meta(50), aggregateType: 'payee', name: 'Österreich', aliase
 const rule = { ...meta(51), aggregateType: 'rule', order: 0, conditions: [{ field: 'date', operator: 'equals', value: '2028-02-29' }], actions: [{ field: 'categoryId', value: category.id }], stopProcessing: false, enabled: true };
 const reconciliation = { ...meta(60), aggregateType: 'reconciliation', accountId: account.id, statementDate: '2026-10-08', statementBalance: 90_000, transactionIds: [opening.id,expense.id] };
 const scenarios: [string, unknown[]][] = [
-  ['leerer Bestand',[]], ['F01',base], ['F03 historisches Konto',[...base,second,transfer,source,destination]],
+  ['leerer Bestand',[]], ['F01',base], ['Erstattung mindert Verbrauch',[...base,{...expense,...meta(70),amount:2500,splits:[{...expense.splits[0]!,id:id(71),amount:2500}]}]], ['F03 historisches Konto',[...base,second,transfer,source,destination]],
   ['historische Tombstones',base.map(a => a.id===category.id || a.id===group.id ? { ...a, deletedAt: now } : a)],
   ['importierte Dauerzahlung anderer Tag',[...base,schedule,occurrence,payment]],
   ['Fingerprint nach Kontowechsel',[...base,second,{ ...expense,...meta(40), accountId: second.id },batch,fingerprint]],

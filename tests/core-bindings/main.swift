@@ -2,7 +2,9 @@
 import Foundation
 let mode = CommandLine.arguments[1]
 while let request = readLine() {
-    if mode == "execute" { print(executeJson(request: request)) }
+    if mode == "cache" { print(cacheJson(request: request)) }
+    else if mode == "reverse" { print(reverseJson(request: request)) }
+    else if mode == "execute" { print(executeJson(request: request)) }
     else if mode == "calculate" { print(calculateJson(request: request)) }
     else if mode == "validate" { print(validateJson(request: request)) }
     else if mode == "project" { print(projectJson(request: request)) }

@@ -71,7 +71,7 @@ pub fn transaction(tx: &Value) -> CoreResult<()> {
     }
     Ok(())
 }
-fn rule(a: &Value) -> CoreResult<()> {
+pub(crate) fn rule(a: &Value) -> CoreResult<()> {
     for c in array(&a["conditions"])? {
         if c["field"] == "amount" {
             if integer(&c["value"]).is_err() {
@@ -102,7 +102,7 @@ fn rule(a: &Value) -> CoreResult<()> {
     }
     Ok(())
 }
-fn import_batch(a: &Value) -> CoreResult<()> {
+pub(crate) fn import_batch(a: &Value) -> CoreResult<()> {
     let rows = array(&a["rows"])?;
     let ids: BTreeSet<_> = rows
         .iter()

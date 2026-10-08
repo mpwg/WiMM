@@ -3,6 +3,9 @@ import { writeFile, readFile } from 'node:fs/promises';
 import { isDeepStrictEqual } from 'node:util';
 import { DomainValidationError, parseMoney, assertMoney, sumMoney, subtractMoney, multiplyMoney, multiplyDivideMoney, moneyDecimal, parseDirectedMoney, parseFinanceDate, parseYearMonth, monthOf, reorderRules, createChangeSet, type P2Aggregate, type RuleAggregate } from '../../packages/domain/src/index.js';
 import { coreCommandResultSchema, coreCalculationResultSchema, coreStateRequestSchema, type UUID } from '../../packages/contracts/src/index.js';
+import { cacheCases } from './cache-cases.js';
+import { inverseCases } from './inverse-cases.js';
+import { automationCases } from './automation-cases.js';
 import { scheduleDateCases } from './schedule-date-cases.js';
 import { mergeCases } from './merge-cases.js';
 import { reconciliationCases } from './reconciliation-cases.js';
@@ -14,7 +17,7 @@ import { stateCases } from './state-cases.js';
 const id = (n: number) => `30000000-0000-4000-8000-${String(n).padStart(12, '0')}` as UUID;
 const base = { contractVersion: 1, domainSchemaVersion: 1, spaceId: id(1) };
 const context = { operationId: id(2), occurredAt: '2026-10-08T12:00:00Z', generatedIds: [] };
-const cases: { name: string; method: 'calculate' | 'execute' | 'roundtrip' | 'primitive' | 'validate' | 'project'; request: unknown; expected: unknown }[] = [];
+const cases: { name: string; method: 'calculate' | 'execute' | 'roundtrip' | 'primitive' | 'validate' | 'project' | 'reverse' | 'cache'; request: unknown; expected: unknown }[] = [];
 for (const text of ['0', '-0', '+1,2', '-12.34', '000001.05', '90071992547409.91', '-90071992547409,91', '90071992547409.92', '-90071992547409.92', '999999999999999999999999999999999999999999999999999999999', '1,234', ' 1.00', '1.00\n', '1e3', '']) {
   let expected: unknown;
   try { expected = { contractVersion: 1, status: 'money', value: parseMoney(text) }; }
@@ -72,9 +75,10 @@ for (const text of ['12', '+12,3', '00012,34', ' 12', '12 ', '1.2.3', '1e2', '12
   catch (error) { if (!(error instanceof DomainValidationError)) throw error; expected = { contractVersion: 1, status: 'rejected', error: { code: error.code, message: error.message } }; }
   cases.push({ name: `K04 Centtext ${JSON.stringify(text)}`, method: 'calculate', request: { ...base, calculationType: 'money.parse', text }, expected });
 }
-cases.push(...stateCases(),...masterCases(),...transactionCases(),...openingCases(),...transferCases(),...reconciliationCases(),...mergeCases(),...scheduleDateCases());
+cases.push(...stateCases(),...masterCases(),...transactionCases(),...openingCases(),...transferCases(),...reconciliationCases(),...mergeCases(),...scheduleDateCases(),...automationCases(),...inverseCases(),...cacheCases());
 await writeFile('test-results/core-bindings/cases.json' , `${JSON.stringify(cases, null, 2)}\n`);
 
+const serializableCases=JSON.parse(JSON.stringify(cases)) as typeof cases;
 const rustFixture = 'crates/finance-core/tests/fixtures/contract-catalog.json';
-if (process.argv.includes('--update-rust-fixtures')) await writeFile(rustFixture, `${JSON.stringify(cases)}\n`);
-else if (!isDeepStrictEqual(JSON.parse(await readFile(rustFixture,'utf8')), cases)) throw new Error('Der gesperrte Rust-Fachkatalog stimmt nicht mit der TypeScript-Referenz überein. Golden-Diff ausdrücklich prüfen und Rustabnahme wiederholen.');
+if (process.argv.includes('--update-rust-fixtures')) await writeFile(rustFixture, `${JSON.stringify(serializableCases)}\n`);
+else if (!isDeepStrictEqual(JSON.parse(await readFile(rustFixture,'utf8')), serializableCases)) throw new Error('Der gesperrte Rust-Fachkatalog stimmt nicht mit der TypeScript-Referenz überein. Golden-Diff ausdrücklich prüfen und Rustabnahme wiederholen.');

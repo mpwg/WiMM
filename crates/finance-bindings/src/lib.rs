@@ -41,3 +41,16 @@ pub fn validate_json(request: String) -> String {
 pub fn project_json(request: String) -> String {
     wimm_finance_core::project_json(&request)
 }
+
+#[cfg_attr(feature = "native", uniffi::export)]
+#[cfg_attr(feature = "wasm", wasm_bindgen::prelude::wasm_bindgen)]
+pub fn reverse_json(request: String) -> String {
+    wimm_finance_core::reverse_json(&request)
+}
+
+#[cfg(feature = "contract-probe")]
+#[cfg_attr(feature = "native", uniffi::export)]
+#[cfg_attr(feature = "wasm", wasm_bindgen::prelude::wasm_bindgen)]
+pub fn cache_json(request: String) -> String {
+    wimm_finance_core::projection_cache::cache_json(&request)
+}
