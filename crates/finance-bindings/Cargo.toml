@@ -17,3 +17,6 @@ contract-probe = ["wimm-finance-core/contract-probe"]
 wimm-finance-core = { path = "../finance-core" }
 uniffi = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
+
+[lints]
+workspace = true

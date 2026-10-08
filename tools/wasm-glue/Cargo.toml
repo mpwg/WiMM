@@ -6,3 +6,6 @@ license.workspace = true
 
 [dependencies]
 wasm-bindgen-cli-support = "=0.2.129"
+
+[lints]
+workspace = true

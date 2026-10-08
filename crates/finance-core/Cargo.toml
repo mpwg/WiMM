@@ -12,3 +12,6 @@ unicode-normalization = "=0.1.25"
 
 [features]
 contract-probe = []
+
+[lints]
+workspace = true

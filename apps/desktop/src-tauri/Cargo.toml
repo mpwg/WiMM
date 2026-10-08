@@ -21,3 +21,6 @@ tempfile = "=3.27.0"
 
 [dev-dependencies]
 wimm-finance-core = { path = "../../../crates/finance-core" }
+
+[lints.rust]
+unsafe_code = "forbid"
