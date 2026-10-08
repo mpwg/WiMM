@@ -4,7 +4,7 @@
 
 Diese Teilaufgaben konkretisieren [P5](tasks.md#p5--import-und-automatisierung). Der ausdrückliche Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026 gibt P5.1–P5.6 frei und erlaubt die Fortsetzung trotz offener P4-Abnahmen. Die zuvor ausdrücklich verschobenen Windows-/Linux-Prüfungen sowie die übrigen P4-Lücken bleiben sichtbar. Parser- und Fachregeln stehen weiterhin in den verlinkten Quellen.
 
-Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen; nach jedem abgeschlossenen Abschnitt einen zusammengehörigen Zwischencommit und eine [Übergabe](templates/handoff.md) erstellen. P5 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P6](p6-budget.md). Für die Umsetzung wimm-finance und für die Importflächen wimm-ui verwenden. Kein Bankabruf und keine direkte Actual-Budgetmigration in diesem Paket.
+Die [Nachprüfung vom 8. Oktober 2026](handoffs/p5-review-2026-10-08.md) belegt fünf Funktions- und acht Abnahmedeltas. Fortschritt, Blockaden und Prüfbelege der Deltas in [Gesamtabnahme #71 und ihren Einzelissues](https://github.com/mpwg/WiMM/issues/71) pflegen; hier und in [tasks.md](tasks.md) nur zusammengefassten Paketstatus und Abnahmesnapshots festhalten; nach jedem abgeschlossenen Abschnitt einen zusammengehörigen Zwischencommit und eine [Übergabe](templates/handoff.md) erstellen. P5 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P6](p6-budget.md). Für die Umsetzung wimm-finance und für die Importflächen wimm-ui verwenden. Kein Bankabruf und keine direkte Actual-Budgetmigration in diesem Paket.
 
 ## P5.1 — Parserauswahl und normalisierte Zwischenform
 
@@ -20,7 +20,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.2 — CSV-Mapping und Vorschau
 
-- Status: umgesetzt; CSV-Kriterien auf macOS arm64 in Chromium-Web/Desktop-Frontend abgenommen (5. Oktober 2026). Physische Geräte bleiben Teil der Gesamt-Abnahme.
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026); CSV-Kernabläufe aktuell bestätigt, korrigierbare Trennzeichenerkennung fehlt (#58). Physische Geräte bleiben Teil der Gesamt-Abnahme.
 - Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.1 erledigt.
 - Schritte: Encoding-/Trennzeichen-/Kopfzeilenauswahl, explizite Datums-/Zahlenformate und Soll/Haben-Mapping umsetzen; Vorlagen speichern; Originalzeilen neben normalisierten Buchungen und Fehlern anzeigen.
@@ -32,7 +32,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.3 — CAMT.053 und OFX/QFX
 
-- Status: erledigt (5. Oktober 2026); Parser-/Normalisierungskriterien durch alle Formatfixtures belegt.
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026); bestehende Formatfixtures bestanden, CAMT-Empfänger und Auszugssaldo-Hinweise fehlen (#59/#60).
 - Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.2 erledigt.
 - Schritte: CAMT-Namespaces und Entry-/TransactionDetails abbilden; OFX SGML/XML und QFX normalisieren; externe IDs, Finanzdatum und EUR prüfen; Sammelbuchungen sowie Kontozuordnung ausdrücklich vorschlagen.
@@ -44,7 +44,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.4 — Dubletten, gruppierte Übernahme und Wiederaufnahme
 
-- Status: erledigt (5. Oktober 2026); Fach-/Webkriterien und echte native macOS-arm64-Großimport-/Disk-full-Wiederaufnahme abgenommen.
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026); Gruppen-/Wiederaufnahme-/CAS-Kernkriterien aktuell bestätigt, vollständiger Zugriff auf gespeicherte Entscheidungen und UI-Abbruch der Gruppenvorbereitung fehlen (#61/#62). Native Belege vom 5. Oktober bleiben historisch.
 - Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.3 erledigt.
 - Schritte: Quell-ID-Konflikte und normalisierte Fingerprintkandidaten ermitteln; Entscheidungen speichern; bestätigte Gruppen bis 100 Buchungen über Fachbefehle übernehmen; Import-ID/Quellzeile und Fortschritt dauerhaft speichern.
@@ -68,7 +68,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P5.6 — Dauerzahlungen und Gesamt-Abnahme
 
-- Status: in Arbeit: Dauerzahlungen umgesetzt und fachlich/in Chromium abgenommen; Gesamt-Abnahme wegen Firefox-, Geräte- und Screenreaderprüfungen offen.
+- Status: in Arbeit: Dauerzahlungen aktuell fachlich und auf Chromium/WebKit bestätigt; vollständige Umsetzung und Gesamt-Abnahme wegen der in #71 verfolgten Funktions-/Browser-/Layout-/Screenreader-/Geräte-/Plattformdeltas offen.
 - Freigabe: ausdrücklicher Nutzerauftrag „Setze P5.* um“ vom 5. Oktober 2026.
 - Voraussetzungen: P5.5 erledigt.
 - Schritte: Schedule-/Occurrence-Befehle, ursprünglichen Fälligkeitstag, Bestätigung/Überspringen und explizite Importzuordnung umsetzen; fällige Vorschläge/Verwaltung anbinden; gesamte Import-/Automatisierungssuite integrieren.

@@ -143,3 +143,7 @@ Die gemeinsame Oberfläche übernimmt Grünakzent, warme Flächen, die Wortmarke
 Buchungen und Konten werden über geschützte Dialoge bearbeitet; mobil füllen diese den Bildschirm. Import führt durch vier ausdrücklich bestätigte Schritte. Budget, Teilen und Familienausgleich sind weiterhin spätere Fachpakete. Es werden keine simulierten Konzeptdaten übernommen. Prüfung: `pnpm test:ux`; aktuelle Belege und offene Plattformprüfungen stehen in der UX-Übergabe.
 
 Aktuelle UX-Abnahme vom 5. Oktober 2026: [Kriterien und Prüfbelege](../../docs/handoffs/ux.md). Die Umsetzung ist bereit zur Prüfung; Die Ubuntu-CI besteht einschließlich Firefox; vollständige Geräte-/Screenreader- und weitere native Plattformbelege sowie die gesamte Zoommatrix sind noch offen.
+
+## P5-Nachprüfung vom 8. Oktober 2026
+
+Die [aktuelle Kriterienmatrix](../../docs/handoffs/p5-review-2026-10-08.md) bestätigt Parser-/Fach-/Browser-/Speicher-/Offline-Kernabläufe, belegt aber zusätzliche Funktions- und Abnahmelücken. [Gesamtabnahme #71](https://github.com/mpwg/WiMM/issues/71) verknüpft alle Einzelissues. P5 ist weder vollständig umgesetzt noch vollständig abgenommen; frühere native Belege bleiben historisch.
