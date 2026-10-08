@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { writeFile } from 'node:fs/promises';
-import { DomainValidationError, parseMoney, reorderRules, createChangeSet, type P2Aggregate, type RuleAggregate } from '../../packages/domain/src/index.js';
+import { DomainValidationError, parseMoney, assertMoney, sumMoney, subtractMoney, multiplyMoney, multiplyDivideMoney, moneyDecimal, parseDirectedMoney, parseFinanceDate, parseYearMonth, monthOf, reorderRules, createChangeSet, type P2Aggregate, type RuleAggregate } from '../../packages/domain/src/index.js';
 import { coreCommandResultSchema, coreCalculationResultSchema, coreStateRequestSchema, type UUID } from '../../packages/contracts/src/index.js';
 const id = (n: number) => `30000000-0000-4000-8000-${String(n).padStart(12, '0')}` as UUID;
 const base = { contractVersion: 1, domainSchemaVersion: 1, spaceId: id(1) };
 const context = { operationId: id(2), occurredAt: '2026-10-08T12:00:00Z', generatedIds: [] };
-const cases: { name: string; method: 'calculate' | 'execute' | 'roundtrip'; request: unknown; expected: unknown }[] = [];
+const cases: { name: string; method: 'calculate' | 'execute' | 'roundtrip' | 'primitive'; request: unknown; expected: unknown }[] = [];
 for (const text of ['0', '-0', '+1,2', '-12.34', '000001.05', '90071992547409.91', '-90071992547409,91', '90071992547409.92', '-90071992547409.92', '999999999999999999999999999999999999999999999999999999999', '1,234', ' 1.00', '1.00\n', '1e3', '']) {
   let expected: unknown;
   try { expected = { contractVersion: 1, status: 'money', value: parseMoney(text) }; }
@@ -37,5 +37,30 @@ const opening = { id: id(51), spaceId: base.spaceId, revision: 1, aggregateType:
 for (const present of [false, true]) {
   const request = coreStateRequestSchema.parse({ ...base, aggregates: [account, { ...opening, ...(present ? { note: 'Grüße 🏠', importReference: 'Synthetischer Herkunftshinweis' } : {}) }] });
   cases.push({ name: `Feldtransport ${present ? 'optionale Felder vorhanden' : 'optionale Felder abwesend'}`, method: 'roundtrip', request, expected: request });
+}
+// K04: sämtliche Fälle der bisherigen primitives.test.ts und zusätzliche Vorzeichen-/Jahrhundertgrenzen.
+const max = Number.MAX_SAFE_INTEGER;
+function primitive(name: string, args: unknown[], action: () => unknown) {
+  let expected: unknown;
+  try { expected = { contractVersion: 1, status: 'primitive', value: action() }; }
+  catch (error) { if (!(error instanceof DomainValidationError)) throw error; expected = { contractVersion: 1, status: 'rejected', error: { code: error.code, message: error.message } }; }
+  cases.push({ name: `${name} ${JSON.stringify(args)}`, method: 'primitive', request: { ...base, primitive: name, args }, expected });
+}
+for (const value of [0, max, -max, max + 1, -max - 1, 1.5]) primitive('money.assert', [value], () => assertMoney(value));
+for (const values of [[], [1234, -34, 800], [max, 1, -1], [-max, -1, 1], [max, -max], [max + 1], [1.5]]) primitive('money.sum', [values], () => sumMoney(values));
+for (const [left, right] of [[100, 30], [max, -1], [-max, 1], [max, max], [max + 1, 1]]) primitive('money.subtract', [left, right], () => subtractMoney(left!, right!));
+for (const [amount, factor] of [[100, 2], [100, -2], [max, 2], [-max, 2], [100, 1.5], [max + 1, 1], [0, max], [100, max + 1]]) primitive('money.multiply', [amount, factor], () => multiplyMoney(amount!, factor!));
+for (const [amount, numerator, denominator] of [[1001, 1, 2], [-1001, 1, 2], [1001, -1, 2], [max, max, max], [-max, max, max], [max, 2, 1], [100, 1, 0], [100, 1, -1], [100, 1.5, 2], [100, 1, 1.5], [100, max + 1, 1]]) primitive('money.divide', [amount, numerator, denominator], () => multiplyDivideMoney(amount!, numerator!, denominator!));
+for (const value of [0, 1, -1, 1234, -1234, max, -max, max + 1]) primitive('money.decimal', [value], () => moneyDecimal(value));
+for (const text of ['0', '-0', '+12,3', '-12.34', '90071992547409.91', '-90071992547409.91', '90071992547409.92', '1e2']) for (const direction of ['expense', 'income'] as const) primitive('money.directed', [text, direction], () => parseDirectedMoney(text, direction));
+for (const text of ['2028-02-29', '2027-02-28', '0000-02-29', '1900-02-29', '2000-02-29', '2100-02-29', '9999-12-31', '2027-02-29', '2028-13-01', '2028-04-31', '2028-2-01', '2028-02-01T00:00:00Z', '2028-00-01', '2028-01-00', '２０２８-02-29']) primitive('calendar.date', [text], () => parseFinanceDate(text));
+for (const text of ['2028-02', '0000-01', '9999-12', '2028-2', '2028-00', '2028-13', '2028-02\n']) primitive('calendar.month', [text], () => parseYearMonth(text));
+for (const text of ['2028-02-29', '0000-02-29', '9999-12-31']) primitive('calendar.monthOf', [text], () => monthOf(parseFinanceDate(text)));
+// Die übrigen gültigen/ungültigen Geldtexte aus primitives.test.ts laufen durch den echten Produktvertrag.
+for (const text of ['12', '+12,3', '00012,34', ' 12', '12 ', '1.2.3', '1e2', '12,', '--12']) {
+  let expected: unknown;
+  try { expected = { contractVersion: 1, status: 'money', value: parseMoney(text) }; }
+  catch (error) { if (!(error instanceof DomainValidationError)) throw error; expected = { contractVersion: 1, status: 'rejected', error: { code: error.code, message: error.message } }; }
+  cases.push({ name: `K04 Centtext ${JSON.stringify(text)}`, method: 'calculate', request: { ...base, calculationType: 'money.parse', text }, expected });
 }
 await writeFile('test-results/core-bindings/cases.json' , `${JSON.stringify(cases, null, 2)}\n`);

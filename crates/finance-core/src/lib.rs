@@ -1,15 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! K03-Referenzkern: keine UI, Datenbank, HTTP, Systemzeit oder Zufallsquelle.
+//! Gemeinsamer Fachkern im Aufbau (K03/K04): keine UI, Datenbank, HTTP, Systemzeit oder Zufallsquelle.
 //! Produktmigration sämtlicher vorhandener Regeln bleibt K04/K05.
 #![forbid(unsafe_code)]
 use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 use uuid::Uuid;
+pub mod calendar;
+pub mod money;
+#[cfg(feature = "contract-probe")]
+mod primitive_probe;
+#[cfg(feature = "contract-probe")]
+pub use primitive_probe::primitive_json;
 
 const MAX_SAFE: i64 = 9_007_199_254_740_991;
 
-type CoreResult<T> = Result<T, (&'static str, &'static str)>;
+pub type CoreResult<T> = Result<T, (&'static str, &'static str)>;
 fn rejection(code: &str, message: &str) -> Value {
     json!({"contractVersion":1,"status":"rejected","error":{"code":code,"message":message}})
 }

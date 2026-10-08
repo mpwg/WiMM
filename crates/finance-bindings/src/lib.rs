@@ -21,3 +21,10 @@ pub fn calculate_json(request: String) -> String {
 pub fn roundtrip_json(request: String) -> String {
     wimm_finance_core::roundtrip_json(&request)
 }
+
+#[cfg(feature = "contract-probe")]
+#[cfg_attr(feature = "native", uniffi::export)]
+#[cfg_attr(feature = "wasm", wasm_bindgen::prelude::wasm_bindgen)]
+pub fn primitive_json(request: String) -> String {
+    wimm_finance_core::primitive_json(&request)
+}

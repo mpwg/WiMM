@@ -4,6 +4,7 @@ let mode = CommandLine.arguments[1]
 while let request = readLine() {
     if mode == "execute" { print(executeJson(request: request)) }
     else if mode == "calculate" { print(calculateJson(request: request)) }
+    else if mode == "primitive" { print(primitiveJson(request: request)) }
     else if mode == "roundtrip" { print(roundtripJson(request: request)) }
     else { fatalError("Unbekannte Testaktion") }
 }
