@@ -2,6 +2,7 @@
 import { writeFile } from 'node:fs/promises';
 import { DomainValidationError, parseMoney, assertMoney, sumMoney, subtractMoney, multiplyMoney, multiplyDivideMoney, moneyDecimal, parseDirectedMoney, parseFinanceDate, parseYearMonth, monthOf, reorderRules, createChangeSet, type P2Aggregate, type RuleAggregate } from '../../packages/domain/src/index.js';
 import { coreCommandResultSchema, coreCalculationResultSchema, coreStateRequestSchema, type UUID } from '../../packages/contracts/src/index.js';
+import { openingCases } from './opening-cases.js';
 import { transactionCases } from './transaction-cases.js';
 import { masterCases } from './master-cases.js';
 import { stateCases } from './state-cases.js';
@@ -66,5 +67,5 @@ for (const text of ['12', '+12,3', '00012,34', ' 12', '12 ', '1.2.3', '1e2', '12
   catch (error) { if (!(error instanceof DomainValidationError)) throw error; expected = { contractVersion: 1, status: 'rejected', error: { code: error.code, message: error.message } }; }
   cases.push({ name: `K04 Centtext ${JSON.stringify(text)}`, method: 'calculate', request: { ...base, calculationType: 'money.parse', text }, expected });
 }
-cases.push(...stateCases(),...masterCases(),...transactionCases());
+cases.push(...stateCases(),...masterCases(),...transactionCases(),...openingCases());
 await writeFile('test-results/core-bindings/cases.json' , `${JSON.stringify(cases, null, 2)}\n`);

@@ -194,6 +194,13 @@ struct Request {
 pub fn execute_json(input: &str) -> String {
     output((|| {
         let decoded = decode(input)?;
+        if decoded["command"]["commandType"] == "account.save"
+            && decoded["command"]["aggregates"]
+                .as_array()
+                .is_some_and(|a| a.len() == 2)
+        {
+            return financial_commands::execute(decoded);
+        }
         if ["transaction.save", "transaction.delete"]
             .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
         {

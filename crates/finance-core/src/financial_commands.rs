@@ -296,6 +296,53 @@ pub fn execute(decoded: Value) -> CoreResult<Value> {
     if request.command.as_object().is_none_or(|o| o.len() != 2) {
         return Err(COMMAND);
     }
+    if command == "account.save" {
+        let entries = array(&request.command["aggregates"]).map_err(|_| COMMAND)?;
+        if entries.len() != 2 {
+            return Err((
+                "INVALID_COMMAND",
+                "Der Kontoeinstieg benötigt Konto und Anfangsbestand gemeinsam.",
+            ));
+        }
+        for a in entries {
+            aggregate_schema::aggregate(a).map_err(|_| COMMAND)?;
+        }
+        let account = crate::master_commands::normalize(entries[0].clone(), "account")?;
+        let tx = normalize(entries[1].clone())?;
+        if integer(&account["revision"])? != 1 || current.contains_key(string(&account["id"])?) {
+            return Err((
+                "INVALID_COMMAND",
+                "Der Kontoeinstieg ist nur für ein neues Konto zulässig.",
+            ));
+        }
+        if tx["kind"] != "opening"
+            || tx["accountId"] != account["id"]
+            || !live(&tx)
+            || tx["clearance"] == "reconciled"
+        {
+            return Err((
+                "INVALID_COMMAND",
+                "Der Anfangsbestand muss zum neuen Konto gehören.",
+            ));
+        }
+        let mut pending = current.clone();
+        pending.insert(string(&account["id"])?, &account);
+        require(&tx, &request.expected_revisions, &pending)?;
+        let initial = vec![account, tx];
+        inspect_changes(
+            &initial,
+            &request.space_id,
+            &request.expected_revisions,
+            &current,
+            &request,
+        )?;
+        let (changes, expected) =
+            prepare_financial(initial, request.expected_revisions.clone(), &request)?;
+        inspect_changes(&changes, &request.space_id, &expected, &current, &request)?;
+        return Ok(
+            json!({"contractVersion":1,"status":"changed","changeSet":{"spaceId":request.space_id,"commandType":command,"operationId":request.context.operation_id,"occurredAt":request.context.occurred_at,"expectedRevisions":expected.iter().map(|e|json!({"id":e.id,"expectedRevision":e.expected_revision})).collect::<Vec<_>>(),"aggregates":changes}}),
+        );
+    }
     let deleting = command == "transaction.delete";
     let tx = if deleting {
         let id = string(&request.command["aggregateId"]).map_err(|_| COMMAND)?;

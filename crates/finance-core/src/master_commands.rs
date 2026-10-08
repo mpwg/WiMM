@@ -36,7 +36,7 @@ pub(crate) struct Request {
 fn fail(code: &'static str, message: &'static str) -> CoreResult<Value> {
     Err((code, message))
 }
-fn normalize(mut a: Value, ty: &str) -> CoreResult<Value> {
+pub(crate) fn normalize(mut a: Value, ty: &str) -> CoreResult<Value> {
     if aggregate_schema::kind(&a) != ty {
         return fail(
             "INVALID_AGGREGATE",
