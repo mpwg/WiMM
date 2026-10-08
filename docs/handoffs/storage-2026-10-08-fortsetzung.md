@@ -34,3 +34,16 @@ Abnahmesnapshot vom 8. Oktober 2026 nach dem Fortsetzungsauftrag; Umsetzung gem�
 | README/Verträge/Prüfkette | erfüllt | README, Speicherarchitektur, ADR-045, P3-Status und reguläre Speicherprüfungen aktualisiert; keine Schema- oder Finanzformatmigration |
 
 Aktuelle Serie auf dem fertigen Abschnitt: zehn native Contractfälle, 38 echte Chromium-/IndexedDB-Ausführungen, 26 Speicher-/Schutzporttests, 94 Fachtests und zwölf reguläre Rusttests bestanden. Typecheck, vollständiger Oxlint mit Warnungen als Fehler, Rustformat/Clippy, Paketgraph, Dokumentations- und Whitespaceprüfung bestanden. SQLite-Rollback wird durch einen ausschließlich im Testtreiber installierten Trigger bei der zweiten Cachezeile ausgelöst; Browserrollback durch einen gezielt geworfenen QuotaExceededError im echten IDB-Schreibpfad. Dies sind Fehlerproben, keine tatsächlichen Disk-full-/Quota-Abnahmen. Native GUI-/Screenreader-/Geräte- und Gesamt-CI-Abnahme bleiben gesondert offen. Nächster Speicherabschnitt: gesicherte vorwärtsgerichtete Migration #82.
+
+## Empfänger-Merge #75 als Rust-Sollbasis
+
+Abnahmesnapshot vom 8. Oktober 2026 nach der Implementierungsfreigabe zu #91. Acht identische Szenarien gegen echten DesktopStorageAdapter/Rust/SQLite und echte Browser-IndexedDB prüfen vollständigen Merge, ausgelassene offene/abgeglichene Buchung, doppelte/fremde/veraltete Referenzen, CAS nach gleichzeitig neuer Quellbuchung und Schreibabbruch nach bereits geschriebenen Aggregaten/Outbox/erster Cachezeile. Die Negativfälle verlangen konkrete Fach-/CAS-Fehler; vollständige Snapshots einschließlich Entwürfen und Cursor bleiben nach Ablehnung und Neustart unverändert. Der gültige Merge verändert nur Empfängerreferenz/Revision, archiviert die Quelle und erhält historische Tombstonereferenzen. SQLite-Neustart beendet den nativen Prozess und öffnet dieselbe Datei.
+
+| Kriterium | Status | Beleg |
+| --- | --- | --- |
+| Ausgelassene Referenz verhindert ganzen Merge | erfüllt | Gemeinsame Fälle `ausgelassen` und `abgeglichen-ausgelassen`, vollständiger Originalsnapshot unverändert |
+| Vollständiger Fachbestand und historische Referenzen | erfüllt | Beide dauerhaften Adapter liefern den Bestandsport; Quellbuchung umgestellt, Tombstone bleibt historisch auf archivierter Quelle |
+| Entsperrpflicht nicht über ausgelassene Buchung umgehen | erfüllt | Gespeicherte abgeglichene Buchung samt Abgleichaggregate; Merge ohne ihre Referenz liefert INVALID_COMMAND |
+| Gültiger Merge, doppelte/fremde Referenzen, stale CAS und Rollback in echten Adaptern | erfüllt | Acht identische Fälle, konkrete Fehlercodes, alle Buchungsfelder/Outbox/Projektionen/Cursor und echter SQLite-Dateineustart |
+
+Aktuelle Prüfung dieses Abschnitts: 18 native Contractfälle, 54 Chromium-/IndexedDB-Ausführungen, Typecheck, vollständiger Lint, Rustformat/Clippy und zwölf reguläre Rusttests bestanden. Diese Speicherbelege sind Sollfixtures für K04, keine native GUI- oder tatsächliche Disk-full-Abnahme. Die Fehlerproben verwenden die im #81-Abschnitt beschriebenen gezielten Speicherfehler. Gesamt-Konformität #85 bleibt für die übrigen Verträge offen.

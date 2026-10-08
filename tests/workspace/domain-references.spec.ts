@@ -56,3 +56,12 @@ for (const scenario of rebuildCases) {
     await expect(page.evaluate((value) => window.storageRebuildContract(value), scenario)).resolves.toBeUndefined();
   });
 }
+
+import { mergeCases } from '../storage/contracts/merge-catalog.js';
+for (const scenario of mergeCases) {
+  test(`Gemeinsamer echter Empfängermerge: ${scenario}`, async ({ page }) => {
+    await page.goto('/tests/domain-regressions.html');
+    await page.waitForFunction(() => window.storageMergeContract !== undefined);
+    await expect(page.evaluate((value) => window.storageMergeContract(value), scenario)).resolves.toBeUndefined();
+  });
+}

@@ -768,6 +768,7 @@ mod tests {
                     "storage_replace_snapshot" => replace_snapshot(&mut connection, profile, serde_json::from_value(args["snapshot"].clone()).map_err(storage_error)?).map(|()| Value::Null),
                     "storage_get_sync_state" => serde_json::to_value(get_sync_state(&connection, profile, space)?).map_err(storage_error),
                     "storage_load_confirmed" => read_rows(&connection, "SELECT payload FROM confirmed WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile, space).map(Value::Array),
+                    "storage_query_aggregates" => read_rows(&connection, "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile, space).map(Value::Array),
                     "storage_load_pending" => read_rows(&connection, "SELECT payload FROM outbox WHERE profile_id = ?1 AND space_id = ?2 ORDER BY operation_id", profile, space).map(Value::Array),
                     _ => Err("Unbekanntes Testkommando.".into()),
                 }

@@ -35,3 +35,10 @@ for (const change of ['neues-Aggregat', 'gleiche-Revision'] as const) {
     } finally { await fixture.close(); }
   });
 }
+
+import { runMergeCase, mergeCases } from './contracts/merge-catalog.js';
+for (const scenario of mergeCases) {
+  it(`Echter DesktopStorageAdapter/Rust/SQLite: Empfängermerge ${scenario}`, async () => {
+    await expect(runMergeCase(scenario, await sqliteFixture())).resolves.toBeUndefined();
+  }, 30_000);
+}
