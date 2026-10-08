@@ -1,6 +1,6 @@
 # Versions- und Lizenzbasis
 
-Stand: 7. Oktober 2026. Dieses Dokument hält den Auswahlstand aus P1.1 und die aktuellen Abweichungen der tatsächlichen Manifeste fest. Paketmanifeste und Lockfiles sperren die installierten Versionen; vollständige Fremdhinweise bleiben vor einer Distribution erforderlich. Die Auswahlübersichten nach dem T1-Abschnitt sind historische P1.1-Belege.
+Stand: 8. Oktober 2026. Dieses Dokument hält den Auswahlstand aus P1.1 und die aktuellen Abweichungen der tatsächlichen Manifeste fest. Paketmanifeste und Lockfiles sperren die installierten Versionen; vollständige Fremdhinweise bleiben vor einer Distribution erforderlich. Die Auswahlübersichten nach dem T1-Abschnitt sind historische P1.1-Belege.
 
 ## Tatsächlicher Manifeststand und Toolmodernisierung T1
 
@@ -10,7 +10,8 @@ Die Auswahlübersichten unten dokumentieren P1.1; die tatsächlichen Installatio
 | --- | --- | --- |
 | Tauri-CLI | 2.11.5 | 2.12.0; notwendige Korrektur der veralteten STATIC_VCRUNTIME-Übergabe |
 | tauri-build | 2.6.3 | 2.7.1 |
-| Dexie | 4.4.6 | 4.2.1 |
+| Tauri-Core / JS-API | 2.11.6 / 2.11.1 | 2.12.1 / 2.12.0 |
+| Dexie | 4.4.6 | 4.4.6 |
 | rusqlite | 0.40.2 | 0.40.2 |
 | better-sqlite3 | 13.0.3 für den späteren Server | Noch keine Abhängigkeit des aktuellen Servers |
 
@@ -92,3 +93,11 @@ Für die Entwicklungsprüfung wird `@babel/parser` exakt auf 8.0.6 gesperrt (MIT
 ## Auditbehebung: Entwicklungsabhängigkeiten
 
 `source-map-js` wird bei Versionen unter 1.2.2 durch einen eng begrenzten Override auf 1.2.2 korrigiert (BSD-3-Clause, Veröffentlichung 30. September 2026). [GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q) nennt 1.2.2 als korrigierte Version. `pnpm audit` meldet am 7. Oktober nach Aktualisierung keinen Treffer; Typecheck, Toolchainnegativtests, Vite- und Tauri-Build bestehen.
+
+## Abhängigkeitsstand vom 8. Oktober 2026
+
+Die Nutzercommits `81bf325` und `6258f71` verschärfen die pnpm-Reifezeitprüfung (`minimumReleaseAgeStrict: true`) und aktualisieren JS-API 2.12.0, Dexie 4.4.6, ofx-js 1.1.2, Lucide React 1.49.0, Oxlint 1.86.0 sowie Vitest 5.0.3. Diese Änderungen bleiben erhalten; historische T1-/P1-Auswahlbelege oben bleiben historisch.
+
+Der bisherige Rust-Core 2.11.6 wurde durch den tatsächlichen CLI-Build als unpassend zur JS-API 2.12.0 abgewiesen. Core ist nun exakt auf 2.12.1 gesperrt; Build 2.7.1 und CLI/JS-API 2.12.0 bleiben passend. [Core 2.12.1](https://github.com/tauri-apps/tauri/releases/tag/tauri-v2.12.1) und die gesperrten [Runtime-](https://github.com/tauri-apps/tauri/releases/tag/tauri-runtime-v2.12.1)/[Wry-Runtime-Patches](https://github.com/tauri-apps/tauri/releases/tag/tauri-runtime-wry-v2.12.1) erschienen am 30. September und erfüllen die Reifezeit. Rust 1.99 erfüllt die Core-Mindestversion 1.90. Kein Tauri-3-Prerelease und kein kopierter Upstreamcode; Apache-2.0/MIT-Fremdlizenzen bleiben erhalten.
+
+Die aktuelle Rust-Auflösung verwendet tao 0.37.1, wry 0.57.0 und muda 0.20.0. Der Linuxbaum enthält weiterhin GTK 0.18.2/glib 0.18.5 und proc-macro-error 1.0.4. Das kompatible SDK-Update löst D02 nicht; der Nutzer hat #41 ausdrücklich für eine spätere native Linuxabnahme offen gelassen.

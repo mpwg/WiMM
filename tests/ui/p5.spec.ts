@@ -40,3 +40,18 @@ test('verlangt eine Vorschauentscheidung auch für gleiche Zeilen derselben Date
   await view.getByRole('button', { name: 'Fortsetzen (bis 100 Buchungen)' }).click();
   await expect(view).toContainText('Abgeschlossen · 2 / 2');
 });
+
+test('aktualisiert fällige Vorschläge nach Tageswechsel ohne Änderungen an einem offenen Buchungsentwurf', async ({ page }) => {
+  await prepare(page);
+  await navigate(page, 'Dauerzahlungen'); await page.getByRole('button', { name: 'Neue Dauerzahlung', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Konto', exact: true }).selectOption({ label: 'Giro P5' });
+  await page.getByRole('combobox', { name: 'Kategorie', exact: true }).selectOption({ label: 'Lebensmittel P5' });
+  await page.getByLabel('Dauerzahlungsbetrag').fill('-1,00'); await page.getByLabel('Erste Fälligkeit').fill('2028-04-01'); await page.getByRole('button', { name: 'Dauerzahlung anlegen', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0); await expect(page.getByText('Fällig: 01.04.2028', { exact: true })).toHaveCount(0);
+  await page.clock.setFixedTime(new Date('2028-04-01T12:00:00Z')); await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(page.getByText('Fällig: 01.04.2028', { exact: true })).toBeVisible();
+  await navigate(page, 'Buchungen'); await page.getByRole('button', { name: 'Neue Buchung', exact: true }).click(); const dialog = page.getByRole('dialog', { name: 'Neue Buchung' });
+  await expect(dialog.getByLabel('Datum', { exact: true })).toHaveValue('2028-04-01'); await dialog.getByLabel('Datum', { exact: true }).fill('2028-03-20');
+  await page.clock.setFixedTime(new Date('2028-04-02T12:00:00Z')); await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(dialog.getByLabel('Datum', { exact: true })).toHaveValue('2028-03-20');
+});

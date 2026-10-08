@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import type { UUID } from '@wimm/contracts';
 import { parseFinanceDate, parseMoney, type TransactionAggregate } from '@wimm/domain';
-import { TransferForm } from './account-actions.js';
+import { TransferForm, today } from './account-actions.js';
 import { useDraftGuard, useFormDraft } from './drafts.js';
 import { Button, EmptyState } from './components.js';
 import { SlidersHorizontal, X } from 'lucide-react';
@@ -37,7 +37,7 @@ export function TransactionForm({ model, previous, onSaved, onBusy, defaultAccou
   const [payeeId, setPayeeId] = useState(previous?.payeeId ?? '');
   const [amount, setAmount] = useState(previous === undefined ? '' : moneyText(previous.amount).replace(/^[+-]/, ''));
   const [direction, setDirection] = useState<'expense' | 'income'>(previous === undefined || previous.amount < 0 ? 'expense' : 'income');
-  const [date, setDate] = useState<string>(previous?.date ?? new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Vienna' }).format(new Date()));
+  const [date, setDate] = useState<string>(() => previous?.date ?? today());
   const [note, setNote] = useState(previous?.note ?? ''); const opening = previous?.kind === 'opening';
   const [error, setError] = useState<string>(); const [amountError, setAmountError] = useState<string>(); const [dateError, setDateError] = useState<string>();
   const [saving, setSaving] = useState(false); const submitting = useRef(false);

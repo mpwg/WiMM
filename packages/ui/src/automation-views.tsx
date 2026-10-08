@@ -5,6 +5,7 @@ import { applyRules, classifyImportCandidates, dueDates, parseFinanceDate, parse
 import { createImportWorkerPort, normalizeImportRecord, MAX_IMPORT_BYTES, type CsvMapping, type ImportFormat, type PreviewRow } from '@wimm/importers';
 import type { AutomationModel } from './automation-model.js';
 import { formatMoney, displayDate } from './workspace.js';
+import { today as financeToday } from './account-actions.js';
 import { Button, Dialog, EmptyState } from './components.js';
 import { Plus } from 'lucide-react';
 import { useDraftGuard, useFormDraft } from './drafts.js';
@@ -82,7 +83,14 @@ export function AutomationView({ model, section = 'rules' }: { readonly model: A
   const [message, setMessage] = useState(''); const [busy, setBusy] = useState(false); const working = useRef(false);
   const [rule, setRule] = useState<RuleAggregate | 'new'>(); const [schedule, setSchedule] = useState<ScheduleAggregate | 'new'>(); const [removing, setRemoving] = useState<RuleAggregate>();
   async function run(action: () => Promise<void>) { if (working.current) return; working.current = true; setBusy(true); setMessage(''); try { await action(); setMessage('Lokal gespeichert.'); } catch (error) { setMessage(errorText(error)); } finally { working.current = false; setBusy(false); } }
-  const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Vienna', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const [today, setToday] = useState(financeToday);
+  useEffect(() => {
+    const update = () => setToday(financeToday());
+    const timer = setInterval(update, 60_000);
+    window.addEventListener('focus', update);
+    document.addEventListener('visibilitychange', update);
+    return () => { clearInterval(timer); window.removeEventListener('focus', update); document.removeEventListener('visibilitychange', update); };
+  }, []);
   const ordered = [...model.rules].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
   return <section><p role="status">{message}</p>{section === 'rules' ? <>
     <div className="toolbar"><Button variant="primary" icon={Plus} onClick={() => setRule('new')}>Neue Regel</Button></div><p className="help-text">Regeln ordnen importierte Buchungen in dieser Reihenfolge zu. Sie erzeugen keine Zahlungen.</p>
