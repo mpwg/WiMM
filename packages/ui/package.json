@@ -15,7 +15,8 @@
     "@wimm/importers": "workspace:*",
     "@wimm/storage": "workspace:*",
     "lucide-react": "1.49.0",
-    "react": "19.3.0"
+    "react": "19.3.0",
+    "@wimm/application": "workspace:*"
   },
   "devDependencies": {
     "vitest": "5.0.3"

@@ -298,6 +298,24 @@ importers:
         specifier: 8.3.1
         version: 8.3.1(@types/node@26.6.3)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
 
+  packages/application:
+    dependencies:
+      '@wimm/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@wimm/crypto':
+        specifier: workspace:*
+        version: link:../crypto
+      '@wimm/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@wimm/importers':
+        specifier: workspace:*
+        version: link:../importers
+      '@wimm/storage':
+        specifier: workspace:*
+        version: link:../storage
+
   packages/contracts:
     dependencies:
       zod:
@@ -383,6 +401,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@wimm/application':
+        specifier: workspace:*
+        version: link:../application
       '@wimm/contracts':
         specifier: workspace:*
         version: link:../contracts
