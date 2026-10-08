@@ -46,3 +46,9 @@ WhereIsMyMoney einschließlich seiner eigenen Dokumentation und des späteren ei
 ## Verbindlichkeit
 
 Dieses Dokumentationspaket ist die Umsetzungsspezifikation vom 2. Oktober 2026. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen. Die [Entscheidungen](docs/decisions.md) begründen Festlegungen, die spezifischen Fach- und Schnittstellendokumente beschreiben ihre Verträge. Produktänderungen müssen dort vor Umsetzung nachvollziehbar dokumentiert werden.
+
+## Gemeinsame dauerhafte Speicherprüfung
+
+`pnpm test:storage:native` baut das gesperrte Rust-Testbinary und führt den echten `DesktopStorageAdapter` über den katalogisierten JSON-Testtransport gegen eine SQLite-Datei aus. Derselbe Snapshotkatalog läuft mit `pnpm exec playwright test --config tests/workspace/config.ts tests/workspace/domain-references.spec.ts` gegen echte Browser-IndexedDB. P5-Aggregate, Originalentwürfe, verschlüsselte Negativroundtrips und Profil-/Bereichstrennung gehören zum Katalog. Der SQLite-Neustart beendet den Rust-Prozess vollständig und öffnet dieselbe Datei erneut. Browserfälle schließen und öffnen den Adapter; die vorhandenen Browserprojektlabels belegen hier beide IndexedDB, keine native Oberfläche.
+
+Der Treiber existiert ausschließlich im Rust-Testbinary, erweitert weder Tauri-Kommandos noch Produktrechte und führt keine Finanzberechnung aus. Ergebnisse liegen unter `test-results/storage-contract`; synthetische Daten. Native GUI, tatsächliches Disk-full, Screenreader und physische Geräte benötigen eigene Abnahmen. [Historischer Fortsetzungspunkt](docs/handoffs/issues-2026-10-08-rechnerwechsel.md), [gemeinsame vollständige Konformität #85](https://github.com/mpwg/WiMM/issues/85).

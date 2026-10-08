@@ -38,3 +38,12 @@ test('weist authentisch verschlüsselte ungültige Snapshots ohne Teiländerung 
   await page.goto('/tests/domain-regressions.html'); await page.waitForFunction(() => window.snapshotValidationRegression !== undefined);
   expect(await page.evaluate(() => window.snapshotValidationRegression())).toBe(true);
 });
+
+import { snapshotCases } from '../storage/contracts/snapshot-catalog.js';
+for (const scenario of snapshotCases) {
+  test(`Gemeinsamer echter Snapshotvertrag: ${scenario}`, async ({ page }) => {
+    await page.goto('/tests/domain-regressions.html');
+    await page.waitForFunction(() => window.storageSnapshotContract !== undefined);
+    await expect(page.evaluate((value) => window.storageSnapshotContract(value), scenario)).resolves.toBeUndefined();
+  });
+}

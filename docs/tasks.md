@@ -2,7 +2,7 @@
 
 ## Auftrag und Statusführung
 
-Auf ausdrücklichen Nutzerwunsch vom 8. Oktober 2026 ist die Issuebehebung für einen Rechnerwechsel angehalten. Alle eigenen Änderungen sind committed und werden auf `main` gepusht; [Übergabe mit Weiterarbeits-Prompt](handoffs/issues-2026-10-08-rechnerwechsel.md) nennt den geprüften Stand und die verbleibenden Integrationskriterien. Der bestehende Implementierungsauftrag bleibt erhalten; Fortsetzung nach Nutzeranweisung am nächsten PC.
+Auf ausdrücklichen Nutzerauftrag vom 8. Oktober 2026 ist die Pause zum Rechnerwechsel beendet. Die systematische Behebung der offenen GitHub-Issues wird ausschließlich in der aktiven Arbeitskopie fortgesetzt; direkte eigene Commits und Pushes auf `main` sind erlaubt. Die [historische Übergabe](handoffs/issues-2026-10-08-rechnerwechsel.md) nennt den Ausgangsstand `cc7b90f`; aktuelle Belege und Blockaden stehen in den jeweiligen Issues. P6–P11 und K01–K11 erhalten dadurch keine zusätzliche Produktfreigabe.
 
 Aktuelle Freigabe: D0, D1 und D2 sind abgeschlossen. P1, P2 und P3 sind nach der [Nachprüfung vom 8. Oktober 2026](handoffs/p1-p3-review-2026-10-08.md) erneut in Arbeit: Herkunftsregistergrundlage, verbleibende Fachabnahme und zehn Speicherdeltas verhindern die vollständige Abnahme; [Gesamtübersicht #87](https://github.com/mpwg/WiMM/issues/87) führt die Einzelissues und vorhandene native Plattformdeltas. Der Nutzerauftrag vom 8. Oktober 2026 umfasst die systematische Behebung der offenen Issues und das Schließen erfüllter Issues. Die Fachkorrekturen werden mit aktuellen Belegen in #87 verfolgt; vollständige gemeinsame Adapter- und Plattformabnahmen stehen noch aus. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1 sowie P4.2.1 bis P4.2.7 sind erneut vollständig abgenommen; P4.3.1–P4.3.8 sind ebenfalls vollständig abgenommen; P4.4 und P4.5.1–P4.5.6 sind ebenfalls abgenommen. P4.6 ist ausdrücklich freigegeben und in Arbeit; verbleibende Abnahmezellen stehen in der [Kriterienmatrix](handoffs/p4-6.md). Zusätzlich ist T1 zur Toolkonfigurationsmodernisierung ausdrücklich freigegeben.
 
@@ -24,7 +24,7 @@ Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungss
 
 ## Teilaufgaben und Bearbeitungsfolge
 
-Abnahmesnapshot: #73, #74 und #76 sind behoben; #75 besitzt Fachfix und echte IndexedDB-Belege, seine SQLite-Abnahme bleibt offen. Maßgeblich für die weitere Bearbeitung sind die Kriterien und Voraussetzungen der GitHub-Issues.
+Abnahmesnapshot vom 8. Oktober 2026: #73, #74 und #76 sind behoben; #80 besitzt nach dem Rechnerwechsel die [aktuelle gemeinsame Snapshotabnahme](handoffs/storage-2026-10-08-fortsetzung.md); #75 besitzt Fachfix und echte IndexedDB-Belege, seine SQLite-Abnahme bleibt offen. Maßgeblich für die weitere Bearbeitung sind die Kriterien und Voraussetzungen der GitHub-Issues.
 
 Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. P2 ist nach der aktuellen Nachprüfung erneut in Arbeit. Der Nutzer hat am 3. Oktober 2026 den vollständigen Abschluss von P3 freigegeben.
 

@@ -131,3 +131,12 @@ window.snapshotValidationRegression = async () => {
     return true;
   } finally { await storage.close(); }
 };
+
+// Derselbe Contract-Katalog wie im tatsächlichen Rust-/SQLite-Dateiprozesstest.
+import { runSnapshotCase, profileId as contractProfile, type SnapshotCase } from '../../../tests/storage/contracts/snapshot-catalog.js';
+declare global { interface Window { storageSnapshotContract: (scenario: SnapshotCase) => Promise<void> } }
+window.storageSnapshotContract = async (scenario) => {
+  const name = `wimm-snapshot-contract-${crypto.randomUUID()}`;
+  let storage = new IndexedDbStorageAdapter(contractProfile, name);
+  await runSnapshotCase(scenario, { storage, forProfile: (profile) => new IndexedDbStorageAdapter(profile, name), async restart() { await storage.close(); storage = new IndexedDbStorageAdapter(contractProfile, name); return storage; }, async close() { await storage.close(); } });
+};

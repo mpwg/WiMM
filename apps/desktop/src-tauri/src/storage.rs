@@ -691,6 +691,42 @@ pub fn storage_rebuild_projections(
 mod tests {
     use super::*;
 
+    /// Nur im Testbinary: echter SQLite-Port für denselben TypeScript-Contract-Katalog.
+    /// Kein Produktkommando, keine zusätzliche Tauri-Capability, kein SQL aus dem Client.
+    #[test]
+    #[ignore = "wird ausschließlich vom gemeinsamen TypeScript-Speichervertrag gestartet"]
+    fn contract_driver() {
+        use std::io::{BufRead, Write};
+        let path = std::env::var("WIMM_CONTRACT_DATABASE").unwrap();
+        let mut connection = Connection::open(path).unwrap();
+        initialize_storage(&connection).unwrap();
+        for line in std::io::stdin().lock().lines() {
+            let request: Value = serde_json::from_str(&line.unwrap()).unwrap();
+            let args = &request["arguments"];
+            let profile = args["profileId"].as_str().unwrap_or_default();
+            let space = args["spaceId"].as_str().unwrap_or_default();
+            let result: Result<Value, String> = (|| {
+                match request["command"].as_str().unwrap() {
+                    "storage_initialize_area" => initialize_area(&mut connection, profile, space, args["proposedEpoch"].as_str().unwrap()).map(Value::String),
+                    "storage_apply_batch" => apply_batch(&mut connection, serde_json::from_value(args["batch"].clone()).map_err(storage_error)?).map(|()| Value::Null),
+                    "storage_save_sync_page" => save_sync_page(&mut connection, profile, serde_json::from_value(args["page"].clone()).map_err(storage_error)?).map(|()| Value::Null),
+                    "storage_export_snapshot" => serde_json::to_value(export_snapshot(&mut connection, profile, space)?).map_err(storage_error),
+                    "storage_replace_snapshot" => replace_snapshot(&mut connection, profile, serde_json::from_value(args["snapshot"].clone()).map_err(storage_error)?).map(|()| Value::Null),
+                    "storage_get_sync_state" => serde_json::to_value(get_sync_state(&connection, profile, space)?).map_err(storage_error),
+                    "storage_load_confirmed" => read_rows(&connection, "SELECT payload FROM confirmed WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile, space).map(Value::Array),
+                    "storage_load_pending" => read_rows(&connection, "SELECT payload FROM outbox WHERE profile_id = ?1 AND space_id = ?2 ORDER BY operation_id", profile, space).map(Value::Array),
+                    _ => Err("Unbekanntes Testkommando.".into()),
+                }
+            })();
+            let response = match result {
+                Ok(value) => serde_json::json!({"id":request["id"],"value":value}),
+                Err(error) => serde_json::json!({"id":request["id"],"error":error}),
+            };
+            println!("WIMM_CONTRACT:{response}");
+            std::io::stdout().flush().unwrap();
+        }
+    }
+
     fn seed(connection: &mut Connection, profile_id: &str) {
         initialize_storage(connection).unwrap();
         let batch = serde_json::from_value(serde_json::json!({
