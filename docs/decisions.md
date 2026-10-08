@@ -211,7 +211,7 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 ## ADR-042 — Gemeinsamer Rust-Fachkern für Web und native Clients
 
 - Datum: 8. Oktober 2026.
-- Status: angenommen als Architekturziel; Produktimplementierung nicht freigegeben.
+- Status: angenommen; Produktimplementierung K01–K11 durch anschließenden Nutzerauftrag zu #91 am 8. Oktober 2026 freigegeben.
 - Herkunft: ausdrückliche Nutzerwahl „Rust als Ziel festlegen“ und bestätigter Konzept-/Issueauftrag.
 - Problem: Der TypeScript-Kern ist React-frei, benötigt für vollständig native Swift-/Kotlin-Oberflächen aber eine zusätzliche JavaScript-Laufzeit. Eine zweite Finanzimplementierung gefährdet konsistente Regeln.
 - Entscheidung: Ein eigenständiger Rust-Fachkern liefert gemeinsame Befehlsprüfung und Projektionen. Web nutzt WASM, Tauri direkte Rust-Aufrufe und spätere native Clients etablierte Swift-/Kotlin-Bindings. ADR-024 wird als Ziel ersetzt; TypeScript bleibt bis zur geprüften K05-Umschaltung Bestand und Vergleichsreferenz. ADR-014 wird hinsichtlich der Fachkernsprache entsprechend präzisiert.
@@ -224,7 +224,7 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 ## ADR-043 — UI-freie Anwendung und App-Composition
 
 - Datum: 8. Oktober 2026.
-- Status: angenommen als Architekturziel; Produktimplementierung nicht freigegeben.
+- Status: angenommen; Produktimplementierung K01–K11 durch anschließenden Nutzerauftrag zu #91 am 8. Oktober 2026 freigegeben.
 - Herkunft: bestätigter Nutzerauftrag für Konzept und Issues zur austauschbaren Oberfläche.
 - Problem: FinanceModel, Profilabläufe, Historie und Speicherung/Importkoordination liegen im UI-Paket oder in React-Callbacks. Ihre Wiederverwendung benötigt dadurch UI-/Browserabhängigkeiten.
 - Entscheidung: Anwendungsschicht als eigenes Paket, zunächst TypeScript, außerhalb React bereitstellen. Apps komponieren Fachkern, Anwendung und injizierte Speicher-/Profil-/Plattformports. ADR-031 wird als Ziel ersetzt; bestehende Komposition bleibt bis K02-Abnahme erhalten. Native Clients erfüllen dieselben dokumentierten Ablaufverträge.
@@ -237,7 +237,7 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 ## ADR-044 — Austauschbare SQL-Serveradapter
 
 - Datum: 8. Oktober 2026.
-- Status: angenommen als Architekturziel; Produktimplementierung nicht freigegeben.
+- Status: angenommen; Produktimplementierung K01–K11 durch anschließenden Nutzerauftrag zu #91 am 8. Oktober 2026 freigegeben.
 - Herkunft: Nutzerpräzisierung zu beliebigen SQL-Datenbanken und Auswahl „Server, Client bleibt lokal“.
 - Problem: Der bisherige Serverdefault schreibt SQLite vor. SQL-Wechsel dürfen weder Fach-/Transportregeln noch E2EE-Vertrauensgrenzen ändern.
 - Entscheidung: Gemeinsamer CiphertextStore und separater öffentlicher Verwaltungsport mit gemeinsamer Transaktion; SQLite als Standard/Referenz, PostgreSQL und MySQL/InnoDB als zusätzliche Serveradapter. Weitere SQL-Systeme benötigen Adapter und bestandene Konformitätssuite. ADR-021 wird hinsichtlich der SQLite-Beschränkung erweitert; Cluster-/Mehrinstanzbetrieb bleibt außerhalb dieses Ziels.

@@ -2,7 +2,7 @@
 
 ## Auftrag, Ziel und Stand
 
-Am 8. Oktober 2026 hat der Nutzer das Architekturziel und die Erstellung dieses Konzepts einschließlich GitHub-Issues bestätigt. Freigegeben sind ausschließlich Dokumentation und Issueanlage. Die Produktimplementierung K01–K11 benötigt einen gesonderten Auftrag gemäß [Aufgaben](tasks.md).
+Am 8. Oktober 2026 hat der Nutzer das Architekturziel und die Erstellung dieses Konzepts einschließlich GitHub-Issues bestätigt. Mit anschließendem ausdrücklichem Nutzerauftrag vom selben Tag ist auch die Produktimplementierung und Abnahme von #91/K01–K11 freigegeben; maßgeblich sind [Aufgaben](tasks.md). Die bisherigen Konzeptbelege bleiben historische Planungsbelege.
 
 Ziel ist eine gemeinsame Finanzlogik für Web und vollständig native Oberflächen sowie austauschbare SQL-Serverdatenbanken: zunächst SQLite, PostgreSQL und MySQL, später weitere Adapter mit denselben Garantien. Desktop bleibt lokal mit SQLite, die PWA mit IndexedDB offlinefähig. Serverdatenbank und lokale Clientdatenbank sind getrennte Entscheidungen.
 
@@ -41,7 +41,7 @@ TypeScript dient während der Migration als Vergleichsreferenz, ergänzt durch d
 
 ## SQL-Unabhängigkeit auf dem Server
 
-Der gemeinsame `CiphertextStore` und ein separater öffentlicher Verwaltungsport teilen für zusammengehörige Vorgänge dieselbe Transaktion. Verwaltungsdaten, signierte Manifeste, Chiffrate, Receipts, Änderungslog und Folgekursor dürfen nicht unabhängig teilcommittet werden. Aufnahme-/Rotationsvorgänge folgen weiterhin [P8](p8-server.md), Transport und Mehrgeräteabläufe [P9](p9-sync.md); deren Implementierungsfreigaben bleiben erforderlich.
+Der gemeinsame `CiphertextStore` und ein separater öffentlicher Verwaltungsport teilen für zusammengehörige Vorgänge dieselbe Transaktion. Verwaltungsdaten, signierte Manifeste, Chiffrate, Receipts, Änderungslog und Folgekursor dürfen nicht unabhängig teilcommittet werden. Aufnahme-/Rotationsvorgänge folgen weiterhin [P8](p8-server.md), Transport und Mehrgeräteabläufe [P9](p9-sync.md); deren weitergehende Produktabläufe bleiben gesondert freizugeben; der K-Auftrag umfasst die beschriebenen Persistenzgrundlagen.
 
 Alle Adapter garantieren atomare Speicherung, CAS-Revisionsprüfung, eindeutige Operations-IDs, konsistente Leseseiten/Snapshots und dauerhafte bestätigte Commits. Technische Wiederholungen betreffen vollständige Transaktionen und dieselbe Operations-ID. Fachliche Konflikte, abweichender Inhalt unter derselben Operations-ID und unklarer Commitausgang werden ausdrücklich behandelt; kein stilles Überschreiben oder blindes erneutes Neuanlegen.
 
@@ -83,4 +83,10 @@ Bestehende [#77](https://github.com/mpwg/WiMM/issues/77), [#82](https://github.c
 
 Abnahme verlangt aktuelle Fachvergleichs-/Grenztests für Rust/WASM, tatsächliche Swift-/Kotlin-Bindings, gemeinsame lokale und Serveradapterprüfungen, alle SQL-Wechsel sowie Web-/Tauri-/Offline-Regressionsnachweise. CAS-Parallelität, Operations-ID-Idempotenz, Fehlerrollback, konsistente Snapshots/Cursor, Neustart und Restore sind verpflichtend. Browserfallback ersetzt keinen nativen SQLite-Nachweis. Fehlende Plattform-/Toolchainnachweise bleiben konkrete offene Kriterien.
 
-Die Konzeptabnahme umfasst Dokumentations-/Link-/Konsistenzprüfung und verifizierte Issueverweise. Es liegen noch keine Rust-Migrations-, zusätzlichen SQL-Adapter- oder nativen Bindingnachweise vor. Produkt-, Deployment- und Releasefreigaben ergeben sich daraus nicht.
+Die historische Konzeptabnahme umfasst Dokumentations-/Link-/Konsistenzprüfung und verifizierte Issueverweise. Es liegen noch keine Rust-Migrations-, zusätzlichen SQL-Adapter- oder nativen Bindingnachweise vor. Produkt-, Deployment- und Releasefreigaben ergeben sich daraus nicht.
+
+## Freigegebene Bearbeitungsfolge am 8. Oktober 2026
+
+Nach ergänztem SQLite-Sollbeleg für #75 und minimaler sicherer Versionsabweisung aus #82 folgt zuerst K01. K02 und K03 können danach unabhängig erfolgen; K04 portiert die vorhandenen geprüften Regeln. K05 verbindet die gemeinsame Rust-Engine mit Web und Tauri und benötigt die echte lokale Adapterkonformität #85 sowie den vollständigen Port #77. Finanzreferenzprüfung #86 wird mit der Rust-Validierung umgesetzt und in den echten Adaptern abgenommen; ein zusätzlicher großer TypeScript-Fachausbau wird vermieden.
+
+Die übrige lokale Migrations-/Indexarbeit #82/#83 bleibt verbindlich, wird aber an den K01-Verträgen und tatsächlichen Schemaänderungen ausgerichtet. Browserpersistenz #84 und P4-/P5-Bedienungs-/Parserdeltas bleiben eigenständige Anforderungen. Aufwendige abschließende Plattform-/Screenreader-/Geräteabnahmen werden möglichst auf dem umgestellten Produktstand ausgeführt. K06–K10 zur Server-SQL-Portabilität folgen als eigener Strang und sind keine Voraussetzung für den lokalen Rust-Kern; K11 bleibt der Abschluss aller K-Kriterien.

@@ -2,7 +2,7 @@
 
 ## Bestand und bestätigter Zielzustand
 
-Die folgende Komponentenstruktur beschreibt die vorhandene TypeScript-/React-Grundlage und die bisherigen P1–P11-Verträge. Das am 8. Oktober 2026 bestätigte [Portabilitätskonzept](core-and-sql-portability.md) und ADR-042–ADR-044 in den [Entscheidungen](decisions.md) legen den künftigen Rust-Fachkern, UI-freie Anwendung und SQL-Serveradapter fest. Bei Aussagen zu TypeScript-Fachberechnung, UI-Composition und ausschließlichem SQLite-Serverbetrieb gelten diese bisherigen Festlegungen nur für Bestand und Übergang bis zur jeweiligen K-Abnahme. Der Auftrag umfasst ausschließlich Dokumentation und Issueanlage.
+Die folgende Komponentenstruktur beschreibt die vorhandene TypeScript-/React-Grundlage und die bisherigen P1–P11-Verträge. Das am 8. Oktober 2026 bestätigte [Portabilitätskonzept](core-and-sql-portability.md) und ADR-042–ADR-044 in den [Entscheidungen](decisions.md) legen den künftigen Rust-Fachkern, UI-freie Anwendung und SQL-Serveradapter fest. Bei Aussagen zu TypeScript-Fachberechnung, UI-Composition und ausschließlichem SQLite-Serverbetrieb gelten diese bisherigen Festlegungen nur für Bestand und Übergang bis zur jeweiligen K-Abnahme. Seit dem anschließenden ausdrücklichen Nutzerauftrag zu #91 am 8. Oktober 2026 ist K01–K11 auch zur Implementierung freigegeben. Die bestehende Architektur bleibt bis zur jeweiligen geprüften Umschaltung in Betrieb.
 
 ## Komponenten und bisherige Struktur
 

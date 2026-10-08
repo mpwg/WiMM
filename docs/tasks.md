@@ -2,7 +2,7 @@
 
 ## Auftrag und Statusführung
 
-Auf ausdrücklichen Nutzerauftrag vom 8. Oktober 2026 ist die Pause zum Rechnerwechsel beendet. Die systematische Behebung der offenen GitHub-Issues wird ausschließlich in der aktiven Arbeitskopie fortgesetzt; direkte eigene Commits und Pushes auf `main` sind erlaubt. Die [historische Übergabe](handoffs/issues-2026-10-08-rechnerwechsel.md) nennt den Ausgangsstand `cc7b90f`; aktuelle Belege und Blockaden stehen in den jeweiligen Issues. P6–P11 und K01–K11 erhalten dadurch keine zusätzliche Produktfreigabe.
+Auf ausdrücklichen Nutzerauftrag vom 8. Oktober 2026 ist die Pause zum Rechnerwechsel beendet. Die systematische Behebung der offenen GitHub-Issues wird ausschließlich in der aktiven Arbeitskopie fortgesetzt; direkte eigene Commits und Pushes auf `main` sind erlaubt. Die [historische Übergabe](handoffs/issues-2026-10-08-rechnerwechsel.md) nennt den Ausgangsstand `cc7b90f`; aktuelle Belege und Blockaden stehen in den jeweiligen Issues. P6–P11 erhalten dadurch keine zusätzliche Produktfreigabe. K01–K11 sind durch den anschließenden ausdrücklichen Nutzerauftrag zu #91 freigegeben.
 
 Aktuelle Freigabe: D0, D1 und D2 sind abgeschlossen. P1, P2 und P3 sind nach der [Nachprüfung vom 8. Oktober 2026](handoffs/p1-p3-review-2026-10-08.md) erneut in Arbeit: Herkunftsregistergrundlage, verbleibende Fachabnahme und zehn Speicherdeltas verhindern die vollständige Abnahme; [Gesamtübersicht #87](https://github.com/mpwg/WiMM/issues/87) führt die Einzelissues und vorhandene native Plattformdeltas. Der Nutzerauftrag vom 8. Oktober 2026 umfasst die systematische Behebung der offenen Issues und das Schließen erfüllter Issues. Die Fachkorrekturen werden mit aktuellen Belegen in #87 verfolgt; vollständige gemeinsame Adapter- und Plattformabnahmen stehen noch aus. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1 sowie P4.2.1 bis P4.2.7 sind erneut vollständig abgenommen; P4.3.1–P4.3.8 sind ebenfalls vollständig abgenommen; P4.4 und P4.5.1–P4.5.6 sind ebenfalls abgenommen. P4.6 ist ausdrücklich freigegeben und in Arbeit; verbleibende Abnahmezellen stehen in der [Kriterienmatrix](handoffs/p4-6.md). Zusätzlich ist T1 zur Toolkonfigurationsmodernisierung ausdrücklich freigegeben.
 
@@ -12,15 +12,16 @@ Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungss
 
 ## K — Rust-Fachkern und SQL-Portabilität
 
-- Status: erledigt (Konzeptdokumentation und Issueanlage, 8. Oktober 2026); Produktimplementierung K01–K11 offen, nicht freigegeben.
-- Freigabe: Nutzerauftrag vom 8. Oktober 2026 ausschließlich für das bestätigte Konzept und GitHub-Issues. Rust ist das Ziel des gemeinsamen Fachkerns; SQL-Austauschbarkeit betrifft den Server, lokale Clients behalten SQLite beziehungsweise IndexedDB.
+- Status: in Arbeit (Implementierungsfreigabe K01–K11 am 8. Oktober 2026); Konzeptdokumentation und Issueanlage zuvor abgeschlossen.
+- Freigabe: ausdrücklicher Nutzerauftrag vom 8. Oktober 2026: „ok. mach so weiter. der auftrag für #91 ist hiermit erteilt“. Er umfasst die Umsetzung und kriteriumsgerechte Abnahme von K01–K11. Rust ist das Ziel des gemeinsamen Fachkerns; SQL-Austauschbarkeit betrifft den Server, lokale Clients behalten SQLite beziehungsweise IndexedDB.
 - Voraussetzungen: aktuelle aktive Arbeitskopie, bestehende Fach-/E2EE-Verträge und geprüfte GitHub-Duplikate; bestehende Freigaben für P1–P11 werden nicht erweitert.
 - Ergebnis: [Portabilitätskonzept](core-and-sql-portability.md), ADR-042–ADR-044, abgestimmte Architektur und [Gesamtübersicht #91](https://github.com/mpwg/WiMM/issues/91) mit elf Einzelissues #92–#102 und deren Voraussetzungen/Abnahmekriterien.
 - Verträge: Architektur, Fachmodell, Datenmodell, E2EE, P8-/P9-Speicher- und Transportgrenzen. Bestehende lokale Speicherdeltas #77/#82/#85 behalten ihre Zuständigkeit.
-- Abnahme: gültige Dokumentationslinks und konsistente Unterscheidung von Bestand/Ziel; eine Gesamtübersicht und elf Einzelissues ohne Doppelanlage mit gegenseitigen Verweisen.
+- Abnahme: aktuelle Kriterien von #91 und den elf Einzelissues; gemeinsame Rust-/WASM-/Sprachbindings, vorhandene Finanzregeln, Web-/Tauri-Umschaltung, drei echte SQL-Serveradapter, alle sechs Datenbankwechsel und E2EE-/Kompatibilitätsnachweise.
 - Prüfungen: Dokumentationsvalidator, Paketgraph, Whitespace-/Freigabeprüfung und Rücklesen der angelegten Issues.
 - Prüfbelege: Dokumentationsvalidator, drei Dokumentationsvalidatortests, Paketgraph und Whitespaceprüfung bestanden. Alle zwölf GitHub-Issues mit Titel, offenem Zustand, exaktem Inhalt, Freigabegrenzen und gegenseitigen Abhängigkeitslinks rückgelesen. Konzeptzwischencommit `2cb536d`; Trackingabschluss im nachfolgenden Dokumentationscommit. Keine Produktprüfbelege.
-- Einschränkungen: keine Produktänderungen, Rust-/WASM-/Binding- oder zusätzlichen SQL-Adapterprüfungen im Dokumentationsauftrag.
+- Einschränkungen: bisherige K-Belege betreffen ausschließlich das Konzept. P6–P11-Funktionen, neue native Produkt-Apps, Clusterbetrieb und Veröffentlichungen bleiben gesonderte Aufträge. K06–K10 folgen als eigener Serverpersistenzstrang; sie blockieren die lokale Kernumstellung nicht.
+- Bearbeitungsfolge nach neuer Nutzerwahl: fehlender #75-SQLite-Sollbeleg und minimale Versionsabweisung aus #82 → K01 → K02/K03 → K04 → K05 samt #77/#85 und Rust-Referenzanbindung aus #86 → verbleibender Speicherausbau #82/#83 sowie P4-/P5-Abnahmen; K06–K10 anschließend und K11 als Gesamtabschluss. Keine vollständige #85-/Plattformabnahme als Voraussetzung für den Beginn von K01–K04 erfinden.
 
 ## Teilaufgaben und Bearbeitungsfolge
 
