@@ -1,6 +1,6 @@
 # Architekturentscheidungen
 
-Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Einträgen. Nutzerentscheidungen sind verbindlich; technische Defaults präzisieren das Konzept. Änderungen benötigen einen neuen Eintrag mit Grund, betroffenen Verträgen und Migration/Tests. Alte Einträge bleiben als Historie erhalten.
+Stand: 8. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Einträgen. Nutzerentscheidungen sind verbindlich; technische Defaults präzisieren das Konzept. Änderungen benötigen einen neuen Eintrag mit Grund, betroffenen Verträgen und Migration/Tests. Alte Einträge bleiben als Historie erhalten.
 
 | ID | Entscheidung | Herkunft und Begründung | Konsequenz |
 | --- | --- | --- | --- |
@@ -24,10 +24,10 @@ Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Eintr
 | ADR-018 | Veröffentlichung als freigegebene Kopie plus privater Link | Fachliche Präzisierung | Keine privaten Quellen-IDs im Haushalt; Änderungen nur nach erneuter Bestätigung |
 | ADR-019 | Rückerstattungen kumulativ aus ursprünglichen Anteilen | Technischer/Fachlicher Default | Teilzahlungen runden deterministisch und volle Erstattung stellt Originalverteilung wieder her |
 | ADR-020 | Snapshotersatz erzeugt neue Epoche | Technischer Default | Alte Offlinewrites werden nicht wieder eingespielt; Entwürfe vor Übernahme sichern |
-| ADR-021 | Eine SQLite-Serverinstanz und lokale Volumes | Technischer Default | Kein Cluster/NFS, serialisierte Writes; horizontaler Ausbau später neue Architekturentscheidung |
+| ADR-021 | Eine SQLite-Serverinstanz und lokale Volumes | SQL-Beschränkung als Ziel durch ADR-044 ersetzt | SQLite bleibt Standard; kein Cluster/NFS, horizontaler Ausbau weiterhin eigene Entscheidung |
 | ADR-022 | WIMM-Export einzelner Bereiche, getrennte Adminsicherung | Technischer Default | Finanzrestore verleiht keine Benutzerrechte; Nutzerexport enthält keine Credentials |
 | ADR-023 | Offlinegeräte gelten als vertrauenswürdige lokale Geräte | Technischer Default aus Lokalbetrieb | Kein Fernwiderruf schon bekannter Daten; OS-Schutz statt behaupteter Appverschlüsselung |
-| ADR-024 | Finanzlogik in TypeScript, begrenzte Rust-Speicherbrücke | Technischer Default | Keine zweite Budgetengine, kein uneingeschränktes SQL aus der UI |
+| ADR-024 | Finanzlogik in TypeScript, begrenzte Rust-Speicherbrücke | Ziel durch ADR-042 ersetzt; Bestand bis K05 | Keine zweite produktive Budgetengine, kein uneingeschränktes SQL aus der UI |
 | ADR-025 | E2EE ist Pflicht ab v1, ersetzt ADR-008 | Nutzerentscheidung: sonst kein Vertrauen | Finanzserver nur Chiffrate/öffentliche Metadaten; Fachvalidierung und Berechnungen auf Clients |
 | ADR-026 | Bereichsschlüssel, signierte Rollen/Geräte und eigenständige Recovery | Technischer Default für ADR-025 | libsodium, Fingerprintprüfung, Schlüsselfreigabe, Rotation und separate Tresorentsperrung; Änderungen beim externen Identitätsanbieter entschlüsseln nichts |
 | ADR-027 | Authentifizierte Clients sind vertrauenswürdig; keine Codesignatur als Sicherheitsbasis | Zusätzliche Nutzerentscheidung | Web/PWA/Desktop gleich zugelassen; keine Attestierung/Build-Allowlist; Nachrichten-/Schlüsselsignaturen schützen Datenintegrität, keine Appherkunft |
@@ -35,8 +35,11 @@ Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Eintr
 | ADR-029 | Kompakter Einstieg, P1-Teilaufgaben und portable Prüfungen; Hooks erst P1 | Nutzerauftrag D2 und bestätigter Ergänzungsplan | Zentrale Fachquellen erhalten, Beispiele synthetisch; optionaler pre-commit prüft vorgemerkte Inhalte ohne Dateiumschreiben; gemeinsame Prüfungen in CI; keine automatische Commit-/Push-/Taskabschlussfunktion |
 | ADR-030 | Serveridentitäten ausschließlich extern; Apps lokal eigenständig | Nutzerentscheidung vom 2. Oktober 2026; ersetzt ADR-011 Authentifizierungsdefault | Keine lokale Benutzer-/Passwortverwaltung oder Setupkonten; Serververbindung setzt OIDC oder gleichwertigen externen Identitätsdienst voraus; Standalone-Apps benötigen keine Anmeldung |
 | ADR-032 | Abgleich nur ohne Differenz, Budgeteintritt mit Geldfreigabe und gezielte Gegenbefehle | P4.4-Vertragsabgleich mit verbindlichem Fachmodell | Auswahl, Ausgangssaldo und CAS explizit; keine Snapshotrücksetzung |
-| ADR-031 | Gemeinsame UI enthält den lokalen Client-Composition-Root | P4-Umsetzung | Die UI darf die lokalen Crypto-/Storage-Clients zusammensetzen; native Systemfunktionen bleiben injizierte Ports |
+| ADR-031 | Gemeinsame UI enthält den lokalen Client-Composition-Root | Ziel durch ADR-043 ersetzt; Bestand bis K02 | Vorhandene UI-Composition im Übergang; Ziel ist eigenständige Anwendung mit injizierten Ports |
 | ADR-034 | Änderungen werden ausschließlich über Pull Requests integriert | Nutzerentscheidung vom 5. Oktober 2026 | Direkte Commits und Pushes auf `main` sind verboten; Themenbranch-Pushes dienen dem zugehörigen Pull Request |
+| ADR-042 | Gemeinsamer Rust-Fachkern für Web und native Clients | Nutzerziel vom 8. Oktober 2026; ersetzt ADR-024 als Ziel | WASM und native Bindings; bestehende TypeScript-Engine bis geprüfter Umschaltung, keine Produktfreigabe |
+| ADR-043 | UI-freie Anwendung und App-Composition | Nutzerziel vom 8. Oktober 2026; ersetzt ADR-031 als Ziel | Anwendungsabläufe außerhalb React, Plattform-/Speicherports injiziert |
+| ADR-044 | Austauschbare SQL-Serveradapter | Nutzerziel vom 8. Oktober 2026; erweitert ADR-021 | SQLite/PostgreSQL/MySQL hinter gleichen Serverports; lokale Clients unverändert, E2EE verpflichtend |
 
 ## ADR-032 — Abgleich und lokale Gegenbefehle
 
@@ -54,7 +57,7 @@ Stand: 2. Oktober 2026. Status: angenommen, außer ausdrücklich ersetzten Eintr
 ## ADR-031 — Lokale Client-Composition in der UI
 
 - Datum: 3. Oktober 2026.
-- Status: angenommen.
+- Status: als Ziel durch ADR-043 ersetzt; vorhandene Umsetzung bis geprüfter K02-Umstellung erhalten.
 - Problem: Web und Desktop benötigen dieselbe lokale Tresor-, Bereichs- und Speicherorchestrierung; doppelte App-Composition würde Verträge auseinanderführen.
 - Entscheidung: `packages/ui` enthält den gemeinsamen Client-Composition-Root und darf dazu `crypto` und `storage` verwenden. Systemzugriffe verbleiben hinter `PlatformServices`.
 - Folgen: Fachkern und Server bleiben weiterhin frei von UI-/Speicher-/Krypto-UI-Abhängigkeiten; Paketgraph prüft diese eng begrenzte Richtung.
@@ -204,3 +207,42 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 - Betroffene Verträge/Pakete: [Datenmodell](data-model.md), [Speicherports](architecture.md#speicherports), P2/P3/P5, #80 und die gemeinsame Referenzabnahme #86. Fachberechnung bleibt clientseitig; Rust wiederholt nur öffentliche lokale Metadaten-/Besitzgrenzen und SQLite-Atomizität.
 - Migration und Kompatibilität: bestehende vollständige V1-Finanzdaten und die numerische Legacycacheart bleiben lesbar. Historische Referenzen auf enthaltene Tombstoneziele bleiben in wiederhergestellten vollständigen Beständen erhalten; neue Fachreferenzen unterliegen weiterhin #76. Entwürfe sind getrennte Originaldaten und werden nicht automatisch angewandt. Beschädigte oder noch nicht unterstützte Bestände benötigen eine gesonderte bestätigte Korrektur, keine stille Ersetzung.
 - Prüfung: F01–F03, verschlüsselte Negativroundtrips für Versionen/Metadaten/Handles/Caches, unveränderter Gesamtbestand nach Ablehnung, native Bereichsgrenzen und gemeinsame dauerhafte Adapterprüfung in #85. Der aktuelle Abschnitt ist Implementierung mit Teilbelegen, keine abgeschlossene Gesamtadapterabnahme.
+
+## ADR-042 — Gemeinsamer Rust-Fachkern für Web und native Clients
+
+- Datum: 8. Oktober 2026.
+- Status: angenommen als Architekturziel; Produktimplementierung nicht freigegeben.
+- Herkunft: ausdrückliche Nutzerwahl „Rust als Ziel festlegen“ und bestätigter Konzept-/Issueauftrag.
+- Problem: Der TypeScript-Kern ist React-frei, benötigt für vollständig native Swift-/Kotlin-Oberflächen aber eine zusätzliche JavaScript-Laufzeit. Eine zweite Finanzimplementierung gefährdet konsistente Regeln.
+- Entscheidung: Ein eigenständiger Rust-Fachkern liefert gemeinsame Befehlsprüfung und Projektionen. Web nutzt WASM, Tauri direkte Rust-Aufrufe und spätere native Clients etablierte Swift-/Kotlin-Bindings. ADR-024 wird als Ziel ersetzt; TypeScript bleibt bis zur geprüften K05-Umschaltung Bestand und Vergleichsreferenz. ADR-014 wird hinsichtlich der Fachkernsprache entsprechend präzisiert.
+- Alternativen: Dauerhafte TypeScript-/JavaScript-Laufzeit in jedem nativen Client und getrennte Engines pro Sprache werden zugunsten eines gemeinsamen Kerns verworfen.
+- Folgen: Binding-/WASM-/Vergleichstests werden erforderlich. Pure Fachlogik bleibt frei von UI, Datenbank, HTTP und Tauri; der Server importiert sie nicht. Native Produktoberflächen bleiben ein späterer eigener Auftrag, ADR-004 gilt für die vorhandene UI fort.
+- Betroffene Verträge/Pakete: [Portabilitätskonzept](core-and-sql-portability.md), [Fachmodell](domain.md), [Datenmodell](data-model.md), [Architektur](architecture.md), K01/K03–K05/K11 und vorhandene Clientpakete.
+- Migration und Kompatibilität: bisherige sichere Centgrenzen, Kalender-/Rundungsregeln und Daten-/Cryptoformate erhalten; erst nach Ergebnisvergleich und Clientintegration produktive TypeScript-Engine entfernen. Keine Freigabe zusätzlicher P6–P11-Funktionen.
+- Prüfung: vorhandene Fach-/Grenzfälle nativ und WASM, deterministischer TypeScript-Vergleich, tatsächlich kompilierte/ausgeführte Swift-/Kotlin-Testharnesses, Web-/Tauri-/Offline-Regressionsabnahme.
+
+## ADR-043 — UI-freie Anwendung und App-Composition
+
+- Datum: 8. Oktober 2026.
+- Status: angenommen als Architekturziel; Produktimplementierung nicht freigegeben.
+- Herkunft: bestätigter Nutzerauftrag für Konzept und Issues zur austauschbaren Oberfläche.
+- Problem: FinanceModel, Profilabläufe, Historie und Speicherung/Importkoordination liegen im UI-Paket oder in React-Callbacks. Ihre Wiederverwendung benötigt dadurch UI-/Browserabhängigkeiten.
+- Entscheidung: Anwendungsschicht als eigenes Paket, zunächst TypeScript, außerhalb React bereitstellen. Apps komponieren Fachkern, Anwendung und injizierte Speicher-/Profil-/Plattformports. ADR-031 wird als Ziel ersetzt; bestehende Komposition bleibt bis K02-Abnahme erhalten. Native Clients erfüllen dieselben dokumentierten Ablaufverträge.
+- Alternativen: Zusammensetzen der Clients weiterhin im UI-Paket und Kopieren von Anwendungsabläufen in jede Oberfläche werden verworfen.
+- Folgen: Browser-Worker, lokale Profilpersistenz/Koordination, Uhr und IDs werden Adapter beziehungsweise injizierte Dienste. Darstellung, Navigation, Fokus und Formulare bleiben in der UI. TypeScript-Anwendung wird nicht automatisch zu einer Swift-/Kotlin-Bibliothek.
+- Betroffene Verträge/Pakete: [Portabilitätskonzept](core-and-sql-portability.md), [Architektur](architecture.md), [Aufgaben](tasks.md#k--rust-fachkern-und-sql-portabilität), K01/K02/K05/K11 sowie ui und App-Einstiegspunkte.
+- Migration und Kompatibilität: bestehende Profile, atomare Speicherung, Schreib-/Wechselsperren, Entwürfe und Konfliktzustände bewahren; keine Speicherformatmigration allein durch Paketverschiebung.
+- Prüfung: Anwendung ohne React/DOM/Browserglobals, Paketgraph, Fehler-/Konflikt-/Historien-/Abbruchfälle sowie bestehende Web-/Desktopfrontendabläufe.
+
+## ADR-044 — Austauschbare SQL-Serveradapter
+
+- Datum: 8. Oktober 2026.
+- Status: angenommen als Architekturziel; Produktimplementierung nicht freigegeben.
+- Herkunft: Nutzerpräzisierung zu beliebigen SQL-Datenbanken und Auswahl „Server, Client bleibt lokal“.
+- Problem: Der bisherige Serverdefault schreibt SQLite vor. SQL-Wechsel dürfen weder Fach-/Transportregeln noch E2EE-Vertrauensgrenzen ändern.
+- Entscheidung: Gemeinsamer CiphertextStore und separater öffentlicher Verwaltungsport mit gemeinsamer Transaktion; SQLite als Standard/Referenz, PostgreSQL und MySQL/InnoDB als zusätzliche Serveradapter. Weitere SQL-Systeme benötigen Adapter und bestandene Konformitätssuite. ADR-021 wird hinsichtlich der SQLite-Beschränkung erweitert; Cluster-/Mehrinstanzbetrieb bleibt außerhalb dieses Ziels.
+- Alternativen: Datenbankspezifische Regeln in API/Fachkern, direkte SQL-Zugriffe aus Oberflächen und automatische Zusage für alle SQL-Systeme werden verworfen.
+- Folgen: CAS, Operations-ID-Idempotenz, Rollback und konsistente Snapshot-/Cursorregeln sind gemeinsame Garantien. Dialekte, Isolation, Sperren, Indizes und Migrationen liegen in Adaptern. Desktop bleibt SQLite, PWA IndexedDB; Server erhält niemals Finanzklartexte/private Schlüssel.
+- Betroffene Verträge/Pakete: [Portabilitätskonzept](core-and-sql-portability.md), [Architektur](architecture.md), [P8](p8-server.md), [API](api.md), [E2EE](encryption.md), [Sync](synchronization.md), [Betrieb](operations.md), K01/K06–K11. P8-/P9-Produktfreigaben bleiben gesondert erforderlich.
+- Migration und Kompatibilität: angehaltene Writes, gesicherter versionierter Betreiberexport, leeres Ziel, byte-/wertgetreue Hüllen/IDs/Revisionen/Receipts/Epochen/Cursor, Integritätsprüfung vor Umschaltung und geprüfter Restore. Keine automatische Crypto-/Protokolländerung.
+- Prüfung: gemeinsame Suite gegen echte SQLite/PostgreSQL/MySQL, parallele Verbindungen, CAS-/Idempotenz-/Rollback-/Snapshot-/Neustartfälle und alle sechs gerichteten Datenbankwechsel.

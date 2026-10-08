@@ -10,6 +10,10 @@ Für den ersten Überblick: [Einstieg](getting-started.md). Für die schrittweis
 
 Die [UX-Neugestaltung](ux-redesign.md) ist durch ausdrücklichen Nutzerauftrag vom 5. Oktober 2026 für UX-01–UX-06 freigegeben; [aktuelle UX-Abnahme](handoffs/ux.md).
 
+## Architekturziel: Rust und SQL-Portabilität
+
+Das [Konzept für gemeinsamen Rust-Fachkern und austauschbare SQL-Datenbanken](core-and-sql-portability.md) beschreibt den am 8. Oktober 2026 bestätigten Zielzustand für Web und spätere native Oberflächen. Desktop bleibt lokal mit SQLite, PWA mit IndexedDB; der Server erhält künftig SQLite-/PostgreSQL-/MySQL-Adapter. Freigegeben sind Konzept und Issueanlage, keine K01–K11-Produktimplementierung; [Auftrag und Status](tasks.md#k--rust-fachkern-und-sql-portabilität).
+
 ## Lesereihenfolge
 
 | Schritt | Dokument | Zweck |

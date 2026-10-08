@@ -1,6 +1,10 @@
 # Technische Architektur
 
-## Komponenten und Zielstruktur
+## Bestand und bestätigter Zielzustand
+
+Die folgende Komponentenstruktur beschreibt die vorhandene TypeScript-/React-Grundlage und die bisherigen P1–P11-Verträge. Das am 8. Oktober 2026 bestätigte [Portabilitätskonzept](core-and-sql-portability.md) und ADR-042–ADR-044 in den [Entscheidungen](decisions.md) legen den künftigen Rust-Fachkern, UI-freie Anwendung und SQL-Serveradapter fest. Bei Aussagen zu TypeScript-Fachberechnung, UI-Composition und ausschließlichem SQLite-Serverbetrieb gelten diese bisherigen Festlegungen nur für Bestand und Übergang bis zur jeweiligen K-Abnahme. Der Auftrag umfasst ausschließlich Dokumentation und Issueanlage.
+
+## Komponenten und bisherige Struktur
 
 | Bereich | Verantwortung | Darf abhängen von |
 | --- | --- | --- |

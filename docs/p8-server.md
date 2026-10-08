@@ -6,6 +6,10 @@ Diese Teilaufgaben konkretisieren [P8](tasks.md#p8--server-und-identitäten). De
 
 Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen; nach jedem abgeschlossenen Abschnitt einen zusammengehörigen Zwischencommit und eine [Übergabe](templates/handoff.md) erstellen. P8 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P9](p9-sync.md). Für die Umsetzung wimm-e2ee und wimm-workflow verwenden, für Kopplungs-/Schlüsselflächen wimm-ui. P8 implementiert die öffentlichen Aufnahme-/Rotationsverträge und ihre atomare Speicherung; Mehrgeräte-Sync und vollständige Konvergenz folgen in P9.
 
+## SQL-Portabilität als bestätigtes Architekturziel
+
+ADR-044 und das [Portabilitätskonzept](core-and-sql-portability.md) erweitern die bisherige SQLite-Servergrundlage um austauschbare SQLite-/PostgreSQL-/MySQL-Adapter. P8.1 muss den gemeinsamen CiphertextStore-/Verwaltungsvertrag und gemeinsame Transaktionsgrenzen berücksichtigen; SQLite bleibt Referenz und Standard. K06–K09 planen diese Persistenzgrundlage, duplizieren keine Aufnahme-/Rotations-/Authentifizierungsabläufe aus P8 und erteilen keine P8-Implementierungsfreigabe. Der Stand und die Freigaben stehen in [Aufgaben](tasks.md#k--rust-fachkern-und-sql-portabilität).
+
 ## P8.1 — CiphertextStore und öffentliche Servergrundlage
 
 - Status: offen.
