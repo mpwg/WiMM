@@ -184,6 +184,34 @@ describe('Konten und Kategorien', () => {
     );
     expect(system).toMatchObject({ name: 'Nicht zugeordnet', system: 'uncategorized', archived: false });
 
+    const ordinaryId = '00000000-0000-4000-8000-000000000099' as UUID;
+    const ordinary = saveCategory({
+      commandType: 'category.save', spaceId: SPACE,
+      expectedRevisions: [{ id: ordinaryId, expectedRevision: 0 }, { id: GROUP, expectedRevision: 1 }],
+      mutations: [{ aggregate: category(1, { id: ordinaryId }) }]
+    }, reader(head(GROUP, 1, 'categoryGroup')), dependencies());
+    expect(ordinary.aggregates[0]).toMatchObject({ id: ordinaryId, archived: false });
+
+    const base = reader(head(system.id, 1, 'category'), head(GROUP, 1, 'categoryGroup'));
+    const storedHeads: AggregateHeadReader = {
+      ...base,
+      list: (spaceId) => [...base.list!(spaceId).filter((entry) => entry.id !== system.id), system]
+    };
+    const saveSystem = (aggregate: CategoryAggregate) => saveCategory({
+      commandType: 'category.save', spaceId: SPACE,
+      expectedRevisions: [{ id: system.id, expectedRevision: 1 }, { id: GROUP, expectedRevision: 1 }],
+      mutations: [{ aggregate }]
+    }, storedHeads, dependencies());
+    const { system: _removedSystem, ...unmarked } = system;
+    expectDomainError(() => saveSystem({ ...unmarked, revision: 2 }), 'INVALID_COMMAND');
+    expectDomainError(() => saveSystem({ ...system, revision: 2, archived: true }), 'INVALID_COMMAND');
+    expectDomainError(() => saveSystem({ ...system, revision: 2, deletedAt: NOW }), 'INVALID_COMMAND');
+    expectDomainError(() => archiveCategory({
+      commandType: 'category.archive', spaceId: SPACE,
+      expectedRevisions: [{ id: system.id, expectedRevision: 1 }, { id: GROUP, expectedRevision: 1 }],
+      mutations: [{ aggregate: { ...unmarked, revision: 2, archived: true } }]
+    }, storedHeads, dependencies()), 'INVALID_COMMAND');
+
     expectDomainError(
       () =>
         archiveCategory(

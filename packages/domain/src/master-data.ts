@@ -96,6 +96,7 @@ export function saveCategory(
   dependencies: DomainDependencies
 ): DomainChangeSet<'category.save', CategoryAggregate> {
   const category = normalizeCategory(singleMutation(input, 'category.save'));
+  assertCategorySystemStatus(category, input.spaceId, heads);
   requireCategoryGroupRevision(input.expectedRevisions, category.groupId, heads);
   return createChangeSet({ ...input, mutations: [{ aggregate: category }] }, heads, dependencies);
 }
@@ -106,6 +107,7 @@ export function archiveCategory(
   dependencies: DomainDependencies
 ): DomainChangeSet<'category.archive', CategoryAggregate> {
   const category = normalizeCategory(singleMutation(input, 'category.archive'));
+  assertCategorySystemStatus(category, input.spaceId, heads);
   if (!category.archived) {
     throw new DomainValidationError('INVALID_COMMAND', 'Eine archivierte Kategorie muss als archiviert markiert sein.');
   }
@@ -117,6 +119,21 @@ export function archiveCategory(
   }
   requireCategoryGroupRevision(input.expectedRevisions, category.groupId, heads);
   return createChangeSet({ ...input, mutations: [{ aggregate: category }] }, heads, dependencies);
+}
+
+function assertCategorySystemStatus(category: CategoryAggregate, spaceId: UUID, heads: AggregateHeadReader): void {
+  if (heads.list === undefined) {
+    throw new DomainValidationError('INVALID_COMMAND', 'Kategorieänderungen benötigen den vollständigen aktuellen Fachbestand.');
+  }
+  const current = heads.list(spaceId).find((aggregate) => aggregate.id === category.id);
+  const stored = current?.aggregateType === 'category' ? current as CategoryAggregate : undefined;
+  if (stored?.system === 'uncategorized') {
+    if (category.system !== 'uncategorized' || category.archived || category.deletedAt !== undefined) {
+      throw new DomainValidationError('INVALID_COMMAND', 'Die Systemkategorie „Nicht zugeordnet“ darf weder umgewidmet noch archiviert oder gelöscht werden.');
+    }
+  } else if (stored !== undefined && category.system !== stored.system) {
+    throw new DomainValidationError('INVALID_COMMAND', 'Der Systemstatus einer gespeicherten Kategorie darf nicht geändert werden.');
+  }
 }
 
 /** Erstellt die unveränderliche Systemkategorie für noch nicht zugeordnete normale Buchungen. */
