@@ -2,7 +2,7 @@
 
 ## In zehn Minuten orientieren
 
-WhereIsMyMoney besitzt die abgeschlossenen Pakete P1 bis P3 mit Workspace, Fachkern, Crypto-Binding, lokalem Speicher und Offline-Assetbasis. D5 ergänzt die Teilaufgaben bis P11. Die [verbleibenden Teilaufgaben für P4–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) benötigen weiterhin einen ausdrücklichen Auftrag. Diese Anleitung erteilt ihn nicht.
+WhereIsMyMoney besitzt die vorhandenen Grundlagen P1 bis P3 mit Workspace, Fachkern, Crypto-Binding, lokalem Speicher und Offline-Assetbasis. Die [P1–P3-Nachprüfung](handoffs/p1-p3-review-2026-10-08.md) hat ihre vollständige Abnahme erneut geöffnet; [#87](https://github.com/mpwg/WiMM/issues/87) führt die Deltas. D5 ergänzt die Teilaufgaben bis P11. Die [verbleibenden Teilaufgaben für P4–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) benötigen weiterhin einen ausdrücklichen Auftrag. Diese Anleitung erteilt ihn nicht.
 
 1. [Arbeitsregeln](../AGENTS.md) und [Dokumentationsindex](README.md) lesen, danach die dort vorgeschriebenen Grundlagen: Fachmodell, Architektur, Entscheidungen und Aufgaben.
 2. Den tatsächlichen Nutzerauftrag mit dem [Paketstatus](tasks.md) abgleichen. Vorhandene Änderungen prüfen und bewahren; keinen Branch ungefragt wechseln.

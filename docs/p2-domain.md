@@ -1,5 +1,9 @@
 # P2 — Teilaufgaben des Fachkerns
 
+## Nachprüfung vom 8. Oktober 2026
+
+Das Gesamtpaket ist erneut in Arbeit und nicht vollständig abgenommen. Die [aktuelle Kriterienmatrix](handoffs/p1-p3-review-2026-10-08.md) ordnet jedes Kriterium den aktuellen Prüfbelegen und GitHub-Issues zu; [Gesamtabnahme #87](https://github.com/mpwg/WiMM/issues/87) führt Fortschritt und Voraussetzungen. Die folgenden ursprünglichen Ergebnisse und Prüfbelege bleiben als Historie erhalten. Der aktuelle Prüfauftrag umfasst Issueanlage, keine Produktkorrektur.
+
 ## Auftrag und Reihenfolge
 
 Diese Teilaufgaben konkretisieren [P2](tasks.md#p2--fachkern) nach der [P1-Vorlage](p1-foundation.md). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt den vollständigen Abschluss von P2. P2.1 bis P2.6 werden in Reihenfolge nach abgeschlossenem P1 bearbeitet. Die Fachquellen bleiben verbindlich; dieser Plan führt keine neuen Produktregeln ein.
@@ -20,7 +24,7 @@ Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie 
 
 ## P2.2 — Fachaggregate und atomare Befehlsverträge
 
-- Status: erledigt (3. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 3. Oktober 2026).
 - Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach weiter mit P2.2“).
 - Voraussetzungen: P2.1 erledigt.
 - Schritte: P2-Aggregate und vollständige Befehlseingaben typisieren/validieren; Bereichsreferenzen, erwartete Revisionen und Änderungssets definieren; Zeit-/ID-Erzeugung injizieren; Fachschemas von öffentlichen Transporthüllen trennen.
@@ -32,7 +36,7 @@ Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie 
 
 ## P2.3 — Konten, Kategorien und Empfänger
 
-- Status: erledigt (3. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 3. Oktober 2026).
 - Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach weiter“).
 - Voraussetzungen: P2.2 erledigt.
 - Schritte: Konto-/Kategoriegruppen-/Kategorie-/Empfängerbefehle umsetzen; Systemkategorie unzugeordnet anlegen; Referenzarchivierung und Empfängerzusammenführung als vollständiges Änderungsset behandeln.
@@ -44,7 +48,7 @@ Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie 
 
 ## P2.4 — Buchungen, Splits und Anfangsbestand
 
-- Status: erledigt (3. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 3. Oktober 2026).
 - Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach P2 komplett fertig. mach nach jedem zwischenschritt commits“).
 - Voraussetzungen: P2.3 erledigt.
 - Schritte: transaction.save/delete einschließlich vollständiger Splits und Anfangsbestand umsetzen; Erstattungszeichen und unzugeordnete Kategorie beachten; Tombstones sowie Sperre abgeglichener Buchungen prüfen.
@@ -56,7 +60,7 @@ Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie 
 
 ## P2.5 — Umbuchungen und Kontenabgleich
 
-- Status: erledigt (3. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 3. Oktober 2026).
 - Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach P2 komplett fertig. mach nach jedem zwischenschritt commits“).
 - Voraussetzungen: P2.4 erledigt.
 - Schritte: transfer.save/delete samt Gegenbuchungen und Abgleich confirm/unlock umsetzen; alle beteiligten Revisionen prüfen; Budgetgrenzübertritt mit erforderlicher Kategorie kennzeichnen; Differenzen ohne automatische Korrekturbuchung liefern.
@@ -68,7 +72,7 @@ Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie 
 
 ## P2.6 — Projektionen und Gesamt-Abnahme
 
-- Status: erledigt (3. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 3. Oktober 2026).
 - Freigabe: Nutzerauftrag vom 3. Oktober 2026 („mach P2 komplett fertig. mach nach jedem zwischenschritt commits“).
 - Voraussetzungen: P2.5 erledigt.
 - Schritte: Kontosalden und Einnahmen-/Ausgabenprojektionen aus Aggregaten ableiten; Vorzeichen/Opening/Transfer korrekt behandeln; P2-Fachsuite in Projektprüfungen aufnehmen und Paketabschluss dokumentieren.

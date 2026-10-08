@@ -2,7 +2,7 @@
 
 ## Stand
 
-Dieses Repository enthält die abgeschlossenen Grundlagen P1–P3, den plattformunabhängigen Fachkern, verschlüsselte lokale Speicheradapter und bereits implementierte P4-Oberflächen. Die Serverhülle besitzt öffentliche Health-/Metadatenendpunkte; vollständige Synchronisierung folgt in P9. T1 modernisiert die Toolkonfigurationen und verbindlichen Prüfungen.
+Dieses Repository enthält die vorhandenen Grundlagen P1–P3 mit [erneut offenen Abnahmekriterien](handoffs/p1-p3-review-2026-10-08.md), den plattformunabhängigen Fachkern, verschlüsselte lokale Speicheradapter und bereits implementierte P4-Oberflächen. Die Serverhülle besitzt öffentliche Health-/Metadatenendpunkte; vollständige Synchronisierung folgt in P9. T1 modernisiert die Toolkonfigurationen und verbindlichen Prüfungen.
 
 Die installierte lokale Toolchain benötigt Node `>=26.10.0 <28`, pnpm `>=12.8.1 <14` sowie für die Desktop-Hülle Rust und Xcode. Der entwickelte macOS-arm64-Rechner verwendet Node 26.10.0, pnpm 12.8.1 und Rust 1.99.0; die versionierte rustup-Toolchain enthält Clippy und rustfmt. Für reproduzierbare Installationen bleibt pnpm 12.8.1 in `packageManager` festgelegt. Vor der ersten Installation `pnpm install --frozen-lockfile` ausführen. Verfügbare Befehle:
 

@@ -1,5 +1,9 @@
 # P3 — Teilaufgaben für Speicher und Offlinebasis
 
+## Nachprüfung vom 8. Oktober 2026
+
+Das Gesamtpaket ist erneut in Arbeit und nicht vollständig abgenommen. Die [aktuelle Kriterienmatrix](handoffs/p1-p3-review-2026-10-08.md) ordnet jedes Kriterium den aktuellen Prüfbelegen und GitHub-Issues zu; [Gesamtabnahme #87](https://github.com/mpwg/WiMM/issues/87) führt Fortschritt und Voraussetzungen. Die folgenden ursprünglichen Ergebnisse und Prüfbelege bleiben als Historie erhalten. Der aktuelle Prüfauftrag umfasst Issueanlage, keine Produktkorrektur.
+
 ## Auftrag und Reihenfolge
 
 Diese Teilaufgaben konkretisieren [P3](tasks.md#p3--speicher-und-offlinebasis). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt den vollständigen Abschluss von P3. P3.1 bis P3.6 werden in Reihenfolge nach abgeschlossenem [P2](p2-domain.md) bearbeitet. Maßgeblich bleiben die verlinkten Fach-, Speicher- und E2EE-Verträge.
@@ -8,7 +12,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P3.1 — Speicherverträge, Schemata und Konformitätssuite
 
-- Status: erledigt (3. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 3. Oktober 2026).
 - Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P2 erledigt; vorhandener StorageAdapter-Port geprüft.
 - Schritte: Fachaggregate auf SQLite-/Dexie-Schemata und Pflichtindizes abbilden; lokale Revisionen, Transaktionsgrenzen und vorwärts gerichtete Migrationen konkretisieren; Vor-Migrationssicherung über den verschlüsselten Snapshotport aus P3.2 vor destruktiven Änderungen vorsehen; gemeinsame Adapterkonformitätssuite anlegen.
@@ -32,7 +36,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P3.3 — SQLite-Adapter und begrenzte Rust-Brücke
 
-- Status: erledigt (3. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 3. Oktober 2026).
 - Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P3.2 erledigt.
 - Schritte: Desktopadapter mit katalogisierten Rust-Batches, aktivierten Fremdschlüsseln und lokalen Transaktionen implementieren; Aggregate, Projektionen und Entwürfe gemeinsam speichern; Migrations-/Fehlerpfade integrieren.
@@ -44,7 +48,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P3.4 — IndexedDB-Adapter und Tabkoordination
 
-- Status: erledigt (3. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 3. Oktober 2026).
 - Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P3.3 erledigt; gemeinsame Suite verfügbar.
 - Schritte: Dexie-Adapter mit denselben Batches und Fachreferenzprüfungen implementieren; Browserpersistenz anfragen; Web Locks/BroadcastChannel für konkurrierende Tabs integrieren; Profile getrennt halten.
@@ -56,7 +60,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P3.5 — Lokale Orchestrierung und getrennte Entwürfe
 
-- Status: erledigt (3. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 3. Oktober 2026).
 - Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P3.4 erledigt.
 - Schritte: Fachbefehle über Speicherports ausführen; bestätigten Stand, lokale Revisionen, anwendbare Entwürfe und Konflikte getrennt modellieren; Outbox nur für servergebundene Bereiche vorbereiten; saveSyncPage/exportSnapshot/replaceSnapshot katalogisieren.
@@ -68,7 +72,7 @@ Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.
 
 ## P3.6 — Offline-Start und Gesamt-Abnahme
 
-- Status: erledigt (3. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 3. Oktober 2026).
 - Freigabe: Nutzerauftrag zum vollständigen P3-Abschluss.
 - Voraussetzungen: P3.5 erledigt.
 - Schritte: versionierte Appassets per Service Worker cachen; Offline-Start und sichere Updateübergabe vorbereiten; Projektionen rebuildbar halten; beide Adapter und Schlüssel-/Snapshotports gemeinsam abnehmen.

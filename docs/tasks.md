@@ -2,7 +2,7 @@
 
 ## Auftrag und Statusführung
 
-Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1 sowie P4.2.1 bis P4.2.7 sind erneut vollständig abgenommen; P4.3.1–P4.3.8 sind ebenfalls vollständig abgenommen; P4.4 und P4.5.1–P4.5.6 sind ebenfalls abgenommen. P4.6 ist ausdrücklich freigegeben und in Arbeit; verbleibende Abnahmezellen stehen in der [Kriterienmatrix](handoffs/p4-6.md). Zusätzlich ist T1 zur Toolkonfigurationsmodernisierung ausdrücklich freigegeben.
+Aktuelle Freigabe: D0, D1 und D2 sind abgeschlossen. P1, P2 und P3 sind nach der [Nachprüfung vom 8. Oktober 2026](handoffs/p1-p3-review-2026-10-08.md) erneut in Arbeit: Herkunftsregistergrundlage, vier Fachkernfehler und zehn Speicherdeltas verhindern die vollständige Abnahme; [Gesamtübersicht #87](https://github.com/mpwg/WiMM/issues/87) führt die 15 Einzelissues und vorhandene native Plattformdeltas. Der aktuelle Nutzerauftrag umfasst Prüfung und Issueanlage, keine neue Produktimplementierung. P4 besitzt dokumentierte Implementierungsfreigaben und Teilimplementierungen. P4.1 sowie P4.2.1 bis P4.2.7 sind erneut vollständig abgenommen; P4.3.1–P4.3.8 sind ebenfalls vollständig abgenommen; P4.4 und P4.5.1–P4.5.6 sind ebenfalls abgenommen. P4.6 ist ausdrücklich freigegeben und in Arbeit; verbleibende Abnahmezellen stehen in der [Kriterienmatrix](handoffs/p4-6.md). Zusätzlich ist T1 zur Toolkonfigurationsmodernisierung ausdrücklich freigegeben.
 
 Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
 
@@ -10,11 +10,11 @@ Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungss
 
 ## Teilaufgaben und Bearbeitungsfolge
 
-Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. P2 ist abgeschlossen. Der Nutzer hat am 3. Oktober 2026 den vollständigen Abschluss von P3 freigegeben.
+Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. P2 ist nach der aktuellen Nachprüfung erneut in Arbeit. Der Nutzer hat am 3. Oktober 2026 den vollständigen Abschluss von P3 freigegeben.
 
 | Paket | Teilaufgaben | Ergebnis der Schrittfolge |
 | --- | --- | --- |
-| P1 | [P1.1–P1.6](p1-foundation.md) | Projektgrundlage; bereits erledigt |
+| P1 | [P1.1–P1.6](p1-foundation.md) | Projektgrundlage; Herkunftsregisterdelta offen |
 | P2 | [P2.1–P2.6](p2-domain.md) | Primitive → Aggregate → Stammdaten → Buchungen → Transfer/Abgleich → Projektionen/Abnahme |
 | P3 | [P3.1–P3.6](p3-storage.md) | Speicherverträge → Tresor → SQLite → IndexedDB → Orchestrierung → Offline-Abnahme |
 | P4 | [44 kleine Unteraufgaben in P4.1–P4.6](p4-ui.md#kleine-arbeitsaufträge-und-abschlussregeln) | jede Funktion und jeder Nachweis einzeln; verbleibend P4.5.7 und offene P4.6-Abnahmezellen |
@@ -151,7 +151,7 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 
 ## P1 — Projektgrundlage
 
-- Status: erledigt (3. Oktober 2026). Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn mit P1.1. Voraussetzung: D0 erledigt.
+- Status: in Arbeit (erneute Nachprüfung vom 8. Oktober 2026; historische Abnahme vom 3. Oktober eingeschränkt). Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn mit P1.1. Voraussetzung: D0 erledigt.
 - Fortschritt: P1.1 bis P1.6 sind erledigt.
 - Teilaufgaben: [P1.1–P1.6](p1-foundation.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: stabile kompatible Toolchain prüfen; Workspace einschließlich `packages/crypto`; TS strict/ESM; Fach- und öffentliche EncryptedOperation-/KeyRoster-Verträge trennen; gepflegte libsodium-Bindung und RFC-8785-Bibliothek; Crypto-Testvektoren; leere Apphüllen/Lockfiles/CI. Keine Klartext-FinanzAPI als Zwischenlösung.
@@ -161,10 +161,12 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 - Prüfungen: CI lokal reproduzieren, Paketgraph auf verbotene Imports prüfen, Buildsmokechecks; keine Secrets erforderlich.
 - Prüfbelege: P1.1: [Versions- und Lizenzbasis](technology-baseline.md) am 3. Oktober 2026 anhand offizieller Release-, Registry- und Tauri-Quellen geprüft; Tauri 2.12.1 wegen der festgelegten sieben Tage Reifezeit auf die aktuelle reife 2.11-Kombination korrigiert. P1.2: Workspace und Lockfile angelegt; Installation mit unverändertem Lockfile, TypeScript und Paketgraph damals im OrbStack-Dev-Container geprüft. Die VS-Code-Dev-Containers-Erweiterung 0.469.0 hat die damalige Konfiguration einschließlich `postCreateCommand` erfolgreich gestartet. P1.3: öffentliche Zod-Vertragshüllen, Fehler- und Porttypen angelegt; vier gezielte Vertragstests sowie TypeScript und Paketgraphprüfungen damals im Container bestanden. Ein absichtlich verbotener Import wurde erkannt und entfernt. Die Containerumgebung wurde inzwischen entfernt. P1.4: `libsodium-wrappers-sumo` 0.8.4 und `canonicalize` 5.1.0 gekapselt; sieben synthetische Binding-/Manipulationstests sowie Vertrags-, TypeScript- und Paketgraphprüfungen mit Node 24.21.0 bestanden. P1.5: Web-, Server- und Tauri-Hülle mit sichtbarem Source-/Lizenzhinweis und Crypto-Binding angelegt. Die zwei Servertests, TypeScript, Paketgraph, Vite-Builds und der native macOS-arm64-Tauri-Build mit Rust 1.99.0 aus Homebrew bestanden; alle drei Hüllen starteten lokal. P1.6: gemeinsame Markdown-/JSON-/YAML-/Linkprüfung, optionale indexbasierte Hookprüfung und Ubuntu-CI erstellt; positiver/negativer Validator-, Hook-, Installations-, Typ-, Paketgraph-, Test- und lokaler Buildnachweis erbracht. Kein Remote-Lauf oder Push. Keine Finanzfunktion, Finanz-HTTP-API oder Finanzdaten vorhanden. Windows und E2E bleiben ungeprüft. Wartung am 3. Oktober 2026: Dependabot prüft npm/pnpm, Cargo und GitHub Actions täglich; npm/pnpm-Versionsupdates warten sieben Tage. `@types/node` 26.6.3, Actions v7/v6 und die vollständige lokale CI-Prüfserie bestanden. `skipLibCheck` übergeht ausschließlich die inkompatible Fremddeklaration von `thread-stream` mit Node-26-Typen. CI-Nachbesserung am 4. Oktober 2026: Lauf 37188501893 scheiterte an fehlendem Playwright-Chromium; Browserinstallation samt Systemabhängigkeiten wurde ergänzt. CI-Optimierung am 4. Oktober 2026: Playwright-Chromium und Rust/Cargo-Buildartefakte werden mit getrennten, passenden Schlüsseln gecacht; Browser-Systemabhängigkeiten bleiben auf jedem frischen Runner installiert. Vollständiges `pnpm check:ci` in der aktiven macOS-arm64-Arbeitskopie bestanden (Dokumentation, Paketgraph, TypeScript, 80 Unit-/Service-Worker-Tests, 14 Web-/Desktop-UI-Prüfungen sowie Builds einschließlich Tauri). Nachprüfung des Remote-Laufs 37190134465: Ubuntu 24.04 brach nach 20 Minuten während der Playwright-Installation des vollständigen 167-MiB-Chromium-Archivs ab; Tests begannen nicht. Die Installation hing beim Entpacken reproduzierbar auch lokal mit Playwright 1.58.2 unter Node 26.10.0. Playwright hat den Hänger für Versionen unter 1.60.0 dokumentiert; ab 1.60.0 behoben ([Playwright-Fehlerbericht](https://github.com/microsoft/playwright/issues/40998)). `@playwright/test` ist auf die bereits in der [Versionsbasis](technology-baseline.md) festgelegte Version 1.63.0 aktualisiert. CI folgt Playwrights GitHub-Actions-Empfehlung und installiert nur Chromiums Headless-Shell samt OS-Abhängigkeiten (`pnpm exec playwright install --with-deps --only-shell chromium`); Browsercache entfernt, Cargo-Cache bleibt. Frische lokale Headless-Shell-Installation und beide UI-Suiten mit Node 26.10.0 bestanden. Vollständiges `pnpm check:ci` anschließend bestanden (80 Unit-/Service-Worker-Tests, 14 UI-Prüfungen und alle Builds einschließlich Tauri). Remote-Neulauf mangels Push noch offen.
 
+- Aktuelle Nachprüfung: [Kriterienmatrix P1–P3](handoffs/p1-p3-review-2026-10-08.md), [Gesamtabnahme #87](https://github.com/mpwg/WiMM/issues/87). Frühere Prüfbelege bleiben historische Nachweise; der Paketabschluss ist erneut offen.
+
 ## P2 — Fachkern
 
-- Status: erledigt (3. Oktober 2026). Voraussetzung: P1.
-- Fortschritt: P2.1 bis P2.6 und die P2-Gesamtabnahme sind erledigt.
+- Status: in Arbeit (erneute Nachprüfung vom 8. Oktober 2026; historische Abnahme vom 3. Oktober eingeschränkt). Voraussetzung: P1.
+- Fortschritt: P2.1 erfüllt; P2.2–P2.6 wegen reproduzierter Referenz-/Schutzregeldefekte erneut in Arbeit.
 - Teilaufgaben: [P2.1–P2.6](p2-domain.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: exakte Geld-/Datumsparser; Aggregate/Revisionstypen; Konten/Kategorien/Empfänger; Buchungen/Splits/Opening; Transfers und Kontenabgleich; pure Befehlshandler mit Änderungssets; Projektionen für Salden und Einnahmen/Ausgaben. Reconciled-Lock und Referenzarchivierung berücksichtigen.
 - Ergebnis: plattformfreie Fachlogik ohne Datenbank/React/HTTP, die sämtliche Eingabe- und Summeninvarianten prüft sowie Saldo- und Verbrauchsprojektionen reproduzierbar aus vollständigen Aggregaten ableitet.
@@ -173,9 +175,11 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 - Prüfungen: deterministische Vitest-Fachtests sowie Eigenschaften für Summen, Transfererhaltung und Ganzzahlüberlauf.
 - Prüfbelege: P2.1: Dezimalgeld-, sichere Summen-/Zwischenwert- und Kalenderprimitive im plattformfreien Paket `@wimm/domain` umgesetzt. 26 neue Fachtests sowie die vier vorhandenen Vitest-Suiten mit insgesamt 39 Tests bestanden; TypeScript, Paketgraph und positive/negative Dokumentationsprüfung bestanden. Nach Aktualisierung auf Node 26.10.0 und pnpm 12.8.1 bestanden außerdem die gesperrte Installation und `pnpm check:ci`. P2.2: vollständige Aggregate, Revisionskopfstände, atomare Änderungsmengen und injizierte ID-/Zeitgeber ergänzt; die Fachtests decken Mehraggregat- und Fehlpfade ab. P2.3: Konten, Kategorien und Empfänger einschließlich atomarer Empfänger-Merges ergänzt. P2.4: vollständige Buchungen, Splits, Anfangsbestandsregeln und Tombstones ergänzt; 43 Domänentests und `pnpm check:ci` bestanden. P2.5: atomare Umbuchungen mit Gegenbuchungen, Budgetgrenzen und Kontenabgleich ergänzt; 47 Domänentests und `pnpm check:ci` bestanden. P2.6: reine Saldo- und Verbrauchsprojektionen mit F01/F03, Erstattungs- und Neuaufbaugleichheit ergänzt. Die P2-Gesamtabnahme mit 50 Domänentests und vollständigem `pnpm check:ci` ist bestanden. Details und Teilnachweise stehen im [P2-Teilplan](p2-domain.md).
 
+- Aktuelle Nachprüfung: [Kriterienmatrix P1–P3](handoffs/p1-p3-review-2026-10-08.md), [Gesamtabnahme #87](https://github.com/mpwg/WiMM/issues/87). Frühere Prüfbelege bleiben historische Nachweise; der Paketabschluss ist erneut offen.
+
 ## P3 — Speicher und Offlinebasis
 
-- Status: erledigt (3. Oktober 2026). Voraussetzung: P2 erledigt.
+- Status: in Arbeit (erneute Nachprüfung vom 8. Oktober 2026; historische Abnahme vom 3. Oktober eingeschränkt). Voraussetzung: P2 erledigt.
 - Teilaufgaben: [P3.1–P3.6](p3-storage.md) in Reihenfolge; Gesamtabschluss erst nach allen Teilabnahmen.
 - Schritte: Client-Speicheradapter/Rustbatch-Brücke, Transaktionen/Projektionen/Entwürfe; lokaler verschlüsselter UserVault, unabhängige Bereichsschlüssel, Entsperrung/Rettungscode und Schlüsselports; keine persistierten Klartextkeys. Export-Snapshotport verschlüsselt. Service Worker, persistenter Browserstore und Tabkoordination.
 - Ergebnis: dauerhafte lokale Datenhaltung in beiden Clients; vorbereitete Outbox ohne Netzwerkpflicht.
@@ -183,6 +187,8 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 - Abnahme: gemeinsame Konformitätssuite für beide Adapter; S01–S03/S14; offline Neustart ohne verlorene Buchungen; Quota/Disk-full kein Erfolg; private Profile getrennt.
 - Prüfungen: echte DB-/IndexedDB-Integrationsprüfungen, Absturzpunkte in Batch-/Cursorcommit simulieren; PWA-Network-off-Neustart.
 - Prüfbelege: P3.1–P3.6 mit atomarem Speichervertrag, lokalem UserVault, begrenzter SQLite-Brücke, Dexie-Adapter, Orchestrierung und Service Worker abgeschlossen. Acht Speichertests, elf Kryptotests, Service-Worker- und Rust-SQLite-Test sowie TypeScript, Paketgraph, Dokumentation, Web-/Desktopbuild und lokale CI-Prüfung bestanden. Echte Network-off-PWA- und native Disk-full-Smokechecks bleiben als explizite Plattformprüfung vor P4 offen; Details stehen im [P3-Teilplan](p3-storage.md).
+
+- Aktuelle Nachprüfung: [Kriterienmatrix P1–P3](handoffs/p1-p3-review-2026-10-08.md), [Gesamtabnahme #87](https://github.com/mpwg/WiMM/issues/87). Frühere Prüfbelege bleiben historische Nachweise; der Paketabschluss ist erneut offen.
 
 ## P4 — Oberfläche und native App
 

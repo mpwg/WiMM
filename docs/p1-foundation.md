@@ -1,12 +1,16 @@
 # P1 — Teilaufgaben der Projektgrundlage
 
+## Nachprüfung vom 8. Oktober 2026
+
+Das Gesamtpaket ist erneut in Arbeit und nicht vollständig abgenommen. Die [aktuelle Kriterienmatrix](handoffs/p1-p3-review-2026-10-08.md) ordnet jedes Kriterium den aktuellen Prüfbelegen und GitHub-Issues zu; [Gesamtabnahme #87](https://github.com/mpwg/WiMM/issues/87) führt Fortschritt und Voraussetzungen. Die folgenden ursprünglichen Ergebnisse und Prüfbelege bleiben als Historie erhalten. Der aktuelle Prüfauftrag umfasst Issueanlage, keine Produktkorrektur.
+
 ## Auftrag und Reihenfolge
 
 Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis P1.6 werden in Reihenfolge bearbeitet. P1 ist erst mit der Abnahme des Gesamtpakets erledigt; P2 beginnt danach. Nach Umsetzung Status und Prüfbelege hier sowie den Gesamtstatus in tasks.md pflegen.
 
 ## P1.1 — Versions- und Lizenzprüfung
 
-- Status: erledigt (2. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 2. Oktober 2026).
 - Freigabe: Nutzerauftrag vom 2. Oktober 2026 für den Beginn der Umsetzung.
 - Voraussetzungen: D0/D1 erledigt; [Architektur](architecture.md) und [Entscheidungen](decisions.md) gelesen.
 - Schritte: unterstützte Node-LTS-/pnpm-/Rust-/Tauri-Versionen und stabile kompatible Bibliotheken aus offiziellen Quellen ermitteln; libsodium-Binding, RFC-8785-Bibliothek und Node-SQLite-Binding berücksichtigen; Lizenzen und Plattformvoraussetzungen prüfen.
@@ -18,7 +22,7 @@ Diese Teilaufgaben konkretisieren [P1](tasks.md#p1--projektgrundlage). P1.1 bis 
 
 ## P1.2 — Workspace und Paketgraph
 
-- Status: erledigt (2. Oktober 2026).
+- Status: in Arbeit (Nachprüfung 8. Oktober 2026; historisch erledigt 2. Oktober 2026).
 - Freigabe: Nutzerauftrag vom 2. Oktober 2026.
 - Voraussetzungen: P1.1 erledigt.
 - Schritte: pnpm-Workspace mit den Architekturpaketen und Appverzeichnissen anlegen; Versionen/Lockfile sperren, TypeScript strict/ESM und AGPL-Metadaten konfigurieren; erlaubte Importgrenzen automatisch prüfbar machen.
