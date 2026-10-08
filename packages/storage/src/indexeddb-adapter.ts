@@ -2,6 +2,7 @@
 import { Dexie, type Table } from 'dexie';
 import type { AtomicBatch, RevisionExpectation } from '@wimm/contracts';
 import type { UUID } from '@wimm/contracts';
+import { rebuildStoredProjections } from './projection-rebuild.js';
 import { validateLocalSnapshot } from './snapshot-validation.js';
 
 import {
@@ -157,7 +158,13 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
   }
 
   async rebuildProjections(spaceId: UUID): Promise<void> {
-    await this.write(async () => this.db.projections.where('[profileId+spaceId]').equals([this.profileId, spaceId]).delete());
+    await this.write(async () => this.db.transaction('rw', this.db.aggregates, this.db.projections, async () => {
+      const source = await this.db.aggregates.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray();
+      const previous = await this.db.projections.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray();
+      const rebuilt = rebuildStoredProjections(source.map((entry) => entry.payload), spaceId, previous.map((entry) => entry.payload));
+      await this.db.projections.where('[profileId+spaceId]').equals([this.profileId, spaceId]).delete();
+      await this.db.projections.bulkPut(rebuilt.map((payload) => ({ profileId: this.profileId, spaceId, kind: payload.kind, key: payload.key, payload })));
+    }));
   }
 
   async close(): Promise<void> { this.db.close(); }

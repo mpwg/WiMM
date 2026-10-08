@@ -24,7 +24,7 @@ Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungss
 
 ## Teilaufgaben und Bearbeitungsfolge
 
-Abnahmesnapshot vom 8. Oktober 2026: #73, #74 und #76 sind behoben; #80 besitzt nach dem Rechnerwechsel die [aktuelle gemeinsame Snapshotabnahme](handoffs/storage-2026-10-08-fortsetzung.md); #75 besitzt Fachfix und echte IndexedDB-Belege, seine SQLite-Abnahme bleibt offen. Maßgeblich für die weitere Bearbeitung sind die Kriterien und Voraussetzungen der GitHub-Issues.
+Abnahmesnapshot vom 8. Oktober 2026: #73, #74 und #76 sind behoben; #80 und #81 besitzen nach dem Rechnerwechsel die [aktuelle gemeinsame Speicherabnahme](handoffs/storage-2026-10-08-fortsetzung.md); #75 besitzt Fachfix und echte IndexedDB-Belege, seine SQLite-Abnahme bleibt offen. Maßgeblich für die weitere Bearbeitung sind die Kriterien und Voraussetzungen der GitHub-Issues.
 
 Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. P2 ist nach der aktuellen Nachprüfung erneut in Arbeit. Der Nutzer hat am 3. Oktober 2026 den vollständigen Abschluss von P3 freigegeben.
 

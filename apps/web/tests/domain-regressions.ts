@@ -140,3 +140,19 @@ window.storageSnapshotContract = async (scenario) => {
   let storage = new IndexedDbStorageAdapter(contractProfile, name);
   await runSnapshotCase(scenario, { storage, forProfile: (profile) => new IndexedDbStorageAdapter(profile, name), async restart() { await storage.close(); storage = new IndexedDbStorageAdapter(contractProfile, name); return storage; }, async close() { await storage.close(); } });
 };
+
+import { runRebuildCase, type RebuildCase } from '../../../tests/storage/contracts/rebuild-catalog.js';
+declare global { interface Window { storageRebuildContract: (scenario: RebuildCase) => Promise<void> } }
+window.storageRebuildContract = async (scenario) => {
+  const name = `wimm-rebuild-contract-${crypto.randomUUID()}`;
+  let storage = new IndexedDbStorageAdapter(contractProfile, name);
+  const foreign: IndexedDbStorageAdapter[] = [];
+  await runRebuildCase(scenario, { storage, forProfile: (profile) => { const adapter = new IndexedDbStorageAdapter(profile, name); foreign.push(adapter); return adapter; }, async restart() { await storage.close(); storage = new IndexedDbStorageAdapter(contractProfile, name); return storage; }, async close() { await storage.close(); for (const adapter of foreign) await adapter.close(); }, async withProjectionWriteFailure(action) {
+    const original = Reflect.get(IDBObjectStore.prototype, 'put') as IDBObjectStore['put']; let writes = 0;
+    IDBObjectStore.prototype.put = function (...args: Parameters<typeof original>) {
+      if (this.name === 'projections' && ++writes === 2) throw new DOMException('Synthetischer Cache-Schreibfehler', 'QuotaExceededError');
+      return original.apply(this, args);
+    };
+    try { await action(); } finally { IDBObjectStore.prototype.put = original; }
+  } });
+};

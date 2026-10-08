@@ -671,20 +671,66 @@ pub fn storage_replace_snapshot(
     replace_snapshot(&mut connection, &profile_id, snapshot)
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectionRebuild {
+    space_id: String,
+    source_aggregates: Vec<StoredAggregate>,
+    projections: Vec<Value>,
+}
+
+// Kein Fachrechner in Rust: vollständiger Bestandsvergleich und atomarer Cacheersatz.
+fn rebuild_projections(
+    connection: &mut Connection,
+    profile_id: &str,
+    rebuild: ProjectionRebuild,
+) -> Result<(), String> {
+    assert_area_rows(&rebuild.projections, &rebuild.space_id)?;
+    let transaction = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(storage_error)?;
+    let actual = read_rows(
+        &transaction,
+        "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle",
+        profile_id,
+        &rebuild.space_id,
+    )?;
+    let mut expected = rebuild
+        .source_aggregates
+        .into_iter()
+        .map(|entry| serde_json::to_value(entry).map_err(storage_error))
+        .collect::<Result<Vec<_>, _>>()?;
+    expected.sort_by(|a, b| a["handle"].as_str().cmp(&b["handle"].as_str()));
+    if actual != expected {
+        return Err("Die lokale Revision ist nicht mehr aktuell.".into());
+    }
+    transaction
+        .execute(
+            "DELETE FROM projections WHERE profile_id = ?1 AND space_id = ?2",
+            params![profile_id, rebuild.space_id],
+        )
+        .map_err(storage_error)?;
+    write_batch(
+        &transaction,
+        &StorageBatch {
+            profile_id: profile_id.into(),
+            expected_revisions: vec![],
+            aggregates: vec![],
+            outbox: vec![],
+            projections: rebuild.projections,
+        },
+    )?;
+    transaction.commit().map_err(storage_error)
+}
+
 #[tauri::command]
 pub fn storage_rebuild_projections(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
-    space_id: String,
+    rebuild: ProjectionRebuild,
 ) -> Result<(), String> {
-    let connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
-    connection
-        .execute(
-            "DELETE FROM projections WHERE profile_id = ?1 AND space_id = ?2",
-            params![profile_id, space_id],
-        )
-        .map_err(storage_error)?;
-    Ok(())
+    let mut connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
+    rebuild_projections(&mut connection, &profile_id, rebuild)
 }
 
 #[cfg(test)]
@@ -711,6 +757,14 @@ mod tests {
                     "storage_apply_batch" => apply_batch(&mut connection, serde_json::from_value(args["batch"].clone()).map_err(storage_error)?).map(|()| Value::Null),
                     "storage_save_sync_page" => save_sync_page(&mut connection, profile, serde_json::from_value(args["page"].clone()).map_err(storage_error)?).map(|()| Value::Null),
                     "storage_export_snapshot" => serde_json::to_value(export_snapshot(&mut connection, profile, space)?).map_err(storage_error),
+                    "storage_rebuild_projections" => rebuild_projections(&mut connection, profile, serde_json::from_value(args["rebuild"].clone()).map_err(storage_error)?).map(|()| Value::Null),
+                    "test_projection_fault" => {
+                        connection.execute_batch("DROP TRIGGER IF EXISTS contract_projection_fault; DROP TABLE IF EXISTS contract_projection_writes;").map_err(storage_error)?;
+                        if args["enabled"].as_bool().unwrap_or(false) {
+                            connection.execute_batch("CREATE TEMP TABLE contract_projection_writes(count INTEGER); INSERT INTO contract_projection_writes VALUES(0); CREATE TEMP TRIGGER contract_projection_fault BEFORE INSERT ON projections BEGIN UPDATE contract_projection_writes SET count = count + 1; SELECT CASE WHEN (SELECT count FROM contract_projection_writes) >= 2 THEN RAISE(ABORT, 'Synthetischer Cache-Schreibfehler') END; END;").map_err(storage_error)?;
+                        }
+                        Ok(Value::Null)
+                    },
                     "storage_replace_snapshot" => replace_snapshot(&mut connection, profile, serde_json::from_value(args["snapshot"].clone()).map_err(storage_error)?).map(|()| Value::Null),
                     "storage_get_sync_state" => serde_json::to_value(get_sync_state(&connection, profile, space)?).map_err(storage_error),
                     "storage_load_confirmed" => read_rows(&connection, "SELECT payload FROM confirmed WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile, space).map(Value::Array),

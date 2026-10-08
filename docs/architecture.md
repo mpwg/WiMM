@@ -35,6 +35,8 @@ Der lokale Port ergänzt `initializeArea(spaceId, proposedEpoch)` für die atoma
 
 Snapshotersatz verwendet vor jeder Mutation die gemeinsame Form-/Kontextprüfung und den vollständigen Fachvalidator gemäß [ADR-041](decisions.md#adr-041--gemeinsame-snapshotprüfung-vor-destruktivem-ersatz). Finanzregeln bleiben im TypeScript-Fachkern; native SQLite-Kommandos prüfen zusätzlich Metadatenbindung und fremde Handlebelegungen innerhalb der Transaktion.
 
+`rebuildProjections` berechnet Salden und Gesamt-/Monatsverbrauch aus den aktuellen lokalen Aggregaten über denselben Fachkern. IndexedDB liest und ersetzt innerhalb einer Schreibtransaktion; Memory verwendet seine Schreibwarteschlange. Der Desktopadapter liest atomar, berechnet clientseitig und übergibt den vollständigen Ausgangsbestand samt Caches an das begrenzte Rust-Kommando. Dieses vergleicht alle Aggregate vor dem atomaren Cacheersatz; veraltete Bestände erhalten einen Revisionskonflikt. Bestätigungen, Entwürfe, Cursor und Finanzaggregate werden nicht geändert. Einzelheiten in [ADR-045](decisions.md#adr-045--fachprojektionsneuaufbau-mit-vollständigem-bestandsvergleich).
+
 IndexedDB und SQLite auf Clients erfüllen dieselbe Fachspeicher-Contract-Suite. Die Desktopbrücke akzeptiert katalogisierte Batchtypen; die UI erhält keinen unbeschränkten SQL-/Dateizugriff. Der Server besitzt einen separaten CiphertextStore: opake Handles/Revisionen, verschlüsselte Bundles, öffentliche Manifeste, Receipts und Changes. Er committet diese atomar, niemals Finanzaggregate/Projektionen im Klartext.
 
 ## Datenfluss

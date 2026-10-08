@@ -2,7 +2,8 @@
 import type { AtomicBatch } from '@wimm/contracts';
 import type { UUID } from '@wimm/contracts';
 
-import type { ConfirmedAggregate, LocalSnapshot, LocalStorageAdapter, PendingOperation, StoredAggregate, StoredProjection, SyncPage, SyncState } from './contracts.js';
+import { rebuildStoredProjections } from './projection-rebuild.js';
+import type { ProjectionRebuild, ConfirmedAggregate, LocalSnapshot, LocalStorageAdapter, PendingOperation, StoredAggregate, StoredProjection, SyncPage, SyncState } from './contracts.js';
 import { StorageRevisionConflictError, StorageWriteError } from './contracts.js';
 import { validateLocalSnapshot } from './snapshot-validation.js';
 
@@ -24,7 +25,7 @@ export interface DesktopStorageBridge {
   getSyncState(profileId: UUID, spaceId: UUID): Promise<SyncState | undefined>;
   exportSnapshot(profileId: UUID, spaceId: UUID): Promise<LocalSnapshot>;
   replaceSnapshot(profileId: UUID, snapshot: LocalSnapshot): Promise<void>;
-  rebuildProjections(profileId: UUID, spaceId: UUID): Promise<void>;
+  rebuildProjections(profileId: UUID, rebuild: ProjectionRebuild): Promise<void>;
 }
 
 export type DesktopStorageCommand = 'storage_initialize_area' | 'storage_apply_batch' | 'storage_read_aggregate' | 'storage_query_aggregates' | 'storage_load_confirmed' | 'storage_load_pending' | 'storage_save_sync_page' | 'storage_get_sync_state' | 'storage_export_snapshot' | 'storage_replace_snapshot' | 'storage_rebuild_projections';
@@ -60,7 +61,7 @@ export function createTauriStorageBridge(
       return { ...snapshot, syncState: snapshot.syncState ?? undefined };
     },
     replaceSnapshot: (profileId, snapshot) => call('storage_replace_snapshot', { profileId, snapshot }),
-    rebuildProjections: (profileId, spaceId) => call('storage_rebuild_projections', { profileId, spaceId })
+    rebuildProjections: (profileId, rebuild) => call('storage_rebuild_projections', { profileId, rebuild })
   };
 }
 
@@ -82,6 +83,10 @@ export class DesktopStorageAdapter implements LocalStorageAdapter {
   async replaceSnapshot(snapshot: LocalSnapshot) {
     return this.bridge.replaceSnapshot(this.profileId, validateLocalSnapshot(snapshot, this.profileId));
   }
-  rebuildProjections(spaceId: UUID) { return this.bridge.rebuildProjections(this.profileId, spaceId); }
+  async rebuildProjections(spaceId: UUID) {
+    const snapshot = await this.bridge.exportSnapshot(this.profileId, spaceId);
+    const projections = rebuildStoredProjections(snapshot.aggregates, spaceId, snapshot.projections);
+    return this.bridge.rebuildProjections(this.profileId, { spaceId, sourceAggregates: snapshot.aggregates, projections });
+  }
   async close(): Promise<void> {}
 }

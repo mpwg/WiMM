@@ -65,7 +65,7 @@ export interface LocalSnapshot {
 }
 
 export interface StorageFaultInjector {
-  beforeCommit?(operation: 'applyAtomicBatch' | 'saveSyncPage' | 'replaceSnapshot'): void | Promise<void>;
+  beforeCommit?(operation: 'applyAtomicBatch' | 'saveSyncPage' | 'replaceSnapshot' | 'rebuildProjections'): void | Promise<void>;
 }
 
 export interface LocalStorageAdapter extends StorageAdapter<
@@ -112,4 +112,11 @@ export function assertExpectedRevision(
   expected: Revision
 ): void {
   if ((current?.revision ?? 0) !== expected) throw new StorageRevisionConflictError();
+}
+
+/** Vollständiger gelesener Ausgangsbestand als CAS für den nativen Cacheersatz. */
+export interface ProjectionRebuild {
+  readonly spaceId: UUID;
+  readonly sourceAggregates: readonly StoredAggregate[];
+  readonly projections: readonly StoredProjection[];
 }

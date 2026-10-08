@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { AtomicBatch, RevisionExpectation } from '@wimm/contracts';
 import type { UUID } from '@wimm/contracts';
+import { rebuildStoredProjections } from './projection-rebuild.js';
 import { validateLocalSnapshot } from './snapshot-validation.js';
 
 import {
@@ -132,7 +133,14 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
   }
 
   private async rebuildProjectionsExclusive(spaceId: UUID): Promise<void> {
-    for (const [key, projection] of this.projections) if (projection.spaceId === spaceId) this.projections.delete(key);
+    const next = this.copy();
+    const aggregates = [...next.aggregates.values()].filter((entry) => entry.spaceId === spaceId);
+    const previous = [...next.projections.values()].filter((entry) => entry.spaceId === spaceId);
+    const rebuilt = rebuildStoredProjections(aggregates, spaceId, previous);
+    for (const [key, projection] of next.projections) if (projection.spaceId === spaceId) next.projections.delete(key);
+    for (const projection of rebuilt) next.projections.set(projectionKey(projection), clone(projection)!);
+    await this.faults.beforeCommit?.('rebuildProjections');
+    this.replace(next);
   }
 
   private serialize<T>(action: () => Promise<T>): Promise<T> {

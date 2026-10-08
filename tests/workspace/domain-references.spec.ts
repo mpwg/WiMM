@@ -47,3 +47,12 @@ for (const scenario of snapshotCases) {
     await expect(page.evaluate((value) => window.storageSnapshotContract(value), scenario)).resolves.toBeUndefined();
   });
 }
+
+import { rebuildCases } from '../storage/contracts/rebuild-catalog.js';
+for (const scenario of rebuildCases) {
+  test(`Gemeinsamer echter Projektionsneuaufbau: ${scenario}`, async ({ page }) => {
+    await page.goto('/tests/domain-regressions.html');
+    await page.waitForFunction(() => window.storageRebuildContract !== undefined);
+    await expect(page.evaluate((value) => window.storageRebuildContract(value), scenario)).resolves.toBeUndefined();
+  });
+}

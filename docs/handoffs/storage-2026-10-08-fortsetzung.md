@@ -20,3 +20,17 @@ SQLite benutzt den echten Rust-Speichercode und eine Datei; Neustart beendet den
 ## Gesamtstatus und Folge
 
 [#80](https://github.com/mpwg/WiMM/issues/80) besitzt damit seine konkrete Snapshotabnahme. Die vollständige gemeinsame Konformität [#85](https://github.com/mpwg/WiMM/issues/85) bleibt offen; der Snapshotkatalog alleine schließt weder Batch-/Syncseiten-/Quota-/Mehrtabkriterien noch native GUI-/Disk-full-Abnahmen. Projektionsneuaufbau [#81](https://github.com/mpwg/WiMM/issues/81) folgt vor Migration [#82](https://github.com/mpwg/WiMM/issues/82); weitere Voraussetzungen und Gesamtabnahme stehen in [#87](https://github.com/mpwg/WiMM/issues/87). Keine zusätzliche Freigabe für P6–P11 oder K01–K11. Kein vollständiger neuer CI- oder Releasebuildbeleg dieses Abschnitts.
+
+## Projektionsneuaufbau #81
+
+Abnahmesnapshot vom 8. Oktober 2026 nach dem Fortsetzungsauftrag; Umsetzung gemäß ADR-045.
+
+| Kriterium | Status | Aktueller Beleg |
+| --- | --- | --- |
+| Vollständigen aktuellen Bereichsbestand fachlich berechnen und atomar ersetzen | erfüllt | Gemeinsame Speicherformatierung ruft ausschließlich vorhandene Fachkernvalidatoren und Saldo-/Konsumfunktionen auf; IndexedDB-Schreibtransaktion, Memory-Warteschlange, SQLite-Transaktion mit vollständigem Ausgangsbestandsvergleich |
+| Inkrementelles Ergebnis, Tombstones, Opening, Transfers und Erstattung | erfüllt | Identischer expliziter Katalog auf beiden echten Adaptern: Opening 100.000 Cent, Ausgabe 10.000, Einnahme 20.000, Erstattung 2.000, Transfer 20.000 ergibt Salden 92.000/20.000/0 und Verbrauch 8.000 bei Einkommen 20.000; gelöschte Ausgabe 50.000 ignoriert; Legacy-/Monatsadressen und Neuaufbau ohne vorhandene Caches geprüft |
+| Profil-/Bereichstrennung, Überlauf und Fehler vor Commit erhalten Bestand | erfüllt | Andere Profile/Bereiche unverändert; Überlauf lehnt Neuaufbau vor Löschung ab; Fehler bei zweiter Cachezeile rollt begonnenen Ersatz samt erster Zeile zurück; Aggregate, Bestätigungen, Originalentwürfe, Cursor und Epoche unverändert; erneuter Neuaufbau nach Fehler möglich |
+| Gemeinsame echte SQLite-/IndexedDB-Prüfung ohne Rust-Finanzengine | erfüllt | Vier neue gemeinsame Szenarien plus zwei deterministische native CAS-Fälle für neues Aggregat und Änderung ohne Revisionserhöhung; parallel gespeicherte Buchung verliert keine Werte; dauerhaftes erneutes Speicheröffnen und echter SQLite-Prozessneustart |
+| README/Verträge/Prüfkette | erfüllt | README, Speicherarchitektur, ADR-045, P3-Status und reguläre Speicherprüfungen aktualisiert; keine Schema- oder Finanzformatmigration |
+
+Aktuelle Serie auf dem fertigen Abschnitt: zehn native Contractfälle, 38 echte Chromium-/IndexedDB-Ausführungen, 26 Speicher-/Schutzporttests, 94 Fachtests und zwölf reguläre Rusttests bestanden. Typecheck, vollständiger Oxlint mit Warnungen als Fehler, Rustformat/Clippy, Paketgraph, Dokumentations- und Whitespaceprüfung bestanden. SQLite-Rollback wird durch einen ausschließlich im Testtreiber installierten Trigger bei der zweiten Cachezeile ausgelöst; Browserrollback durch einen gezielt geworfenen QuotaExceededError im echten IDB-Schreibpfad. Dies sind Fehlerproben, keine tatsächlichen Disk-full-/Quota-Abnahmen. Native GUI-/Screenreader-/Geräte- und Gesamt-CI-Abnahme bleiben gesondert offen. Nächster Speicherabschnitt: gesicherte vorwärtsgerichtete Migration #82.
