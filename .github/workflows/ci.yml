@@ -52,11 +52,14 @@ jobs:
         run: |
           rustup show active-toolchain
           pnpm check:rust-toolchain
+          rustup target add wasm32-unknown-unknown
 
       - name: Rust-Abhängigkeiten und Buildartefakte cachen
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: apps/desktop/src-tauri -> target
+          workspaces: |
+            . -> target
+            apps/desktop/src-tauri -> target
 
       - name: Abhängigkeiten gesperrt installieren
         run: pnpm install --frozen-lockfile

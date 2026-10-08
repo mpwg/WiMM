@@ -1,0 +1,19 @@
+[package]
+name = "wimm-core-bindings"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "staticlib", "rlib"]
+
+[features]
+default = ["native"]
+native = ["dep:uniffi"]
+wasm = ["dep:wasm-bindgen"]
+contract-probe = ["wimm-finance-core/contract-probe"]
+
+[dependencies]
+wimm-finance-core = { path = "../finance-core" }
+uniffi = { workspace = true, optional = true }
+wasm-bindgen = { workspace = true, optional = true }

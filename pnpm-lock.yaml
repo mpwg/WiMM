@@ -263,6 +263,9 @@ importers:
       '@wimm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@wimm/core-bindings':
+        specifier: workspace:*
+        version: link:../../packages/core-bindings
       '@wimm/crypto':
         specifier: workspace:*
         version: link:../../packages/crypto
@@ -300,6 +303,12 @@ importers:
       zod:
         specifier: 4.6.5
         version: 4.6.5
+
+  packages/core-bindings:
+    dependencies:
+      '@wimm/contracts':
+        specifier: workspace:*
+        version: link:../contracts
 
   packages/crypto:
     dependencies:

@@ -1,0 +1,10 @@
+{
+  "name": "@wimm/core-bindings",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "test": "vitest run --config ../../vitest.config.ts", "typecheck": "tsc --project tsconfig.json --noEmit" },
+  "dependencies": { "@wimm/contracts": "workspace:*" }
+}

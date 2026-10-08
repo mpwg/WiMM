@@ -1,0 +1,8 @@
+[package]
+name = "wimm-wasm-glue"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+wasm-bindgen-cli-support = "=0.2.129"

@@ -18,7 +18,8 @@
     "@wimm/sync": "workspace:*",
     "@wimm/ui": "workspace:*",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "@wimm/core-bindings": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "6.1.1",

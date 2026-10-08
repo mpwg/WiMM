@@ -6,6 +6,7 @@ import { parse } from '@babel/parser';
 
 const packages = new Map([
   ['@wimm/contracts', 'packages/contracts'],
+  ['@wimm/core-bindings', 'packages/core-bindings'],
   ['@wimm/crypto', 'packages/crypto'],
   ['@wimm/domain', 'packages/domain'],
   ['@wimm/storage', 'packages/storage'],
@@ -18,13 +19,14 @@ const packages = new Map([
 ]);
 const allowedDependencies = new Map([
   ['@wimm/contracts', []],
+  ['@wimm/core-bindings', ['@wimm/contracts']],
   ['@wimm/crypto', ['@wimm/contracts']],
   ['@wimm/domain', ['@wimm/contracts']],
   ['@wimm/storage', ['@wimm/contracts', '@wimm/domain']],
   ['@wimm/sync', ['@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/storage']],
   ['@wimm/importers', ['@wimm/contracts', '@wimm/domain']],
   ['@wimm/ui', ['@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/storage', '@wimm/importers']],
-  ['@wimm/web', ['@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/importers', '@wimm/storage', '@wimm/sync', '@wimm/ui']],
+  ['@wimm/web', ['@wimm/core-bindings', '@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/importers', '@wimm/storage', '@wimm/sync', '@wimm/ui']],
   ['@wimm/desktop', ['@wimm/contracts', '@wimm/crypto', '@wimm/domain', '@wimm/importers', '@wimm/storage', '@wimm/sync', '@wimm/ui']],
   ['@wimm/server', ['@wimm/contracts']]
 ]);

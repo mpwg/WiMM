@@ -6,7 +6,7 @@ Am 8. Oktober 2026 hat der Nutzer das Architekturziel und die Erstellung dieses 
 
 Ziel ist eine gemeinsame Finanzlogik für Web und vollständig native Oberflächen sowie austauschbare SQL-Serverdatenbanken: zunächst SQLite, PostgreSQL und MySQL, später weitere Adapter mit denselben Garantien. Desktop bleibt lokal mit SQLite, die PWA mit IndexedDB offlinefähig. Serverdatenbank und lokale Clientdatenbank sind getrennte Entscheidungen.
 
-Der aktuelle Code enthält einen TypeScript-Fachkern, Clientkomposition und Anwendungsabläufe in `packages/ui`, IndexedDB-Speicher sowie eine begrenzte Rust-/SQLite-Brücke. Der Server stellt bisher nur Health-/Metadatenrouten bereit. Rust-Fachengine und PostgreSQL-/MySQL-Adapter sind Zielzustand, keine bereits vorhandenen Fähigkeiten.
+Der aktuelle Code enthält einen TypeScript-Fachkern, Clientkomposition und Anwendungsabläufe in `packages/ui`, IndexedDB-Speicher sowie eine begrenzte Rust-/SQLite-Brücke. Der Server stellt bisher nur Health-/Metadatenrouten bereit. Die [K03-Grundlage](handoffs/k03-2026-10-08.md) liefert inzwischen einen eigenständigen Rust-Referenzkern mit tatsächlichen Rust-/WASM-/Swift-/Kotlin-Aufrufen. Vollständige Fachengine/Produktumschaltung und PostgreSQL-/MySQL-Adapter bleiben weitere offene Implementierung.
 
 Die [Architektur](architecture.md) unterscheidet Bestand und Ziel; ADR-042–ADR-044 in den [Entscheidungen](decisions.md) begründen den Übergang. Eine vollständig native Produktoberfläche und neue mobile Store-Apps werden durch dieses Konzept nicht beauftragt.
 

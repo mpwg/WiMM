@@ -15,7 +15,8 @@
     "apps/web/tests/**/*.tsx",
     "tests/importers/**/*.ts",
     "packages/importers/tests/**/*.ts",
-    "tests/storage/**/*.ts"
+    "tests/storage/**/*.ts",
+    "tests/core-bindings/**/*.ts"
   ],
   "exclude": [
     "node_modules",

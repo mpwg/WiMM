@@ -3,6 +3,8 @@ use std::fs;
 use std::sync::Mutex;
 
 use rusqlite::Connection;
+#[cfg(test)]
+mod core_contract;
 mod storage;
 use storage::{StorageState, initialize_storage};
 use tauri::{Emitter, Manager};

@@ -1,0 +1,8 @@
+[package]
+name = "wimm-core-probe"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+wimm-finance-core = { path = "../../crates/finance-core", features = ["contract-probe"] }
