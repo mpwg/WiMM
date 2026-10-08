@@ -10,6 +10,7 @@ mod aggregate_schema;
 pub mod calendar;
 mod financial_commands;
 mod master_commands;
+mod payee_merge;
 mod projections;
 mod reconciliation_commands;
 mod references;
@@ -196,6 +197,9 @@ struct Request {
 pub fn execute_json(input: &str) -> String {
     output((|| {
         let decoded = decode(input)?;
+        if decoded["command"]["commandType"] == "payee.merge" {
+            return payee_merge::execute(decoded);
+        }
         if ["reconciliation.confirm", "reconciliation.unlock"]
             .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
         {
