@@ -11,7 +11,7 @@ use unicode_normalization::UnicodeNormalization;
 fn failure(code: &'static str, message: &'static str) -> CoreResult<()> {
     Err((code, message))
 }
-fn normal_text(s: &str) -> String {
+pub(crate) fn normal_text(s: &str) -> String {
     s.nfc()
         .collect::<String>()
         .split(aggregate_schema::js_space)

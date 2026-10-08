@@ -8,6 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use uuid::Uuid;
 mod aggregate_schema;
 pub mod calendar;
+mod master_commands;
 mod projections;
 mod references;
 mod state_validation;
@@ -188,10 +189,22 @@ struct Request {
     context: Context,
 }
 
-/// Ein vorhandener vollständiger Fachbefehl als K03-Referenz, keine zweite Produktengine.
+/// Schrittweise portierte Fachhandler über K01; keine Persistenz oder Produktumschaltung.
 pub fn execute_json(input: &str) -> String {
     output((|| {
         let decoded = decode(input)?;
+        if [
+            "account.save",
+            "account.archive",
+            "categoryGroup.save",
+            "category.save",
+            "category.archive",
+            "payee.save",
+        ]
+        .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
+        {
+            return master_commands::execute(decoded);
+        }
         let request: Request = serde_json::from_value(decoded)
             .map_err(|_| ("INVALID_COMMAND", "Der Fachbefehl ist ungültig."))?;
         if request.contract_version != 1
