@@ -9,6 +9,8 @@ fn main() {
         let result = match mode.as_str() {
             "execute" => wimm_finance_core::execute_json(&request),
             "calculate" => wimm_finance_core::calculate_json(&request),
+            "validate" => wimm_finance_core::validate_json(&request),
+            "project" => wimm_finance_core::project_json(&request),
             "primitive" => wimm_finance_core::primitive_json(&request),
             "roundtrip" => wimm_finance_core::roundtrip_json(&request),
             _ => panic!("Unbekannte Testaktion"),

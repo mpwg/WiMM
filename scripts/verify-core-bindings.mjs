@@ -17,9 +17,9 @@ const tools = [
 ];
 const results = [];
 for (const [name, command, args] of tools) {
-  for (const method of ['execute', 'calculate', 'roundtrip', 'primitive']) {
+  for (const method of ['execute', 'calculate', 'roundtrip', 'primitive', 'validate', 'project']) {
     const selected = cases.filter((test) => test.method === method);
-    const result = spawnSync(command, [...args, method], { input: selected.map((test) => JSON.stringify(test.request)).join('\n') + '\n', encoding: 'utf8' });
+    const result = spawnSync(command, [...args, method], { input: selected.map((test) => (typeof test.request === 'string' ? test.request : JSON.stringify(test.request))).join('\n') + '\n', encoding: 'utf8' });
     assert.equal(result.status, 0, `${name}: ${result.stderr}`);
     assert.equal(result.stderr.trim(), '', `${name}: unerwartete Warnung/Diagnose`);
     const responses = result.stdout.trim().split('\n').map((line) => JSON.parse(line));
@@ -28,7 +28,10 @@ for (const [name, command, args] of tools) {
   }
   results.push({ client: name, passed: cases.length });
 }
-for (const test of cases) assert.deepEqual(JSON.parse(test.method === 'execute' ? wasm.execute_json(JSON.stringify(test.request)) : test.method === 'primitive' ? wasm.primitive_json(JSON.stringify(test.request)) : test.method === 'calculate' ? wasm.calculate_json(JSON.stringify(test.request)) : wasm.roundtrip_json(JSON.stringify(test.request))), test.expected, `WASM: ${test.name}`);
+for (const test of cases) {
+  const method = { execute: 'execute_json', calculate: 'calculate_json', roundtrip: 'roundtrip_json', primitive: 'primitive_json', validate: 'validate_json', project: 'project_json' }[test.method];
+  assert.deepEqual(JSON.parse(wasm[method]((typeof test.request === 'string' ? test.request : JSON.stringify(test.request)))), test.expected, `WASM: ${test.name}`);
+}
 results.push({ client: 'echtes WASM/Node', passed: cases.length });
 await writeFile('test-results/core-bindings/results.json', `${JSON.stringify(results, null, 2)}\n`);
 console.log(JSON.stringify(results));

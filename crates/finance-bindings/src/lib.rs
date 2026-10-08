@@ -28,3 +28,15 @@ pub fn roundtrip_json(request: String) -> String {
 pub fn primitive_json(request: String) -> String {
     wimm_finance_core::primitive_json(&request)
 }
+
+#[cfg_attr(feature = "native", uniffi::export)]
+#[cfg_attr(feature = "wasm", wasm_bindgen::prelude::wasm_bindgen)]
+pub fn validate_json(request: String) -> String {
+    wimm_finance_core::validate_json(&request)
+}
+
+#[cfg_attr(feature = "native", uniffi::export)]
+#[cfg_attr(feature = "wasm", wasm_bindgen::prelude::wasm_bindgen)]
+pub fn project_json(request: String) -> String {
+    wimm_finance_core::project_json(&request)
+}

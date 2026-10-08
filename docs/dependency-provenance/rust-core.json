@@ -1,6 +1,6 @@
 {
   "snapshotDate": "2026-10-08",
-  "scope": "K03-Arbeitsraum; keine vollständige Herkunftsregisterabnahme #72",
+  "scope": "K03/K04-Arbeitsraum; keine vollständige Herkunftsregisterabnahme #72",
   "projectLicense": "AGPL-3.0-or-later",
   "directDependencies": [
     {
@@ -44,6 +44,13 @@
       "publishedAt": "2026-10-02T22:57:48.946630Z",
       "license": "Apache-2.0 OR MIT",
       "source": "https://crates.io/crates/uuid/1.27.0"
+    },
+    {
+      "name": "unicode-normalization",
+      "version": "0.1.25",
+      "publishedAt": "2025-10-30",
+      "license": "MIT OR Apache-2.0",
+      "source": "https://docs.rs/crate/unicode-normalization/0.1.25"
     }
   ],
   "lockedRegistryDependencies": [
@@ -643,6 +650,18 @@
       "source": "registry+https://github.com/rust-lang/crates.io-index"
     },
     {
+      "name": "tinyvec",
+      "version": "1.13.3",
+      "license": "Zlib OR Apache-2.0 OR MIT",
+      "repository": "https://github.com/Lokathor/tinyvec",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "licenseFiles": [
+        "LICENSE-APACHE.md",
+        "LICENSE-MIT.md",
+        "LICENSE-ZLIB.md"
+      ]
+    },
+    {
       "name": "toml",
       "version": "1.1.7+spec-1.1.0",
       "license": "MIT OR Apache-2.0",
@@ -676,6 +695,17 @@
       "license": "(MIT OR Apache-2.0) AND Unicode-3.0",
       "repository": "https://github.com/dtolnay/unicode-ident",
       "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "unicode-normalization",
+      "version": "0.1.25",
+      "license": "MIT OR Apache-2.0",
+      "repository": "https://github.com/unicode-rs/unicode-normalization",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "licenseFiles": [
+        "LICENSE-APACHE",
+        "LICENSE-MIT"
+      ]
     },
     {
       "name": "unicode-width",
@@ -864,6 +894,7 @@
   "notes": [
     "uuid 1.27.0 wird aus der bestehenden nativen Versionsbasis übernommen; keine Änderung der bisherigen Tauri-Registryversionen.",
     "JNA wird unter der angebotenen Apache-2.0-Lizenz als Testabhängigkeit verwendet.",
-    "Keine Übernahme von Actual-Code oder zusätzliche Kryptografie."
+    "Keine Übernahme von Actual-Code oder zusätzliche Kryptografie.",
+    "K04 verwendet etablierte Unicode-NFC-Normalisierung 0.1.25 (30. Oktober 2025) und übernimmt tinyvec 1.13.3 (13. September 2026) aus der vorhandenen nativen Basis. Bisherige Tauri-Registryversionen bleiben erhalten. Fremdlizenzen liegen unverändert in den Registryquellen; keine Codekopie."
   ]
 }

@@ -6,7 +6,12 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 use uuid::Uuid;
+mod aggregate_schema;
 pub mod calendar;
+mod projections;
+mod references;
+mod state_validation;
+pub use state_validation::{project_json, validate_json};
 pub mod money;
 #[cfg(feature = "contract-probe")]
 mod primitive_probe;
@@ -20,8 +25,9 @@ fn rejection(code: &str, message: &str) -> Value {
     json!({"contractVersion":1,"status":"rejected","error":{"code":code,"message":message}})
 }
 fn decode(input: &str) -> CoreResult<Value> {
-    let value: Value = serde_json::from_str(input)
+    let mut value: Value = serde_json::from_str(input)
         .map_err(|_| ("INVALID_COMMAND", "Der Fachbefehl ist ungültig."))?;
+    normalize_json_integers(&mut value);
     if !value.is_object()
         || value.get("contractVersion").is_none()
         || value.get("domainSchemaVersion").is_none()
@@ -36,6 +42,25 @@ fn decode(input: &str) -> CoreResult<Value> {
     }
     Ok(value)
 }
+// JSON-Zahlen haben keine separate Integer-Syntax im sprachneutralen Vertrag.
+// Nur Eingabevalidierung/Konvertierung, keine Gleitkomma-Geldberechnung.
+fn normalize_json_integers(value: &mut Value) {
+    match value {
+        Value::Number(number) if number.is_f64() => {
+            if let Some(n) = number.as_f64()
+                && n.is_finite()
+                && n.fract() == 0.0
+                && n.abs() <= MAX_SAFE as f64
+            {
+                *value = json!(n as i64);
+            }
+        }
+        Value::Array(values) => values.iter_mut().for_each(normalize_json_integers),
+        Value::Object(values) => values.values_mut().for_each(normalize_json_integers),
+        _ => {}
+    }
+}
+
 fn output(result: CoreResult<Value>) -> String {
     match result {
         Ok(value) => value,
@@ -44,9 +69,21 @@ fn output(result: CoreResult<Value>) -> String {
     .to_string()
 }
 fn valid_id(value: &str) -> bool {
-    Uuid::parse_str(value).is_ok_and(|id| {
-        id.get_variant() == uuid::Variant::RFC4122 && (1..=8).contains(&id.get_version_num())
-    })
+    let b = value.as_bytes();
+    b.len() == 36
+        && b.iter().enumerate().all(|(n, c)| {
+            if [8, 13, 18, 23].contains(&n) {
+                *c == b'-'
+            } else {
+                c.is_ascii_hexdigit()
+            }
+        })
+        && Uuid::parse_str(value).is_ok_and(|id| {
+            id.is_nil()
+                || id == Uuid::max()
+                || (id.get_variant() == uuid::Variant::RFC4122
+                    && (1..=8).contains(&id.get_version_num()))
+        })
 }
 
 #[derive(Deserialize)]
