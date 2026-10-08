@@ -2,7 +2,7 @@
 import { createDesktopPlatformServices } from './platform.js';
 import { invoke } from '@tauri-apps/api/core';
 import { AppShell, createBrowserProfileStore, type WorkspaceStorage } from '@wimm/ui';
-import { createTauriStorageBridge, IndexedDbStorageAdapter } from '@wimm/storage';
+import { createTauriStorageBridge, DesktopStorageAdapter, IndexedDbStorageAdapter } from '@wimm/storage';
 import type { UUID } from '@wimm/contracts';
 
 // Das getrennte Modul vor dem Einstieg laden: nach SW-Kontrolle wird es so
@@ -15,11 +15,7 @@ function createDesktopWorkspaceStorage(profileId: UUID): WorkspaceStorage {
   // Die Playwright-Frontendprüfung läuft absichtlich ohne Tauri-Laufzeit. Die
   // Produktanwendung verwendet dort niemals den Browserfallback.
   if ('__TAURI_INTERNALS__' in window) {
-    const bridge = createTauriStorageBridge(invoke);
-    return {
-      query: ({ spaceId }) => bridge.queryAggregates(profileId, spaceId),
-      applyAtomicBatch: (batch) => bridge.applyBatch({ profileId, ...batch })
-    };
+    return new DesktopStorageAdapter(profileId, createTauriStorageBridge(invoke));
   }
   return new IndexedDbStorageAdapter(profileId, `wimm-ui-desktop-frontend-test-${profileId}`);
 }

@@ -2,9 +2,11 @@
 
 ## Nachprüfung vom 8. Oktober 2026
 
-Das Gesamtpaket ist erneut in Arbeit und nicht vollständig abgenommen. Die [aktuelle Kriterienmatrix](handoffs/p1-p3-review-2026-10-08.md) ordnet jedes Kriterium den aktuellen Prüfbelegen und GitHub-Issues zu; [Gesamtabnahme #87](https://github.com/mpwg/WiMM/issues/87) führt Fortschritt und Voraussetzungen. Die folgenden ursprünglichen Ergebnisse und Prüfbelege bleiben als Historie erhalten. Der aktuelle Prüfauftrag umfasst Issueanlage, keine Produktkorrektur.
+Das Gesamtpaket ist erneut in Arbeit und nicht vollständig abgenommen. Die [aktuelle Kriterienmatrix](handoffs/p1-p3-review-2026-10-08.md) ordnet jedes Kriterium den aktuellen Prüfbelegen und GitHub-Issues zu; [Gesamtabnahme #87](https://github.com/mpwg/WiMM/issues/87) führt Fortschritt und Voraussetzungen. Die folgenden ursprünglichen Ergebnisse und Prüfbelege bleiben als Historie erhalten. Der Nutzerauftrag vom 8. Oktober 2026 umfasst nun die systematische Behebung der offenen Issues.
 
 ## Auftrag und Reihenfolge
+
+Aktueller Behebungsabschnitt #77: Der vollständige DesktopStorageAdapter und alle katalogisierten lokalen Rust-Kommandos sind implementiert; native Composition nutzt denselben LocalStorageAdapter-Port wie die PWA. Bestätigte Daten besitzen eine eigene SQLite-Tabelle. Syncseiten, Cursor und Snapshotersatz werden atomar geschrieben; Snapshotlesen verwendet eine Transaktion. Neun Rusttests einschließlich echter SQLite-Dateineustarts, stale Batch, Seiten-/Snapshotrollback und Profiltrennung sowie 14 Speichertests, Typecheck, gezielter Lint, Rustformat und Clippy bestanden. Die gemeinsame Adapterkonformität bleibt in #85 offen; lokale Epochengrundlage, vollständige Snapshotvalidierung und Projektionsneuaufbau werden in #78/#80/#81 verfolgt. Die native GUI-Abnahme ist damit nicht behauptet.
 
 Diese Teilaufgaben konkretisieren [P3](tasks.md#p3--speicher-und-offlinebasis). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt den vollständigen Abschluss von P3. P3.1 bis P3.6 werden in Reihenfolge nach abgeschlossenem [P2](p2-domain.md) bearbeitet. Maßgeblich bleiben die verlinkten Fach-, Speicher- und E2EE-Verträge.
 

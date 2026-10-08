@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-storage-get-sync-state"
+description = "Enables the storage_get_sync_state command without any pre-configured scope."
+commands.allow = ["storage_get_sync_state"]
+
+[[permission]]
+identifier = "deny-storage-get-sync-state"
+description = "Denies the storage_get_sync_state command without any pre-configured scope."
+commands.deny = ["storage_get_sync_state"]
