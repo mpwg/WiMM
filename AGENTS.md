@@ -19,6 +19,7 @@
 
 - Implementiere Geld-, Budget-, Verteilungs- und Ausgleichsregeln ausschließlich im plattformunabhängigen Fachkern.
 - Verwende ganze Cent; keine Gleitkomma-Geldberechnungen. Prüfe auch Summen und Zwischenwerte auf sichere Ganzzahlgrenzen.
+- Verwende kein `unsafe` in eigenem Rust-Code. Alle eigenen Rust-Crates einschließlich Bindings, Werkzeuge, Tauri-App und Buildscripts müssen `#![forbid(unsafe_code)]` setzen; das Verbot darf nicht abgeschwächt oder umgangen werden.
 - Halte Fachkern frei von UI, HTTP und Speicherabhängigkeiten. Beachte die Abhängigkeitsrichtung in der Architektur.
 - Verwende dieselben Fachverträge und Adapter-Konformitätstests auf allen Plattformen.
 - Änderungen an Buchungen, Umbuchungen, Ausgabenverteilungen und ihren Projektionen müssen atomar sein.
