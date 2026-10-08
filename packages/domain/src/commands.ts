@@ -5,22 +5,14 @@ import {
   utcTimestampSchema,
   uuidSchema
 } from '@wimm/contracts';
+import { financialAggregateTypes } from '@wimm/contracts';
 import type { Revision, UtcTimestamp, UUID } from '@wimm/contracts';
 
 import { DomainValidationError } from './errors.js';
 import type { AccountAggregate } from './master-data.js';
 import { validateFinancialMutation } from './financial-validation.js';
 
-export const p2AggregateTypes = [
-  'account',
-  'financialRevision',
-  'categoryGroup',
-  'category',
-  'payee',
-  'transaction',
-  'transfer',
-  'reconciliation', 'importMapping', 'importBatch', 'importFingerprint', 'rule', 'schedule', 'scheduleOccurrence'
-] as const;
+export const p2AggregateTypes = financialAggregateTypes;
 
 export type P2AggregateType = (typeof p2AggregateTypes)[number];
 

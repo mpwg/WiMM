@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { AtomicBatch, RevisionExpectation } from '@wimm/contracts';
 import type { UUID } from '@wimm/contracts';
+import { validateLocalSnapshot } from './snapshot-validation.js';
 
 import {
   assertExpectedRevision,
@@ -104,14 +105,18 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
     });
   }
 
-  replaceSnapshot(snapshot: LocalSnapshot): Promise<void> {
-    return this.serialize(() => this.replaceSnapshotExclusive(snapshot));
+  async replaceSnapshot(snapshot: LocalSnapshot): Promise<void> {
+    const validated = validateLocalSnapshot(snapshot, this.profileId);
+    return this.serialize(() => this.replaceSnapshotExclusive(validated));
   }
 
   private async replaceSnapshotExclusive(snapshot: LocalSnapshot): Promise<void> {
     if (snapshot.profileId !== this.profileId) throw new StorageWriteError('Der Snapshot gehört zu einem anderen Profil.');
     const next = this.copy();
     next.clearSpace(snapshot.spaceId);
+    for (const aggregate of snapshot.aggregates) if (this.aggregates.has(aggregate.handle) && this.aggregates.get(aggregate.handle)?.spaceId !== snapshot.spaceId) throw new StorageWriteError('Ein Snapshothandle gehört zu einem anderen Bereich.');
+    for (const confirmed of snapshot.confirmed) if (this.confirmed.has(confirmed.aggregate.handle) && this.confirmed.get(confirmed.aggregate.handle)?.spaceId !== snapshot.spaceId) throw new StorageWriteError('Ein bestätigtes Snapshothandle gehört zu einem anderen Bereich.');
+    for (const pending of snapshot.pending) if (this.pending.has(pending.operationId) && this.pending.get(pending.operationId)?.spaceId !== snapshot.spaceId) throw new StorageWriteError('Eine Snapshotoperation gehört zu einem anderen Bereich.');
     for (const aggregate of snapshot.aggregates) next.aggregates.set(aggregate.handle, clone(aggregate)!);
     for (const confirmed of snapshot.confirmed) next.confirmed.set(confirmed.aggregate.handle, clone(confirmed)!);
     for (const pending of snapshot.pending) next.pending.set(pending.operationId, clone(pending)!);

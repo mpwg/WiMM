@@ -33,3 +33,8 @@ test('exportiert bei konkurrierenden vollständigen IndexedDB-Commits niemals ge
   await page.goto('/tests/domain-regressions.html'); await page.waitForFunction(() => window.snapshotConsistencyRegression !== undefined);
   expect(await page.evaluate(() => window.snapshotConsistencyRegression())).toBe(true);
 });
+
+test('weist authentisch verschlüsselte ungültige Snapshots ohne Teiländerung ab', async ({ page }) => {
+  await page.goto('/tests/domain-regressions.html'); await page.waitForFunction(() => window.snapshotValidationRegression !== undefined);
+  expect(await page.evaluate(() => window.snapshotValidationRegression())).toBe(true);
+});

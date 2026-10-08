@@ -2,6 +2,7 @@
 import { Dexie, type Table } from 'dexie';
 import type { AtomicBatch, RevisionExpectation } from '@wimm/contracts';
 import type { UUID } from '@wimm/contracts';
+import { validateLocalSnapshot } from './snapshot-validation.js';
 
 import {
   assertExpectedRevision,
@@ -125,10 +126,22 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
   }
 
   async replaceSnapshot(snapshot: LocalSnapshot): Promise<void> {
-    if (snapshot.profileId !== this.profileId) throw new StorageWriteError('Der Snapshot gehört zu einem anderen Profil.');
+    snapshot = validateLocalSnapshot(snapshot, this.profileId);
     await this.write(async () => this.db.transaction(
       'rw', [this.db.aggregates, this.db.confirmed, this.db.pending, this.db.projections, this.db.syncStates],
       async () => {
+        for (const aggregate of snapshot.aggregates) {
+          const current = await this.db.aggregates.get([this.profileId, aggregate.handle]);
+          if (current !== undefined && current.spaceId !== snapshot.spaceId) throw new StorageWriteError('Ein Snapshothandle gehört zu einem anderen Bereich.');
+        }
+        for (const confirmed of snapshot.confirmed) {
+          const current = await this.db.confirmed.get([this.profileId, confirmed.aggregate.handle]);
+          if (current !== undefined && current.spaceId !== snapshot.spaceId) throw new StorageWriteError('Ein bestätigtes Snapshothandle gehört zu einem anderen Bereich.');
+        }
+        for (const operation of snapshot.pending) {
+          const current = await this.db.pending.get([this.profileId, operation.operationId]);
+          if (current !== undefined && current.spaceId !== snapshot.spaceId) throw new StorageWriteError('Eine Snapshotoperation gehört zu einem anderen Bereich.');
+        }
         await this.db.aggregates.where('[profileId+spaceId]').equals([this.profileId, snapshot.spaceId]).delete();
         await this.db.confirmed.where('[profileId+spaceId]').equals([this.profileId, snapshot.spaceId]).delete();
         await this.db.pending.where('[profileId+spaceId]').equals([this.profileId, snapshot.spaceId]).delete();

@@ -6,6 +6,8 @@ Das Gesamtpaket ist erneut in Arbeit und nicht vollständig abgenommen. Die [akt
 
 ## Auftrag und Reihenfolge
 
+Für #80 ist die gemeinsame Snapshotprüfung gemäß ADR-041 in Memory, IndexedDB und DesktopStorageAdapter eingebunden: vollständige Formschemas, Kontext-/Handlebindung, Fachreferenzen, Transfer-/Abgleichstruktur und reproduzierte Cachewerte werden vor Ersatz geprüft. Authentisch verschlüsselte Negativfälle erhalten den Originalbestand. Der Issueabschluss bleibt bis zu den vollständigen nativen und P5-Adapterroundtrips offen; die Rechnerwechselübergabe dokumentiert den Fortsetzungspunkt.
+
 Für #79 verwenden IndexedDB und SQLite eine vollständige Lesetransaktion, der Memory-Port koordiniert Export und Writes in derselben Warteschlange. 21 Speicher-/Schutzportfälle, elf Rusttests und 20 echte Chromium-/IndexedDB-Fälle bestanden. Je 30 gezielte konkurrierende Commit-/Exportphasen prüfen Cursor, Aggregate, Bestätigungen, Entwürfe und Projektionen als zusammengehörigen Stand. Die verschlüsselte Exportbasis ist damit geprüft; ihre Verwendung für die Vor-Migrationssicherung wird mit #82 abgenommen.
 
 Für #78 ist die dauerhafte lokale Epochengrundlage gemäß ADR-040 implementiert, ohne künstliche Syncseite/Outbox und ohne Finanzschemaänderung. Bereichsstart und LocalAreaService initialisieren idempotent; Snapshotersatz übernimmt die Epoche atomar. 19 Speicher-/Schutzportfälle, zehn Rusttests und 18 echte Chromium-/IndexedDB-Fälle bestanden, darunter leere/befüllte Exporte mit libsodium, falscher Schlüssel ohne Write und erneutes Öffnen. Der gemeinsame verschlüsselte SQLite-Roundtrip bleibt in #85 nachzuweisen; #78 ist deshalb noch offen.

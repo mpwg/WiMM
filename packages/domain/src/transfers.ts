@@ -204,7 +204,7 @@ export function unlockReconciliation(
   );
 }
 
-function normalizeTransfer(input: TransferCommandInput): {
+export function validateTransferPair(input: Pick<TransferCommandInput, 'spaceId' | 'transfer' | 'source' | 'target'>): {
   readonly transfer: TransferAggregate;
   readonly source: TransactionAggregate;
   readonly target: TransactionAggregate;
@@ -242,8 +242,13 @@ function normalizeTransfer(input: TransferCommandInput): {
       'Die Umbuchungsseiten müssen entgegengesetzte Beträge, Konten und dasselbe Datum besitzen.'
     );
   }
-  validateBudgetBoundary(input, transfer);
   return { transfer, source, target };
+}
+
+function normalizeTransfer(input: TransferCommandInput) {
+  const result = validateTransferPair(input);
+  validateBudgetBoundary(input, result.transfer);
+  return result;
 }
 
 function transferExpectations(
@@ -266,7 +271,7 @@ function transferExpectations(
   return expected;
 }
 
-function normalizeReconciliation(reconciliation: ReconciliationAggregate): ReconciliationAggregate {
+export function normalizeReconciliation(reconciliation: ReconciliationAggregate): ReconciliationAggregate {
   parseFinanceDate(reconciliation.statementDate, 'Das Auszugsdatum');
   assertAggregateSpace(reconciliation, reconciliation.spaceId, 'Der Abgleich');
   assertUuid(reconciliation.accountId, 'Das Abgleichkonto');

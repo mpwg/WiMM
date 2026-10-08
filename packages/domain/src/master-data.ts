@@ -324,7 +324,7 @@ function singleMutation<TCommandType extends 'account.save' | 'account.archive' 
   return input.mutations[0]!.aggregate;
 }
 
-function normalizeAccount(account: AccountAggregate): AccountAggregate {
+export function normalizeAccount(account: AccountAggregate): AccountAggregate {
   assertAggregateType(account, 'account', 'Das Konto');
   const name = normalizeRequiredText(account.name, 'Der Kontoname');
   if (!accountTypes.includes(account.type)) {
@@ -341,7 +341,7 @@ function normalizeAccount(account: AccountAggregate): AccountAggregate {
   return { ...account, name };
 }
 
-function normalizeCategoryGroup(group: CategoryGroupAggregate): CategoryGroupAggregate {
+export function normalizeCategoryGroup(group: CategoryGroupAggregate): CategoryGroupAggregate {
   assertAggregateType(group, 'categoryGroup', 'Die Kategoriegruppe');
   const name = normalizeRequiredText(group.name, 'Der Name der Kategoriegruppe');
   if (!categoryGroupKinds.includes(group.kind)) {
@@ -352,7 +352,7 @@ function normalizeCategoryGroup(group: CategoryGroupAggregate): CategoryGroupAgg
   return { ...group, name };
 }
 
-function normalizeCategory(category: CategoryAggregate): CategoryAggregate {
+export function normalizeCategory(category: CategoryAggregate): CategoryAggregate {
   assertAggregateType(category, 'category', 'Die Kategorie');
   assertUuid(category.groupId, 'Die Kategoriegruppen-ID');
   const name = normalizeRequiredText(category.name, 'Der Kategoriename');
@@ -364,7 +364,7 @@ function normalizeCategory(category: CategoryAggregate): CategoryAggregate {
   return { ...category, name };
 }
 
-function normalizePayee(payee: PayeeAggregate): PayeeAggregate {
+export function normalizePayee(payee: PayeeAggregate): PayeeAggregate {
   assertAggregateType(payee, 'payee', 'Der Empfänger');
   const name = normalizeRequiredText(payee.name, 'Der Empfängername');
   assertBoolean(payee.archived, 'Der Archivstatus');

@@ -17,6 +17,43 @@ const factories: readonly [string, () => LocalStorageAdapter & { close?(): Promi
 ];
 
 describe.each(factories)('Lokaler verschlüsselter Snapshot: %s', (_name, factory) => {
+  it('bewahrt andere Bereiche bei einem fremd belegten Snapshothandle', async () => {
+    const store = factory();
+    try {
+      await store.initializeArea(spaceId, epoch); await store.initializeArea(id(99), id(98));
+      const account = { id: id(10), spaceId, aggregateType: 'account' as const, revision: 1, createdAt: '2026-10-08T10:00:00Z', updatedAt: '2026-10-08T10:00:00Z', name: 'Originalbereich', type: 'checking' as const, onBudget: true, archived: false, handle: id(10) };
+      await store.applyAtomicBatch({ expectedRevisions: [{ handle: account.id, expectedRevision: 0 }], aggregates: [account], outbox: [], projections: [] });
+      const before = await store.exportSnapshot(spaceId), other = await store.exportSnapshot(id(99));
+      const incoming = { ...other, aggregates: [{ ...account, spaceId: other.spaceId }] };
+      await expect(store.replaceSnapshot(incoming)).rejects.toThrow('anderen Bereich');
+      expect(await store.exportSnapshot(spaceId)).toEqual(before); expect(await store.exportSnapshot(id(99))).toEqual(other);
+    } finally { await store.close?.(); }
+  });
+  it('weist authentisch verschlüsselte ungültige Inhalte vor jeder Ersetzung ab', async () => {
+    const store = factory();
+    try {
+      const service = new LocalAreaService(store, spaceId, { connected: false, initialEpoch: epoch });
+      const account = { id: id(10), spaceId, aggregateType: 'account' as const, revision: 1, createdAt: '2026-10-08T10:00:00Z', updatedAt: '2026-10-08T10:00:00Z', name: 'Originalbestand', type: 'checking' as const, onBudget: true, archived: false };
+      await service.applyChangeSet({ operationId: id(11), occurredAt: account.updatedAt, commandType: 'account.save', spaceId, expectedRevisions: [{ id: account.id, expectedRevision: 0 }], aggregates: [account] }, [{ spaceId, kind: 'accountBalance', key: account.id, payload: { balance: 0 } }]);
+      const before = await store.exportSnapshot(spaceId);
+      const first = before.aggregates[0]!;
+      const invalid: readonly LocalSnapshot[] = [
+        { ...before, storageSchemaVersion: 999 }, { ...before, domainSchemaVersion: 999 },
+        { ...before, profileId: id(99) }, { ...before, epoch: 'ungültig' },
+        { ...before, aggregates: [{ ...first, spaceId: id(99) }] }, { ...before, aggregates: [{ ...first, handle: id(99) }] },
+        { ...before, aggregates: [first, first] }, { ...before, aggregates: [{ ...first, revision: 0 }] },
+        { ...before, confirmed: [{ spaceId, epoch: id(99), aggregate: first }] },
+        { ...before, projections: [{ spaceId, kind: 'accountBalance', key: account.id, payload: { balance: 1 } }] },
+        { ...before, projections: [{ spaceId, kind: 'future-projection', key: account.id, payload: 0 }] },
+        { ...before, syncState: { profileId, spaceId: id(99), epoch, cursor: '0' } },
+        { ...before, pending: [{ operationId: id(90), spaceId, expectedRevisions: [], dependsOn: [], state: 'blocked', draft: { spaceId: id(99) }, retryCount: 0 }] }
+      ];
+      for (const value of invalid) {
+        await expect(service.replaceEncryptedSnapshot(protector, await protector.seal(value))).rejects.toThrow(/Snapshot|Bereich/);
+        expect(await store.exportSnapshot(spaceId)).toEqual(before);
+      }
+    } finally { await store.close?.(); }
+  });
   it('exportiert bei parallelen Seitencommits ausschließlich zusammengehörige Cursor und Projektionen', async () => {
     const store = factory();
     try {

@@ -29,6 +29,8 @@ Routing und UI-Zustand bleiben von persistenten Fachdaten getrennt. Kontolisten 
 
 Der lokale Port ergänzt `initializeArea(spaceId, proposedEpoch)` für die atomare, idempotente Epochengrundlage gemäß [ADR-040](decisions.md#adr-040--dauerhafte-lokale-epoche-ohne-synczustand). Diese Metadaten benötigen weder Serveranmeldung noch Cursor oder Outbox und bleiben von den Finanzaggregaten getrennt.
 
+Snapshotersatz verwendet vor jeder Mutation die gemeinsame Form-/Kontextprüfung und den vollständigen Fachvalidator gemäß [ADR-041](decisions.md#adr-041--gemeinsame-snapshotprüfung-vor-destruktivem-ersatz). Finanzregeln bleiben im TypeScript-Fachkern; native SQLite-Kommandos prüfen zusätzlich Metadatenbindung und fremde Handlebelegungen innerhalb der Transaktion.
+
 IndexedDB und SQLite auf Clients erfüllen dieselbe Fachspeicher-Contract-Suite. Die Desktopbrücke akzeptiert katalogisierte Batchtypen; die UI erhält keinen unbeschränkten SQL-/Dateizugriff. Der Server besitzt einen separaten CiphertextStore: opake Handles/Revisionen, verschlüsselte Bundles, öffentliche Manifeste, Receipts und Changes. Er committet diese atomar, niemals Finanzaggregate/Projektionen im Klartext.
 
 ## Datenfluss

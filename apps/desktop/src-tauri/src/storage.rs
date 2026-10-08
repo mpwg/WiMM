@@ -379,6 +379,13 @@ fn save_sync_page(
         return Err("Die Syncseite gehört zu einem anderen Profil.".into());
     }
     assert_area_rows(&page.projections, &page.state.space_id)?;
+    if page
+        .confirmed
+        .iter()
+        .any(|entry| entry.epoch != page.state.epoch)
+    {
+        return Err("Die Bestätigungsepoche passt nicht zur Syncseite.".into());
+    }
     let transaction = connection.transaction().map_err(storage_error)?;
     write_confirmed(
         &transaction,
@@ -490,7 +497,57 @@ fn replace_snapshot(
     }
     assert_area_rows(&snapshot.pending, &snapshot.space_id)?;
     assert_area_rows(&snapshot.projections, &snapshot.space_id)?;
+    if snapshot
+        .confirmed
+        .iter()
+        .any(|entry| entry.epoch != snapshot.epoch)
+    {
+        return Err("Die Bestätigungsepoche passt nicht zum Snapshot.".into());
+    }
     let transaction = connection.transaction().map_err(storage_error)?;
+    for (table, key, handles) in [
+        (
+            "aggregates",
+            "handle",
+            snapshot
+                .aggregates
+                .iter()
+                .map(|entry| entry.handle.as_str())
+                .collect::<Vec<_>>(),
+        ),
+        (
+            "confirmed",
+            "handle",
+            snapshot
+                .confirmed
+                .iter()
+                .map(|entry| entry.aggregate.handle.as_str())
+                .collect(),
+        ),
+        (
+            "outbox",
+            "operation_id",
+            snapshot
+                .pending
+                .iter()
+                .filter_map(|entry| entry.get("operationId").and_then(Value::as_str))
+                .collect(),
+        ),
+    ] {
+        for handle in handles {
+            let current: Option<String> = transaction
+                .query_row(
+                    &format!("SELECT space_id FROM {table} WHERE profile_id = ?1 AND {key} = ?2"),
+                    params![profile_id, handle],
+                    |row| row.get(0),
+                )
+                .optional()
+                .map_err(storage_error)?;
+            if current.is_some_and(|space_id| space_id != snapshot.space_id) {
+                return Err("Ein Snapshothandle gehört zu einem anderen Bereich.".into());
+            }
+        }
+    }
     for table in [
         "aggregates",
         "confirmed",
@@ -805,6 +862,37 @@ mod tests {
         .unwrap();
         assert_eq!(snapshot_value(&mut connection, "p"), before);
         assert_eq!(snapshot_value(&mut connection, "other"), other);
+    }
+
+    #[test]
+    fn sqlite_snapshotersatz_uebernimmt_keine_fremden_bereichshandles() {
+        let mut connection = Connection::open_in_memory().unwrap();
+        seed(&mut connection, "p");
+        initialize_area(&mut connection, "p", "other", "e2").unwrap();
+        let before = snapshot_value(&mut connection, "p");
+        let other =
+            serde_json::to_value(export_snapshot(&mut connection, "p", "other").unwrap()).unwrap();
+        let mut incoming = before.clone();
+        incoming["spaceId"] = Value::from("other");
+        incoming["syncState"]["spaceId"] = Value::from("other");
+        for field in ["aggregates", "pending", "projections"] {
+            for entry in incoming[field].as_array_mut().unwrap() {
+                entry["spaceId"] = Value::from("other");
+            }
+        }
+        assert!(
+            replace_snapshot(
+                &mut connection,
+                "p",
+                serde_json::from_value(incoming).unwrap()
+            )
+            .is_err()
+        );
+        assert_eq!(snapshot_value(&mut connection, "p"), before);
+        assert_eq!(
+            serde_json::to_value(export_snapshot(&mut connection, "p", "other").unwrap()).unwrap(),
+            other
+        );
     }
 
     #[test]

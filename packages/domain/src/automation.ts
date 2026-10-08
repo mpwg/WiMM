@@ -31,13 +31,19 @@ export function automationChange(commandType: P2CommandType, aggregates: readonl
   const ids = [...new Set([...aggregates.map(a => a.id), ...read])];
   return createChangeSet({ commandType, spaceId: aggregates[0]!.spaceId, expectedRevisions: ids.map(id => ({ id, expectedRevision: map.get(id)?.revision ?? 0 })), mutations: aggregates.map(aggregate => ({ aggregate })) }, { get: id => map.get(id), list: spaceId => all.filter(a => a.spaceId === spaceId) }, deps);
 }
-export function validateRule(rule: RuleAggregate, all: readonly P2Aggregate[]): void {
+export function validateRuleStructure(rule: RuleAggregate): void {
   if (!Number.isSafeInteger(rule.order) || rule.order < 0 || typeof rule.enabled !== 'boolean' || typeof rule.stopProcessing !== 'boolean' || !Array.isArray(rule.conditions) || !rule.conditions.length || !Array.isArray(rule.actions) || !rule.actions.length) fail('Die Regel ist unvollständig.');
   for (const c of rule.conditions as readonly RuleCondition[]) {
     if (!['date', 'amount', 'payee', 'memo'].includes(c.field) || !['equals', 'contains', 'gte', 'lte'].includes(c.operator)) fail('Die Regelbedingung ist nicht erlaubt.');
     if (c.field === 'amount') { assertMoney(c.value as Money); if (c.operator === 'contains') fail('Beträge unterstützen keine Textsuche.'); }
     else { if (typeof c.value !== 'string' || !c.value.length) fail('Die Textbedingung ist leer.'); if (c.field === 'date') { parseFinanceDate(c.value); if (c.operator === 'contains') fail('Datum unterstützt keine Textsuche.'); } else if (!['equals', 'contains'].includes(c.operator)) fail('Text unterstützt nur Gleichheit und Enthalten.'); }
   }
+  for (const a of rule.actions as readonly RuleAction[]) {
+    if (!['categoryId', 'payeeId', 'clearance'].includes(a.field) || (a.field === 'clearance' && !['uncleared', 'cleared'].includes(a.value))) fail('Die Regelaktion ist nicht erlaubt.');
+  }
+}
+export function validateRule(rule: RuleAggregate, all: readonly P2Aggregate[]): void {
+  validateRuleStructure(rule);
   for (const a of rule.actions as readonly RuleAction[]) {
     if (a.field === 'categoryId') references(all, rule.spaceId, a.value, 'category');
     else if (a.field === 'payeeId') references(all, rule.spaceId, a.value, 'payee');
@@ -137,8 +143,7 @@ export function duplicateStatus(row: ImportCandidate, accountId: UUID, fingerpri
   if (sameId.some(f => f.fingerprint !== fingerprint)) return 'conflict';
   return (row.externalId ? sameId.length > 0 : fingerprints.some(f => f.accountId === accountId && f.fingerprint === fingerprint)) ? 'duplicate' : 'new';
 }
-function validateImportBatch(batch: ImportBatchAggregate, all: readonly P2Aggregate[]) {
-  references(all, batch.spaceId, batch.accountId, 'account');
+export function validateImportBatchStructure(batch: ImportBatchAggregate) {
   if (!/^[a-f0-9]{64}$/.test(batch.fileHash) || batch.rows.length > 100_000 || !batch.rows.length || new Set(batch.rows.map(r => r.sourceRow)).size !== batch.rows.length) fail('Die Importbeschreibung ist ungültig.');
   for (const row of batch.rows) {
     if (!Number.isSafeInteger(row.sourceRow) || row.sourceRow < 1 || !['import', 'exclude', 'separate'].includes(row.decision)) fail('Die Zeilenentscheidung ist ungültig.');
@@ -146,6 +151,10 @@ function validateImportBatch(batch: ImportBatchAggregate, all: readonly P2Aggreg
     if (row.candidate && row.candidate.sourceRow !== row.sourceRow) fail('Die Quellzeile stimmt nicht überein.');
   }
   if (!['ready', 'partial', 'completed'].includes(batch.state) || new Set(batch.committedRows).size !== batch.committedRows.length || batch.committedRows.some(n => !batch.rows.some(r => r.sourceRow === n))) fail('Der Importfortschritt ist ungültig.');
+}
+function validateImportBatch(batch: ImportBatchAggregate, all: readonly P2Aggregate[]) {
+  references(all, batch.spaceId, batch.accountId, 'account');
+  validateImportBatchStructure(batch);
 }
 export function saveImportBatch(batch: ImportBatchAggregate, all: readonly P2Aggregate[], deps: DomainDependencies) {
   validateImportBatch(batch, all);

@@ -4,6 +4,7 @@ import type { UUID } from '@wimm/contracts';
 
 import type { ConfirmedAggregate, LocalSnapshot, LocalStorageAdapter, PendingOperation, StoredAggregate, StoredProjection, SyncPage, SyncState } from './contracts.js';
 import { StorageRevisionConflictError, StorageWriteError } from './contracts.js';
+import { validateLocalSnapshot } from './snapshot-validation.js';
 
 /** Begrenzter Desktopport; sein Rust-Gegenstück akzeptiert keine SQL- oder Pfadkommandos. */
 export interface DesktopStorageBridge {
@@ -79,8 +80,7 @@ export class DesktopStorageAdapter implements LocalStorageAdapter {
   getSyncState(spaceId: UUID) { return this.bridge.getSyncState(this.profileId, spaceId); }
   exportSnapshot(spaceId: UUID) { return this.bridge.exportSnapshot(this.profileId, spaceId); }
   async replaceSnapshot(snapshot: LocalSnapshot) {
-    if (snapshot.profileId !== this.profileId) throw new StorageWriteError('Der Snapshot gehört zu einem anderen Profil.');
-    return this.bridge.replaceSnapshot(this.profileId, snapshot);
+    return this.bridge.replaceSnapshot(this.profileId, validateLocalSnapshot(snapshot, this.profileId));
   }
   rebuildProjections(spaceId: UUID) { return this.bridge.rebuildProjections(this.profileId, spaceId); }
   async close(): Promise<void> {}
