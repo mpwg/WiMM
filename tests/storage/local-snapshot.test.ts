@@ -17,6 +17,19 @@ const factories: readonly [string, () => LocalStorageAdapter & { close?(): Promi
 ];
 
 describe.each(factories)('Lokaler verschlüsselter Snapshot: %s', (_name, factory) => {
+  it('exportiert bei parallelen Seitencommits ausschließlich zusammengehörige Cursor und Projektionen', async () => {
+    const store = factory();
+    try {
+      const page = (cursor: number) => ({ state: { profileId, spaceId, epoch, cursor: String(cursor) }, confirmed: [], removeOperationIds: [], projections: [{ spaceId, kind: 'syntheticCommit', key: 'cursor', payload: cursor }] });
+      await store.saveSyncPage(page(0));
+      for (let cursor = 1; cursor <= 30; cursor++) {
+        const [snapshot] = await Promise.all([store.exportSnapshot(spaceId), store.saveSyncPage(page(cursor))]);
+        const actual = Number(snapshot.syncState?.cursor);
+        expect([cursor - 1, cursor]).toContain(actual);
+        expect(snapshot.projections.find((entry) => entry.kind === 'syntheticCommit')?.payload).toBe(actual);
+      }
+    } finally { await store.close?.(); }
+  });
   it('exportiert einen leeren Bereich ohne Syncseite oder Outbox mit stabiler Epoche', async () => {
     const store = factory();
     try {

@@ -108,16 +108,20 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
   }
 
   async exportSnapshot(spaceId: UUID): Promise<LocalSnapshot> {
-    const syncState = await this.getSyncState(spaceId);
-    const confirmed = await this.loadConfirmed(spaceId);
-    const epoch = syncState?.epoch ?? (await this.db.syncStates.get([this.profileId, spaceId]))?.localEpoch ?? confirmed[0]?.epoch;
-    if (epoch === undefined) throw new StorageWriteError('Für den Bereich fehlt eine Epoche.');
-    return {
-      storageSchemaVersion: 1, domainSchemaVersion: 1, profileId: this.profileId, spaceId, epoch,
-      aggregates: await this.query({ spaceId }), confirmed, pending: await this.loadPending(spaceId),
-      projections: (await this.db.projections.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray()).map((entry) => entry.payload),
-      syncState
-    };
+    return this.db.transaction('r', [this.db.aggregates, this.db.confirmed, this.db.pending, this.db.projections, this.db.syncStates], async () => {
+      const [row, aggregates, confirmed, pending, projections] = await Promise.all([
+        this.db.syncStates.get([this.profileId, spaceId]),
+        this.db.aggregates.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray(),
+        this.db.confirmed.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray(),
+        this.db.pending.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray(),
+        this.db.projections.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray()
+      ]);
+      const epoch = row?.payload?.epoch ?? row?.localEpoch ?? confirmed[0]?.payload.epoch;
+      if (epoch === undefined) throw new StorageWriteError('Für den Bereich fehlt eine Epoche.');
+      return { storageSchemaVersion: 1, domainSchemaVersion: 1, profileId: this.profileId, spaceId, epoch,
+        aggregates: aggregates.map((entry) => entry.payload), confirmed: confirmed.map((entry) => entry.payload),
+        pending: pending.map((entry) => entry.payload), projections: projections.map((entry) => entry.payload), syncState: row?.payload };
+    });
   }
 
   async replaceSnapshot(snapshot: LocalSnapshot): Promise<void> {

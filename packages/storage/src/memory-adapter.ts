@@ -92,21 +92,16 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
   }
 
   async exportSnapshot(spaceId: UUID): Promise<LocalSnapshot> {
-    const state = this.syncStates.get(spaceId);
-    const epoch = state?.epoch ?? this.localEpochs.get(spaceId) ?? snapshotEpoch(this.confirmed, spaceId);
-    if (epoch === undefined) throw new StorageWriteError('Für den Bereich fehlt eine Epoche.');
-    return {
-      storageSchemaVersion: 1,
-      domainSchemaVersion: 1,
-      profileId: this.profileId,
-      spaceId,
-      epoch,
-      aggregates: await this.query({ spaceId }),
-      confirmed: await this.loadConfirmed(spaceId),
-      pending: await this.loadPending(spaceId),
-      projections: [...this.projections.values()].filter((entry) => entry.spaceId === spaceId).map((entry) => clone(entry)!),
-      syncState: clone(state)
-    };
+    return this.serialize(async () => {
+      const state = this.syncStates.get(spaceId);
+      const epoch = state?.epoch ?? this.localEpochs.get(spaceId) ?? snapshotEpoch(this.confirmed, spaceId);
+      if (epoch === undefined) throw new StorageWriteError('Für den Bereich fehlt eine Epoche.');
+      return { storageSchemaVersion: 1, domainSchemaVersion: 1, profileId: this.profileId, spaceId, epoch,
+        aggregates: [...this.aggregates.values()].filter((entry) => entry.spaceId === spaceId).map((entry) => clone(entry)!),
+        confirmed: [...this.confirmed.values()].filter((entry) => entry.spaceId === spaceId).map((entry) => clone(entry)!),
+        pending: [...this.pending.values()].filter((entry) => entry.spaceId === spaceId).map((entry) => clone(entry)!),
+        projections: [...this.projections.values()].filter((entry) => entry.spaceId === spaceId).map((entry) => clone(entry)!), syncState: clone(state) };
+    });
   }
 
   replaceSnapshot(snapshot: LocalSnapshot): Promise<void> {

@@ -678,6 +678,71 @@ mod tests {
     }
 
     #[test]
+    fn sqlite_parallele_commits_exportieren_nur_vollstaendige_lesestaende() {
+        use std::sync::{Arc, Barrier};
+        let directory = tempfile::tempdir_in(".").unwrap();
+        let path = directory.path().join("snapshot-parallel.sqlite3");
+        let mut connection = Connection::open(&path).unwrap();
+        connection
+            .execute_batch("PRAGMA journal_mode = WAL;")
+            .unwrap();
+        connection
+            .busy_timeout(std::time::Duration::from_secs(5))
+            .unwrap();
+        seed(&mut connection, "p");
+        let mut original = snapshot_value(&mut connection, "p");
+        original["aggregates"][0]["marker"] = Value::from(0);
+        original["confirmed"] = serde_json::json!([{"spaceId":"s","epoch":"e","aggregate":original["aggregates"][0].clone()}]);
+        original["pending"][0]["draft"]["marker"] = Value::from(0);
+        original["projections"][0]["payload"]["marker"] = Value::from(0);
+        replace_snapshot(
+            &mut connection,
+            "p",
+            serde_json::from_value(original.clone()).unwrap(),
+        )
+        .unwrap();
+        let barrier = Arc::new(Barrier::new(2));
+        let writer_barrier = Arc::clone(&barrier);
+        let writer = std::thread::spawn(move || {
+            let mut writer = Connection::open(path).unwrap();
+            writer
+                .busy_timeout(std::time::Duration::from_secs(5))
+                .unwrap();
+            for cursor in 1..=30 {
+                let mut next = original.clone();
+                next["syncState"]["cursor"] = Value::from(cursor.to_string());
+                next["aggregates"][0]["marker"] = Value::from(cursor);
+                next["confirmed"][0]["aggregate"]["marker"] = Value::from(cursor);
+                next["pending"][0]["draft"]["marker"] = Value::from(cursor);
+                next["projections"][0]["payload"]["marker"] = Value::from(cursor);
+                writer_barrier.wait();
+                replace_snapshot(&mut writer, "p", serde_json::from_value(next).unwrap()).unwrap();
+                writer_barrier.wait();
+            }
+        });
+        for expected in 1..=30 {
+            barrier.wait();
+            let snapshot = snapshot_value(&mut connection, "p");
+            barrier.wait();
+            let cursor: i64 = snapshot["syncState"]["cursor"]
+                .as_str()
+                .unwrap()
+                .parse()
+                .unwrap();
+            assert!([expected - 1, expected].contains(&cursor));
+            for actual in [
+                &snapshot["aggregates"][0]["marker"],
+                &snapshot["confirmed"][0]["aggregate"]["marker"],
+                &snapshot["pending"][0]["draft"]["marker"],
+                &snapshot["projections"][0]["payload"]["marker"],
+            ] {
+                assert_eq!(actual, &Value::from(cursor));
+            }
+        }
+        writer.join().unwrap();
+    }
+
+    #[test]
     fn sqlite_syncseite_ist_atomar_und_bestaetigung_vom_lokalstand_getrennt() {
         let mut connection = Connection::open_in_memory().unwrap();
         seed(&mut connection, "p");

@@ -28,3 +28,8 @@ for (const filled of [false, true]) {
     expect(await page.evaluate((value) => window.localSnapshotRegression(value), filled)).toEqual({ epoch: '00000000-0000-4000-8000-000000000095', stableEpoch: true, wrongKeyRejected: true, unchanged: true, noOutbox: true, noSyncState: true, encrypted: true });
   });
 }
+
+test('exportiert bei konkurrierenden vollständigen IndexedDB-Commits niemals gemischte Snapshots', async ({ page }) => {
+  await page.goto('/tests/domain-regressions.html'); await page.waitForFunction(() => window.snapshotConsistencyRegression !== undefined);
+  expect(await page.evaluate(() => window.snapshotConsistencyRegression())).toBe(true);
+});

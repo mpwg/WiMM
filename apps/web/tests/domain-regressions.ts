@@ -8,6 +8,7 @@ import { IndexedDbStorageAdapter, LocalAreaService, StorageRevisionConflictError
 type Scenario = 'account' | 'category' | 'categoryGroup' | 'payee' | 'merge-omitted' | 'merge-stale' | 'merge-complete';
 declare global { interface Window { domainRegression: (scenario: Scenario) => Promise<{ code: string; unchanged: boolean; transaction?: TransactionAggregate; sourceArchived?: boolean }> } }
 declare global { interface Window { localSnapshotRegression: (filled: boolean) => Promise<{ epoch: UUID; stableEpoch: boolean; wrongKeyRejected: boolean; unchanged: boolean; noOutbox: boolean; noSyncState: boolean; encrypted: boolean }> } }
+declare global { interface Window { snapshotConsistencyRegression: () => Promise<boolean> } }
 const id = (value: number) => `00000000-0000-4000-8000-${String(value).padStart(12, '0')}` as UUID;
 const spaceId = id(1), profileId = id(2), now = '2026-10-08T10:00:00Z';
 const meta = (value: number) => ({ id: id(value), spaceId, revision: 1, createdAt: now, updatedAt: now });
@@ -78,4 +79,25 @@ window.localSnapshotRegression = async (filled) => {
     const restarted = await protector.unseal(await service.exportEncryptedSnapshot(protector));
     return { epoch: before.epoch, stableEpoch: restarted.epoch === before.epoch, wrongKeyRejected, unchanged, noOutbox: restarted.pending.length === 0, noSyncState: restarted.syncState === undefined, encrypted: !new TextDecoder().decode(bytes).includes('Lokales synthetisches Konto') };
   } finally { await storage.close(); }
+};
+
+window.snapshotConsistencyRegression = async () => {
+  const name = 'wimm-parallel-snapshot';
+  const reader = new IndexedDbStorageAdapter(profileId, name), writer = new IndexedDbStorageAdapter(profileId, name);
+  try {
+    await reader.initializeArea(spaceId, id(95));
+    const base = await reader.exportSnapshot(spaceId);
+    const snapshot = (cursor: number): LocalSnapshot => {
+      const account = toStoredAggregate({ ...meta(3), aggregateType: 'account' as const, revision: cursor + 1, name: 'Synthetischer Commit', type: 'checking' as const, onBudget: true, archived: false, marker: cursor });
+      return { ...base, aggregates: [account], confirmed: [{ spaceId, epoch: base.epoch, aggregate: account }], pending: [{ operationId: id(90), spaceId, expectedRevisions: [], dependsOn: [], state: 'queued', draft: { marker: cursor }, retryCount: 0 }], projections: [{ spaceId, kind: 'syntheticCommit', key: 'cursor', payload: { marker: cursor } }], syncState: { profileId, spaceId, epoch: base.epoch, cursor: String(cursor) } };
+    };
+    await writer.replaceSnapshot(snapshot(0));
+    for (let cursor = 1; cursor <= 30; cursor++) {
+      const [actual] = await Promise.all([reader.exportSnapshot(spaceId), writer.replaceSnapshot(snapshot(cursor))]);
+      const expected = Number(actual.syncState?.cursor);
+      const expectedSnapshot = snapshot(expected);
+      if (![cursor - 1, cursor].includes(expected) || JSON.stringify(actual) !== JSON.stringify(expectedSnapshot)) return false;
+    }
+    return true;
+  } finally { await reader.close(); await writer.close(); }
 };
