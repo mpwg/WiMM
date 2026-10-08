@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from 'vitest';
-import type { UUID } from '@wimm/contracts';
+import type { Money, UUID } from '@wimm/contracts';
 
 import {
   archiveAccount,
@@ -18,7 +18,8 @@ import {
   type CategoryAggregate,
   type DomainDependencies,
   type PayeeAggregate,
-  type PayeeTransactionReference
+  type PayeeTransactionReference,
+  type TransactionAggregate
 } from './index.js';
 
 const SPACE = '00000000-0000-4000-8000-000000000001' as UUID;
@@ -43,6 +44,14 @@ function reader(...heads: readonly AggregateHead[]): AggregateHeadReader {
     ...heads.filter(h => h.aggregateType === 'category').map(h => ({ ...h, createdAt: NOW, updatedAt: NOW, groupId: '00000000-0000-4000-8000-000000000999' })),
     { id: '00000000-0000-4000-8000-000000000999', spaceId: SPACE, revision: 1, createdAt: NOW, updatedAt: NOW, aggregateType: 'categoryGroup', kind: 'expense' }
   ] };
+}
+
+function withTransactions(base: AggregateHeadReader, ...transactions: readonly TransactionAggregate[]): AggregateHeadReader {
+  return { ...base, list: (spaceId) => [...base.list!(spaceId), ...transactions] };
+}
+
+function storedTransaction(reference: PayeeTransactionReference): TransactionAggregate {
+  return { ...reference, accountId: ACCOUNT, date: '2026-10-03', amount: -100 as Money, kind: 'opening', splits: [] };
 }
 
 function head(
@@ -183,6 +192,11 @@ describe('Konten und Kategorien', () => {
       GROUP
     );
     expect(system).toMatchObject({ name: 'Nicht zugeordnet', system: 'uncategorized', archived: false });
+    expect(saveCategory({
+      commandType: 'category.save', spaceId: SPACE,
+      expectedRevisions: [{ id: system.id, expectedRevision: 0 }, { id: GROUP, expectedRevision: 1 }],
+      mutations: [{ aggregate: system }]
+    }, reader(head(GROUP, 1, 'categoryGroup')), dependencies()).aggregates[0]).toMatchObject({ system: 'uncategorized', archived: false });
 
     const ordinaryId = '00000000-0000-4000-8000-000000000099' as UUID;
     const ordinary = saveCategory({
@@ -279,7 +293,7 @@ describe('Empfängerzusammenführung', () => {
         sources: [payee(SOURCE, 3, 'Bäckerei', ['Backstube'])],
         transactions: [transaction]
       },
-      reader(head(TARGET, 2, 'payee'), head(SOURCE, 3, 'payee'), head(TRANSACTION, 4, 'transaction')),
+      withTransactions(reader(head(TARGET, 2, 'payee'), head(SOURCE, 3, 'payee'), head(TRANSACTION, 4, 'transaction')), storedTransaction(transaction)),
       dependencies()
     );
 
@@ -312,7 +326,7 @@ describe('Empfängerzusammenführung', () => {
       () =>
         mergePayees(
           input,
-          reader(head(TARGET, 2, 'payee'), head(SOURCE, 4, 'payee'), head(TRANSACTION, 4, 'transaction')),
+          withTransactions(reader(head(TARGET, 2, 'payee'), head(SOURCE, 4, 'payee'), head(TRANSACTION, 4, 'transaction')), storedTransaction(transaction)),
           dependencies()
         ),
       'REVISION_CONFLICT'
@@ -327,6 +341,34 @@ describe('Empfängerzusammenführung', () => {
         ),
       'INVALID_COMMAND'
     );
+  });
+
+  it.each(['uncleared', 'reconciled'] as const)('lehnt ausgelassene gespeicherte Quellbuchungen ohne Teiländerungsset ab: %s', (clearance) => {
+    const target = payee(TARGET, 1, 'Ziel');
+    const source = payee(SOURCE, 1, 'Quelle');
+    const stored = storedTransaction({ id: TRANSACTION, spaceId: SPACE, revision: 1, createdAt: NOW, updatedAt: NOW, aggregateType: 'transaction', payeeId: SOURCE, clearance });
+    const input = { spaceId: SPACE, target, sources: [source], transactions: [] };
+    const before = structuredClone({ target, source, stored });
+    const heads = withTransactions(reader(target, source, stored), stored);
+    expectDomainError(() => mergePayees(input, heads, dependencies()), 'INVALID_COMMAND');
+    expect({ target, source, stored }).toEqual(before);
+  });
+
+  it('bewahrt Tombstones und vollständige Buchungsfelder und schützt die Referenzabfrage per Finanz-CAS', () => {
+    const target = payee(TARGET, 1, 'Ziel'); const source = payee(SOURCE, 1, 'Quelle');
+    const stored = storedTransaction({ id: TRANSACTION, spaceId: SPACE, revision: 1, createdAt: NOW, updatedAt: NOW, aggregateType: 'transaction', payeeId: SOURCE, clearance: 'cleared' });
+    const tombstone = { ...stored, id: CATEGORY, deletedAt: NOW };
+    const guard = { id: SPACE, spaceId: SPACE, revision: 7, createdAt: NOW, updatedAt: NOW, aggregateType: 'financialRevision' as const };
+    const base = withTransactions(reader(target, source, stored, guard), stored, tombstone);
+    const heads = { ...base, list: (spaceId: UUID) => [...base.list!(spaceId), guard] };
+    const input = { spaceId: SPACE, target, sources: [source], transactions: [stored] };
+    const result = mergePayees(input, heads, dependencies());
+    expect(result.expectedRevisions).toContainEqual({ id: SPACE, expectedRevision: 7 });
+    expect(result.aggregates.find((aggregate) => aggregate.id === TRANSACTION)).toMatchObject({ ...stored, revision: 2, payeeId: TARGET });
+    expect(result.aggregates.find((aggregate) => aggregate.id === tombstone.id)).toBeUndefined();
+    expectDomainError(() => mergePayees({ ...input, transactions: [stored, stored] }, heads, dependencies()), 'DUPLICATE_REFERENCE');
+    expectDomainError(() => mergePayees({ ...input, transactions: [{ ...stored, revision: 2 }] }, heads, dependencies()), 'REVISION_CONFLICT');
+    expectDomainError(() => mergePayees({ ...input, transactions: [{ ...stored, clearance: 'uncleared' }] }, heads, dependencies()), 'REVISION_CONFLICT');
   });
 });
 
@@ -345,10 +387,11 @@ it.each([
 
 it('weist abgeglichene Empfängerreferenzen vor Änderungen ab und erlaubt den entsperrten Stand', () => {
   const target = payee(TARGET, 1, 'Ziel'); const source = payee(SOURCE, 1, 'Quelle');
-  const transaction = { id: TRANSACTION, spaceId: SPACE, revision: 1, createdAt: NOW, updatedAt: NOW, aggregateType: 'transaction' as const, payeeId: SOURCE, clearance: 'reconciled' as const };
+  const transaction: PayeeTransactionReference = { id: TRANSACTION, spaceId: SPACE, revision: 1, createdAt: NOW, updatedAt: NOW, aggregateType: 'transaction', payeeId: SOURCE, clearance: 'reconciled' };
   const input = { spaceId: SPACE, target, sources: [source], transactions: [transaction] };
   const original = structuredClone(input);
-  expect(() => mergePayees(input, reader(target, source, transaction), dependencies())).toThrow('entsperrt'); expect(input).toEqual(original);
+  const base = reader(target, source, transaction);
+  expect(() => mergePayees(input, withTransactions(base, storedTransaction(transaction)), dependencies())).toThrow('entsperrt'); expect(input).toEqual(original);
   const unlocked = { ...transaction, clearance: 'cleared' as const };
-  expect(mergePayees({ ...input, transactions: [unlocked] }, reader(target, source, unlocked), dependencies()).aggregates.find(a => a.id === TRANSACTION)).toMatchObject({ payeeId: TARGET, clearance: 'cleared' });
+  expect(mergePayees({ ...input, transactions: [unlocked] }, withTransactions(reader(target, source, unlocked), storedTransaction(unlocked)), dependencies()).aggregates.find(a => a.id === TRANSACTION)).toMatchObject({ aggregateType: 'transaction', accountId: ACCOUNT, kind: 'opening', payeeId: TARGET, clearance: 'cleared' });
 });

@@ -10,6 +10,8 @@ Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungss
 
 ## Teilaufgaben und Bearbeitungsfolge
 
+Aktueller Behebungsstand: #73 und #74 geschlossen; Fachfix #75 umgesetzt, echte Adapterbelege noch ausstehend. Maßgeblich für die weitere Bearbeitung sind die Kriterien und Voraussetzungen der GitHub-Issues.
+
 Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. P2 ist nach der aktuellen Nachprüfung erneut in Arbeit. Der Nutzer hat am 3. Oktober 2026 den vollständigen Abschluss von P3 freigegeben.
 
 | Paket | Teilaufgaben | Ergebnis der Schrittfolge |

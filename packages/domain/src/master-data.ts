@@ -14,6 +14,7 @@ import {
   type RevisionExpectation
 } from './commands.js';
 import { DomainValidationError } from './errors.js';
+import type { TransactionAggregate } from './transactions.js';
 
 export const accountTypes = ['checking', 'cash', 'savings', 'credit', 'other'] as const;
 export type AccountType = (typeof accountTypes)[number];
@@ -172,7 +173,7 @@ export interface PayeeMergeInput {
 }
 
 /**
- * Führt Empfänger und sämtliche mitgelieferten Transaktionsreferenzen in einer
+ * Führt Empfänger und sämtliche aktiven gespeicherten Transaktionsreferenzen in einer
  * Änderungsmenge zusammen. Alle Quellen werden archiviert, nie gelöscht.
  */
 export function mergePayees(
@@ -220,8 +221,22 @@ export function mergePayees(
     return normalized;
   });
 
+  if (heads.list === undefined) {
+    throw new DomainValidationError('INVALID_COMMAND', 'Empfängerzusammenführungen benötigen den vollständigen aktuellen Fachbestand.');
+  }
+  const current = heads.list(input.spaceId);
+  if (current.some((aggregate) => aggregate.spaceId !== input.spaceId) || new Set(current.map((aggregate) => aggregate.id)).size !== current.length) {
+    throw new DomainValidationError('INVALID_AGGREGATE', 'Der Fachbestand für die Empfängerzusammenführung ist nicht eindeutig im aktuellen Bereich.');
+  }
+  const currentTransactions = current.filter((aggregate): aggregate is TransactionAggregate => {
+    if (aggregate.aggregateType !== 'transaction' || aggregate.deletedAt !== undefined) return false;
+    const transaction = aggregate as TransactionAggregate;
+    return transaction.payeeId !== undefined && sourceIds.has(transaction.payeeId);
+  });
+
   const transactionIds = new Set<UUID>();
-  const transactions = input.transactions.map((transaction: PayeeTransactionReference) => {
+  const suppliedById = new Map<UUID, PayeeTransactionReference>();
+  input.transactions.forEach((transaction: PayeeTransactionReference) => {
     assertPayeeTransactionReference(transaction);
     if (transaction.spaceId !== input.spaceId || transaction.payeeId === undefined || !sourceIds.has(transaction.payeeId)) {
       throw new DomainValidationError(
@@ -237,7 +252,18 @@ export function mergePayees(
     }
     if (transaction.clearance === 'reconciled') throw new DomainValidationError('INVALID_COMMAND', 'Abgeglichene Buchungen müssen vor der Empfängerzusammenführung ausdrücklich entsperrt werden.');
     transactionIds.add(transaction.id);
-    return transaction;
+    suppliedById.set(transaction.id, transaction);
+  });
+  if (transactionIds.size !== currentTransactions.length || currentTransactions.some((transaction) => !transactionIds.has(transaction.id))) {
+    throw new DomainValidationError('INVALID_COMMAND', 'Die Empfängerreferenzliste ist unvollständig.');
+  }
+  const transactions = currentTransactions.map((stored) => {
+    const supplied = suppliedById.get(stored.id)!;
+    if (supplied.revision !== stored.revision || supplied.spaceId !== stored.spaceId || supplied.payeeId !== stored.payeeId || supplied.clearance !== stored.clearance) {
+      throw new DomainValidationError('REVISION_CONFLICT', 'Eine Buchungsreferenz der Empfängerzusammenführung ist nicht mehr aktuell.');
+    }
+    if (stored.clearance === 'reconciled') throw new DomainValidationError('INVALID_COMMAND', 'Abgeglichene Buchungen müssen vor der Empfängerzusammenführung ausdrücklich entsperrt werden.');
+    return stored;
   });
 
   const aliases = normalizeAliases([
@@ -258,6 +284,11 @@ export function mergePayees(
     id: aggregate.id,
     expectedRevision: aggregate.revision - 1
   }));
+  const financialRevision = current.find((aggregate) => aggregate.id === input.spaceId);
+  if (financialRevision !== undefined && financialRevision.aggregateType !== 'financialRevision') {
+    throw new DomainValidationError('INVALID_AGGREGATE', 'Die reservierte lokale Finanzrevision ist nicht verfügbar.');
+  }
+  expectedRevisions.push({ id: input.spaceId, expectedRevision: financialRevision?.revision ?? 0 });
 
   return createChangeSet(
     {

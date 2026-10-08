@@ -6,6 +6,8 @@ Das Gesamtpaket ist erneut in Arbeit und nicht vollständig abgenommen. Die [akt
 
 ## Auftrag und Reihenfolge
 
+Der Fachfix für #75 ist umgesetzt und mit 13 Stammdatenfällen geprüft: vollständige gespeicherte Quellreferenzen, unveränderte Buchungsfelder, Tombstones und Finanz-CAS. Die gemeinsame echte Adapterabnahme bleibt Voraussetzung für den Issueabschluss; Fortschritt und Belege stehen im Issue. #76 bleibt offen.
+
 Diese Teilaufgaben konkretisieren [P2](tasks.md#p2--fachkern) nach der [P1-Vorlage](p1-foundation.md). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt den vollständigen Abschluss von P2. P2.1 bis P2.6 werden in Reihenfolge nach abgeschlossenem P1 bearbeitet. Die Fachquellen bleiben verbindlich; dieser Plan führt keine neuen Produktregeln ein.
 
 Nach jedem abgeschlossenen Abschnitt Status und konkrete Prüfbelege hier sowie den Gesamtstatus in [tasks.md](tasks.md) pflegen, einen zusammengehörigen Zwischencommit erstellen und mit der [Übergabevorlage](templates/handoff.md) den nächsten Schritt nennen. P2 ist erst nach allen Teilabnahmen und der Gesamt-Abnahme erledigt; danach folgt [P3](p3-storage.md). Für die Umsetzung den Skill wimm-finance verwenden.
