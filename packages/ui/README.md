@@ -98,6 +98,8 @@ Der separate Moduleinstieg `@wimm/ui/workspace` exportiert die Finanzansicht. Di
 
 ## Gesamtprüfung P4.6
 
+Die [Nachprüfung vom 8. Oktober 2026](../../docs/handoffs/p4-review-2026-10-08.md) trennt aktuelle Funktionsbelege von den verbleibenden Browser-, Screenreader-, Zoom-, Geräte- und nativen Plattformabnahmen. `check:all` führt die separate Produktionsbrowserabnahme `test:ui:acceptance` nicht aus; erfolgreiche Firefox-UX-Tests ersetzen deren Kernablauf-/Neustartnachweis nicht.
+
 Die mobile Hauptnavigation bleibt am unteren Bildschirmrand erreichbar und bietet Übersicht, Buchungen und Mehr. Mehr führt mit sichtbarem Fokus zu Konten, Kategorien und Empfängern; Budget folgt erst in P6. Ein eigener scrollbarer Inhaltsbereich endet oberhalb der Navigation; die untere sichere Fläche wird berücksichtigt. Mobile Buchungslisten zeigen große negative Beträge vollständig in einer eigenen Zeile. Lange Kategorienamen umbrechen auch im Detaildialog. Modale Dialoge halten Tab und Umschalt+Tab im obersten geöffneten Dialog.
 
 ```sh

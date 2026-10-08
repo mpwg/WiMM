@@ -4,6 +4,8 @@ WhereIsMyMoney ist ein geplanter Open-Source-Finanzmanager für Familien. Gemein
 
 **Projektstatus: P1 bis P3 abgeschlossen, P4 und P5 in Arbeit.** Der lokale Einstieg und P4.2.1 bis P4.2.7 sind einzeln abgenommen. Navigation und Stammdaten sind bei 320, 768, 900 und 1024 CSS-Pixeln geprüft; „System / Hell / Dunkel“ ist lokal wählbar. Bereichswechsel, Stammdaten und der Merge-Dialog sind per Tastatur bedienbar. P4.3 und P4.4 sind ebenfalls vollständig einzeln abgenommen: Buchungspflege, Transfers, Auswahlabgleich, bestätigte Korrektur/Entsperrung, Undo/Redo und Entwurfsschutz. Die [P4.4-Kriterienmatrix](docs/handoffs/p4-4.md) nennt Belege und Grenzen. P5.1–P5.6 sind implementiert: CSV/CAMT.053/OFX/QFX mit korrigierbarer Vorschau, gruppierter Übernahme/Wiederaufnahme, Regeln und Dauerzahlungen. Die [P5-Kriterienmatrix](docs/handoffs/p5.md) nennt Fach-/Speicher-/Offlinebelege, native macOS-Prüfungen und offene Firefox-, Geräte- und Screenreaderprüfungen. Budget, gemeinsame Kosten, Synchronisierung und die vollständige Plattformabnahme bleiben offen.
 
+Die [P4-Nachprüfung vom 8. Oktober 2026](docs/handoffs/p4-review-2026-10-08.md) bestätigt die vorhandenen Funktionen mit aktuellen Browser-/Speicher-/Layoutprüfungen. Für die vollständige Abnahme fehlen die separate Firefox-Kernablaufprüfung, Screenreader-Ansagen, die vollständige echte Zoommatrix sowie aktuelle native und physische Gerätenachweise. Eine grüne CI allein schließt P4 nicht ab.
+
 ## Geplantes Produkt
 
 - Webanwendung und installierbare, offlinefähige PWA.
