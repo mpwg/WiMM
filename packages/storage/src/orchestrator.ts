@@ -34,6 +34,7 @@ export class LocalAreaService {
     projections: readonly StoredProjection[] = []
   ): Promise<void> {
     if (changeSet.spaceId !== this.spaceId) throw new TypeError('Die Änderungsmenge gehört zu einem anderen Bereich.');
+    await this.initializeArea();
     const outbox = this.mode.connected ? [this.toPending(changeSet)] : [];
     await this.storage.applyAtomicBatch({
       expectedRevisions: changeSet.expectedRevisions.map((entry) => ({ handle: entry.id, expectedRevision: entry.expectedRevision })),
@@ -67,7 +68,12 @@ export class LocalAreaService {
   }
 
   async exportEncryptedSnapshot(protector: SnapshotProtector): Promise<Uint8Array> {
+    await this.initializeArea();
     return protector.seal(await this.storage.exportSnapshot(this.spaceId));
+  }
+
+  private initializeArea(): Promise<UUID> {
+    return this.storage.initializeArea(this.spaceId, this.mode.initialEpoch ?? crypto.randomUUID() as UUID);
   }
 
   async replaceEncryptedSnapshot(protector: SnapshotProtector, bytes: Uint8Array): Promise<void> {

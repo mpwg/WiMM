@@ -27,6 +27,8 @@ Routing und UI-Zustand bleiben von persistenten Fachdaten getrennt. Kontolisten 
 
 `StorageAdapter` bietet `readAggregate`, `query`, `applyAtomicBatch`, `loadConfirmed`, `loadPending`, `saveSyncPage`, `exportSnapshot`, `replaceSnapshot` und `rebuildProjections`. `applyAtomicBatch` prüft erwartete lokale Revisionen und schreibt Aggregate, Outbox und Projektionen gemeinsam. `saveSyncPage` schreibt alle Seitenänderungen samt Folgekursor in einer Transaktion.
 
+Der lokale Port ergänzt `initializeArea(spaceId, proposedEpoch)` für die atomare, idempotente Epochengrundlage gemäß [ADR-040](decisions.md#adr-040--dauerhafte-lokale-epoche-ohne-synczustand). Diese Metadaten benötigen weder Serveranmeldung noch Cursor oder Outbox und bleiben von den Finanzaggregaten getrennt.
+
 IndexedDB und SQLite auf Clients erfüllen dieselbe Fachspeicher-Contract-Suite. Die Desktopbrücke akzeptiert katalogisierte Batchtypen; die UI erhält keinen unbeschränkten SQL-/Dateizugriff. Der Server besitzt einen separaten CiphertextStore: opake Handles/Revisionen, verschlüsselte Bundles, öffentliche Manifeste, Receipts und Changes. Er committet diese atomar, niemals Finanzaggregate/Projektionen im Klartext.
 
 ## Datenfluss

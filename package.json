@@ -23,7 +23,7 @@
     "test:crypto": "pnpm --filter @wimm/crypto test",
     "test:domain": "pnpm --filter @wimm/domain test",
     "test:offline": "node --test scripts/service-worker.test.mjs",
-    "test:storage": "pnpm --filter @wimm/storage test",
+    "test:storage": "pnpm --filter @wimm/storage test && vitest run --config vitest.config.ts tests/storage",
     "test:ui": "node scripts/test-ui.mjs",
     "test:docs": "node --test scripts/check-documentation.test.mjs",
     "typecheck": "tsc --project tsconfig.json --noEmit",

@@ -6,6 +6,8 @@ Das Gesamtpaket ist erneut in Arbeit und nicht vollständig abgenommen. Die [akt
 
 ## Auftrag und Reihenfolge
 
+Für #78 ist die dauerhafte lokale Epochengrundlage gemäß ADR-040 implementiert, ohne künstliche Syncseite/Outbox und ohne Finanzschemaänderung. Bereichsstart und LocalAreaService initialisieren idempotent; Snapshotersatz übernimmt die Epoche atomar. 19 Speicher-/Schutzportfälle, zehn Rusttests und 18 echte Chromium-/IndexedDB-Fälle bestanden, darunter leere/befüllte Exporte mit libsodium, falscher Schlüssel ohne Write und erneutes Öffnen. Der gemeinsame verschlüsselte SQLite-Roundtrip bleibt in #85 nachzuweisen; #78 ist deshalb noch offen.
+
 Aktueller Behebungsabschnitt #77: Der vollständige DesktopStorageAdapter und alle katalogisierten lokalen Rust-Kommandos sind implementiert; native Composition nutzt denselben LocalStorageAdapter-Port wie die PWA. Bestätigte Daten besitzen eine eigene SQLite-Tabelle. Syncseiten, Cursor und Snapshotersatz werden atomar geschrieben; Snapshotlesen verwendet eine Transaktion. Neun Rusttests einschließlich echter SQLite-Dateineustarts, stale Batch, Seiten-/Snapshotrollback und Profiltrennung sowie 14 Speichertests, Typecheck, gezielter Lint, Rustformat und Clippy bestanden. Die gemeinsame Adapterkonformität bleibt in #85 offen; lokale Epochengrundlage, vollständige Snapshotvalidierung und Projektionsneuaufbau werden in #78/#80/#81 verfolgt. Die native GUI-Abnahme ist damit nicht behauptet.
 
 Diese Teilaufgaben konkretisieren [P3](tasks.md#p3--speicher-und-offlinebasis). Der Nutzerauftrag vom 3. Oktober 2026 erlaubt den vollständigen Abschluss von P3. P3.1 bis P3.6 werden in Reihenfolge nach abgeschlossenem [P2](p2-domain.md) bearbeitet. Maßgeblich bleiben die verlinkten Fach-, Speicher- und E2EE-Verträge.

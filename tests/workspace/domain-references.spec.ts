@@ -21,3 +21,10 @@ test('committet vollständige Empfängeränderung mit erhaltenen Buchungsfeldern
   await page.goto('/tests/domain-regressions.html'); await page.waitForFunction(() => window.domainRegression !== undefined);
   expect(await page.evaluate(() => window.domainRegression('merge-complete'))).toMatchObject({ code: 'OK', sourceArchived: true, transaction: { amount: -100, date: '2026-10-08', clearance: 'cleared', note: 'Historische Testbuchung', payeeId: '00000000-0000-4000-8000-000000000007', revision: 2 } });
 });
+
+for (const filled of [false, true]) {
+  test(`exportiert ${filled ? 'befüllte' : 'leere'} lokale Bereiche verschlüsselt und erhält Epoche bei Neustart`, async ({ page }) => {
+    await page.goto('/tests/domain-regressions.html'); await page.waitForFunction(() => window.localSnapshotRegression !== undefined);
+    expect(await page.evaluate((value) => window.localSnapshotRegression(value), filled)).toEqual({ epoch: '00000000-0000-4000-8000-000000000095', stableEpoch: true, wrongKeyRejected: true, unchanged: true, noOutbox: true, noSyncState: true, encrypted: true });
+  });
+}

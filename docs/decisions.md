@@ -181,3 +181,15 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 - Betroffene Verträge/Pakete: [Fachmodell](domain.md), [lokaler Fachport](api.md#lokaler-finanzbestandsport), [lokales Datenmodell](data-model.md), P2/P3/P4 und Audit B02.
 - Migration und Kompatibilität: vorhandene Bereiche erhalten die lokale Revision erst beim ersten erfolgreichen Finanzcommit; vorhandene Finanz-/Schlüsselaggregate werden nicht umgeschrieben. Die Revision bleibt lokal und darf bei späterem P9 nicht als gemeinsames Finanzaggregat oder globale Sync-CAS-Revision übertragen werden. Empfangene Finanzänderungen müssen weiterhin vor dem lokalen Commit als kombinierter Bestand geprüft werden. Alte parallel laufende Appversionen besitzen diesen Schutz nicht.
 - Prüfung: parallele Grenzwrites auf bestehenden Konten, neue Konten mit Anfangsbestand und zwei gleichzeitige erste Konten; genau ein vollständiger Erfolg, keine Teilwrites. Undo/Redo, Speicherfehler und echte Adapterintegration bleiben Pflicht.
+
+## ADR-040 — Dauerhafte lokale Epoche ohne Synczustand
+
+- Datum: 8. Oktober 2026. Status: angenommen.
+- Herkunft: Nutzerauftrag zur Issuebehebung; reproduzierter Standalone-Exportfehler #78.
+- Problem: lokale Bereiche besitzen keine bestätigten Serverdaten und keinen Cursor. Der Snapshotexport konnte deshalb trotz `initialEpoch` keine Epoche liefern.
+- Entscheidung: `LocalStorageAdapter.initializeArea(spaceId, proposedEpoch)` speichert atomar eine profil- und bereichsgebundene lokale Epoche und gibt die bereits bestehende oder erstmals gewählte Epoche zurück. Bestehende Sync-/Bestätigungsepochen haben beim kompatiblen Erstaufbau Vorrang. Lokale Metadaten und Synczustand bleiben logisch getrennt; eine lokale Initialisierung erzeugt keine Syncseite oder Outbox. Der Bereichsstart und LocalAreaService rufen die idempotente Initialisierung auf. Snapshotersatz übernimmt die Snapshotepoche atomar mit dem übrigen Bestand.
+- Alternativen: eine künstliche Syncseite würde Standalonezustand und Transportcursor vermischen; ein nur flüchtiger Exportfallback würde nach Neustarts wechselnde Epochen liefern.
+- Folgen: auch leere lokale Bereiche erhalten einen stabilen Snapshotkontext. Export bleibt ausschließlich über SnapshotProtector verfügbar; vor erfolgreicher Entschlüsselung wird beim Restore nichts geschrieben.
+- Betroffene Verträge/Pakete: [Speicherports](architecture.md#speicherports), [lokales Datenmodell](data-model.md), P3 und #78–#80.
+- Migration und Kompatibilität: zusätzliche Metadatenfelder in vorhandenen Stores, keine Änderung der Finanzaggregate oder Snapshotversion. Bestehende Bereiche werden beim nächsten Öffnen/Export idempotent ergänzt; vorhandene Schlüssel, Bestätigungsdaten und Cursor bleiben erhalten.
+- Prüfung: leerer/befüllter Standalone-Export, Neustart, gleichzeitige Initialisierung, historische Bereiche mit vorhandener Epoche und verschlüsselter Roundtrip mit falschem Schlüssel ohne Write auf IndexedDB und SQLite.

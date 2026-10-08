@@ -74,6 +74,7 @@ type View = 'overview' | 'accounts' | 'categories' | 'payees' | 'transactions' |
  * weder IndexedDB noch Tauri und hält lediglich ihren Navigationszustand selbst.
  */
 export interface WorkspaceStorage {
+  initializeArea?(spaceId: UUID, proposedEpoch: UUID): Promise<UUID>;
   query(query: { readonly spaceId: UUID }): Promise<readonly StoredAggregate[]>;
   applyAtomicBatch(batch: AtomicBatch<StoredAggregate, PendingOperation, StoredProjection>): Promise<void>;
   close?(): Promise<void>;
@@ -129,7 +130,7 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   const storage = useMemo(() => storageForProfile(context.profile.profileId as UUID), [storageForProfile, context.profile.profileId]);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const reload = useCallback(async () => {
-    try { setState('loading'); const loaded = await storage.query({ spaceId: context.activeArea.id as UUID }); aggregatesRef.current = loaded; setAggregates(loaded); setState('ready'); }
+    try { setState('loading'); await storage.initializeArea?.(context.activeArea.id as UUID, crypto.randomUUID() as UUID); const loaded = await storage.query({ spaceId: context.activeArea.id as UUID }); aggregatesRef.current = loaded; setAggregates(loaded); setState('ready'); }
     catch { setMessage('Die lokalen Daten konnten nicht gelesen werden.'); setState('error'); }
   }, [storage, context.activeArea.id]);
   useEffect(() => {

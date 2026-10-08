@@ -9,6 +9,7 @@
     "core:event:allow-listen",
     "core:event:allow-unlisten",
     "allow-storage-apply-batch",
+    "allow-storage-initialize-area",
     "allow-storage-read-aggregate",
     "allow-storage-query-aggregates",
     "allow-storage-load-confirmed",

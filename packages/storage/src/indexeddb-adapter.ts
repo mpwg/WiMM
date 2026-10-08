@@ -20,7 +20,7 @@ interface AggregateRow { profileId: UUID; handle: UUID; spaceId: UUID; payload: 
 interface ConfirmedRow { profileId: UUID; handle: UUID; spaceId: UUID; payload: ConfirmedAggregate; }
 interface PendingRow { profileId: UUID; operationId: UUID; spaceId: UUID; payload: PendingOperation; }
 interface ProjectionRow { profileId: UUID; spaceId: UUID; kind: string; key: string; payload: StoredProjection; }
-interface SyncRow { profileId: UUID; spaceId: UUID; payload: SyncState; }
+interface SyncRow { profileId: UUID; spaceId: UUID; payload?: SyncState; localEpoch?: UUID; }
 
 class WimmDexie extends Dexie {
   aggregates!: Table<AggregateRow, [UUID, UUID]>;
@@ -49,6 +49,16 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
   constructor(profileId: UUID, databaseName = `wimm-${profileId}`) {
     this.profileId = profileId;
     this.db = new WimmDexie(databaseName);
+  }
+
+  async initializeArea(spaceId: UUID, proposedEpoch: UUID): Promise<UUID> {
+    return this.db.transaction('rw', this.db.syncStates, this.db.confirmed, async () => {
+      const row = await this.db.syncStates.get([this.profileId, spaceId]);
+      const confirmed = await this.db.confirmed.where('[profileId+spaceId]').equals([this.profileId, spaceId]).first();
+      const epoch = row?.localEpoch ?? row?.payload?.epoch ?? confirmed?.payload.epoch ?? proposedEpoch;
+      await this.db.syncStates.put({ ...row, profileId: this.profileId, spaceId, localEpoch: epoch });
+      return epoch;
+    });
   }
 
   async readAggregate(handle: UUID): Promise<StoredAggregate | undefined> {
@@ -88,7 +98,7 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
         await this.db.confirmed.bulkPut(page.confirmed.map((payload) => ({ profileId: this.profileId, handle: payload.aggregate.handle, spaceId: payload.spaceId, payload })));
         await this.db.pending.bulkDelete(page.removeOperationIds.map((id) => [this.profileId, id] as [UUID, UUID]));
         await this.db.projections.bulkPut(page.projections.map((payload) => ({ profileId: this.profileId, spaceId: payload.spaceId, kind: payload.kind, key: payload.key, payload })));
-        await this.db.syncStates.put({ profileId: this.profileId, spaceId: page.state.spaceId, payload: page.state });
+        await this.db.syncStates.put({ profileId: this.profileId, spaceId: page.state.spaceId, payload: page.state, localEpoch: page.state.epoch });
       }
     ));
   }
@@ -100,7 +110,7 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
   async exportSnapshot(spaceId: UUID): Promise<LocalSnapshot> {
     const syncState = await this.getSyncState(spaceId);
     const confirmed = await this.loadConfirmed(spaceId);
-    const epoch = syncState?.epoch ?? confirmed[0]?.epoch;
+    const epoch = syncState?.epoch ?? (await this.db.syncStates.get([this.profileId, spaceId]))?.localEpoch ?? confirmed[0]?.epoch;
     if (epoch === undefined) throw new StorageWriteError('Für den Bereich fehlt eine Epoche.');
     return {
       storageSchemaVersion: 1, domainSchemaVersion: 1, profileId: this.profileId, spaceId, epoch,
@@ -124,7 +134,7 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
         await this.db.confirmed.bulkPut(snapshot.confirmed.map((payload) => ({ profileId: this.profileId, handle: payload.aggregate.handle, spaceId: payload.spaceId, payload })));
         await this.db.pending.bulkPut(snapshot.pending.map((payload) => ({ profileId: this.profileId, operationId: payload.operationId, spaceId: payload.spaceId, payload })));
         await this.db.projections.bulkPut(snapshot.projections.map((payload) => ({ profileId: this.profileId, spaceId: payload.spaceId, kind: payload.kind, key: payload.key, payload })));
-        if (snapshot.syncState !== undefined) await this.db.syncStates.put({ profileId: this.profileId, spaceId: snapshot.spaceId, payload: snapshot.syncState });
+        await this.db.syncStates.put({ profileId: this.profileId, spaceId: snapshot.spaceId, ...(snapshot.syncState === undefined ? {} : { payload: snapshot.syncState }), localEpoch: snapshot.epoch });
       }
     ));
   }

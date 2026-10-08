@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-use rusqlite::{Connection, OptionalExtension, Transaction, params};
+use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior, params};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Mutex;
@@ -290,6 +290,56 @@ fn get_sync_state(
         .map_err(storage_error)
 }
 
+fn local_epoch_key(profile_id: &str, space_id: &str) -> String {
+    format!("localEpoch:{}", serde_json::json!([profile_id, space_id]))
+}
+
+fn get_local_epoch(
+    connection: &Connection,
+    profile_id: &str,
+    space_id: &str,
+) -> Result<Option<String>, String> {
+    connection
+        .query_row(
+            "SELECT value FROM storage_meta WHERE key = ?1",
+            [local_epoch_key(profile_id, space_id)],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(storage_error)
+}
+
+fn write_local_epoch(
+    transaction: &Transaction<'_>,
+    profile_id: &str,
+    space_id: &str,
+    epoch: &str,
+) -> Result<(), String> {
+    transaction.execute("INSERT INTO storage_meta(key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = excluded.value", params![local_epoch_key(profile_id, space_id), epoch]).map_err(storage_error)?;
+    Ok(())
+}
+
+fn initialize_area(
+    connection: &mut Connection,
+    profile_id: &str,
+    space_id: &str,
+    proposed_epoch: &str,
+) -> Result<String, String> {
+    let transaction = connection
+        .transaction_with_behavior(TransactionBehavior::Immediate)
+        .map_err(storage_error)?;
+    let local = get_local_epoch(&transaction, profile_id, space_id)?;
+    let state = get_sync_state(&transaction, profile_id, space_id)?;
+    let confirmed: Option<String> = transaction.query_row("SELECT epoch FROM confirmed WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle LIMIT 1", params![profile_id, space_id], |row| row.get(0)).optional().map_err(storage_error)?;
+    let epoch = local
+        .or_else(|| state.map(|state| state.epoch))
+        .or(confirmed)
+        .unwrap_or_else(|| proposed_epoch.into());
+    write_local_epoch(&transaction, profile_id, space_id, &epoch)?;
+    transaction.commit().map_err(storage_error)?;
+    Ok(epoch)
+}
+
 fn write_sync_state(transaction: &Transaction<'_>, state: &SyncState) -> Result<(), String> {
     transaction.execute("INSERT INTO sync_state(profile_id, space_id, epoch, cursor) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(profile_id, space_id) DO UPDATE SET epoch = excluded.epoch, cursor = excluded.cursor", params![state.profile_id, state.space_id, state.epoch, state.cursor]).map_err(storage_error)?;
     Ok(())
@@ -355,6 +405,12 @@ fn save_sync_page(
         },
     )?;
     write_sync_state(&transaction, &page.state)?;
+    write_local_epoch(
+        &transaction,
+        profile_id,
+        &page.state.space_id,
+        &page.state.epoch,
+    )?;
     transaction.commit().map_err(storage_error)
 }
 
@@ -375,9 +431,11 @@ fn export_snapshot(
     .map(serde_json::from_value)
     .collect::<Result<_, _>>()
     .map_err(storage_error)?;
+    let local_epoch = get_local_epoch(&transaction, profile_id, space_id)?;
     let epoch = sync_state
         .as_ref()
         .map(|state| state.epoch.clone())
+        .or(local_epoch)
         .or_else(|| confirmed.first().map(|entry| entry.epoch.clone()))
         .ok_or("Für den Bereich fehlt eine Epoche.")?;
     let aggregates = read_rows(&transaction, "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile_id, space_id)?.into_iter().map(serde_json::from_value).collect::<Result<_, _>>().map_err(storage_error)?;
@@ -463,10 +521,27 @@ fn replace_snapshot(
             projections: snapshot.projections,
         },
     )?;
+    write_local_epoch(
+        &transaction,
+        profile_id,
+        &snapshot.space_id,
+        &snapshot.epoch,
+    )?;
     if let Some(state) = snapshot.sync_state {
         write_sync_state(&transaction, &state)?;
     }
     transaction.commit().map_err(storage_error)
+}
+
+#[tauri::command]
+pub fn storage_initialize_area(
+    state: tauri::State<'_, StorageState>,
+    profile_id: String,
+    space_id: String,
+    proposed_epoch: String,
+) -> Result<String, String> {
+    let mut connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
+    initialize_area(&mut connection, &profile_id, &space_id, &proposed_epoch)
 }
 
 #[tauri::command]
@@ -574,6 +649,32 @@ mod tests {
 
     fn snapshot_value(connection: &mut Connection, profile_id: &str) -> Value {
         serde_json::to_value(export_snapshot(connection, profile_id, "s").unwrap()).unwrap()
+    }
+
+    #[test]
+    fn sqlite_lokale_epoche_benoetigt_keinen_cursor_und_bleibt_nach_neustart_erhalten() {
+        let directory = tempfile::tempdir_in(".").unwrap();
+        let path = directory.path().join("lokale-epoche.sqlite3");
+        {
+            let mut connection = Connection::open(&path).unwrap();
+            initialize_storage(&connection).unwrap();
+            assert_eq!(
+                initialize_area(&mut connection, "p", "s", "local").unwrap(),
+                "local"
+            );
+            let snapshot = snapshot_value(&mut connection, "p");
+            assert_eq!(snapshot["epoch"], "local");
+            assert_eq!(snapshot["syncState"], Value::Null);
+            assert_eq!(snapshot["pending"], serde_json::json!([]));
+            assert_eq!(snapshot["aggregates"], serde_json::json!([]));
+        }
+        let mut connection = Connection::open(&path).unwrap();
+        initialize_storage(&connection).unwrap();
+        assert_eq!(
+            initialize_area(&mut connection, "p", "s", "other").unwrap(),
+            "local"
+        );
+        assert_eq!(snapshot_value(&mut connection, "p")["epoch"], "local");
     }
 
     #[test]

@@ -25,9 +25,18 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
   private pending = new Map<UUID, PendingOperation>();
   private projections = new Map<string, StoredProjection>();
   private syncStates = new Map<UUID, SyncState>();
+  private localEpochs = new Map<UUID, UUID>();
 
   constructor(profileId: UUID, private readonly faults: StorageFaultInjector = {}) {
     this.profileId = profileId;
+  }
+
+  initializeArea(spaceId: UUID, proposedEpoch: UUID): Promise<UUID> {
+    return this.serialize(async () => {
+      const epoch = this.localEpochs.get(spaceId) ?? this.syncStates.get(spaceId)?.epoch ?? snapshotEpoch(this.confirmed, spaceId) ?? proposedEpoch;
+      this.localEpochs.set(spaceId, epoch);
+      return epoch;
+    });
   }
 
   async readAggregate(handle: UUID): Promise<StoredAggregate | undefined> {
@@ -73,6 +82,7 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
     for (const id of page.removeOperationIds) next.pending.delete(id);
     for (const projection of page.projections) next.projections.set(projectionKey(projection), clone(projection)!);
     next.syncStates.set(page.state.spaceId, clone(page.state)!);
+    next.localEpochs.set(page.state.spaceId, page.state.epoch);
     await this.faults.beforeCommit?.('saveSyncPage');
     this.replace(next);
   }
@@ -83,7 +93,7 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
 
   async exportSnapshot(spaceId: UUID): Promise<LocalSnapshot> {
     const state = this.syncStates.get(spaceId);
-    const epoch = state?.epoch ?? snapshotEpoch(this.confirmed, spaceId);
+    const epoch = state?.epoch ?? this.localEpochs.get(spaceId) ?? snapshotEpoch(this.confirmed, spaceId);
     if (epoch === undefined) throw new StorageWriteError('Für den Bereich fehlt eine Epoche.');
     return {
       storageSchemaVersion: 1,
@@ -112,6 +122,7 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
     for (const pending of snapshot.pending) next.pending.set(pending.operationId, clone(pending)!);
     for (const projection of snapshot.projections) next.projections.set(projectionKey(projection), clone(projection)!);
     if (snapshot.syncState !== undefined) next.syncStates.set(snapshot.spaceId, clone(snapshot.syncState)!);
+    next.localEpochs.set(snapshot.spaceId, snapshot.epoch);
     await this.faults.beforeCommit?.('replaceSnapshot');
     this.replace(next);
   }
@@ -124,9 +135,9 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
     for (const [key, projection] of this.projections) if (projection.spaceId === spaceId) this.projections.delete(key);
   }
 
-  private serialize(action: () => Promise<void>): Promise<void> {
+  private serialize<T>(action: () => Promise<T>): Promise<T> {
     const result = this.writes.then(action);
-    this.writes = result.catch(() => {});
+    this.writes = result.then(() => {}, () => {});
     return result;
   }
 
@@ -137,6 +148,7 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
     copy.pending = cloneMap(this.pending);
     copy.projections = cloneMap(this.projections);
     copy.syncStates = cloneMap(this.syncStates);
+    copy.localEpochs = cloneMap(this.localEpochs);
     return copy;
   }
 
@@ -146,6 +158,7 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
     this.pending = other.pending;
     this.projections = other.projections;
     this.syncStates = other.syncStates;
+    this.localEpochs = other.localEpochs;
   }
 
   private clearSpace(spaceId: UUID): void {
@@ -154,6 +167,7 @@ export class MemoryStorageAdapter implements LocalStorageAdapter {
     for (const [key, entry] of this.pending) if (entry.spaceId === spaceId) this.pending.delete(key);
     for (const [key, entry] of this.projections) if (entry.spaceId === spaceId) this.projections.delete(key);
     this.syncStates.delete(spaceId);
+    this.localEpochs.delete(spaceId);
   }
 }
 

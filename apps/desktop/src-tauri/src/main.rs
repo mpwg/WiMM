@@ -159,6 +159,7 @@ fn main() {
             platform_open_url,
             platform_set_menu,
             storage::storage_apply_batch,
+            storage::storage_initialize_area,
             storage::storage_read_aggregate,
             storage::storage_query_aggregates,
             storage::storage_load_confirmed,

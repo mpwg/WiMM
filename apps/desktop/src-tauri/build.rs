@@ -3,6 +3,7 @@ fn main() {
     tauri_build::try_build(tauri_build::Attributes::new().app_manifest(
         tauri_build::AppManifest::new().commands(&[
             "storage_apply_batch",
+            "storage_initialize_area",
             "storage_read_aggregate",
             "storage_query_aggregates",
             "storage_load_confirmed",

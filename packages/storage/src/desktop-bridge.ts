@@ -7,6 +7,7 @@ import { StorageRevisionConflictError, StorageWriteError } from './contracts.js'
 
 /** Begrenzter Desktopport; sein Rust-Gegenstück akzeptiert keine SQL- oder Pfadkommandos. */
 export interface DesktopStorageBridge {
+  initializeArea(profileId: UUID, spaceId: UUID, proposedEpoch: UUID): Promise<UUID>;
   applyBatch(input: {
     readonly profileId: UUID;
     readonly expectedRevisions: AtomicBatch<StoredAggregate, PendingOperation, StoredProjection>['expectedRevisions'];
@@ -25,7 +26,7 @@ export interface DesktopStorageBridge {
   rebuildProjections(profileId: UUID, spaceId: UUID): Promise<void>;
 }
 
-export type DesktopStorageCommand = 'storage_apply_batch' | 'storage_read_aggregate' | 'storage_query_aggregates' | 'storage_load_confirmed' | 'storage_load_pending' | 'storage_save_sync_page' | 'storage_get_sync_state' | 'storage_export_snapshot' | 'storage_replace_snapshot' | 'storage_rebuild_projections';
+export type DesktopStorageCommand = 'storage_initialize_area' | 'storage_apply_batch' | 'storage_read_aggregate' | 'storage_query_aggregates' | 'storage_load_confirmed' | 'storage_load_pending' | 'storage_save_sync_page' | 'storage_get_sync_state' | 'storage_export_snapshot' | 'storage_replace_snapshot' | 'storage_rebuild_projections';
 
 /** Adapter für Tauri invoke; die Aufrufer sehen nur den katalogisierten Speicherumfang. */
 export function createTauriStorageBridge(
@@ -39,6 +40,7 @@ export function createTauriStorageBridge(
     }
   }
   return {
+    initializeArea: (profileId, spaceId, proposedEpoch) => call('storage_initialize_area', { profileId, spaceId, proposedEpoch }),
     async applyBatch(input) {
       await call<void>('storage_apply_batch', { batch: input });
     },
@@ -64,6 +66,7 @@ export function createTauriStorageBridge(
 /** Die appweit verwaltete SQLite-Verbindung bleibt beim Schließen eines Profilports bestehen. */
 export class DesktopStorageAdapter implements LocalStorageAdapter {
   constructor(readonly profileId: UUID, private readonly bridge: DesktopStorageBridge) {}
+  initializeArea(spaceId: UUID, proposedEpoch: UUID) { return this.bridge.initializeArea(this.profileId, spaceId, proposedEpoch); }
   readAggregate(handle: UUID) { return this.bridge.readAggregate(this.profileId, handle); }
   query({ spaceId }: { readonly spaceId: UUID }) { return this.bridge.queryAggregates(this.profileId, spaceId); }
   applyAtomicBatch(batch: AtomicBatch<StoredAggregate, PendingOperation, StoredProjection>) { return this.bridge.applyBatch({ profileId: this.profileId, ...batch }); }

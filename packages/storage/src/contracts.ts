@@ -78,6 +78,7 @@ export interface LocalStorageAdapter extends StorageAdapter<
   StoredProjection
 > {
   readonly profileId: UUID;
+  initializeArea(spaceId: UUID, proposedEpoch: UUID): Promise<UUID>;
   applyAtomicBatch(batch: AtomicBatch<StoredAggregate, PendingOperation, StoredProjection>): Promise<void>;
   getSyncState(spaceId: UUID): Promise<SyncState | undefined>;
 }
