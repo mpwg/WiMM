@@ -42,3 +42,10 @@ for (const scenario of mergeCases) {
     await expect(runMergeCase(scenario, await sqliteFixture())).resolves.toBeUndefined();
   }, 30_000);
 }
+
+import { runVersionCase, versionCases } from './contracts/version-catalog.js';
+for (const scenario of versionCases) {
+  it(`Echter DesktopStorageAdapter/Rust/SQLite: unbekannte ${scenario}-Version`, async () => {
+    await expect(runVersionCase(scenario, await sqliteFixture())).resolves.toBeUndefined();
+  }, 30_000);
+}

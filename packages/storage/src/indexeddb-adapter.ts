@@ -22,14 +22,15 @@ interface AggregateRow { profileId: UUID; handle: UUID; spaceId: UUID; payload: 
 interface ConfirmedRow { profileId: UUID; handle: UUID; spaceId: UUID; payload: ConfirmedAggregate; }
 interface PendingRow { profileId: UUID; operationId: UUID; spaceId: UUID; payload: PendingOperation; }
 interface ProjectionRow { profileId: UUID; spaceId: UUID; kind: string; key: string; payload: StoredProjection; }
-interface SyncRow { profileId: UUID; spaceId: UUID; payload?: SyncState; localEpoch?: UUID; }
+const SCHEMA_KEY = 'wimm:storage-schema';
+interface SyncRow { profileId: string; spaceId: string; payload?: SyncState; localEpoch?: UUID; versions?: { storageSchemaVersion: number; domainSchemaVersion: number }; }
 
 class WimmDexie extends Dexie {
   aggregates!: Table<AggregateRow, [UUID, UUID]>;
   confirmed!: Table<ConfirmedRow, [UUID, UUID]>;
   pending!: Table<PendingRow, [UUID, UUID]>;
   projections!: Table<ProjectionRow, [UUID, UUID, string, string]>;
-  syncStates!: Table<SyncRow, [UUID, UUID]>;
+  syncStates!: Table<SyncRow, [string, string]>;
 
   constructor(name: string) {
     super(name);
@@ -54,22 +55,21 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
   }
 
   async initializeArea(spaceId: UUID, proposedEpoch: UUID): Promise<UUID> {
-    return this.db.transaction('rw', this.db.syncStates, this.db.confirmed, async () => {
+    return this.checked('rw', async () => this.db.transaction('rw', this.db.syncStates, this.db.confirmed, async () => {
       const row = await this.db.syncStates.get([this.profileId, spaceId]);
       const confirmed = await this.db.confirmed.where('[profileId+spaceId]').equals([this.profileId, spaceId]).first();
       const epoch = row?.localEpoch ?? row?.payload?.epoch ?? confirmed?.payload.epoch ?? proposedEpoch;
       await this.db.syncStates.put({ ...row, profileId: this.profileId, spaceId, localEpoch: epoch });
       return epoch;
-    });
+    }));
   }
 
   async readAggregate(handle: UUID): Promise<StoredAggregate | undefined> {
-    return (await this.db.aggregates.get([this.profileId, handle]))?.payload;
+    return this.checked('r', async () => (await this.db.aggregates.get([this.profileId, handle]))?.payload);
   }
 
   async query(query: { readonly spaceId: UUID }): Promise<readonly StoredAggregate[]> {
-    return (await this.db.aggregates.where('[profileId+spaceId]').equals([this.profileId, query.spaceId]).toArray())
-      .map((entry) => entry.payload);
+    return this.checked('r', async () => (await this.db.aggregates.where('[profileId+spaceId]').equals([this.profileId, query.spaceId]).toArray()).map((entry) => entry.payload));
   }
 
   async applyAtomicBatch(batch: AtomicBatch<StoredAggregate, PendingOperation, StoredProjection>): Promise<void> {
@@ -85,11 +85,11 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
   }
 
   async loadConfirmed(spaceId: UUID): Promise<readonly ConfirmedAggregate[]> {
-    return (await this.db.confirmed.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray()).map((entry) => entry.payload);
+    return this.checked('r', async () => (await this.db.confirmed.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray()).map((entry) => entry.payload));
   }
 
   async loadPending(spaceId: UUID): Promise<readonly PendingOperation[]> {
-    return (await this.db.pending.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray()).map((entry) => entry.payload);
+    return this.checked('r', async () => (await this.db.pending.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray()).map((entry) => entry.payload));
   }
 
   async saveSyncPage(page: SyncPage): Promise<void> {
@@ -106,11 +106,11 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
   }
 
   async getSyncState(spaceId: UUID): Promise<SyncState | undefined> {
-    return (await this.db.syncStates.get([this.profileId, spaceId]))?.payload;
+    return this.checked('r', async () => (await this.db.syncStates.get([this.profileId, spaceId]))?.payload);
   }
 
   async exportSnapshot(spaceId: UUID): Promise<LocalSnapshot> {
-    return this.db.transaction('r', [this.db.aggregates, this.db.confirmed, this.db.pending, this.db.projections, this.db.syncStates], async () => {
+    return this.checked('r', async () => {
       const [row, aggregates, confirmed, pending, projections] = await Promise.all([
         this.db.syncStates.get([this.profileId, spaceId]),
         this.db.aggregates.where('[profileId+spaceId]').equals([this.profileId, spaceId]).toArray(),
@@ -169,8 +169,20 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter {
 
   async close(): Promise<void> { this.db.close(); }
 
+  private checked<T>(mode: 'r' | 'rw', operation: () => Promise<T>): Promise<T> {
+    return this.db.transaction(mode, this.db.tables, async () => {
+      const row = await this.db.syncStates.get([SCHEMA_KEY, SCHEMA_KEY]);
+      if (row !== undefined && (row.versions?.storageSchemaVersion !== 1 || row.versions.domainSchemaVersion !== 1)) {
+        throw new StorageWriteError('Die Storage- oder Fachversion wird nicht unterstützt. Bitte eine passende Appversion verwenden; der vorhandene Stand bleibt erhalten.');
+      }
+      // Additive V1-Metadaten; kein Reset, keine neue Dexie-Version und keine Finanzmigration.
+      if (row === undefined && mode === 'rw') await this.db.syncStates.add({ profileId: SCHEMA_KEY, spaceId: SCHEMA_KEY, versions: { storageSchemaVersion: 1, domainSchemaVersion: 1 } });
+      return operation();
+    });
+  }
+
   private async write(operation: () => Promise<unknown>): Promise<void> {
-    try { await operation(); }
+    try { await this.checked('rw', operation); }
     catch (error) {
       if (error instanceof DOMException && error.name === 'QuotaExceededError') {
         throw new StorageWriteError('Der Browserspeicher ist voll. Eingaben bleiben erhalten.', 'QUOTA');

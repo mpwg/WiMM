@@ -65,3 +65,12 @@ for (const scenario of mergeCases) {
     await expect(page.evaluate((value) => window.storageMergeContract(value), scenario)).resolves.toBeUndefined();
   });
 }
+
+import { versionCases } from '../storage/contracts/version-catalog.js';
+for (const scenario of versionCases) {
+  test(`Gemeinsame echte Versionsabweisung: ${scenario}`, async ({ page }) => {
+    await page.goto('/tests/domain-regressions.html');
+    await page.waitForFunction(() => window.storageVersionContract !== undefined);
+    await expect(page.evaluate((value) => window.storageVersionContract(value), scenario)).resolves.toBeUndefined();
+  });
+}

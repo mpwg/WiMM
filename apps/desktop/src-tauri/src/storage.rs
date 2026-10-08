@@ -78,10 +78,48 @@ fn storage_error(error: impl std::fmt::Display) -> String {
     format!("Speicherfehler: {error}")
 }
 
+fn assert_supported_schema(connection: &Connection) -> rusqlite::Result<()> {
+    let has_meta: bool = connection.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'storage_meta')",
+        [],
+        |row| row.get(0),
+    )?;
+    if !has_meta {
+        let has_data: bool = connection.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name IN ('aggregates', 'confirmed', 'outbox', 'projections', 'sync_state'))", [], |row| row.get(0))?;
+        if !has_data {
+            return Ok(());
+        }
+        return Err(rusqlite::Error::InvalidParameterName(
+            "Die Speicherversion fehlt. Der vorhandene Stand bleibt erhalten.".into(),
+        ));
+    }
+    let storage: Option<String> = connection
+        .query_row(
+            "SELECT value FROM storage_meta WHERE key = 'storageSchemaVersion'",
+            [],
+            |row| row.get(0),
+        )
+        .optional()?;
+    let domain: Option<String> = connection
+        .query_row(
+            "SELECT value FROM storage_meta WHERE key = 'domainSchemaVersion'",
+            [],
+            |row| row.get(0),
+        )
+        .optional()?;
+    // Vorhandene V1-Datenbanken ohne gesonderte Fachversionszeile sind bekannte Legacybestände.
+    if storage.as_deref() != Some("1") || domain.as_deref().is_some_and(|version| version != "1") {
+        return Err(rusqlite::Error::InvalidParameterName("Die Storage- oder Fachversion wird nicht unterstützt. Bitte eine passende Appversion verwenden; der vorhandene Stand bleibt erhalten.".into()));
+    }
+    Ok(())
+}
+
 pub fn initialize_storage(connection: &Connection) -> rusqlite::Result<()> {
-    connection.execute_batch(
-        "PRAGMA foreign_keys = ON;
-         CREATE TABLE IF NOT EXISTS storage_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+    assert_supported_schema(connection)?;
+    connection.pragma_update(None, "foreign_keys", "ON")?;
+    let transaction = connection.unchecked_transaction()?;
+    transaction.execute_batch(
+        "CREATE TABLE IF NOT EXISTS storage_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
          CREATE TABLE IF NOT EXISTS aggregates (
            profile_id TEXT NOT NULL, handle TEXT NOT NULL, space_id TEXT NOT NULL,
            revision INTEGER NOT NULL CHECK(revision >= 1), payload TEXT NOT NULL,
@@ -110,11 +148,8 @@ pub fn initialize_storage(connection: &Connection) -> rusqlite::Result<()> {
            PRIMARY KEY(profile_id, space_id)
          );",
     )?;
-    connection.execute(
-        "INSERT OR IGNORE INTO storage_meta(key, value) VALUES ('storageSchemaVersion', '1')",
-        [],
-    )?;
-    Ok(())
+    transaction.execute("INSERT OR IGNORE INTO storage_meta(key, value) VALUES ('storageSchemaVersion', '1'), ('domainSchemaVersion', '1')", [])?;
+    transaction.commit()
 }
 
 fn assert_expected_revisions(
@@ -150,12 +185,14 @@ pub fn storage_apply_batch(
 }
 
 fn apply_batch(connection: &mut Connection, batch: StorageBatch) -> Result<(), String> {
+    assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection.transaction().map_err(storage_error)?;
     write_batch(&transaction, &batch)?;
     transaction.commit().map_err(storage_error)
 }
 
 fn write_batch(transaction: &Transaction<'_>, batch: &StorageBatch) -> Result<(), String> {
+    assert_supported_schema(transaction).map_err(storage_error)?;
     assert_expected_revisions(transaction, batch)?;
     for aggregate in &batch.aggregates {
         let payload = serde_json::to_string(aggregate).map_err(storage_error)?;
@@ -216,6 +253,7 @@ pub fn storage_read_aggregate(
         .0
         .lock()
         .map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
+    assert_supported_schema(&connection).map_err(storage_error)?;
     connection
         .query_row(
             "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND handle = ?2",
@@ -238,6 +276,7 @@ pub fn storage_query_aggregates(
         .0
         .lock()
         .map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
+    assert_supported_schema(&connection).map_err(storage_error)?;
     let mut statement = connection
         .prepare("SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2")
         .map_err(storage_error)?;
@@ -257,6 +296,7 @@ fn read_rows(
     profile_id: &str,
     space_id: &str,
 ) -> Result<Vec<Value>, String> {
+    assert_supported_schema(connection).map_err(storage_error)?;
     let mut statement = connection.prepare(sql).map_err(storage_error)?;
     let rows = statement
         .query_map(params![profile_id, space_id], |row| row.get::<_, String>(0))
@@ -273,6 +313,7 @@ fn get_sync_state(
     profile_id: &str,
     space_id: &str,
 ) -> Result<Option<SyncState>, String> {
+    assert_supported_schema(connection).map_err(storage_error)?;
     connection
         .query_row(
             "SELECT epoch, cursor FROM sync_state WHERE profile_id = ?1 AND space_id = ?2",
@@ -325,6 +366,7 @@ fn initialize_area(
     space_id: &str,
     proposed_epoch: &str,
 ) -> Result<String, String> {
+    assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(storage_error)?;
@@ -386,6 +428,7 @@ fn save_sync_page(
     {
         return Err("Die Bestätigungsepoche passt nicht zur Syncseite.".into());
     }
+    assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection.transaction().map_err(storage_error)?;
     write_confirmed(
         &transaction,
@@ -426,6 +469,7 @@ fn export_snapshot(
     profile_id: &str,
     space_id: &str,
 ) -> Result<LocalSnapshot, String> {
+    assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection.transaction().map_err(storage_error)?;
     let sync_state = get_sync_state(&transaction, profile_id, space_id)?;
     let confirmed: Vec<ConfirmedAggregate> = read_rows(
@@ -504,6 +548,7 @@ fn replace_snapshot(
     {
         return Err("Die Bestätigungsepoche passt nicht zum Snapshot.".into());
     }
+    assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection.transaction().map_err(storage_error)?;
     for (table, key, handles) in [
         (
@@ -686,6 +731,7 @@ fn rebuild_projections(
     rebuild: ProjectionRebuild,
 ) -> Result<(), String> {
     assert_area_rows(&rebuild.projections, &rebuild.space_id)?;
+    assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
         .map_err(storage_error)?;
@@ -758,6 +804,11 @@ mod tests {
                     "storage_save_sync_page" => save_sync_page(&mut connection, profile, serde_json::from_value(args["page"].clone()).map_err(storage_error)?).map(|()| Value::Null),
                     "storage_export_snapshot" => serde_json::to_value(export_snapshot(&mut connection, profile, space)?).map_err(storage_error),
                     "storage_rebuild_projections" => rebuild_projections(&mut connection, profile, serde_json::from_value(args["rebuild"].clone()).map_err(storage_error)?).map(|()| Value::Null),
+                    "test_schema_version" => {
+                        let key = if args["kind"].as_str() == Some("domain") { "domainSchemaVersion" } else { "storageSchemaVersion" };
+                        connection.execute("UPDATE storage_meta SET value = ?1 WHERE key = ?2", params![args["version"].as_str().unwrap(), key]).map_err(storage_error)?;
+                        Ok(Value::Null)
+                    },
                     "test_projection_fault" => {
                         connection.execute_batch("DROP TRIGGER IF EXISTS contract_projection_fault; DROP TABLE IF EXISTS contract_projection_writes;").map_err(storage_error)?;
                         if args["enabled"].as_bool().unwrap_or(false) {
@@ -768,6 +819,11 @@ mod tests {
                     "storage_replace_snapshot" => replace_snapshot(&mut connection, profile, serde_json::from_value(args["snapshot"].clone()).map_err(storage_error)?).map(|()| Value::Null),
                     "storage_get_sync_state" => serde_json::to_value(get_sync_state(&connection, profile, space)?).map_err(storage_error),
                     "storage_load_confirmed" => read_rows(&connection, "SELECT payload FROM confirmed WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile, space).map(Value::Array),
+                    "storage_read_aggregate" => {
+                        assert_supported_schema(&connection).map_err(storage_error)?;
+                        let row: Option<String> = connection.query_row("SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND handle = ?2", params![profile, args["handle"].as_str().unwrap()], |row| row.get(0)).optional().map_err(storage_error)?;
+                        row.map(|value| serde_json::from_str(&value).map_err(storage_error)).transpose().map(|value| value.unwrap_or(Value::Null))
+                    },
                     "storage_query_aggregates" => read_rows(&connection, "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile, space).map(Value::Array),
                     "storage_load_pending" => read_rows(&connection, "SELECT payload FROM outbox WHERE profile_id = ?1 AND space_id = ?2 ORDER BY operation_id", profile, space).map(Value::Array),
                     _ => Err("Unbekanntes Testkommando.".into()),
@@ -780,6 +836,51 @@ mod tests {
             println!("WIMM_CONTRACT:{response}");
             std::io::stdout().flush().unwrap();
         }
+    }
+
+    #[test]
+    fn sqlite_unbekannte_versionen_bleiben_vor_jeder_initialisierung_unveraendert() {
+        for key in ["storageSchemaVersion", "domainSchemaVersion"] {
+            let directory = tempfile::tempdir_in(".").unwrap();
+            let path = directory.path().join("schema.sqlite3");
+            let connection = Connection::open(&path).unwrap();
+            initialize_storage(&connection).unwrap();
+            connection
+                .execute(
+                    "UPDATE storage_meta SET value = '999' WHERE key = ?1",
+                    [key],
+                )
+                .unwrap();
+            drop(connection);
+            let before = std::fs::read(&path).unwrap();
+            let connection = Connection::open(&path).unwrap();
+            assert!(initialize_storage(&connection).is_err());
+            drop(connection);
+            assert_eq!(before, std::fs::read(&path).unwrap());
+        }
+    }
+
+    #[test]
+    fn sqlite_legacy_fachversion_ergaenzt_nur_metadaten_ohne_finanzverlust() {
+        let mut connection = Connection::open_in_memory().unwrap();
+        seed(&mut connection, "p");
+        connection
+            .execute(
+                "DELETE FROM storage_meta WHERE key = 'domainSchemaVersion'",
+                [],
+            )
+            .unwrap();
+        let before = snapshot_value(&mut connection, "p");
+        initialize_storage(&connection).unwrap();
+        assert_eq!(snapshot_value(&mut connection, "p"), before);
+        let version: String = connection
+            .query_row(
+                "SELECT value FROM storage_meta WHERE key = 'domainSchemaVersion'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(version, "1");
     }
 
     fn seed(connection: &mut Connection, profile_id: &str) {

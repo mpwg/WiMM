@@ -21,7 +21,7 @@ Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungss
 - Prüfungen: Dokumentationsvalidator, Paketgraph, Whitespace-/Freigabeprüfung und Rücklesen der angelegten Issues.
 - Prüfbelege: Dokumentationsvalidator, drei Dokumentationsvalidatortests, Paketgraph und Whitespaceprüfung bestanden. Alle zwölf GitHub-Issues mit Titel, offenem Zustand, exaktem Inhalt, Freigabegrenzen und gegenseitigen Abhängigkeitslinks rückgelesen. Konzeptzwischencommit `2cb536d`; Trackingabschluss im nachfolgenden Dokumentationscommit. Keine Produktprüfbelege.
 - Einschränkungen: bisherige K-Belege betreffen ausschließlich das Konzept. P6–P11-Funktionen, neue native Produkt-Apps, Clusterbetrieb und Veröffentlichungen bleiben gesonderte Aufträge. K06–K10 folgen als eigener Serverpersistenzstrang; sie blockieren die lokale Kernumstellung nicht.
-- Bearbeitungsfolge nach neuer Nutzerwahl: fehlender #75-SQLite-Sollbeleg und minimale Versionsabweisung aus #82 → K01 → K02/K03 → K04 → K05 samt #77/#85 und Rust-Referenzanbindung aus #86 → verbleibender Speicherausbau #82/#83 sowie P4-/P5-Abnahmen; K06–K10 anschließend und K11 als Gesamtabschluss. Keine vollständige #85-/Plattformabnahme als Voraussetzung für den Beginn von K01–K04 erfinden.
+- Bearbeitungsfolge nach neuer Nutzerwahl: abgenommener #75-SQLite-Sollbeleg und minimale Versionsabweisung aus #82 → K01 → K02/K03 → K04 → K05 samt #77/#85 und Rust-Referenzanbindung aus #86 → verbleibender Speicherausbau #82/#83 sowie P4-/P5-Abnahmen; K06–K10 anschließend und K11 als Gesamtabschluss. Keine vollständige #85-/Plattformabnahme als Voraussetzung für den Beginn von K01–K04 erfinden.
 
 ## Teilaufgaben und Bearbeitungsfolge
 

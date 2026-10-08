@@ -141,9 +141,9 @@ window.storageSnapshotContract = async (scenario) => {
   await runSnapshotCase(scenario, { storage, forProfile: (profile) => new IndexedDbStorageAdapter(profile, name), async restart() { await storage.close(); storage = new IndexedDbStorageAdapter(contractProfile, name); return storage; }, async close() { await storage.close(); } });
 };
 
-import { runRebuildCase, type RebuildCase, type RebuildFixture } from '../../../tests/storage/contracts/rebuild-catalog.js';
+import { runRebuildCase, type RebuildCase } from '../../../tests/storage/contracts/rebuild-catalog.js';
 declare global { interface Window { storageRebuildContract: (scenario: RebuildCase) => Promise<void> } }
-function browserContractFixture(): RebuildFixture {
+function browserContractFixture(): VersionFixture {
   const name = `wimm-rebuild-contract-${crypto.randomUUID()}`;
   let storage = new IndexedDbStorageAdapter(contractProfile, name);
   const foreign: IndexedDbStorageAdapter[] = [];
@@ -154,6 +154,23 @@ function browserContractFixture(): RebuildFixture {
       return original.apply(this, args);
     };
     try { await action(); } finally { IDBObjectStore.prototype.put = original; }
+  }, async withSchemaVersion(kind, version, action) {
+    const change = (value: number) => new Promise<void>((resolve, reject) => {
+      const open = indexedDB.open(name);
+      open.onerror = () => reject(open.error);
+      open.onsuccess = () => {
+        const db = open.result;
+        const tx = db.transaction('syncStates', 'readwrite');
+        tx.oncomplete = () => { db.close(); resolve(); }; tx.onabort = () => { db.close(); reject(tx.error); };
+        const store = tx.objectStore('syncStates'); const request = store.get(['wimm:storage-schema', 'wimm:storage-schema']);
+        request.onsuccess = () => {
+          const row = request.result as { profileId: string; spaceId: string; versions: { storageSchemaVersion: number; domainSchemaVersion: number } };
+          store.put({ ...row, versions: { ...row.versions, [kind === 'storage' ? 'storageSchemaVersion' : 'domainSchemaVersion']: value } });
+        };
+      };
+    });
+    await change(version);
+    try { await action(); } finally { await change(1); }
   } };
 }
 window.storageRebuildContract = async (scenario) => runRebuildCase(scenario, browserContractFixture());
@@ -161,3 +178,7 @@ window.storageRebuildContract = async (scenario) => runRebuildCase(scenario, bro
 import { runMergeCase, type MergeCase } from '../../../tests/storage/contracts/merge-catalog.js';
 declare global { interface Window { storageMergeContract: (scenario: MergeCase) => Promise<void> } }
 window.storageMergeContract = async (scenario) => runMergeCase(scenario, browserContractFixture());
+
+import { runVersionCase, type VersionFixture, type versionCases } from '../../../tests/storage/contracts/version-catalog.js';
+declare global { interface Window { storageVersionContract: (scenario: typeof versionCases[number]) => Promise<void> } }
+window.storageVersionContract = async (scenario) => runVersionCase(scenario, browserContractFixture());
