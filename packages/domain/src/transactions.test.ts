@@ -198,4 +198,24 @@ describe('Buchungen und Splits', () => {
       'INVALID_COMMAND'
     );
   });
+
+  it('sperrt gespeicherte abgeglichene Buchungen auch bei geändertem Eingabestatus bis zur Entsperrung', () => {
+    const reconciled = transaction({ revision: 2, clearance: 'reconciled' });
+    const currentReader: AggregateHeadReader = {
+      ...allHeads(2),
+      list: (spaceId) => [...allHeads(2).list!(spaceId), reconciled]
+    };
+    const changed = transaction({ revision: 2, clearance: 'uncleared', amount: -20_000 as Money, splits: [{ id: SPLIT_ONE, categoryId: CATEGORY, amount: -20_000 as Money }] });
+    const command = { commandType: 'transaction.save' as const, spaceId: SPACE, expectedRevisions: expectations(2), mutations: [{ aggregate: changed }] };
+    expectDomainError(() => saveTransaction(command, currentReader, dependencies()), 'INVALID_COMMAND');
+    expectDomainError(() => deleteTransaction({ ...command, commandType: 'transaction.delete' }, currentReader, dependencies()), 'INVALID_COMMAND');
+
+    const unlocked = transaction({ revision: 3, clearance: 'cleared' });
+    const unlockedReader: AggregateHeadReader = {
+      ...allHeads(3),
+      list: (spaceId) => [...allHeads(3).list!(spaceId), unlocked]
+    };
+    const afterUnlock = saveTransaction({ ...command, expectedRevisions: expectations(3), mutations: [{ aggregate: { ...changed, revision: 4, clearance: 'cleared' } }] }, unlockedReader, dependencies());
+    expect(afterUnlock.aggregates).toContainEqual(expect.objectContaining({ id: TRANSACTION, clearance: 'cleared', amount: -20_000 }));
+  });
 });

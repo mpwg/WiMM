@@ -48,6 +48,7 @@ export function saveTransaction(
   dependencies: DomainDependencies
 ): DomainChangeSet<'transaction.save', TransactionAggregate> {
   const transaction = normalizeTransaction(singleTransaction(input, 'transaction.save'));
+  assertNotStoredReconciled(transaction, input.spaceId, heads, 'Abgeglichene Buchungen müssen vor einer Änderung atomar entsperrt werden.');
   if (transaction.deletedAt !== undefined) {
     throw new DomainValidationError('INVALID_COMMAND', 'Eine gespeicherte Buchung darf kein Tombstone sein.');
   }
@@ -73,6 +74,7 @@ export function deleteTransaction(
   dependencies: DomainDependencies
 ): DomainChangeSet<'transaction.delete', TransactionAggregate> {
   const transaction = normalizeTransaction(singleTransaction(input, 'transaction.delete'));
+  assertNotStoredReconciled(transaction, input.spaceId, heads, 'Abgeglichene Buchungen müssen vor dem Löschen atomar entsperrt werden.');
   if (transaction.clearance === 'reconciled') {
     throw new DomainValidationError(
       'INVALID_COMMAND',
@@ -92,6 +94,21 @@ export function deleteTransaction(
     heads,
     dependencies
   );
+}
+
+function assertNotStoredReconciled(
+  transaction: TransactionAggregate,
+  spaceId: UUID,
+  heads: AggregateHeadReader,
+  message: string
+): void {
+  if (heads.list === undefined) {
+    throw new DomainValidationError('INVALID_COMMAND', 'Finanzänderungen benötigen den vollständigen aktuellen Fachbestand.');
+  }
+  const current = heads.list(spaceId).find((aggregate) => aggregate.id === transaction.id);
+  if (current?.aggregateType === 'transaction' && (current as TransactionAggregate).clearance === 'reconciled') {
+    throw new DomainValidationError('INVALID_COMMAND', message);
+  }
 }
 
 export function normalizeTransaction(transaction: TransactionAggregate): TransactionAggregate {

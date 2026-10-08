@@ -255,6 +255,35 @@ describe('Umbuchungen und Kontenabgleich', () => {
       ])
     );
   });
+
+  it('erzwingt den gespeicherten Abgleichsstatus auf beiden Transferseiten', () => {
+    const input = {
+      spaceId: SPACE,
+      transfer: transfer({ revision: 2, budgetRelease: true }),
+      source: transferTransaction(SOURCE_TRANSACTION, SOURCE_ACCOUNT, -20_000 as Money, { revision: 2, clearance: 'cleared' }),
+      target: transferTransaction(TARGET_TRANSACTION, TARGET_ACCOUNT, 20_000 as Money, { revision: 2, clearance: 'cleared' }),
+      sourceAccount: account(SOURCE_ACCOUNT, false),
+      targetAccount: account(TARGET_ACCOUNT, true)
+    };
+    const storedSource = { ...input.source, clearance: 'reconciled' as const };
+    const storedTarget = { ...input.target, clearance: 'reconciled' as const };
+    const currentHeads = reader(
+      head(TRANSFER, 2, 'transfer'), head(SOURCE_TRANSACTION, 2, 'transaction'), head(TARGET_TRANSACTION, 2, 'transaction'),
+      head(SOURCE_ACCOUNT, 1, 'account'), head(TARGET_ACCOUNT, 1, 'account')
+    );
+    const withStored = (transactions: readonly TransactionAggregate[]): AggregateHeadReader => ({
+      ...currentHeads,
+      list: (spaceId) => [...currentHeads.list!(spaceId), ...transactions]
+    });
+    expectDomainError(() => saveTransfer(input, withStored([storedSource, storedTarget]), dependencies()), 'INVALID_COMMAND');
+    expectDomainError(() => deleteTransfer(input, withStored([storedSource, storedTarget]), dependencies()), 'INVALID_COMMAND');
+
+    const unlocked = saveTransfer({ ...input, transfer: { ...input.transfer, revision: 3 }, source: { ...input.source, revision: 3 }, target: { ...input.target, revision: 3 } }, withStored([input.source, input.target]), dependencies());
+    expect(unlocked.aggregates).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: SOURCE_TRANSACTION, clearance: 'cleared' }),
+      expect.objectContaining({ id: TARGET_TRANSACTION, clearance: 'cleared' })
+    ]));
+  });
 });
 
 describe('P4.4-Vertragsgrenzen', () => {

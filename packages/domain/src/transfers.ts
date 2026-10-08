@@ -70,6 +70,7 @@ export function saveTransfer(
   dependencies: DomainDependencies
 ): DomainChangeSet<'transfer.save'> {
   const { transfer, source, target } = normalizeTransfer(input);
+  assertNotStoredReconciled(source, target, input.spaceId, heads, 'Abgeglichene Umbuchungen müssen vor Änderungen atomar entsperrt werden.');
   if (source.clearance === 'reconciled' || target.clearance === 'reconciled') throw new DomainValidationError('INVALID_COMMAND', 'Abgeglichene Umbuchungen müssen vor Änderungen atomar entsperrt werden.');
   const expectations = transferExpectations(input, transfer, heads, true);
   return createChangeSet<'transfer.save', TransferAggregate | TransactionAggregate>(
@@ -91,6 +92,7 @@ export function deleteTransfer(
   dependencies: DomainDependencies
 ): DomainChangeSet<'transfer.delete'> {
   const { transfer, source, target } = normalizeTransfer(input);
+  assertNotStoredReconciled(source, target, input.spaceId, heads, 'Abgeglichene Umbuchungen müssen vor dem Löschen atomar entsperrt werden.');
   if (source.clearance === 'reconciled' || target.clearance === 'reconciled') {
     throw new DomainValidationError(
       'INVALID_COMMAND',
@@ -121,6 +123,25 @@ export function deleteTransfer(
     heads,
     dependencies
   );
+}
+
+function assertNotStoredReconciled(
+  source: TransactionAggregate,
+  target: TransactionAggregate,
+  spaceId: UUID,
+  heads: AggregateHeadReader,
+  message: string
+): void {
+  if (heads.list === undefined) {
+    throw new DomainValidationError('INVALID_COMMAND', 'Finanzänderungen benötigen den vollständigen aktuellen Fachbestand.');
+  }
+  const stored = new Map(heads.list(spaceId).map((aggregate) => [aggregate.id, aggregate]));
+  for (const transaction of [source, target]) {
+    const current = stored.get(transaction.id);
+    if (current?.aggregateType === 'transaction' && (current as TransactionAggregate).clearance === 'reconciled') {
+      throw new DomainValidationError('INVALID_COMMAND', message);
+    }
+  }
 }
 
 /** Bestätigt einen Kontoauszug und sperrt exakt dessen Buchungen atomar. */
