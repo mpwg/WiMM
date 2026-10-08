@@ -14,12 +14,14 @@ Die folgende Komponentenstruktur beschreibt die vorhandene TypeScript-/React-Gru
 | packages/storage | Adapter, Transaktionen, Projektionen, Migrationen | domain, contracts |
 | packages/sync | Verschlüsselte Outbox, Push/Pull, Revisionen, Konflikte | domain, contracts, crypto, Storage-Port |
 | packages/importers | Dateiparser, Normalisierung, Vorschau, Dubletten | domain, contracts |
-| packages/ui | Client-Composition, Fachkomponenten, Plattformtokens, Eingabe- und Ansichtsmuster | domain/contract-Typen, React, crypto/storage/importers; native Funktionen weiterhin als Plattformport |
+| packages/application | Clientabläufe, Profil/Sitzung, atomarer Commit, Konflikte, Historie und Importkoordination | domain, contracts, crypto, importers; injizierte Ports |
+| packages/browser-adapters | Browserpersistenz mit Locks, Uhr/IDs und begrenzte Worker | application, contracts, domain, storage, importers |
+| packages/ui | Darstellung, Eingabeentwürfe, Fokus, Navigation und Plattformtokens | application und Typen/Ansichtshelfer; React, injizierte Plattformdienste |
 | apps/web | PWA, Browserrouting, Service Worker, IndexedDB-Komposition | gemeinsame Pakete |
 | apps/desktop | Tauri-Hülle, gemeinsame React-App, Rust-Speicher-/Systembrücke | gemeinsame Pakete; begrenzte Tauri-Commands |
 | apps/server | Fastify, Identitäten, öffentliche Rechte/Zertifikate, SQLite-Chiffratspeicher und PWA | öffentliche contracts, Signaturprüfung und servergeeignete Speicherteile; kein Finanzfachkern |
 
-Keine UI-Abhängigkeiten im Fachkern; Contracts importieren nicht domain. Die gemeinsame UI-Schicht bildet den Client-Composition-Root und darf dafür die lokalen Crypto-/Storage-/Importclients verwenden; native Datei-, Menü-, Link- und Tokenfunktionen bleiben als `PlatformServices` injiziert. Der Server kann Finanzinhalte wegen verpflichtender E2EE nicht validieren oder berechnen. Apps gelten nach Authentifizierung als vertrauenswürdige Clients; keine Codesignatur/Attestierung als Zugangsvoraussetzung. Nachrichten-/Schlüsselsignaturen sind davon getrennte Integritätsprüfungen.
+Keine UI-Abhängigkeiten im Fachkern; Contracts importieren nicht domain. Seit der geprüften K02-Umstellung bilden Web-/Desktop-Einstiegspunkte den Client-Composition-Root. Die UI beobachtet die plattformfreie Anwendung; konkrete Browser- und Speicheradapter werden injiziert; native Datei-, Menü-, Link- und Tokenfunktionen bleiben als `PlatformServices` injiziert. Der Server kann Finanzinhalte wegen verpflichtender E2EE nicht validieren oder berechnen. Apps gelten nach Authentifizierung als vertrauenswürdige Clients; keine Codesignatur/Attestierung als Zugangsvoraussetzung. Nachrichten-/Schlüsselsignaturen sind davon getrennte Integritätsprüfungen.
 
 ## Bibliotheken und Toolchain
 

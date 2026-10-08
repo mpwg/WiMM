@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 
 import type { UUID } from '@wimm/contracts';
-import { dueDates, type OccurrenceAggregate, projectAccountBalances, projectConsumption, sumMoney, type AccountAggregate, type DomainChangeSet } from '@wimm/domain';
-import { FinanceApplication, type WorkspaceStorageFactory } from '@wimm/application';
+import { type AccountAggregate } from '@wimm/domain';
+import { FinanceModel, AutomationModel } from '@wimm/application';
 
 import type { UnlockedAppContext } from './app.js';
 import { DraftProtection, useDraftGuard, useFormDraft } from './drafts.js';
 import { isTextEditing } from './platform.js';
-import { FinanceModel, browserDomainDependencies } from './application-runtime.js';
 import { TransferForm, ReconciliationForm } from './account-actions.js';
 import { ImportView, AutomationView } from './automation-views.js';
-import { AutomationModel } from './automation-model.js';
 import { Transactions, TransactionForm, TransactionList } from './transactions.js';
 import { Button, Dialog, EmptyState } from './components.js';
 import { Receipt, LayoutDashboard, ArrowLeftRight, Landmark, Settings, LockKeyhole, CircleHelp, Ellipsis, ChevronRight, Plus, Upload, Undo2, Redo2, Check, Tags, Users, ListFilter, CalendarClock, Palette } from 'lucide-react';
@@ -36,11 +34,11 @@ type View = 'overview' | 'accounts' | 'categories' | 'payees' | 'transactions' |
  */
 export type { WorkspaceStorage, WorkspaceStorageFactory } from '@wimm/application';
 
-export function FinanceWorkspace(props: { readonly context: UnlockedAppContext; readonly storageForProfile: WorkspaceStorageFactory; readonly desktop?: boolean }) {
+export function FinanceWorkspace(props: { readonly context: UnlockedAppContext;  readonly desktop?: boolean }) {
   const [view, setView] = useState<View>('overview');
   return <DraftProtection><WorkspaceContent view={view} setView={setView} key={`${props.context.profile.profileId}:${props.context.activeArea.id}`} {...props} /></DraftProtection>;
 }
-function WorkspaceContent({ context, storageForProfile, desktop = false, view, setView }: { readonly context: UnlockedAppContext; readonly storageForProfile: WorkspaceStorageFactory; readonly desktop?: boolean; readonly view: View; readonly setView: (view: View) => void }) {
+function WorkspaceContent({ context, desktop = false, view, setView }: { readonly context: UnlockedAppContext;  readonly desktop?: boolean; readonly view: View; readonly setView: (view: View) => void }) {
   const guard = useDraftGuard();
   const { isProfileChanging } = context;
   const [mobile, setMobile] = useState(() => matchMedia('(max-width: 767px)').matches);
@@ -72,11 +70,8 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
     setColorScheme(value);
     try { localStorage.setItem('wimm:color-scheme', value); } catch { /* Die Auswahl bleibt für diese Sitzung nutzbar. */ }
   };
-  const storage = useMemo(() => storageForProfile(context.profile.profileId as UUID), [storageForProfile, context.profile.profileId]);
-  const dependencies = useMemo(() => browserDomainDependencies(), []);
-  const application = useMemo(() => new FinanceApplication(context.activeArea.id as UUID, storage, dependencies, isProfileChanging), [context.activeArea.id, storage, dependencies, isProfileChanging]);
+  const application = useMemo(() => context.runtime.financeForScope(context.profile.profileId as UUID, context.activeArea.id as UUID), [context.runtime, context.profile.profileId, context.activeArea.id]);
   const snapshot = useSyncExternalStore(application.subscribe, application.getSnapshot);
-  const aggregates = snapshot.aggregates;
   const state = snapshot.status;
   const saving = snapshot.saving || context.profileChanging;
   const [localMessage, setMessage] = useState<string>();
@@ -86,10 +81,10 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
   useEffect(() => {
     if (closeTimer.current !== undefined) clearTimeout(closeTimer.current);
     void application.load();
-    return () => { closeTimer.current = setTimeout(() => { application.dispose(); void storage.close?.(); }, 0); };
-  }, [application, storage]);
-  const execute = useCallback((change: DomainChangeSet) => { setMessage(undefined); return application.execute(change); }, [application]);
-  const model = useMemo(() => new FinanceModel(context.activeArea.id as UUID, aggregates, execute, dependencies), [context.activeArea.id, aggregates, execute, dependencies]);
+    return () => { closeTimer.current = setTimeout(() => { application.dispose(); }, 0); };
+  }, [application]);
+  const model = application.model;
+  const automation = useMemo(() => new AutomationModel(model, context.runtime.importPreparation, context.runtime.importPreview), [model, context.runtime.importPreparation, context.runtime.importPreview]);
   async function moveHistory(direction: 'undo' | 'redo') {
     try { setMessage(undefined); await application.moveHistory(direction); }
     catch (error) { setMessage(messageFor(error, 'Die Aktion wurde nicht ausgeführt.')); }
@@ -180,13 +175,13 @@ function WorkspaceContent({ context, storageForProfile, desktop = false, view, s
       {state === 'loading' ? <p role="status">Lokale Daten werden geladen …</p> : null}
       {state === 'error' ? <p role="alert">Die Daten bleiben unverändert. Bitte entsperren Sie den Tresor erneut oder starten Sie die App neu.</p> : null}
       <fieldset className="workspace-content" disabled={saving}>
-        {state === 'ready' && view === 'overview' ? <Overview model={model} onAccounts={() => go('accounts')} onTransactions={(id) => { setSelectedTransaction(id); go('transactions'); }} onSchedules={() => go('schedules')} onAccount={(id) => { setSelectedAccount(id); go('accounts'); }} /> : null}
+        {state === 'ready' && view === 'overview' ? <Overview model={model} automation={automation} onAccounts={() => go('accounts')} onTransactions={(id) => { setSelectedTransaction(id); go('transactions'); }} onSchedules={() => go('schedules')} onAccount={(id) => { setSelectedAccount(id); go('accounts'); }} /> : null}
         {state === 'ready' && view === 'accounts' ? <Accounts model={model} saving={saving} selectedId={selectedAccount} onSelect={setSelectedAccount} onNew={(accountId) => setNewBooking({ accountId })} /> : null}
         {state === 'ready' && view === 'categories' ? <Categories model={model} /> : null}
         {state === 'ready' && view === 'payees' ? <Payees model={model} /> : null}
         {state === 'ready' && view === 'transactions' ? <Transactions model={model} initialSelection={selectedTransaction} onSelectionClosed={() => setSelectedTransaction(undefined)} onAccounts={() => go('accounts')} /> : null}
-        {state === 'ready' && view === 'import' ? <ImportView model={new AutomationModel(model)} platform={context.platform} /> : null}
-        {state === 'ready' && (view === 'automation' || view === 'schedules') ? <AutomationView key={view} model={new AutomationModel(model)} section={view === 'schedules' ? 'schedules' : 'rules'} /> : null}
+        {state === 'ready' && view === 'import' ? <ImportView model={automation} platform={context.platform} /> : null}
+        {state === 'ready' && (view === 'automation' || view === 'schedules') ? <AutomationView key={view} model={automation} section={view === 'schedules' ? 'schedules' : 'rules'} /> : null}
         {state === 'ready' && (settingsView || view === 'more') ? <>
           {view === 'settings' || view === 'more' ? <div className="settings-list">
             {view === 'more' ? <Button icon={Landmark} onClick={() => go('accounts')}>Konten<ChevronRight size={18} aria-hidden="true" /></Button> : null}
@@ -209,16 +204,15 @@ export { FinanceModel } from './application-runtime.js';
 
 
 function AreaPicker({ context, disabled = false, request }: { readonly context: UnlockedAppContext; readonly disabled?: boolean; readonly request: (action: () => void, trigger: HTMLElement) => void }) { return <label className="area-picker">Bereich<select aria-label="Bereich" disabled={disabled} onChange={(event) => { const id = event.target.value; request(() => context.selectArea(id), event.currentTarget); }} value={context.activeArea.id}>{context.profile.areas.map((area) => <option key={area.id} value={area.id}>{area.label}</option>)}</select></label>; }
-function Overview({ model, onAccounts, onTransactions, onSchedules, onAccount }: { readonly model: FinanceModel; readonly onAccounts: () => void; readonly onTransactions: (id?: UUID) => void; readonly onSchedules: () => void; readonly onAccount: (id: UUID) => void }) {
+function Overview({ model, automation, onAccounts, onTransactions, onSchedules, onAccount }: { readonly model: FinanceModel; readonly automation: AutomationModel; readonly onAccounts: () => void; readonly onTransactions: (id?: UUID) => void; readonly onSchedules: () => void; readonly onAccount: (id: UUID) => void }) {
   if (model.allAccounts.length === 0) return <section><ol className="stepper" aria-label="Lokaler Einstieg"><li>1. Tresor anlegen</li><li>2. Rettungscode sichern</li><li aria-current="step">3. Erstes Konto</li></ol><EmptyState title="Ihr erster Überblick" action={<Button variant="primary" icon={Plus} onClick={onAccounts}>Erstes Konto anlegen</Button>}>Legen Sie Ihr erstes Konto an. Danach sehen Sie hier Ihre Kontostände und die Buchungen dieses Monats.</EmptyState></section>;
-  const balances = projectAccountBalances(model.transactions);
-  const total = sumMoney(balances.map((item) => item.balance), 'Das Gesamtguthaben');
+  const balances = model.accountBalances;
+  const total = model.totalBalance;
   const month = today().slice(0, 7);
   const monthLabel = new Intl.DateTimeFormat('de-AT', { month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' }).format(new Date(`${month}-15T12:00:00Z`));
-  const consumption = projectConsumption(model.transactions.filter((transaction) => transaction.date.startsWith(month)), model.allCategories, model.groups);
+  const consumption = model.consumptionForMonth(month);
   const recent = model.orderedTransactions.slice(0, 5);
-  const automation = new AutomationModel(model);
-  const due = automation.schedules.filter(schedule => schedule.enabled).flatMap(schedule => dueDates(schedule, today() as never).filter(date => !automation.all.some(entry => entry.aggregateType === 'scheduleOccurrence' && (entry as OccurrenceAggregate).scheduleId === schedule.id && (entry as OccurrenceAggregate).dueDate === date)).map(date => ({ schedule, date }))).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
+  const due = automation.nextOccurrences(today(), 5);
   return <section>
     <section className="overview-hero" aria-label="Kontostand gesamt"><p>Kontostand gesamt</p><strong className="money hero-amount">{formatMoney(total)}</strong><p>Ihre gespeicherten Kontostände · {monthLabel}</p><div className="hero-footer"><span className="help-text">Anfangsbestände sind keine Einnahmen.</span><Button onClick={onAccounts}>Konten öffnen<ChevronRight size={16} aria-hidden="true" /></Button></div></section>
     <div className="overview-columns">
@@ -234,7 +228,7 @@ function Overview({ model, onAccounts, onTransactions, onSchedules, onAccount }:
 function Accounts({ model, saving, selectedId, onSelect, onNew }: { readonly model: FinanceModel; readonly saving: boolean; readonly selectedId?: UUID | undefined; readonly onSelect: (id?: UUID) => void; readonly onNew: (id: UUID) => void }) {
   const [action, setAction] = useState<'create' | 'transfer' | 'reconcile'>();
   const [error, setError] = useState<string>();
-  const balances = projectAccountBalances(model.transactions);
+  const balances = model.accountBalances;
   const selected = model.allAccounts.find(account => account.id === selectedId);
   async function archive(id: UUID) { try { await model.archiveAccount(id); } catch (reason) { setError(messageFor(reason, 'Das Konto wurde nicht archiviert.')); } }
   return <section>

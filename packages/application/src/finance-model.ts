@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { UUID } from '@wimm/contracts';
-import { createAggregateMetadata, parseFinanceDate, parseMoney, parseDirectedMoney, reviseAggregate, subtractMoney, archiveAccount, archiveCategory, mergePayees, saveTransfer, confirmReconciliation, reconciliationDifference, unlockFinanceSelection, deleteTransfer, saveTransaction, deleteTransaction, createAccountWithOpening, saveCategory, saveCategoryGroup, savePayee, type AccountAggregate, type CategoryAggregate, type CategoryGroupAggregate, type DomainChangeSet, type DomainDependencies, type PayeeAggregate, type P2Aggregate, type TransactionAggregate, type TransferAggregate, type ReconciliationAggregate } from '@wimm/domain';
+import { projectAccountBalances, projectConsumption, sumMoney, createAggregateMetadata, parseFinanceDate, parseMoney, parseDirectedMoney, reviseAggregate, subtractMoney, archiveAccount, archiveCategory, mergePayees, saveTransfer, confirmReconciliation, reconciliationDifference, unlockFinanceSelection, deleteTransfer, saveTransaction, deleteTransaction, createAccountWithOpening, saveCategory, saveCategoryGroup, savePayee, type AccountAggregate, type CategoryAggregate, type CategoryGroupAggregate, type DomainChangeSet, type DomainDependencies, type PayeeAggregate, type P2Aggregate, type TransactionAggregate, type TransferAggregate, type ReconciliationAggregate } from '@wimm/domain';
 import type { StoredAggregate } from '@wimm/storage';
 export interface TransactionInput {
   readonly direction?: 'expense' | 'income'; readonly accountId: UUID; readonly payeeId?: UUID; readonly amount: string; readonly date: string; readonly note: string; readonly opening: boolean;
@@ -34,6 +34,9 @@ export class FinanceModel {
     this.transactions = aggregates.filter((aggregate): aggregate is StoredAggregate & TransactionAggregate => aggregate.aggregateType === 'transaction' && aggregate.deletedAt === undefined);
     this.orderedTransactions = Object.freeze(this.transactions.toSorted((left, right) => right.date.localeCompare(left.date) || left.id.localeCompare(right.id)));
   }
+  get accountBalances() { return projectAccountBalances(this.transactions); }
+  get totalBalance() { return sumMoney(this.accountBalances.map((item) => item.balance), 'Das Gesamtguthaben'); }
+  consumptionForMonth(month: string) { return projectConsumption(this.transactions.filter((entry) => entry.date.startsWith(month)), this.allCategories, this.groups); }
   async addAccount(name: string, type: AccountAggregate['type'], onBudget: boolean, opening?: { amount: string; date: string }) {
     const aggregate: AccountAggregate = { ...createAggregateMetadata(this.spaceId, this.domainDependencies), aggregateType: 'account', name, type, onBudget, archived: false };
     await this.execute(createAccountWithOpening(aggregate, opening, this, this.domainDependencies));

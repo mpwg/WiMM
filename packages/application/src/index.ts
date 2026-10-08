@@ -3,3 +3,13 @@ export * from './finance-model.js';
 export * from './history.js';
 export * from './automation-model.js';
 export * from './finance-application.js';
+export * from './profile.js';
+export * from './profile-store.js';
+export * from './activity.js';
+export * from './profile-application.js';
+
+import type { DomainDependencies, DomainChangeSet } from '@wimm/domain';
+import type { UUID, BackgroundExecutionPort } from '@wimm/contracts';
+import type { ImportPreparationInput, ImportPreviewInput, ImportPreviewOutput } from './automation-model.js';
+import type { FinanceApplication } from './finance-application.js';
+export interface ApplicationRuntime { readonly dependencies: DomainDependencies; readonly importPreparation: BackgroundExecutionPort<ImportPreparationInput, DomainChangeSet | null>; readonly importPreview: BackgroundExecutionPort<ImportPreviewInput, ImportPreviewOutput>; financeForScope(profileId: UUID, spaceId: UUID): FinanceApplication }

@@ -268,3 +268,13 @@ Neue Entscheidung dokumentiert ID, Datum, Status, konkretes Problem, Entscheidun
 - Betroffene Verträge: [K01-Spezifikation](core-contracts.md), contracts, bestehende Profil-/Speicher-/Snapshotporttypen und zentrale Fachbefehls-/Fehlerlisten, K02–K11.
 - Migration und Kompatibilität: zusätzliche Engine-Bindingversion 1, keine Änderung vorhandener Finanz-, Speicher-, Transport- oder Cryptodaten. Optionales bleibt abwesend statt null, sichere Centgrenzen bleiben erhalten. Keine neue P6–P11-Funktion.
 - Prüfung: Schema-/Grenz-/Negativ-/JSON-Roundtriptests, vorhandene Fach-/Profil-/Speichertests, Typecheck/Paketgraph und Dokumentation. Tatsächliche Rust-/WASM-/Swift-/Kotlin-Ausführung, SQL-Adapter und Produktumschaltung folgen in ihren eigenen Issues.
+
+## ADR-047 — Clientanwendung mit gemeinsamer Aktivitätssperre und konkreten Browseradaptern
+
+- Datum: 8. Oktober 2026. Status: angenommen; Umsetzung K02/#93 im freigegebenen #91-Auftrag.
+- Problem: React-Callbacks besaßen persistente Clientabläufe und Browserabhängigkeiten; Profil- und Finanzaktionen müssen dieselbe Sitzungssperre beachten.
+- Entscheidung: packages/application besitzt beobachtbare Finanz-/Profilcontroller, Historie, Konfliktlesen und Generationsschutz. Eine gemeinsam injizierte ApplicationActivity sperrt Profil- und Finanzwrites gegenseitig. Web-/Desktop-Einstiege komponieren konkrete Speicher- und Browseradapter; packages/ui rendert den Zustand und ruft Aktionen auf.
+- Folgen: Uhr/IDs, Locks/localStorage und begrenzte Worker liegen in packages/browser-adapters. Ein bestätigter Finanzcommit wird direkt übernommen; späte abgebrochene oder sitzungsfremde Ergebnisse werden verworfen. Profil-/Tresorformate und etablierte Kryptografie bleiben unverändert.
+- Betroffene Verträge: K01-Anwendungsports, ADR-043 und bisherige ADR-031-Composition, application, browser-adapters, UI und App-Einstiege.
+- Migration und Kompatibilität: keine Datenmigration; TypeScript-Fachengine bis K05 aktiv. Alte UI-Importstellen delegieren über Kompatibilitätsbarrels.
+- Prüfung: [K02-Kriterienmatrix und aktuelle Browser-/Node-/Offlinebelege](handoffs/k02-2026-10-08.md); native GUI-/Geräte-/Screenreaderabnahme bleibt separat.

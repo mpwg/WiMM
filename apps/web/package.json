@@ -19,7 +19,9 @@
     "@wimm/ui": "workspace:*",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "@wimm/core-bindings": "workspace:*"
+    "@wimm/core-bindings": "workspace:*",
+    "@wimm/application": "workspace:*",
+    "@wimm/browser-adapters": "workspace:*"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "6.1.1",

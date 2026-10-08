@@ -211,6 +211,12 @@ importers:
       '@tauri-apps/api':
         specifier: 2.12.0
         version: 2.12.0
+      '@wimm/application':
+        specifier: workspace:*
+        version: link:../../packages/application
+      '@wimm/browser-adapters':
+        specifier: workspace:*
+        version: link:../../packages/browser-adapters
       '@wimm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -260,6 +266,12 @@ importers:
 
   apps/web:
     dependencies:
+      '@wimm/application':
+        specifier: workspace:*
+        version: link:../../packages/application
+      '@wimm/browser-adapters':
+        specifier: workspace:*
+        version: link:../../packages/browser-adapters
       '@wimm/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -306,6 +318,24 @@ importers:
       '@wimm/crypto':
         specifier: workspace:*
         version: link:../crypto
+      '@wimm/domain':
+        specifier: workspace:*
+        version: link:../domain
+      '@wimm/importers':
+        specifier: workspace:*
+        version: link:../importers
+      '@wimm/storage':
+        specifier: workspace:*
+        version: link:../storage
+
+  packages/browser-adapters:
+    dependencies:
+      '@wimm/application':
+        specifier: workspace:*
+        version: link:../application
+      '@wimm/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@wimm/domain':
         specifier: workspace:*
         version: link:../domain
@@ -404,6 +434,9 @@ importers:
       '@wimm/application':
         specifier: workspace:*
         version: link:../application
+      '@wimm/browser-adapters':
+        specifier: workspace:*
+        version: link:../browser-adapters
       '@wimm/contracts':
         specifier: workspace:*
         version: link:../contracts

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { AppShell, createBrowserPlatformServices, createBrowserProfileStore } from '@wimm/ui';
+import { createBrowserProfileStore, createBrowserApplicationRuntime } from '@wimm/browser-adapters';
+import { ProfileApplication, ApplicationActivity } from '@wimm/application';
+import { AppShell, createBrowserPlatformServices } from '@wimm/ui';
 import { IndexedDbStorageAdapter } from '@wimm/storage';
 import type { UUID } from '@wimm/contracts';
 
@@ -7,9 +9,13 @@ import type { UUID } from '@wimm/contracts';
 // auch bei einem Neustart in den Sperrbildschirm vollständig gecacht.
 const { FinanceWorkspace } = await import('@wimm/ui/workspace');
 const profileStore = createBrowserProfileStore();
+const activity = new ApplicationActivity();
+const profileApplication = new ProfileApplication(profileStore, { next: () => crypto.randomUUID() }, activity);
 const platform = createBrowserPlatformServices();
 const storageForProfile = (profileId: UUID) => new IndexedDbStorageAdapter(profileId, `wimm-ui-${profileId}`);
 
+const runtime = createBrowserApplicationRuntime(storageForProfile, profileApplication);
+
 export function App() {
-  return <AppShell platform={platform} store={profileStore} title="WhereIsMyMoney">{(context) => <FinanceWorkspace context={context} storageForProfile={storageForProfile} />}</AppShell>;
+  return <AppShell platform={platform} application={profileApplication} runtime={runtime} title="WhereIsMyMoney">{(context) => <FinanceWorkspace context={context} />}</AppShell>;
 }

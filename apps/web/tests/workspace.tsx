@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Ausschließlich Vite-Testseite; kein Produktionsentry und keine Fehlerports in der App.
+import { createBrowserApplicationRuntime } from '@wimm/browser-adapters';
+import { ProfileApplication, ApplicationActivity } from '@wimm/application';
 import { FinanceWorkspace } from '@wimm/ui/workspace';
 import { createRoot } from 'react-dom/client';
 import { createBrowserPlatformServices, type UnlockedAppContext, type WorkspaceStorage } from '@wimm/ui';
@@ -97,5 +99,7 @@ window.workspaceTest = {
   }
 };
 const area = { id: spaceId, kind: 'private', label: 'Synthetischer Bereich' } as const;
-const context = { profileChanging: false, isProfileChanging: () => false, platform: createBrowserPlatformServices(), activeArea: area, profile: { profileId, areas: [area] }, selectArea: () => undefined, createHousehold: async () => undefined, lock: async () => undefined } as unknown as UnlockedAppContext;
-createRoot(document.getElementById('root')!).render(<FinanceWorkspace context={context} storageForProfile={() => storage} desktop={parameters.get('desktop') === 'true'} />);
+const profileApplication = new ProfileApplication({ load: async () => ({ kind: 'missing' }), change: async () => { throw new Error('Keine Profiländerung im Finanzfixture'); } }, { next: () => crypto.randomUUID() }, new ApplicationActivity());
+const runtime = createBrowserApplicationRuntime(() => storage, profileApplication);
+const context = { runtime, activity: profileApplication.activity, profileChanging: false, isProfileChanging: () => false, platform: createBrowserPlatformServices(), activeArea: area, profile: { profileId, areas: [area] }, selectArea: () => undefined, createHousehold: async () => undefined, lock: async () => undefined } as unknown as UnlockedAppContext;
+createRoot(document.getElementById('root')!).render(<FinanceWorkspace context={context} desktop={parameters.get('desktop') === 'true'} />);

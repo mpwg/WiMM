@@ -24,3 +24,17 @@ it('Abbruch terminiert den Commitworker und ignoriert späte Antworten vor dem W
   const error = await result; expect(error instanceof Error && error.message.includes('abgebrochen')).toBe(true);
   expect(f.terminate).toHaveBeenCalledOnce(); expect(f.commit).not.toHaveBeenCalled();
 });
+
+it('Zeitlimit terminiert die Vorbereitung und spätes Ergebnis erzeugt keinen Write', async () => {
+  vi.useFakeTimers();
+  try {
+    const f = setup(function () {});
+    const result = f.model.next(batch).catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(30_000);
+    f.active()?.onmessage?.({ data: { change: { commandType: 'import.commit' } } } as MessageEvent);
+    const error = await result;
+    expect(error instanceof Error && error.message.includes('Zeitlimit')).toBe(true);
+    expect(f.terminate).toHaveBeenCalledOnce();
+    expect(f.commit).not.toHaveBeenCalled();
+  } finally { vi.useRealTimers(); }
+});

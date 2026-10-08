@@ -1,29 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { fileURLToPath } from 'node:url';
+import { createLocalProfile } from '../../packages/application/src/profile.js';
+import { unlockUserVaultWithPassphrase, persistUnlockedUserVault, lockUserVault } from '../../packages/crypto/src/index.js';
 import { expect, test } from '@playwright/test';
 
 const passphrase = 'synthetische-pr46-schluesselpaare';
 const key = process.env.WIMM_CLIENT === 'desktop' ? 'wimm/desktop-profile/v1' : 'wimm/local-profile/v1';
-const appPath = `/@fs${fileURLToPath(new URL('../../packages/ui/src/app.tsx', import.meta.url))}`;
-const cryptoPath = `/@fs${fileURLToPath(new URL('../../packages/crypto/src/index.ts', import.meta.url))}`;
 
 for (const field of ['identityPublicKey', 'identityPrivateKey', 'encryptionPublicKey', 'encryptionPrivateKey'] as const) {
   for (const recovery of [false, true]) {
     test(`B01/A02: authentisch beschädigte ${field} wird mit ${recovery ? 'Rettungscode' : 'Passphrase'} abgewiesen`, async ({ page }) => {
-      // Nur Vite-Testlauf: synthetischen authentischen Fehlerstand über die bestehenden Cryptoports erzeugen.
+      // Der echte gebaute Client bleibt unverändert; nur der synthetische Producer läuft in Node.
+      const created = await createLocalProfile(passphrase, { next: () => crypto.randomUUID() });
+      const producer = await unlockUserVaultWithPassphrase(created.profile.vault, passphrase);
+      const index = field === 'identityPrivateKey' ? 63 : 1;
+      producer[field][index] = (producer[field][index] ?? 0) ^ 1;
+      const record = await persistUnlockedUserVault(producer, created.profile.vault);
+      await lockUserVault(producer);
+      const code = created.recoveryCode;
       await page.goto('/');
-      const code = await page.evaluate(async (input) => {
-        const app = await import(input.appPath) as typeof import('../../packages/ui/src/app.js');
-        const cryptoPort = await import(input.cryptoPath) as typeof import('../../packages/crypto/src/index.js');
-        const created = await app.createLocalProfile(input.passphrase);
-        const producer = await cryptoPort.unlockUserVaultWithPassphrase(created.profile.vault, input.passphrase);
-        const index = input.field === 'identityPrivateKey' ? 63 : 1;
-        producer[input.field][index] = (producer[input.field][index] ?? 0) ^ 1;
-        const record = await cryptoPort.persistUnlockedUserVault(producer, created.profile.vault);
-        localStorage.setItem(input.key, JSON.stringify({ ...created.profile, vault: record }));
-        await cryptoPort.lockUserVault(producer);
-        return created.recoveryCode;
-      }, { appPath, cryptoPath, key, field, passphrase });
+      await page.evaluate((input) => localStorage.setItem(input.key, JSON.stringify(input.profile)), { key, profile: { ...created.profile, vault: record } });
       const original = await page.evaluate((storageKey) => localStorage.getItem(storageKey), key);
       await page.reload();
       await expect(page.getByRole('heading', { name: 'Tresor entsperren' })).toBeVisible();

@@ -2,6 +2,8 @@
 import type { AtomicBatch, UUID } from '@wimm/contracts';
 import type { DomainChangeSet, DomainDependencies } from '@wimm/domain';
 import { toStoredAggregate, type StoredAggregate, type StoredProjection, type PendingOperation } from '@wimm/storage';
+import type { ApplicationActivity } from './activity.js';
+import { FinanceModel } from './finance-model.js';
 import { FinanceHistory } from './history.js';
 export interface WorkspaceStorage {
   initializeArea?(spaceId: UUID, proposedEpoch: UUID): Promise<UUID>;
@@ -18,7 +20,13 @@ export class FinanceApplication {
   private value: FinanceApplicationState = { aggregates: [], status: 'loading', saving: false, historyVersion: 0, message: undefined };
   private readonly listeners = new Set<() => void>();
   private active = true;
-  constructor(readonly spaceId: UUID, private readonly storage: WorkspaceStorage, readonly dependencies: DomainDependencies, private readonly isProfileChanging: () => boolean) {}
+  private modelSource: readonly StoredAggregate[] | undefined;
+  private cachedModel: FinanceModel | undefined;
+  constructor(readonly spaceId: UUID, private readonly storage: WorkspaceStorage, readonly dependencies: DomainDependencies, private readonly isProfileChanging: () => boolean, private readonly activity?: ApplicationActivity) {}
+  get model(): FinanceModel {
+    if (this.modelSource !== this.value.aggregates) { this.modelSource = this.value.aggregates; this.cachedModel = new FinanceModel(this.spaceId, this.value.aggregates, (change) => this.execute(change), this.dependencies); }
+    return this.cachedModel!;
+  }
   getSnapshot = (): FinanceApplicationState => this.value;
   subscribe = (listener: () => void): (() => void) => { this.listeners.add(listener); return () => this.listeners.delete(listener); };
   private publish(update: Partial<FinanceApplicationState>) { this.value = { ...this.value, ...update }; for (const listener of this.listeners) listener(); }
@@ -34,6 +42,7 @@ export class FinanceApplication {
   async execute(change: DomainChangeSet, record = true): Promise<void> {
     if (!this.active || this.value.saving || this.isProfileChanging()) throw new Error('Bitte warten Sie auf die laufende Speicherung oder den Bereichswechsel.');
     if (change.spaceId !== this.spaceId) throw new Error('Die Änderung gehört zu einem anderen Bereich.');
+    const release = this.activity?.beginFinance();
     const before = this.value.aggregates;
     this.publish({ saving: true, message: undefined });
     try {
@@ -52,12 +61,12 @@ export class FinanceApplication {
       const aggregates = [...before.filter((entry) => !changed.has(entry.id)), ...changed.values()];
       if (record) this.history.record(change, before);
       if (this.active) this.publish({ aggregates, status: 'ready', historyVersion: this.value.historyVersion + 1, message: 'Lokal gespeichert.' });
-    } finally { if (this.active) this.publish({ saving: false }); }
+    } finally { release?.(); if (this.active) this.publish({ saving: false }); }
   }
   async moveHistory(direction: 'undo' | 'redo') {
     if (!this.active || this.value.saving || this.isProfileChanging()) return;
     await this.history.move(direction, this.value.aggregates, this.dependencies, (change) => this.execute(change, false));
     this.publish({ historyVersion: this.value.historyVersion + 1 });
   }
-  dispose() { this.active = false; this.listeners.clear(); }
+  dispose() { this.active = false; this.listeners.clear(); void this.storage.close?.(); }
 }
