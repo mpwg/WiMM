@@ -41,3 +41,5 @@ Produktanforderungen stehen in `product.md`, Fachinvarianten in `domain.md`, Typ
 ## Bewusst spätere Funktionen
 
 Bankabruf, Kinderrollen, Mehrwährung, Wertpapierkurse, Beleg-OCR, Steuerfunktionen, kommerzielles Hosting und iOS-/Android-Store-Apps gehören nicht zur ersten Veröffentlichung. Ende-zu-Ende-Verschlüsselung ist dagegen verpflichtend ab v1. Englische Übersetzungen sind nicht Voraussetzung; Übersetzbarkeit wird technisch vorbereitet.
+
+[Gesicherte #82-Migrationsvorbereitung vom 8. Oktober](handoffs/migration-2026-10-08.md) dokumentiert Koordination und echten Browser-Chiffratspeicher; die vollständige native/Adapter-Migration bleibt offen.
