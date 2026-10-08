@@ -6,6 +6,8 @@ Aktuelle Freigabe: D0, D1, D2, P1, P2 und P3 sind abgeschlossen. P4 besitzt doku
 
 Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt konkrete fehlende Voraussetzung und nächste Handlung. Bei Implementierungsfreigabe das erste offene Paket mit erfüllten Voraussetzungen bearbeiten. Unteraufgaben in Reihenfolge; keine Grundsatzentscheidungen aus dem Konzept neu öffnen. Prüfbelege und notwendige Abweichungen direkt beim Paket ergänzen.
 
+Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungsstand offener Deltas. Fortschritt, Blockaden und Prüfbelege direkt im jeweiligen Issue pflegen; diese Datei behält Auftrag, Freigaben und zusammengefassten Paketstatus. Kriterienmatrizen dokumentieren Abnahmesnapshots mit Issueverweisen. Für P4 ist [Übersicht #57](https://github.com/mpwg/WiMM/issues/57) der Einstieg; das Anlegen eines Issues ändert keine Produktfreigabe.
+
 ## Teilaufgaben und Bearbeitungsfolge
 
 Die Teilpläne konkretisieren die Pakete nach dem Muster von [P1](p1-foundation.md). Jedes Paket beginnt nach Abnahme seines Vorgängers und eigener Implementierungsfreigabe. Pro Teilaufgabe Status, Ergebnis und Prüfbelege im Teilplan pflegen, den Gesamtstatus hier; die bestehenden Paketabnahmen bleiben verbindlich. P2 ist abgeschlossen. Der Nutzer hat am 3. Oktober 2026 den vollständigen Abschluss von P3 freigegeben.
@@ -207,6 +209,7 @@ P4 enthält sechs Sammelaufgaben mit acht noch offenen Unterabnahmen; P5–P11 b
 - Aktuelle Belege auf `0beb3c6` (Laufzeitcode unverändert gegenüber `880ccfa`): Typecheck, 40 UI-Unit-Tests, 60 Web-/58 Desktopfrontendfälle, 66 Speicherintegrationen, 24 Layout-/Leistungsfälle und zwei echte 200-%-Zoomfälle bestanden. Separate Produktionsbrowserabnahme: Chromium/WebKit auf beiden Frontends vier bestanden; Firefox zweimal vor Appinteraktion mit Profilstartfehler gescheitert.
 - Restlücken: Firefox-Kernabläufe einschließlich dauerhaftem Neustart; beobachtete Screenreader-Ansagen; fünf Größen × Hell/Dunkel bei echtem 200-%-Zoom; aktuelle native macOS-arm64-Wiederholung sowie Windows/Linux/macOS x86_64 und echtes iOS-Safari/PWA. Der live bestätigte grüne Ubuntu-Lauf 37731984200 enthält Firefox-UX, aber nicht die separate P4.6-Produktionsbrowserabnahme.
 - Vollständige Kriterienmatrix, Prüfgrenzen, Messwerte und nächste Schritte: [P4-Nachprüfung](handoffs/p4-review-2026-10-08.md). READMEs aktualisiert; keine Abschlussmarker geändert.
+- Delta-Tracking auf Nutzerauftrag vom 8. Oktober: acht offene Einzelissues [#49–#56](https://github.com/mpwg/WiMM/issues/57) und Gesamtabnahme [#57](https://github.com/mpwg/WiMM/issues/57) angelegt. Firefox, Screenreader, Zoom, macOS arm64, Windows x64, Linux x64, macOS x86_64 und iOS-Safari/PWA jeweils separat; vorhandener Linuxbefund [#41](https://github.com/mpwg/WiMM/issues/41) als zusätzliche Freigabegrenze verknüpft. Aktueller Bearbeitungsstand ab sofort ausschließlich in den Issues; P4 bleibt in Arbeit.
 
 ## P5 — Import und Automatisierung
 

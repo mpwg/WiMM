@@ -6,6 +6,8 @@ WhereIsMyMoney ist ein geplanter Open-Source-Finanzmanager für Familien. Gemein
 
 Die [P4-Nachprüfung vom 8. Oktober 2026](docs/handoffs/p4-review-2026-10-08.md) bestätigt die vorhandenen Funktionen mit aktuellen Browser-/Speicher-/Layoutprüfungen. Für die vollständige Abnahme fehlen die separate Firefox-Kernablaufprüfung, Screenreader-Ansagen, die vollständige echte Zoommatrix sowie aktuelle native und physische Gerätenachweise. Eine grüne CI allein schließt P4 nicht ab.
 
+Offene Deltas werden ab sofort in GitHub-Issues verfolgt: [P4-Übersicht #57 mit acht Einzelissues](https://github.com/mpwg/WiMM/issues/57). Die Projektdokumente bleiben die Quelle für Spezifikation, Freigaben und zusammengefassten Paketstatus.
+
 ## Geplantes Produkt
 
 - Webanwendung und installierbare, offlinefähige PWA.

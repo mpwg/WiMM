@@ -9,6 +9,7 @@
 
 - Verwende deutsche Sprache und deutsche Umlaute in Dokumentation, Benutzeroberfläche und verständlichen Meldungen. Technische Bezeichner bleiben englisch.
 - Aktueller Auftrag, Implementierungsfreigaben und Paketstatus stehen ausschließlich in [Aufgaben](docs/tasks.md). Neue Produktpakete beginnen erst nach ausdrücklichem Implementierungsauftrag; ein vollständiges Planzitat erteilt keine zusätzliche Freigabe.
+- Seit Nutzerauftrag vom 8. Oktober 2026 werden offene Deltas in GitHub-Issues verfolgt. Für jedes Delta ein eigenes Issue mit Voraussetzungen und Abnahmekriterien anlegen; Fortschritt, Blockaden und Prüfbelege dort pflegen. Repositorydokumente enthalten Spezifikation, zusammengefassten Paketstatus und Abnahmesnapshots mit Issueverweisen, keine zweite unabhängig gepflegte Deltaliste. P4-Einstieg: [Gesamtabnahme #57](https://github.com/mpwg/WiMM/issues/57).
 - Lies vor Arbeit [Dokumentationsindex](docs/README.md), [Fachmodell](docs/domain.md), [Architektur](docs/architecture.md), [Entscheidungen](docs/decisions.md) und [Aufgaben](docs/tasks.md).
 - Nutze den [Agentenleitfaden](docs/agent-guide.md) und passende Skills unter `.agents/skills`; weitere Produktregeln nicht in Kopien pro Agent verteilen.
 - Seit ausdrücklicher Nutzerfreigabe vom 7. Oktober 2026 ist direkte Arbeit einschließlich Commits und Pushes auf `main` wieder erlaubt. Themenbranches und Pull Requests bleiben bei entsprechendem Auftrag möglich. Bestehende Branches, fremde Änderungen und GitHub-Repositoryschutz bewahren; niemals Force-Push.
