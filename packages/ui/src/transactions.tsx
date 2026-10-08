@@ -103,10 +103,13 @@ export function TransactionList({ model, fixedAccountId, initialSelection, onSel
   const accountNames = useMemo(() => new Map(model.allAccounts.map((entry) => [entry.id, entry.name])), [model]);
   const payeeNames = useMemo(() => new Map(model.allPayees.map((entry) => [entry.id, entry.name])), [model]);
   const categoryNames = useMemo(() => new Map(model.allCategories.map((entry) => [entry.id, entry.name])), [model]);
-  const visible = useMemo(() => model.transactions.filter((transaction) =>
-    `${transaction.note ?? ''} ${payeeNames.get(transaction.payeeId!) ?? ''}`.toLocaleLowerCase('de').includes(filter.toLocaleLowerCase('de')) &&
-    (fixedAccountId === undefined || transaction.accountId === fixedAccountId) && (account === '' || transaction.accountId === account) && (from === '' || transaction.date >= from) && (to === '' || transaction.date <= to)
-  ).sort((left, right) => right.date.localeCompare(left.date) || left.id.localeCompare(right.id)), [model, filter, account, from, to, payeeNames, fixedAccountId]);
+  const visible = useMemo(() => {
+    const needle = filter.toLocaleLowerCase('de');
+    return model.orderedTransactions.filter((transaction) =>
+      (needle === '' || `${transaction.note ?? ''} ${payeeNames.get(transaction.payeeId!) ?? ''}`.toLocaleLowerCase('de').includes(needle)) &&
+      (fixedAccountId === undefined || transaction.accountId === fixedAccountId) && (account === '' || transaction.accountId === account) && (from === '' || transaction.date >= from) && (to === '' || transaction.date <= to)
+    );
+  }, [model, filter, account, from, to, payeeNames, fixedAccountId]);
   useEffect(() => { const query = matchMedia('(max-width: 767px)'); const update = () => setMobile(query.matches); query.addEventListener('change', update); return () => query.removeEventListener('change', update); }, []);
   useEffect(() => {
     if (selected !== undefined) dialog.current?.showModal();

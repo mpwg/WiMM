@@ -25,3 +25,14 @@ test('Übersicht öffnet das vorhandene Transferpaar für Änderung und Löschun
   const deleted = await read(); for (const id of [original.id, original.sourceTransactionId, original.targetTransactionId]) expect(deleted.find(a => a.id === id)?.deletedAt).toBeDefined();
   expect(deleted.filter(a => a.aggregateType === 'transaction' && !a.deletedAt)).toHaveLength(1);
 });
+
+test('Datumsreihenfolge folgt bestätigten Änderungen und bleibt beim Filtern erhalten', async ({ page }, info) => {
+  await page.goto(`/tests/workspace.html?count=2&desktop=${info.project.name.startsWith('Desktop')}`);
+  await navigate(page, 'Buchungen'); const rows = page.locator('[data-transaction-id]');
+  await expect(rows.first()).toContainText('Buchung 00000');
+  await rows.first().getByRole('button', { name: /^Details:/ }).click(); const dialog = page.getByRole('dialog');
+  await dialog.getByRole('button', { name: 'Bearbeiten', exact: true }).click(); await dialog.getByLabel('Datum', { exact: true }).fill('2026-10-01'); await dialog.getByRole('button', { name: 'Änderung speichern' }).click();
+  await expect(dialog).toHaveCount(0); await expect(rows.first()).toContainText('Buchung 00001');
+  await page.getByLabel('Durchsuchen', { exact: true }).fill('Buchung 0000'); await expect(rows).toHaveCount(2); await expect(rows.last()).toContainText('Buchung 00000');
+  await navigate(page, 'Übersicht'); await expect(page.locator('.overview-columns .plain-list').first().locator('li').first()).toContainText('Buchung 00001');
+});

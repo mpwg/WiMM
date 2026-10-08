@@ -309,6 +309,7 @@ export class FinanceModel {
   readonly allPayees: readonly PayeeAggregate[];
   readonly payees: readonly PayeeAggregate[];
   readonly transactions: readonly TransactionAggregate[];
+  readonly orderedTransactions: readonly TransactionAggregate[];
   private readonly heads = new Map<UUID, P2Aggregate>();
   readonly domainDependencies: DomainDependencies = { ids: { next: () => crypto.randomUUID() as UUID }, clock: { now: () => new Date().toISOString() as never } };
   constructor(private readonly spaceId: UUID, aggregates: readonly StoredAggregate[], private readonly execute: (changeSet: DomainChangeSet) => Promise<void>) {
@@ -321,6 +322,7 @@ export class FinanceModel {
     this.allPayees = aggregates.filter((aggregate): aggregate is StoredAggregate & PayeeAggregate => aggregate.aggregateType === 'payee' && aggregate.deletedAt === undefined);
     this.payees = this.allPayees.filter((payee) => !payee.archived);
     this.transactions = aggregates.filter((aggregate): aggregate is StoredAggregate & TransactionAggregate => aggregate.aggregateType === 'transaction' && aggregate.deletedAt === undefined);
+    this.orderedTransactions = Object.freeze(this.transactions.toSorted((left, right) => right.date.localeCompare(left.date) || left.id.localeCompare(right.id)));
   }
   async addAccount(name: string, type: AccountAggregate['type'], onBudget: boolean, opening?: { amount: string; date: string }) {
     const aggregate: AccountAggregate = { ...createAggregateMetadata(this.spaceId, this.domainDependencies), aggregateType: 'account', name, type, onBudget, archived: false };
@@ -461,7 +463,7 @@ function Overview({ model, onAccounts, onTransactions, onSchedules, onAccount }:
   const month = today().slice(0, 7);
   const monthLabel = new Intl.DateTimeFormat('de-AT', { month: 'long', year: 'numeric', timeZone: 'Europe/Vienna' }).format(new Date(`${month}-15T12:00:00Z`));
   const consumption = projectConsumption(model.transactions.filter((transaction) => transaction.date.startsWith(month)), model.allCategories, model.groups);
-  const recent = [...model.transactions].sort((left, right) => right.date.localeCompare(left.date) || left.id.localeCompare(right.id)).slice(0, 5);
+  const recent = model.orderedTransactions.slice(0, 5);
   const automation = new AutomationModel(model);
   const due = automation.schedules.filter(schedule => schedule.enabled).flatMap(schedule => dueDates(schedule, today() as never).filter(date => !automation.all.some(entry => entry.aggregateType === 'scheduleOccurrence' && (entry as OccurrenceAggregate).scheduleId === schedule.id && (entry as OccurrenceAggregate).dueDate === date)).map(date => ({ schedule, date }))).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5);
   return <section>
