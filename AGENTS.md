@@ -32,6 +32,7 @@
 
 - Bearbeite das erste offene, freigegebene Arbeitspaket mit erfüllten Voraussetzungen. Halte Status, Ergebnis und Prüfbelege in `docs/tasks.md` aktuell.
 - Schließe ein Paket erst ab, wenn seine Abnahmekriterien erfüllt sind. Dokumentiere verbleibende Einschränkungen konkret.
+- Rust-Komponenten müssen auch durch native Rust-Tests geprüft werden. Sprachbinding-/TypeScript-/Browservergleiche ergänzen diese Tests, ersetzen aber keine Rust-Assertions.
 - Führe risikogerechte Prüfungen gemäß `docs/testing.md` aus. Bestehende Fach-, Adapter- und Zugriffsinvarianten sind verbindlich.
 - Dokumentiere nötige Architekturänderungen in `docs/decisions.md` und passe betroffene Verträge gleichzeitig an. Bei Widersprüchen zwischen verbindlichen Quellen benenne den Widerspruch und korrigiere betroffene Quellen gemeinsam vor abhängiger Implementierung; bei unklarer Produktabsicht rückfragen.
 - Verwende konsistente Task-/ADR-/Übergabevorlagen aus `docs/templates`; bei Pull Requests gilt die GitHub-Vorlage, Editorformatregeln gelten stets. Erstelle nach jedem abgeschlossenen Abschnitt einen Zwischencommit mit zusammengehörigen eigenen Änderungen gemäß aktueller Gitfreigabe; keine fremden Dateien einschließen. Neue Commitnachrichten nach Conventional Commits mit deutschem Inhalt.

@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { writeFile } from 'node:fs/promises';
+import { writeFile, readFile } from 'node:fs/promises';
+import { isDeepStrictEqual } from 'node:util';
 import { DomainValidationError, parseMoney, assertMoney, sumMoney, subtractMoney, multiplyMoney, multiplyDivideMoney, moneyDecimal, parseDirectedMoney, parseFinanceDate, parseYearMonth, monthOf, reorderRules, createChangeSet, type P2Aggregate, type RuleAggregate } from '../../packages/domain/src/index.js';
 import { coreCommandResultSchema, coreCalculationResultSchema, coreStateRequestSchema, type UUID } from '../../packages/contracts/src/index.js';
+import { reconciliationCases } from './reconciliation-cases.js';
+import { transferCases } from './transfer-cases.js';
 import { openingCases } from './opening-cases.js';
 import { transactionCases } from './transaction-cases.js';
 import { masterCases } from './master-cases.js';
@@ -67,5 +70,9 @@ for (const text of ['12', '+12,3', '00012,34', ' 12', '12 ', '1.2.3', '1e2', '12
   catch (error) { if (!(error instanceof DomainValidationError)) throw error; expected = { contractVersion: 1, status: 'rejected', error: { code: error.code, message: error.message } }; }
   cases.push({ name: `K04 Centtext ${JSON.stringify(text)}`, method: 'calculate', request: { ...base, calculationType: 'money.parse', text }, expected });
 }
-cases.push(...stateCases(),...masterCases(),...transactionCases(),...openingCases());
+cases.push(...stateCases(),...masterCases(),...transactionCases(),...openingCases(),...transferCases(),...reconciliationCases());
 await writeFile('test-results/core-bindings/cases.json' , `${JSON.stringify(cases, null, 2)}\n`);
+
+const rustFixture = 'crates/finance-core/tests/fixtures/contract-catalog.json';
+if (process.argv.includes('--update-rust-fixtures')) await writeFile(rustFixture, `${JSON.stringify(cases)}\n`);
+else if (!isDeepStrictEqual(JSON.parse(await readFile(rustFixture,'utf8')), cases)) throw new Error('Der gesperrte Rust-Fachkatalog stimmt nicht mit der TypeScript-Referenz überein. Golden-Diff ausdrücklich prüfen und Rustabnahme wiederholen.');

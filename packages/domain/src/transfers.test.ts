@@ -310,3 +310,27 @@ describe('P4.4-Vertragsgrenzen', () => {
     expectDomainError(() => confirmReconciliation({ spaceId: SPACE, reconciliation: reconciliation({ statementBalance: -20_000 as Money }), transactions: [normalTransaction('reconciled')] }, reader(head(SOURCE_ACCOUNT, 1, 'account'), head(NORMAL_TRANSACTION, 2, 'transaction')), dependencies()), 'INVALID_COMMAND');
   });
 });
+
+it('entsperrt eine gesamte Abgleichkette auch bei Einstieg über eine normale Buchung', async () => {
+  const { unlockFinanceSelection, validateFinancialState } = await import('./index.js');
+  const id = (n: number) => `a0000000-0000-4000-8000-${String(n).padStart(12, '0')}` as UUID;
+  const spaceId = id(1), time = '2026-10-08T12:00:00Z';
+  const meta = (n: number) => ({ id: id(n), spaceId, revision: 1, createdAt: time, updatedAt: time });
+  const accounts = [2, 3, 4].map(n => ({ ...meta(n), aggregateType: 'account' as const, name: `Konto ${n}`, type: 'checking' as const, onBudget: true, archived: false }));
+  const opening = { ...meta(10), aggregateType: 'transaction' as const, accountId: id(2), date: '2026-10-08', amount: 0, kind: 'opening' as const, clearance: 'reconciled' as const, splits: [] };
+  const transfer1 = { ...meta(11), aggregateType: 'transfer' as const, date: opening.date, sourceAccountId: id(2), targetAccountId: id(3), sourceTransactionId: id(12), targetTransactionId: id(13), amount: 1000 };
+  const transfer2 = { ...transfer1, ...meta(14), sourceAccountId: id(3), targetAccountId: id(4), sourceTransactionId: id(15), targetTransactionId: id(16), amount: 500 };
+  const side = (n: number, account: number, transfer: number, amount: number) => ({ ...opening, ...meta(n), accountId: id(account), transferId: id(transfer), amount, kind: 'transfer' as const });
+  const transactions = [opening, side(12, 2, 11, -1000), side(13, 3, 11, 1000), side(15, 3, 14, -500), side(16, 4, 14, 500)];
+  const reconciliations = [[20, 2, [10, 12], -1000], [21, 3, [13, 15], 500], [22, 4, [16], 500]].map(([n, account, ids, balance]) => ({ ...meta(n as number), aggregateType: 'reconciliation' as const, accountId: id(account as number), statementDate: opening.date, statementBalance: balance as number, transactionIds: (ids as number[]).map(id) }));
+  const all = [...accounts, transfer1, transfer2, ...transactions, ...reconciliations];
+  validateFinancialState(all, spaceId);
+  const change = unlockFinanceSelection(spaceId, opening.id, all, { ids: { next: () => id(100) }, clock: { now: () => time } });
+  expect(change.aggregates.filter(a => a.aggregateType === 'reconciliation')).toHaveLength(3);
+  expect(change.aggregates.filter(a => a.aggregateType === 'transaction')).toHaveLength(5);
+  const next = new Map<UUID, import('./commands.js').P2Aggregate>(all.map(a => [a.id, a]));
+  for (const a of change.aggregates) next.set(a.id, a);
+  validateFinancialState([...next.values()], spaceId);
+  expect([...next.values()].filter(a => a.aggregateType === 'transaction').every(a => (a as TransactionAggregate).clearance === 'cleared')).toBe(true);
+  for (const t of [transfer1, transfer2]) expect(change.expectedRevisions).toContainEqual({ id: t.id, expectedRevision: 1 });
+});

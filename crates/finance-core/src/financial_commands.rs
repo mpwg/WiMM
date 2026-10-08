@@ -9,7 +9,7 @@ use crate::{
 use serde_json::{Value, json};
 use std::collections::{BTreeMap, BTreeSet};
 const COMMAND: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
-fn revise(mut a: Value, time: &str) -> CoreResult<Value> {
+pub(crate) fn revise(mut a: Value, time: &str) -> CoreResult<Value> {
     let revision = integer(&a["revision"])?;
     if revision == MAX_SAFE {
         return Err((
@@ -27,7 +27,7 @@ fn revise(mut a: Value, time: &str) -> CoreResult<Value> {
     a["updatedAt"] = json!(time);
     Ok(a)
 }
-fn normalize(mut tx: Value) -> CoreResult<Value> {
+pub(crate) fn normalize(mut tx: Value) -> CoreResult<Value> {
     if kind(&tx) != "transaction" {
         return Err((
             "INVALID_AGGREGATE",
@@ -88,7 +88,7 @@ fn require(
     }
     Ok(())
 }
-fn inspect_changes(
+pub(crate) fn inspect_changes(
     changes: &[Value],
     space: &str,
     expected: &[Expectation],
@@ -116,7 +116,7 @@ fn inspect_changes(
     }
     Ok(())
 }
-fn prepare_financial(
+pub(crate) fn prepare_financial(
     mut changes: Vec<Value>,
     mut expected: Vec<Expectation>,
     request: &Request,

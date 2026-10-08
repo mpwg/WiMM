@@ -11,8 +11,10 @@ pub mod calendar;
 mod financial_commands;
 mod master_commands;
 mod projections;
+mod reconciliation_commands;
 mod references;
 mod state_validation;
+mod transfer_commands;
 pub use state_validation::{project_json, validate_json};
 pub mod money;
 #[cfg(feature = "contract-probe")]
@@ -194,6 +196,16 @@ struct Request {
 pub fn execute_json(input: &str) -> String {
     output((|| {
         let decoded = decode(input)?;
+        if ["reconciliation.confirm", "reconciliation.unlock"]
+            .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
+        {
+            return reconciliation_commands::execute(decoded);
+        }
+        if ["transfer.save", "transfer.delete"]
+            .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
+        {
+            return transfer_commands::execute(decoded);
+        }
         if decoded["command"]["commandType"] == "account.save"
             && decoded["command"]["aggregates"]
                 .as_array()

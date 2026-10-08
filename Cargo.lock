@@ -1041,6 +1041,7 @@ dependencies = [
 name = "wimm-core-bindings"
 version = "0.0.0"
 dependencies = [
+ "serde_json",
  "uniffi",
  "wasm-bindgen",
  "wimm-finance-core",
