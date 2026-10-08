@@ -13,7 +13,7 @@ const transactionFields = {
   payeeId: uuidSchema.optional(), note: z.string().optional(), clearance: z.enum(['uncleared', 'cleared', 'reconciled']),
   importReference: text.optional(), scheduleOccurrenceId: uuidSchema.optional(), transferId: uuidSchema.optional(), splits: z.array(split)
 };
-const candidate = z.object({ sourceRow: positiveOrdinal, parserSource: z.enum(['csv', 'camt053', 'ofx', 'qfx']).optional(), date: isoDateSchema, amount: moneySchema,
+export const importCandidateSchema = z.object({ sourceRow: positiveOrdinal, parserSource: z.enum(['csv', 'camt053', 'ofx', 'qfx']).optional(), date: isoDateSchema, amount: moneySchema,
   payee: z.string().optional(), memo: z.string().optional(), externalId: z.string().optional(), sourceFingerprint: text.optional(), categoryId: uuidSchema.optional(), payeeId: uuidSchema.optional(), clearance: z.enum(['uncleared', 'cleared']).optional() }).strict();
 
 /** Formvertragsprüfung; berechnete Fachinvarianten verbleiben ausschließlich im Fachkern. */
@@ -28,7 +28,7 @@ export const financialAggregateSchema = z.discriminatedUnion('aggregateType', [
   z.object({ ...metadata, aggregateType: z.literal('reconciliation'), accountId: uuidSchema, statementDate: isoDateSchema, statementBalance: moneySchema, transactionIds: z.array(uuidSchema).min(1) }).strict(),
   z.object({ ...metadata, aggregateType: z.literal('importMapping'), name: text, mapping: z.json() }).strict(),
   z.object({ ...metadata, aggregateType: z.literal('importBatch'), fileHash: z.string().regex(/^[a-f0-9]{64}$/), accountId: uuidSchema,
-    rows: z.array(z.object({ sourceRow: positiveOrdinal, candidate: candidate.nullable(), decision: z.enum(['import', 'exclude', 'separate']), issues: z.array(z.string()) }).strict()).min(1).max(100_000), committedRows: z.array(positiveOrdinal), state: z.enum(['ready', 'partial', 'completed']) }).strict(),
+    rows: z.array(z.object({ sourceRow: positiveOrdinal, candidate: importCandidateSchema.nullable(), decision: z.enum(['import', 'exclude', 'separate']), issues: z.array(z.string()) }).strict()).min(1).max(100_000), committedRows: z.array(positiveOrdinal), state: z.enum(['ready', 'partial', 'completed']) }).strict(),
   z.object({ ...metadata, aggregateType: z.literal('importFingerprint'), accountId: uuidSchema, parserSource: text, externalId: z.string().optional(), fingerprint: text, transactionId: uuidSchema, importId: uuidSchema, sourceRow: positiveOrdinal }).strict(),
   z.object({ ...metadata, aggregateType: z.literal('rule'), order: ordinal, conditions: z.array(z.object({ field: z.enum(['date', 'amount', 'payee', 'memo']), operator: z.enum(['equals', 'contains', 'gte', 'lte']), value: z.union([z.string(), moneySchema]) }).strict()).min(1), actions: z.array(z.union([
     z.object({ field: z.enum(['categoryId', 'payeeId']), value: uuidSchema }).strict(), z.object({ field: z.literal('clearance'), value: z.enum(['uncleared', 'cleared']) }).strict()

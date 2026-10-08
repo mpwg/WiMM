@@ -1,0 +1,70 @@
+# K01 — Plattformfreie Fach- und Anwendungsverträge
+
+Stand: 8. Oktober 2026. Implementierungsauftrag #91; kriteriumsgerechte Vertragsabnahme in [#92](https://github.com/mpwg/WiMM/issues/92). Die Typen und strikten Formschemas liegen in `packages/contracts/src/finance-engine.ts` und `application-ports.ts`. Fachregeln bleiben im Fachkern; konkrete Speicherung und Ausführung bleiben in Adaptern. Die vorhandene TypeScript-Engine bleibt bis K05 aktiv.
+
+## Versionen und Darstellung
+
+| Dimension | Vertrag |
+| --- | --- |
+| Engine-Binding | `contractVersion: 1`; unbekannter Vertrag liefert `UPDATE_REQUIRED`, keine Berechnung oder Mutation |
+| Finanzdaten | `domainSchemaVersion: 1`; bestehende P2-/P5-Aggregate, keine zusätzlichen P6–P11-Typen |
+| Lokaler Speicher | gesonderte `storageSchemaVersion`; weder aus Bindingversion noch Epoche abgeleitet |
+| Sync/Export | bestehende Protokoll-, Crypto- und Exportformate unabhängig erhalten |
+
+Alle Requests und Results sind normale JSON-Daten mit festen discriminated unions und strikten Feldern. Finanzaggregate tragen Fach-ID, Bereich, Revision und UTC-Metadaten; lokale `handle`-Felder gehören ausschließlich in Speicherrecords. Die V1-Adapterabbildung ist Fach-ID gleich Handle gemäß ADR-041; der Adapter entfernt das zusätzliche Handle vor dem Engine-Aufruf und ergänzt es erst beim Speichern. Der Server erhält ausschließlich bestehende verschlüsselte Hüllen und öffentliche Metadaten.
+
+Geld, Revisionen, Reihenfolgen und Zähler bleiben sichere Ganzzahlen zwischen den bisherigen Grenzen einschließlich negativer Cent. Rust verwendet hinreichend breite exakte Zwischenwerte und lehnt Überläufe ab, bevor es Daten für den Commit liefert. JavaScript erhält keine erweiterten Rust-Integerwerte oder BigInt-JSON-Fallbacks. Kalenderdaten bleiben `YYYY-MM-DD`, technische Zeitpunkte UTC mit `Z`. Optionale Felder werden bei Abwesenheit ausgelassen; `null`, leerer Text und Abwesenheit dürfen nicht verwechselt werden. UTF-8, UUIDs und vorhandene Texte bleiben verlustfrei; fachliche Normalisierung folgt ausschließlich dem vorhandenen Fachmodell.
+
+## Fachengine
+
+`FinanceEnginePort` ist der identische logische Vertrag für Web/WASM, direkte Tauri-Aufrufe und spätere Swift-/Kotlin-Bindings. Der asynchrone TypeScript-Port kapselt die Ausführungsform, nicht eine weitere Finanzengine. Native Bindings dürfen denselben reinen Kern synchron aufrufen; das ändert keine Inhalte oder Fehler.
+
+| Aktion | Eingabe | Ergebnis |
+| --- | --- | --- |
+| `execute` | vollständiger aktueller Bereichsbestand, typisierter Fachbefehl, ausdrückliche erwartete Revisionen, Kontext | `changed` mit vollständiger atomarer Änderungsmenge, `unchanged` oder `rejected` |
+| `reverse` | vollständiger Bestand, gezielte historische Zielaggregate, erwartete aktuelle Revisionen, Kontext | reguläre Gegenänderung mit neuen Revisionen/Tombstones; kein Bereichssnapshotrestore |
+| `project` | vollständiger Bestand desselben Bereichs | Kontosalden und Verbrauch mit Kategorien oder strukturierter Fachfehler |
+| `validate` | `historical` mit vollständigem Wiederherstellungsbestand oder `mutation` mit vollständigem Vorher-/Nachherbestand | `valid` oder strukturierter Fehler; historische Tombstones und neue Referenzen getrennt prüfen |
+| `calculate` | typisierte Geldtexte, Regel-/Importkandidaten, Dauerzahlung oder Dublettenbestand | Cent, Regelvorschlag, Fälligkeiten oder Dublettenklassifikation; keine Speicherung |
+
+Alle Ergebnisse tragen die Bindingversion. IDs und Zeit liegen explizit im Kontext: Operations-ID, UTC-Zeitpunkt und geordneter Vorrat erzeugter UUIDs. Der Kern nutzt weder globale Uhr noch Zufall. Nicht verfügbare oder unzulässige IDs liefern `INVALID_GENERATOR`; Wiederholungen mit identischen Requests verwenden denselben Vorrat und müssen identische Ergebnisse liefern. Sortierung, Restcent und Summenreihenfolge folgen `docs/domain.md`; Datenbankrückgabereihenfolgen sind keine Entscheidungsgrundlage.
+
+Die Befehlsformen decken ausschließlich die vorhandenen 22 Befehle ab. Save-Befehle erhalten vollständige vorgeschlagene Aggregate; Archivierung/Löschung ein Ziel. Merge nennt Ziel, Quellen und die ausdrücklich bestätigte Buchungsmenge. Abgleich nennt Konto, Auszugsdatum/-saldo und ausgewählte Buchungen; Entsperren den bestätigten Abgleich. Importcommit nennt die zuvor gespeicherte Importgruppe; Regelnreihenfolge die vollständige gewünschte ID-Reihenfolge. Dauerzahlungsbestätigung nennt Schedule/Fälligkeit und optional eine gespeicherte importierte Zahlung. `unchanged` behandelt bereits erledigte Fälligkeiten oder Importgruppen ohne neue Operation.
+
+Formprüfung ist keine Fachabnahme: Der Kern prüft zusätzlich Bereichszugehörigkeit, vollständige Referenzen/Transferpaare, Revisionen, Abgleichsperren, Tombstones, Automatisierung und Summen einschließlich Zwischenwerten. Neue Referenzen und Snapshotreferenzen erhalten die bereits verbindlichen unterschiedlichen Regeln. Kein Ergebnis darf implizit gespeichert werden. Bekannte Fachfehler liefern die gemeinsamen zentralen Fehlercodes; Formfehler liefern `INVALID_COMMAND`, unbekannte Versionen `UPDATE_REQUIRED`. Fehlermeldungen enthalten keine Original-Finanzpayloads und werden nicht als Klartext zum E2EE-Server gesendet.
+
+## Anwendung und lokaler Speicher
+
+Die Anwendung lebt ab K02 außerhalb React. Sie injiziert Engine, Profil-/Finanzspeicher, IDs/Uhr, Profilkoordination, Hintergrundausführung, Abbruch und Plattformdienste. Die Ports enthalten keine DOM-/React-/Worker-/Web-Lock-/Tauri-/SQL-Typen. Der Historienstapel ist Anwendungssitzungszustand; seine Gegenbefehle kommen aus der Engine. Etablierte Datei-/XML-/CSV-Parser bleiben hinter Adaptergrenzen.
+
+Ein Finanzwrite hat folgenden Ablauf:
+
+1. Aktuellen Profil-/Bereichs- und Sitzungskontext unter derselben Profilkoordination prüfen; bei Sperre oder Wechsel keine Fortsetzung einer veralteten Sitzung.
+2. Vollständigen aktuellen Fachbestand lesen; bestätigte Bestände und Originalentwürfe getrennt halten. Ein fehlendes Profil darf angelegt werden, ein beschädigtes/nicht lesbares Profil erhält keinen Neuanlagefallback.
+3. Engine mit festem Kontext aufrufen. Bei Ablehnung bleiben Eingaben/Entwürfe erhalten; `unchanged` erzeugt keinen Write.
+4. Änderung und fachlich berechnete Projektionen mit allen erwarteten Revisionen atomar speichern. Lokaler Standalonebetrieb erzeugt keine Outbox; verbundene Bereiche speichern die zugehörige Operation mit Originalentwurf im selben Batch.
+5. Erst der dauerhaft bestätigte Commit ergibt lokalen Erfolg. Ein nachfolgender Lese-/Renderfehler darf den bereits gespeicherten Befehl nicht erneut schreiben. Bei unklarem Commitausgang Originaloperation prüfen, keine neue Operations-ID erzeugen.
+
+`ProfileStorePort` bewahrt die bisherigen Loadzustände und den unter Koordination/CAS ausgeführten Änderungscallback. Profilrevision, Finanzrevision und Sitzungsgeneration bleiben getrennt. `LocalFinancialStoragePort` bewahrt sämtliche vorhandenen atomaren Speicherports einschließlich lokaler Epochengrundlage, Syncseiten/Cursor, Snapshot und Projektionsneuaufbau. Speicherfehler unterscheiden Revisionskonflikt, Quota, Schreibfehler, unbekannte Version und Epoche. Rust-Brücke und IndexedDB erfüllen dieselbe aktuelle gemeinsame Suite; Browserfallback ist kein SQLite-Beleg.
+
+`CancellationPort` enthält ausschließlich Beobachtung/Abonnement. Abbruch vor Commit verhindert neue Writes und erhält den Entwurf. Nach bestätigt abgeschlossenem Commit muss das Ergebnis als committed behandelt werden; spätes Abbruchsignal oder Workerantwort erzeugt weder zweiten Write noch vermeintlichen Rollback. Hintergrundausführung und Zeitlimit werden injiziert, statt einen Browser-Worker in der Anwendung vorauszusetzen.
+
+## Migration und Sicherung
+
+`StorageMigrationPlan` nennt die erwartete letzte Migrationsnummer, getrennte Ausgangsversionen und lückenlos nummerierte registrierte Schritte. Jede Versionsdimension bleibt gleich oder steigt, mindestens eine steigt pro Schritt; Rückwärtsmigration ist unzulässig. Die Formprüfung beweist keine vorhandene Implementierung eines Zielschemas. Der Adapter darf ausschließlich registrierte, unterstützte Schritte ausführen; unbekannte Ziele werden vor Mutation abgewiesen.
+
+`LocalMigrationPort` erhält den vollständigen konsistenten Ausgangssnapshot und gegebenenfalls einen dauerhaft bestätigten verschlüsselten Backupbeleg. Vor destruktiven Schritten ist dieser Beleg zwingend: Profil, Bereich, Epoche und Hash des originalen Lesestands müssen übereinstimmen. Ein flüchtig erzeugtes Chiffrat oder bloß gestarteter Download genügt nicht. Der Adapter vergleicht den Ausgangsstand vor Commit atomar erneut; konkurrierende Änderungen verlangen einen neuen Snapshot und neuen Backupbeleg. Fehlender Schlüssel, Backupfehler, Abbruch oder Migrationfehler erhält den Originalbestand. Backup verwendet dieselbe geprüfte atomare Exportbasis aus #79 und SnapshotProtectionPort; keine Klartextdatei und keine automatische Entwurfsübernahme. Konkrete Umsetzung und echte Fehler-/Neustartbelege bleiben #82.
+
+## Öffentliche Serverpersistenz
+
+`ServerPersistencePort.runAtomic` bietet CiphertextStore und öffentliche Verwaltung über denselben Transaktionskontext. Beide werden zusammen committed oder zusammen verworfen. SQL, Treiber, Tabellen, Pools, Dialekte und Sperren verlassen den Adapter nicht. Der Server importiert keinen Finanzfachkern und entschlüsselt nichts.
+
+Operationsschlüssel bindet Bereich, Epoche und Operations-ID. Gleiche ID mit gleichem Hülleninhalt liefert dasselbe Receipt; abweichender Inhalt liefert `OPERATION_ID_REUSED`. Opaque Heads, Chiffrathash und erwartete Revisionen werden per CAS geprüft. Operationsinhalt, Verwaltungs-/Rosterdaten, Receipt und Folgekursor dürfen keinen getrennten Teilcommit erhalten. Snapshot-/Seitenlesen erfolgt aus einem konsistenten Lesestand; stabile Cursorsortierung und Seitenlimit gehören zum Vertrag, die technische Isolation zum Adapter.
+
+`CommitOutcome` unterscheidet `committed`, sicher `notCommitted` und `unknown`. Nur kontrolliert wiederholbare technische Fehler erlauben die begrenzte Wiederholung der gesamten Transaktion mit unveränderter Operations-ID; ein fachlicher Konflikt oder unklarer Commit erlaubt keinen neuen unabhängigen Write. Nach unklarem Commit wird zuerst das Receipt derselben Operation ermittelt. Rechte und signierte Manifestketten werden anhand Sitzung und öffentlicher E2EE-Verträge geprüft, niemals aus einer beliebigen vom Client angegebenen Serveridentität abgeleitet.
+
+K06 konkretisiert diese Portgrundlage für die vollständige öffentliche Verwaltung und P8-/P9-Persistenz; K07–K09 implementieren echte SQL-Adapter. Dies implementiert keine weiteren Authentifizierungs-/Aufnahme-/Rotations-/Syncabläufe aus P8/P9. Lokale Migration #82 und Betreiberwechsel #101 bleiben verschiedene Verfahren; Serverexports bewahren ausschließlich vorhandene Chiffrate/öffentliche Metadaten.
+
+## Abnahmegrenzen
+
+K01 wird durch strikte Vertrags-/Serialisierungs-/Negativtests, Paketgraph, Typecheck und die weiterhin bestehenden Finanz-/Speicher-/Profiltests geprüft. Diese Vertragsabnahme ist weder eine Rust-/WASM-/Swift-/Kotlin-Ausführung noch eine Clientumschaltung oder Serverdatenbankabnahme. K03–K05 sowie K06–K11 verlangen ihre eigenen tatsächlichen Belege. [#91](https://github.com/mpwg/WiMM/issues/91) bleibt bis zu allen K-Kriterien offen.

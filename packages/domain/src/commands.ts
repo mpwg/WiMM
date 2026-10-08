@@ -5,7 +5,7 @@ import {
   utcTimestampSchema,
   uuidSchema
 } from '@wimm/contracts';
-import { financialAggregateTypes } from '@wimm/contracts';
+import { financeCommandTypes, financialAggregateTypes } from '@wimm/contracts';
 import type { Revision, UtcTimestamp, UUID } from '@wimm/contracts';
 
 import { DomainValidationError } from './errors.js';
@@ -16,21 +16,7 @@ export const p2AggregateTypes = financialAggregateTypes;
 
 export type P2AggregateType = (typeof p2AggregateTypes)[number];
 
-export const p2CommandTypes = [
-  'account.save',
-  'account.archive',
-  'categoryGroup.save',
-  'category.save',
-  'category.archive',
-  'payee.save',
-  'payee.merge',
-  'transaction.save',
-  'transaction.delete',
-  'transfer.save',
-  'transfer.delete',
-  'reconciliation.confirm',
-  'reconciliation.unlock', 'importMapping.save', 'importBatch.save', 'import.commit', 'rule.save', 'rule.delete', 'rule.reorder', 'schedule.save', 'schedule.confirm', 'schedule.skip'
-] as const;
+export const p2CommandTypes = financeCommandTypes;
 
 export type P2CommandType = (typeof p2CommandTypes)[number];
 

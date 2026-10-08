@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import type { UUID } from '@wimm/contracts';
+import type { UUID, SnapshotProtectionPort } from '@wimm/contracts';
 import type { DomainChangeSet, P2Aggregate } from '@wimm/domain';
 
 import {
@@ -11,10 +11,7 @@ import {
   type SyncPage
 } from './contracts.js';
 
-export interface SnapshotProtector {
-  seal(snapshot: LocalSnapshot): Promise<Uint8Array>;
-  unseal(bytes: Uint8Array): Promise<LocalSnapshot>;
-}
+export interface SnapshotProtector extends SnapshotProtectionPort<LocalSnapshot> {}
 
 export interface LocalAreaMode {
   readonly connected: boolean;

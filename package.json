@@ -35,7 +35,7 @@
     "test:rust": "node scripts/check-rust.mjs test",
     "test:ui-unit": "pnpm --filter @wimm/ui test",
     "test:toolchain": "node --test scripts/check-toolchain.test.mjs",
-    "check:all": "pnpm check:docs && pnpm test:docs && pnpm test:clean && pnpm check:package-graph && pnpm test:package-graph && pnpm typecheck && pnpm lint && pnpm check:rust && pnpm test:toolchain && pnpm test && pnpm test:storage:native && pnpm test:ui && pnpm test:ui:integration && pnpm test:ui:matrix && pnpm test:ux && pnpm build && pnpm test:ui:offline && pnpm test:importers:worker",
+    "check:all": "pnpm check:docs && pnpm test:docs && pnpm test:clean && pnpm check:package-graph && pnpm test:package-graph && pnpm typecheck:contracts && pnpm typecheck && pnpm lint && pnpm check:rust && pnpm test:toolchain && pnpm test && pnpm test:storage:native && pnpm test:ui && pnpm test:ui:integration && pnpm test:ui:matrix && pnpm test:ux && pnpm build && pnpm test:ui:offline && pnpm test:importers:worker",
     "test:ui:build": "node scripts/test-ui.mjs --build",
     "test:ui:offline": "node scripts/test-ui-offline.mjs",
     "test:ui:integration": "pnpm exec playwright test --config tests/workspace/config.ts",
@@ -52,7 +52,8 @@
     "test:clean": "node --test scripts/clean.test.mjs",
     "test:ux": "pnpm exec playwright test --config tests/ux/config.ts",
     "test:package-graph": "node --test scripts/check-package-graph.test.mjs",
-    "test:storage:native": "node scripts/test-storage-native.mjs"
+    "test:storage:native": "node scripts/test-storage-native.mjs",
+    "typecheck:contracts": "pnpm --filter @wimm/contracts typecheck"
   },
   "devDependencies": {
     "@babel/parser": "8.0.6",

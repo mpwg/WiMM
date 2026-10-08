@@ -10,6 +10,8 @@ Der aktuelle Code enthält einen TypeScript-Fachkern, Clientkomposition und Anwe
 
 Die [Architektur](architecture.md) unterscheidet Bestand und Ziel; ADR-042–ADR-044 in den [Entscheidungen](decisions.md) begründen den Übergang. Eine vollständig native Produktoberfläche und neue mobile Store-Apps werden durch dieses Konzept nicht beauftragt.
 
+Die [K01-Verträge](core-contracts.md) und `packages/contracts` bilden die konkrete plattformfreie Grundlage für die freigegebene Umsetzung. Sie ersetzen keine tatsächliche Rust-/WASM-/Bindingabnahme.
+
 ## Verantwortung und Abhängigkeitsrichtung
 
 | Schicht | Verantwortung | Schnittstelle und Grenze |

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import type { AtomicBatch, RevisionExpectation, StorageAdapter } from '@wimm/contracts';
+import type { AtomicBatch, RevisionExpectation, LocalFinancialStoragePort } from '@wimm/contracts';
 import type { Revision, UUID } from '@wimm/contracts';
 import type { P2Aggregate } from '@wimm/domain';
 
@@ -68,14 +68,15 @@ export interface StorageFaultInjector {
   beforeCommit?(operation: 'applyAtomicBatch' | 'saveSyncPage' | 'replaceSnapshot' | 'rebuildProjections'): void | Promise<void>;
 }
 
-export interface LocalStorageAdapter extends StorageAdapter<
+export interface LocalStorageAdapter extends LocalFinancialStoragePort<
   StoredAggregate,
   { readonly spaceId: UUID },
   ConfirmedAggregate,
   PendingOperation,
   SyncPage,
   LocalSnapshot,
-  StoredProjection
+  StoredProjection,
+  SyncState
 > {
   readonly profileId: UUID;
   initializeArea(spaceId: UUID, proposedEpoch: UUID): Promise<UUID>;

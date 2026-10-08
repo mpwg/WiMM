@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { LocalProfile } from './app.js';
 import { validatePassphraseKdfParameters } from '@wimm/crypto';
-import { uuidSchema } from '@wimm/contracts';
+import { uuidSchema, type ProfileLoadOutcome, type ProfileStorePort } from '@wimm/contracts';
 
-export type ProfileLoadResult =
-  | { readonly kind: 'missing' }
-  | { readonly kind: 'loaded'; readonly profile: LocalProfile }
-  | { readonly kind: 'corrupt' }
-  | { readonly kind: 'unreadable' };
+export type ProfileLoadResult = ProfileLoadOutcome<LocalProfile>;
 
 export class ProfileLoadError extends Error {
   constructor(readonly kind: 'corrupt' | 'unreadable') {
@@ -18,10 +14,7 @@ export class ProfileLoadError extends Error {
 }
 
 /** Alle Änderungen lesen unter derselben Profilkoordination den aktuellen Stand. */
-export interface ProfileStore {
-  load(): Promise<ProfileLoadResult>;
-  change(update: (current: LocalProfile | undefined) => Promise<LocalProfile>): Promise<LocalProfile>;
-}
+export interface ProfileStore extends ProfileStorePort<LocalProfile> {}
 
 /** Verständlicher Hinweis für einen Laufzeitkontext ohne sichere Profilkoordination. */
 export class ProfileCoordinationError extends Error {

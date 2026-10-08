@@ -27,6 +27,10 @@ pnpm-Workspace, TypeScript strict, React, Vite, Tauri 2, Fastify, Dexie, Zod fü
 
 Routing und UI-Zustand bleiben von persistenten Fachdaten getrennt. Kontolisten werden virtualisiert; große Imports und Berichtsprojektionen laufen im Web Worker. Lucide liefert Werkzeugicons, Systemschriften die Typografie. Native Funktionen werden über `PlatformServices` injiziert, nicht durch Plattformprüfungen in jedem Fachwidget.
 
+## Gemeinsame Anwendungsverträge
+
+[Die K01-Verträge](core-contracts.md) und `packages/contracts` legen versionierte Fachbefehle, Ergebnisse, Gegenbefehle, Projektionen und Validierung sowie UI-freie Anwendungs-/Profil-/Speicherports fest. Die vorhandenen Profil-, lokalen Finanzspeicher- und Snapshotports verwenden die generischen Vertragsdefinitionen bereits. Die TypeScript-Fachengine bleibt Vergleichsreferenz und Produktengine bis zur tatsächlichen K05-Abnahme. Serverpersistenz erhält öffentliche Verwaltung und CiphertextStore über denselben Transaktionskontext; sie importiert keinen Finanzfachkern.
+
 ## Speicherports
 
 `StorageAdapter` bietet `readAggregate`, `query`, `applyAtomicBatch`, `loadConfirmed`, `loadPending`, `saveSyncPage`, `exportSnapshot`, `replaceSnapshot` und `rebuildProjections`. `applyAtomicBatch` prüft erwartete lokale Revisionen und schreibt Aggregate, Outbox und Projektionen gemeinsam. `saveSyncPage` schreibt alle Seitenänderungen samt Folgekursor in einer Transaktion.

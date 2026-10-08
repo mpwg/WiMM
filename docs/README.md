@@ -14,6 +14,8 @@ Die [UX-Neugestaltung](ux-redesign.md) ist durch ausdrücklichen Nutzerauftrag v
 
 Das [Konzept für gemeinsamen Rust-Fachkern und austauschbare SQL-Datenbanken](core-and-sql-portability.md) beschreibt den am 8. Oktober 2026 bestätigten Zielzustand für Web und spätere native Oberflächen. Desktop bleibt lokal mit SQLite, PWA mit IndexedDB; der Server erhält künftig SQLite-/PostgreSQL-/MySQL-Adapter. K01–K11 sind seit dem anschließenden ausdrücklichen Nutzerauftrag zu #91 auch zur Implementierung freigegeben; [Auftrag und Status](tasks.md#k--rust-fachkern-und-sql-portabilität).
 
+Die [K01-Abnahme vom 8. Oktober](handoffs/k01-2026-10-08.md) und [plattformfreien K01-Verträge](core-contracts.md) konkretisieren Engine-Bindings, Anwendungsabläufe und getrennte Speicher-/Sicherungs-/Servertransaktionen.
+
 ## Lesereihenfolge
 
 | Schritt | Dokument | Zweck |

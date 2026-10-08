@@ -4,3 +4,5 @@ export * from './ports.js';
 export * from './primitives.js';
 export * from './public-envelopes.js';
 export * from './financial-aggregates.js';
+export * from './finance-engine.js';
+export * from './application-ports.js';
