@@ -73,10 +73,10 @@ Spezifiziert, nicht implementierungsfreigegeben. [P11-Spezifikation](p11-release
 ## VS-Code-Erweiterungen — Zusatzauftrag vom 9. Oktober 2026
 
 - Auftrag: WiMM-Empfehlungen ergänzen, unnötige Erweiterungen nur im Workspace deaktivieren; keine globale Deinstallation und kein neues Profil.
-- Status: Konfiguration umgesetzt; manuelle Editorabnahme und vollständige Workspace-Deaktivierung noch offen.
-- Ergebnis: Rust Analyzer erfasst Root-Workspace und separaten Tauri-Crate; Even Better TOML installiert; Erweiterungsempfehlungen und unerwünschte Empfehlungen sowie [Einrichtung](development.md#vs-code-arbeitsbereich) ergänzt. Bestehende Playwright-Empfehlung und fremde Rust-Änderungen bleiben erhalten.
-- Prüfungen: 17 Empfehlungen und 13 unerwünschte Empfehlungen ohne Duplikate/Überschneidungen; alle 39 Erweiterungen einschließlich der 38 vorher vorhandenen installiert. JSON-/Konfigurationsprüfung, `pnpm check:docs`, `pnpm test:docs` und Whitespaceprüfung bestanden.
-- Offene Abnahme: Nutzer führt **Disable (Workspace)** und erneutes Öffnen aus; tatsächliche Rust-/TypeScript-/Oxc-Diagnosen, Vitest-/Playwright-Testentdeckung, TOML und Mermaid im Editor noch nicht bestätigt.
+- Status: Konfiguration und Workspace-Deaktivierungen umgesetzt; vollständige manuelle Editorabnahme noch offen.
+- Ergebnis: Rust Analyzer erfasst Root-Workspace und separaten Tauri-Crate; Even Better TOML installiert; Erweiterungsempfehlungen und unerwünschte Empfehlungen sowie [Einrichtung](development.md#vs-code-arbeitsbereich) ergänzt. Der im Editor reproduzierte doppelte Clippy-Parameter `--all-targets` wird durch `rust-analyzer.check.allTargets` ersetzt; `--locked`/`-D warnings` bleiben erhalten. Bestehende Playwright-Empfehlung und fremde Rust-Änderungen bleiben erhalten.
+- Prüfungen: 17 Empfehlungen und 13 unerwünschte Empfehlungen ohne Duplikate/Überschneidungen; alle 39 Erweiterungen einschließlich der 38 vorher vorhandenen installiert. Nach Nutzer-Deaktivierung und erneutem Laden gespeicherten WiMM-Status rückgelesen: genau die 13 vorgesehenen Erweiterungen deaktiviert, keine global deaktiviert. Editorprotokolle bestätigen beide Rust-Manifeste sowie den Start von Oxc 1.86.0 und Vitest 5.0.3 mit Projektkonfiguration. JSON-/Konfigurationsprüfung einschließlich des installierten Rust-Analyzer-Schemas, `pnpm check:docs`, `pnpm test:docs` und Whitespaceprüfung bestanden.
+- Offene Abnahme: tatsächliche Rust-/TypeScript-/Oxc-Diagnosen nach Clippy-Korrektur, Vitest-/Playwright-Testentdeckung, TOML und Mermaid im Editor noch nicht vollständig bestätigt. Erweiterungsstart ist kein vollständiger Funktionsnachweis.
 
 ## Fortsetzung und Abschlussregeln
 
