@@ -3,6 +3,7 @@ import { expect, type Page } from '@playwright/test';
 
 /** Tatsächliche Navigation einschließlich eigener mobiler Mehr-Ansicht. */
 export async function navigate(page: Page, name: string) {
+  await expect(page.locator('.app-shell')).toBeVisible();
   const mobile = await page.locator('.mobile-navigation').isVisible();
   if (['Kategorien', 'Empfänger', 'Regeln', 'Dauerzahlungen', 'Einstellungen'].includes(name)) {
     if (mobile) await page.getByRole('button', { name: 'Mehr', exact: true }).click();
