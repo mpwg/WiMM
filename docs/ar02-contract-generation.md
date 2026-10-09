@@ -1,6 +1,6 @@
 # AR02 — gemeinsame Vertragsgenerierung
 
-Stand: 9. Oktober 2026. Abschnittssnapshot zu [#116](https://github.com/mpwg/WiMM/issues/116), nach abgeschlossener [AR01-Abnahme](ar01-typing.md). AR02 vollständig geprüft; Abschlusscommit und GitHub-COMPLETED-Zustand werden mit der Paketabnahme dokumentiert. Umfang und Freigabe in [Aufgaben](tasks.md), Abhängigkeiten ausschließlich in [#114](https://github.com/mpwg/WiMM/issues/114).
+Stand: 9. Oktober 2026. Abschnittssnapshot zu [#116](https://github.com/mpwg/WiMM/issues/116), nach abgeschlossener [AR01-Abnahme](ar01-typing.md). AR02 auf [c2f982a](https://github.com/mpwg/WiMM/commit/c2f982a) vollständig abgenommen; #116 und Bestandskorrektur #130 sind als COMPLETED geschlossen und vollständig rückgelesen. Umfang und Freigabe in [Aufgaben](tasks.md), Abhängigkeiten ausschließlich in [#114](https://github.com/mpwg/WiMM/issues/114).
 
 ## Geprüfter Schemaprototyp
 
