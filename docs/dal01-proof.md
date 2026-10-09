@@ -35,4 +35,4 @@ Die gemeinsame native/WASM-ORM-/DSL-/OPFSbasis und die nativen Client-Driverbuil
 
 ## Ergänzende vollständige CI-Abnahme
 
-[DAL01-Job](https://github.com/mpwg/WiMM/actions/runs/37907404750/job/113744097296) auf `00764504937e6419b123751fc89e4692f576196e` erfolgreich: native Tests 3+2, native PostgreSQL/MySQL-Driverbuild 55,46 s, WASM-Build 24,84 s, reale Bindinggenerierung und 15 Browserfälle in 34,0 s. Die normale Gesamtprojekt-CI desselben Runs ist ein separater Job und noch nicht als abgeschlossen behauptet. Alle DAL01-Kriterien und README erfüllt; #106 wird anhand dieses eigenen Jobbelegs geschlossen.
+[DAL01-Job](https://github.com/mpwg/WiMM/actions/runs/37907404750/job/113744097296) auf `00764504937e6419b123751fc89e4692f576196e` erfolgreich: native Tests 3+2, native PostgreSQL/MySQL-Driverbuild 55,46 s, WASM-Build 24,84 s, reale Bindinggenerierung und 15 Browserfälle in 34,0 s. Die normale Gesamtprojekt-CI desselben Runs ist separat ebenfalls erfolgreich abgeschlossen. Alle DAL01-Kriterien und README erfüllt; #106 wird anhand dieses eigenen Jobbelegs geschlossen.
