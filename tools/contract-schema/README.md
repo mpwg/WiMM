@@ -26,3 +26,5 @@ Im tatsächlichen Negativvergleich gefunden und korrigiert: date-time-Formatvali
 
 
 Öffentliche Quelle separat: `--public --write|--check VERZEICHNIS` exportiert sieben Struktur-/Fehlerschemas und einen Manifest aus wimm-public-contracts. `--probe-public-v2` deserialisiert dieselben öffentlichen Hüllen einschließlich der verpflichtenden relationalen Rust-Guards und gibt nur synthetische valid-Booleans aus. Der öffentliche Standardcrate hat keine private Fachabhängigkeit. Die normale Generierung prüft beide Module; `pnpm test:contracts:public` belegt 42 gemeinsame Zod-/Rust-/WASM-/Browserformen und einen echten öffentlichen Quellendrift-Negativlauf. Genauere Grenzen, insbesondere Standardschema plus relationaler Guard, im [öffentlichen README](../../crates/public-contracts/README.md).
+
+Lokaler Metadatenmodus: `--local --write|--check VERZEICHNIS` erzeugt sieben lokale Struktur-/Fehlerformen und einen Manifest. `--probe-local-v2` prüft synthetische Migrationspläne einschließlich relationaler Rust-Guards ohne Speicherport. Lokale Snapshot-/Kompatibilitätsformen noch offen; [lokaler README](../../crates/local-contracts/README.md).

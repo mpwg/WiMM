@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LocalFormOutcome",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "$ref": "#/$defs/PublicBindingVersion"
+    },
+    "status": {
+      "$ref": "#/$defs/LocalFormStatus"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "status"
+  ],
+  "$defs": {
+    "LocalFormStatus": {
+      "type": "string",
+      "enum": [
+        "formValid"
+      ]
+    },
+    "PublicBindingVersion": {
+      "type": "integer",
+      "const": 2
+    }
+  }
+}

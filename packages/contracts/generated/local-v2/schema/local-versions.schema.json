@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StorageVersions",
+  "type": "object",
+  "properties": {
+    "domainSchemaVersion": {
+      "$ref": "#/$defs/LocalPositive"
+    },
+    "storageSchemaVersion": {
+      "$ref": "#/$defs/LocalPositive"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "storageSchemaVersion",
+    "domainSchemaVersion"
+  ],
+  "$defs": {
+    "LocalPositive": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 1
+    }
+  }
+}

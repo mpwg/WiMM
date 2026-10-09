@@ -9,6 +9,7 @@ if (!['--write', '--check'].includes(mode) || process.argv.length > 4) throw new
 const expectedRoot = resolve(process.argv[3] ?? 'packages/contracts/generated/private-v2');
 const staging = resolve('test-results/contract-bindings-generation');
 const publicRoot = resolve(expectedRoot, '../public-v2');
+const localRoot = resolve(expectedRoot, '../local-v2');
 const extension = process.platform === 'win32' ? 'wimm_core_bindings.dll' : process.platform === 'darwin' ? 'libwimm_core_bindings.dylib' : 'libwimm_core_bindings.so';
 async function run(args) {
   const code = await runWithWarningCheck('cargo', args);
@@ -47,6 +48,21 @@ for(const file of [...publicFiles,'generation.json']) {
   else {let actual;try{actual=await readFile(destination);}catch{throw new Error(`Generierter öffentlicher Vertrag fehlt: ${destination}`);}if(!actual.equals(await readFile(source)))throw new Error(`Vertragsdrift: ${destination}`);}
 }
 if(mode==='--check')await run(['run','--locked','-p','wimm-contract-schema','--','--public','--check',resolve(publicRoot,'schema')]);
+const localFiles=['swift/WiMMLocalTypes.swift','swift/WiMMLocalTypesFFI.h','swift/WiMMLocalTypesFFI.modulemap','kotlin/org/wimm/localcontracts/wimm_local_contracts.kt'];
+await run(['build','--locked','-p','wimm-local-contracts','--features','wasm-bindings','--target','wasm32-unknown-unknown']);
+await run(['run','--locked','-p','wimm-wasm-glue','--','target/wasm32-unknown-unknown/debug/wimm_local_contracts.wasm',resolve(staging,'local-wasm')]);
+await run(['run','--locked','-p','wimm-contract-schema','--','--local','--write',resolve(staging,'local-schema')]);
+const localManifest=JSON.parse(await readFile(resolve(staging,'local-schema/manifest.json'),'utf8'));
+localFiles.push('wasm/wimm_local_contracts.d.ts',...localManifest.files.map(name=>`schema/${name}`),'schema/manifest.json');
+const localStaging=file=>file.startsWith('schema/')?resolve(staging,'local-schema',file.slice(7)):file.startsWith('wasm/')?resolve(staging,'local-wasm',file.slice(5)):resolve(staging,file);
+for(const file of localFiles){const path=localStaging(file);const original=await readFile(path,'utf8');await writeFile(path,original.replace(/\r\n/g,'\n').replace(/[\t ]+$/gm,'').replace(/\n*$/,'\n'));}
+await writeFile(resolve(staging,'local-generation.json'),JSON.stringify({bindingVersion:2,scope:'local',sourceScope:'Port-/Migrationsmetadaten; Snapshotkompatibilität offen',files:localFiles,generators:{uniffi:'0.32.2',wasmBindgen:'0.2.129'}},null,2)+'\n');
+for(const file of [...localFiles,'generation.json']){
+ const source=file==='generation.json'?resolve(staging,'local-generation.json'):localStaging(file);const destination=resolve(localRoot,file);
+ if(mode==='--write'){await mkdir(dirname(destination),{recursive:true});await writeFile(destination,await readFile(source));}
+ else{let actual;try{actual=await readFile(destination);}catch{throw new Error(`Generierter lokaler Vertrag fehlt: ${destination}`);}if(!actual.equals(await readFile(source)))throw new Error(`Vertragsdrift: ${destination}`);}
+}
+if(mode==='--check')await run(['run','--locked','-p','wimm-contract-schema','--','--local','--check',resolve(localRoot,'schema')]);
 // Versionen kennzeichnen den erzeugten Abschnitt, keine abgeschlossene Gesamt-ABI.
 await writeFile(resolve(staging, 'generation.json'), JSON.stringify({ bindingVersion: 2, domainSchemaVersion: 1, legacyBindingVersion: 1, scope: 'calculate, execute, reverse, project und validate nativ/WASM; private Modelle TS/Swift/Kotlin; vollständige private Engineaktionen', generators: { uniffi: '0.32.2', wasmBindgen: '0.2.129' }, files }, null, 2) + '\n');
 for (const file of [...files, 'generation.json']) {

@@ -843,6 +843,14 @@ public func executeV2(request: Request)throws  -> CommandOutcomeV2  {
     )
 })
 }
+public func validateLocalMigrationFormV2(plan: StorageMigrationPlan)throws  -> LocalFormOutcome  {
+    return try  FfiConverterTypeLocalFormOutcome_lift(try rustCallWithError(FfiConverterTypeLocalContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_validate_local_migration_form_v2(
+        FfiConverterTypeStorageMigrationPlan_lower(plan),uniffiCallStatus
+    )
+})
+}
 public func validatePublicOperationFormV2(operation: EncryptedOperation)throws  -> PublicValidationOutcome  {
     return try  FfiConverterTypePublicValidationOutcome_lift(try rustCallWithError(FfiConverterTypePublicContractError_lift) {
         uniffiCallStatus in
@@ -928,6 +936,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_wimm_core_bindings_checksum_func_execute_v2() != 55143) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_wimm_core_bindings_checksum_func_validate_local_migration_form_v2() != 59983) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_wimm_core_bindings_checksum_func_validate_public_operation_form_v2() != 24232) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -948,6 +959,7 @@ private let initializationResult: InitializationResult = {
     }
 
     uniffiEnsureWimmFinanceTypesInitialized()
+    uniffiEnsureWimmLocalContractsInitialized()
     uniffiEnsureWimmPublicContractsInitialized()
     return InitializationResult.ok
 }()

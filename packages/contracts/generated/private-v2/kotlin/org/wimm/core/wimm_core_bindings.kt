@@ -30,6 +30,12 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
+import org.wimm.localcontracts.FfiConverterTypeLocalContractError
+import org.wimm.localcontracts.FfiConverterTypeLocalFormOutcome
+import org.wimm.localcontracts.FfiConverterTypeStorageMigrationPlan
+import org.wimm.localcontracts.LocalContractException
+import org.wimm.localcontracts.LocalFormOutcome
+import org.wimm.localcontracts.StorageMigrationPlan
 import org.wimm.privatecontracts.CalculationOutcome
 import org.wimm.privatecontracts.CalculationRequest
 import org.wimm.privatecontracts.CommandOutcomeV2
@@ -58,6 +64,9 @@ import org.wimm.publiccontracts.FfiConverterTypeSignedKeyRoster
 import org.wimm.publiccontracts.PublicContractException
 import org.wimm.publiccontracts.PublicValidationOutcome
 import org.wimm.publiccontracts.SignedKeyRoster
+import org.wimm.localcontracts.RustBuffer as RustBufferLocalContractError
+import org.wimm.localcontracts.RustBuffer as RustBufferLocalFormOutcome
+import org.wimm.localcontracts.RustBuffer as RustBufferStorageMigrationPlan
 import org.wimm.privatecontracts.RustBuffer as RustBufferCalculationOutcome
 import org.wimm.privatecontracts.RustBuffer as RustBufferCalculationRequest
 import org.wimm.privatecontracts.RustBuffer as RustBufferCommandOutcomeV2
@@ -730,6 +739,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_execute_v2(
     ): Int
+    external fun uniffi_wimm_core_bindings_checksum_func_validate_local_migration_form_v2(
+    ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_validate_public_operation_form_v2(
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_validate_public_roster_form_v2(
@@ -753,6 +764,7 @@ internal object UniffiLib {
 
     init {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "wimm_core_bindings"))
+        org.wimm.localcontracts.uniffiEnsureInitialized()
         org.wimm.privatecontracts.uniffiEnsureInitialized()
         org.wimm.publiccontracts.uniffiEnsureInitialized()
 
@@ -773,6 +785,8 @@ internal object UniffiLib {
     ): RustBufferCalculationOutcome.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_execute_v2(`request`: RustBufferRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBufferCommandOutcomeV2.ByValue
+    external fun uniffi_wimm_core_bindings_fn_func_validate_local_migration_form_v2(`plan`: RustBufferStorageMigrationPlan.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBufferLocalFormOutcome.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_validate_public_operation_form_v2(`operation`: RustBufferEncryptedOperation.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBufferPublicValidationOutcome.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_validate_public_roster_form_v2(`roster`: RustBufferSignedKeyRoster.ByValue,uniffi_out_err: UniffiRustCallStatus,
@@ -923,6 +937,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_execute_v2() and 0xFFFF) != 55143) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_local_migration_form_v2() and 0xFFFF) != 59983) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_public_operation_form_v2() and 0xFFFF) != 24232) {
@@ -1365,6 +1382,10 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 
 
 
+
+
+
+
 object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<ContractException> {
     override fun lift(error_buf: RustBuffer.ByValue): ContractException =
         org.wimm.privatecontracts.ContractException.ErrorHandler.lift(
@@ -1377,6 +1398,19 @@ object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<
 }
 
 
+
+
+
+object LocalContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<LocalContractException> {
+    override fun lift(error_buf: RustBuffer.ByValue): LocalContractException =
+        org.wimm.localcontracts.LocalContractException.ErrorHandler.lift(
+            RustBufferLocalContractError.ByValue().apply {
+                capacity = error_buf.capacity
+                len = error_buf.len
+                data = error_buf.data
+            }
+        )
+}
 
 
 
@@ -1467,6 +1501,18 @@ object PublicContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHa
 
 
         FfiConverterTypeRequest.lower(`request`),_status)
+}
+    )
+    }
+
+
+    @Throws(LocalContractException::class) fun `validateLocalMigrationFormV2`(`plan`: StorageMigrationPlan): LocalFormOutcome {
+            return FfiConverterTypeLocalFormOutcome.lift(
+    uniffiRustCallWithError(LocalContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_func_validate_local_migration_form_v2(
+
+
+        FfiConverterTypeStorageMigrationPlan.lower(`plan`),_status)
 }
     )
     }

@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StorageMigrationStep",
+  "type": "object",
+  "properties": {
+    "destructive": {
+      "type": "boolean"
+    },
+    "from": {
+      "$ref": "#/$defs/StorageVersions"
+    },
+    "number": {
+      "$ref": "#/$defs/LocalPositive"
+    },
+    "to": {
+      "$ref": "#/$defs/StorageVersions"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "number",
+    "from",
+    "to",
+    "destructive"
+  ],
+  "$defs": {
+    "LocalPositive": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 1
+    },
+    "StorageVersions": {
+      "type": "object",
+      "properties": {
+        "domainSchemaVersion": {
+          "$ref": "#/$defs/LocalPositive"
+        },
+        "storageSchemaVersion": {
+          "$ref": "#/$defs/LocalPositive"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "storageSchemaVersion",
+        "domainSchemaVersion"
+      ]
+    }
+  }
+}

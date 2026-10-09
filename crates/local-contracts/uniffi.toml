@@ -1,0 +1,7 @@
+[bindings.swift]
+module_name = "WiMMLocalTypes"
+ffi_module_name = "WiMMLocalTypesFFI"
+generate_module_map = true
+[bindings.kotlin]
+package_name = "org.wimm.localcontracts"
+cdylib_name = "wimm_core_bindings"

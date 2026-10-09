@@ -35,7 +35,7 @@ pnpm check:ci
 
 Gezielte native Rust-/SQLite-, Browser-, Migrations-, Binding-, Offline- und UIbefehle stehen in [Entwicklung](docs/development.md). Vollständige Kriterien in [Tests](docs/testing.md) und [Abnahmekatalog](docs/acceptance-catalog.md). Desktopfrontend-IndexedDB ist kein nativer Tauri-Nachweis; Memory/Mock und historische Greens ersetzen keine reale Plattformabnahme.
 
-AR02 setzt gemäß Nutzerwahl typisierte V2-UniFFI-/WASM-Bindings mit V1-Kompatibilität um. Sämtliche privaten Engineaktionen und ihre Sprachverträge sind in fünf tatsächlichen Laufzeiten geprüft und haben versionierte Sprachsignaturen mit CI-Driftprüfung; Öffentliche Rust-Verträge und unabhängige öffentliche WASM-Formprüfung sind ergänzt; vollständige lokale/Kompatibilitäts-/Vertragsabnahme bleibt offen. [Aktueller Abschnitt](docs/ar02-contract-generation.md), [Sprachprüfung einschließlich Swift/Kotlin](crates/finance-bindings/README.md#ar02--typisiertes-v2-binding).
+AR02 setzt gemäß Nutzerwahl typisierte V2-UniFFI-/WASM-Bindings mit V1-Kompatibilität um. Sämtliche privaten Engineaktionen und ihre Sprachverträge sind in fünf tatsächlichen Laufzeiten geprüft und haben versionierte Sprachsignaturen mit CI-Driftprüfung; Öffentliche Rust-Verträge sowie lokale Port-/Migrationsmetadaten und unabhängige WASM-Formprüfungen sind ergänzt; vollständige lokale/Kompatibilitäts-/Vertragsabnahme bleibt offen. [Aktueller Abschnitt](docs/ar02-contract-generation.md), [Sprachprüfung einschließlich Swift/Kotlin](crates/finance-bindings/README.md#ar02--typisiertes-v2-binding).
 
 ## Produkt und Dokumentation
 

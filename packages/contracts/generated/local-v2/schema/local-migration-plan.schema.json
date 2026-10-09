@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StorageMigrationPlan",
+  "type": "object",
+  "properties": {
+    "expectedMigrationNumber": {
+      "$ref": "#/$defs/LocalRevision"
+    },
+    "from": {
+      "$ref": "#/$defs/StorageVersions"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/StorageMigrationStep"
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "expectedMigrationNumber",
+    "from",
+    "steps"
+  ],
+  "$defs": {
+    "LocalPositive": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 1
+    },
+    "LocalRevision": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 0
+    },
+    "StorageMigrationStep": {
+      "type": "object",
+      "properties": {
+        "destructive": {
+          "type": "boolean"
+        },
+        "from": {
+          "$ref": "#/$defs/StorageVersions"
+        },
+        "number": {
+          "$ref": "#/$defs/LocalPositive"
+        },
+        "to": {
+          "$ref": "#/$defs/StorageVersions"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "number",
+        "from",
+        "to",
+        "destructive"
+      ]
+    },
+    "StorageVersions": {
+      "type": "object",
+      "properties": {
+        "domainSchemaVersion": {
+          "$ref": "#/$defs/LocalPositive"
+        },
+        "storageSchemaVersion": {
+          "$ref": "#/$defs/LocalPositive"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "storageSchemaVersion",
+        "domainSchemaVersion"
+      ]
+    }
+  }
+}

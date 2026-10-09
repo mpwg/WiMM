@@ -1,0 +1,506 @@
+{
+  "synthetic": true,
+  "cases": [
+    {
+      "name": "Ein registrierbarer Vorwärtsschritt",
+      "valid": true,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Nur Fachversion vorwärts",
+      "valid": true,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 2
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Zwei lückenlose Schritte",
+      "valid": true,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          },
+          {
+            "number": 2,
+            "from": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 3,
+              "domainSchemaVersion": 1
+            },
+            "destructive": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Keine Schritte",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": []
+      }
+    },
+    {
+      "name": "Keine Versionsänderung",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Rückwärtsgerichtete Fachversion",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 0
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Nummernlücke",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 2,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Abweichender Ausgangsstand",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Erwartete Nummer negativ",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": -1,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Erwartete Nummer Bruch",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0.5,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Erwartete Nummer String",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": "0",
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Erwartete Nummer null",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": null,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Erwartete Nummer unsicher",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 9007199254740992,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Schrittnummer null",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 0,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ausgangsversion null",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 0,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Zusatzfeld am Plan",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ],
+        "surprise": true
+      }
+    },
+    {
+      "name": "Zusatzfeld am Schritt",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false,
+            "surprise": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Destruktiv nicht Boolean",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 0,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 1,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": "false"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Obere sichere Nummer",
+      "valid": true,
+      "request": {
+        "expectedMigrationNumber": 9007199254740990,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 9007199254740991,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    },
+    {
+      "name": "Nachfolger über sicherer Grenze",
+      "valid": false,
+      "request": {
+        "expectedMigrationNumber": 9007199254740991,
+        "from": {
+          "storageSchemaVersion": 1,
+          "domainSchemaVersion": 1
+        },
+        "steps": [
+          {
+            "number": 9007199254740991,
+            "from": {
+              "storageSchemaVersion": 1,
+              "domainSchemaVersion": 1
+            },
+            "to": {
+              "storageSchemaVersion": 2,
+              "domainSchemaVersion": 1
+            },
+            "destructive": false
+          }
+        ]
+      }
+    }
+  ]
+}

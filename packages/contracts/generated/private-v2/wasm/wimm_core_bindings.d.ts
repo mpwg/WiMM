@@ -27,6 +27,13 @@ export interface AggregateCommand {
     aggregateId: EntityId;
 }
 
+export interface ApplicationScope {
+    profileId: PublicId;
+    spaceId: PublicId;
+    profileRevision: Revision;
+    sessionGeneration: Revision;
+}
+
 export interface Category {
     id: EntityId;
     spaceId: EntityId;
@@ -90,6 +97,14 @@ export interface Context {
 export interface ContractIssue {
     path: NonEmptyString;
     code: NonEmptyString;
+}
+
+export interface EncryptedBackupReceipt {
+    backupId: PublicId;
+    profileId: PublicId;
+    spaceId: PublicId;
+    epoch: PublicId;
+    snapshotHash: Base64Url;
 }
 
 export interface EncryptedOperation {
@@ -223,6 +238,11 @@ export interface KeyRosterMember {
     userId: PublicId;
     identityPublicKey: Base64Url;
     role: Role;
+}
+
+export interface LocalFormOutcome {
+    contractVersion: number;
+    status: LocalFormStatus;
 }
 
 export interface MoneyParseRequest {
@@ -424,6 +444,24 @@ export interface Split {
     amount: MoneyCents;
 }
 
+export interface StorageMigrationPlan {
+    expectedMigrationNumber: Ordinal;
+    from: StorageVersions;
+    steps: StorageMigrationStep[];
+}
+
+export interface StorageMigrationStep {
+    number: PositiveOrdinal;
+    from: StorageVersions;
+    to: StorageVersions;
+    destructive: boolean;
+}
+
+export interface StorageVersions {
+    storageSchemaVersion: PositiveOrdinal;
+    domainSchemaVersion: PositiveOrdinal;
+}
+
 export interface Transaction {
     id: EntityId;
     spaceId: EntityId;
@@ -536,6 +574,18 @@ export type ImportDecision = "import" | "exclude" | "separate";
 
 export type ImportState = "ready" | "partial" | "completed";
 
+export type LocalContractError = { contractVersion: number; code: string; detail: string };
+
+export type LocalFormStatus = "formValid";
+
+export type LocalHash = Base64Url;
+
+export type LocalId = PublicId;
+
+export type LocalPositive = number;
+
+export type LocalRevision = number;
+
 export type MoneyCents = number;
 
 export type NonEmptyString = string;
@@ -637,6 +687,8 @@ export function reverse_v2(request: ReverseRequest): CommandOutcomeV2;
 
 export function validate_json(request: string): string;
 
+export function validate_local_migration_form_v2(input: StorageMigrationPlan): LocalFormOutcome;
+
 export function validate_public_operation_form_v2(input: EncryptedOperation): PublicValidationOutcome;
 
 export function validate_public_roster_form_v2(input: SignedKeyRoster): PublicValidationOutcome;
@@ -669,6 +721,7 @@ export interface InitOutput {
     readonly reverse_json: (a: number, b: number) => [number, number];
     readonly reverse_v2: (a: any) => [number, number, number];
     readonly validate_json: (a: number, b: number) => [number, number];
+    readonly validate_local_migration_form_v2: (a: any) => [number, number, number];
     readonly validate_public_operation_form_v2: (a: any) => [number, number, number];
     readonly validate_public_roster_form_v2: (a: any) => [number, number, number];
     readonly validate_v2: (a: any) => [number, number, number];

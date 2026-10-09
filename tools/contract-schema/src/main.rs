@@ -124,6 +124,27 @@ fn run_exports(args: &[String], data: Vec<(&str, String)>) -> Result<(), String>
 }
 fn main() {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
+    if args.first().is_some_and(|a| a == "--local") {
+        if let Err(error) = run_exports(&args[1..], local_exports()) {
+            eprintln!("{error}");
+            std::process::exit(1);
+        }
+        return;
+    }
+    if args == ["--probe-local-v2"] {
+        use std::io::BufRead;
+        for line in std::io::stdin().lock().lines() {
+            let valid = line
+                .ok()
+                .and_then(|l| {
+                    serde_json::from_str::<wimm_local_contracts::models::StorageMigrationPlan>(&l)
+                        .ok()
+                })
+                .is_some();
+            println!("{}", serde_json::json!({"valid":valid}));
+        }
+        return;
+    }
     if args.first().is_some_and(|a| a == "--public") {
         if let Err(error) = run_exports(&args[1..], public_exports()) {
             eprintln!("{error}");
@@ -178,6 +199,19 @@ fn public_exports() -> Vec<(&'static str, String)> {
         .map(|(name, schema)| (name, serde_json::to_string_pretty(&schema).unwrap() + "\n"))
         .collect::<Vec<_>>();
     let manifest = serde_json::json!({"scope":"public","bindingVersion":2,"protocolVersion":1,"files":exports.iter().map(|(name,_)|*name).collect::<Vec<_>>(),"requiresRustRelationalValidation":true,"exports":[{"name":"validate_public_operation_form_v2","request":"public-operation.schema.json","result":"public-form-outcome.schema.json","error":"public-binding-error.schema.json"},{"name":"validate_public_roster_form_v2","request":"public-signed-roster.schema.json","result":"public-form-outcome.schema.json","error":"public-binding-error.schema.json"}]});
+    exports.push((
+        "manifest.json",
+        serde_json::to_string_pretty(&manifest).unwrap() + "\n",
+    ));
+    exports
+}
+
+fn local_exports() -> Vec<(&'static str, String)> {
+    let mut exports = wimm_local_contracts::schema::exports()
+        .into_iter()
+        .map(|(name, schema)| (name, serde_json::to_string_pretty(&schema).unwrap() + "\n"))
+        .collect::<Vec<_>>();
+    let manifest = serde_json::json!({"scope":"local","bindingVersion":2,"files":exports.iter().map(|(name,_)|*name).collect::<Vec<_>>(),"requiresRustRelationalValidation":true,"exports":[{"name":"validate_local_migration_form_v2","request":"local-migration-plan.schema.json","result":"local-form-outcome.schema.json","error":"local-binding-error.schema.json"}],"storageOrExportMigration":false});
     exports.push((
         "manifest.json",
         serde_json::to_string_pretty(&manifest).unwrap() + "\n",

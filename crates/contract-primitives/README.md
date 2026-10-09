@@ -7,3 +7,5 @@ Dieses Modul enthält ausschließlich gemeinsame UUID- und sichere JSON-Ganzzahl
 Die bestehende öffentliche Zod-Form akzeptiert die Max-UUID ausschließlich kleingeschrieben; der private V1-Rust-Vertrag akzeptiert auch Großbuchstaben. Zwei ausdrücklich benannte Policies erhalten diese bisherigen Grenzen, ohne UUIDs zu normalisieren. Parser bleibt die gesperrte uuid-Bibliothek; Schemapatterns kommen aus derselben neutralen Quelle.
 
 `pnpm check:core` prüft native Wert-/Fach-/Formassertions und die globale unsafe-Sperre. Kein neuer Fremdparser oder neue Fremdversion.
+
+Geteilte `record!`-Deklaration und `Validate`-Trait ermöglichen öffentliche/lokale Feldformen mit automatisch erzeugtem Serde-Deserialisierungsrecord und derselben post-Deserialize-Validierung. Schemars/UniFFI/Tsify bleiben die etablierten Sprach-/Schemageneratoren; keine zweite manuelle Feldliste oder eigene Fremdsprachgenerierung.

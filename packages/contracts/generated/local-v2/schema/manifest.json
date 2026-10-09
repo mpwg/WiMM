@@ -1,0 +1,23 @@
+{
+  "bindingVersion": 2,
+  "exports": [
+    {
+      "error": "local-binding-error.schema.json",
+      "name": "validate_local_migration_form_v2",
+      "request": "local-migration-plan.schema.json",
+      "result": "local-form-outcome.schema.json"
+    }
+  ],
+  "files": [
+    "local-versions.schema.json",
+    "local-migration-step.schema.json",
+    "local-migration-plan.schema.json",
+    "local-application-scope.schema.json",
+    "local-backup-receipt.schema.json",
+    "local-form-outcome.schema.json",
+    "local-binding-error.schema.json"
+  ],
+  "requiresRustRelationalValidation": true,
+  "scope": "local",
+  "storageOrExportMigration": false
+}

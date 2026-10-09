@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ApplicationScope",
+  "type": "object",
+  "properties": {
+    "profileId": {
+      "$ref": "#/$defs/PublicId"
+    },
+    "profileRevision": {
+      "$ref": "#/$defs/LocalRevision"
+    },
+    "sessionGeneration": {
+      "$ref": "#/$defs/LocalRevision"
+    },
+    "spaceId": {
+      "$ref": "#/$defs/PublicId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "profileId",
+    "spaceId",
+    "profileRevision",
+    "sessionGeneration"
+  ],
+  "$defs": {
+    "LocalRevision": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 0
+    },
+    "PublicId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    }
+  }
+}

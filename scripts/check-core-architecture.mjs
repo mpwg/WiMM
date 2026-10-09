@@ -36,3 +36,8 @@ console.log('unsafe-Code global für Workspace und separaten Tauri-Appcrate verb
 const publicTree = execFileSync('cargo', ['tree','--locked','-p','wimm-public-contracts','--no-default-features','--edges','normal','--prefix','none','--format','{p}'], {encoding:'utf8'});
 if (/^(?:wimm-finance-(?:core|types) |uniffi(?:[_ ]|$)|wasm-bindgen |js-sys |tsify |tauri |(?:sqlx|diesel|axum|tokio) )/m.test(publicTree)) throw new Error('Die öffentliche Standardtypquelle darf keine privaten Fachmodelle, Plattformruntime oder ORM importieren.');
 console.log('Öffentliche Rust-Typquelle ohne private Fach-/Plattform-/ORM-Abhängigkeiten geprüft.');
+
+const localTree=execFileSync('cargo',['tree','--locked','-p','wimm-local-contracts','--no-default-features','--edges','normal','--prefix','none','--format','{p}'],{encoding:'utf8'});
+if(/^(?:wimm-finance-core |tauri |(?:sqlx|diesel|axum|tokio) |uniffi(?:[_ ]|$)|wasm-bindgen |js-sys |tsify )/m.test(localTree))throw new Error('Lokale Standard-Vertragsformen dürfen keine Fachhandler, Plattformruntime oder ORM importieren.');
+if(/^wimm-local-contracts /m.test(publicTree))throw new Error('Öffentliche Verträge dürfen lokale Vertragsquellen nicht importieren.');
+console.log('Lokale Standard-Vertragsquelle ohne Fachhandler/Plattform/ORM und öffentliche Abhängigkeitsrichtung geprüft.');

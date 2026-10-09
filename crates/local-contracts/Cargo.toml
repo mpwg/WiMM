@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[package]
+name = "wimm-local-contracts"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+[lib]
+crate-type = ["rlib", "cdylib"]
+[dependencies]
+wimm-public-contracts = { path = "../public-contracts" }
+serde_json = { workspace = true, optional = true }
+js-sys = { version = "=0.3.106", optional = true }
+wimm-contract-primitives = { path = "../contract-primitives" }
+serde.workspace = true
+uniffi = { workspace = true, optional = true }
+tsify = { version = "=0.5.8", default-features = false, features = ["json"], optional = true }
+wasm-bindgen = { workspace = true, optional = true }
+schemars = { version = "=1.2.2", optional = true }
+[features]
+contract-schema = ["wimm-public-contracts/contract-schema", "dep:schemars"]
+native-bindings = ["wimm-public-contracts/native-bindings", "dep:uniffi"]
+wasm-bindings = ["wimm-public-contracts/wasm-bindings", "dep:serde_json", "dep:js-sys", "dep:tsify", "dep:wasm-bindgen"]
+[lints]
+workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
