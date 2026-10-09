@@ -15,6 +15,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  dal-proof:
+    name: DAL01 auf nativer SQLite und drei Browsern
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Quellcode auschecken
+        uses: actions/checkout@v7
+      - name: pnpm einrichten
+        uses: pnpm/action-setup@v6
+        with:
+          version: 12.8.1
+      - name: Node einrichten
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26.10.0
+          cache: pnpm
+      - name: Native Driver- und WASM-Werkzeuge einrichten
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake clang llvm libssl-dev pkg-config build-essential
+          rustup target add wasm32-unknown-unknown
+      - name: Rust-Artefakte cachen
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+            . -> test-results/dal-proof/native-drivers
+      - name: Abhängigkeiten und drei Browser einrichten
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium firefox webkit
+      - name: Tatsächliche DAL01-Prüfung
+        run: pnpm test:dal:proof
+      - name: DAL01-Belege sichern
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: dal01-native-browser-belege
+          path: test-results/dal-proof/browser/
+          if-no-files-found: ignore
+          retention-days: 7
   ubuntu:
     name: Prüfung auf Ubuntu
     runs-on: ubuntu-latest

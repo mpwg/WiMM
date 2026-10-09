@@ -62,7 +62,8 @@
     "check:application": "node scripts/check-application.mjs",
     "test:application": "pnpm --filter @wimm/application test",
     "test:storage:migrations": "pnpm exec playwright test --config tests/storage/backups.config.ts && pnpm exec playwright test --config tests/storage/migrations.config.ts",
-    "test:storage:persistence": "pnpm exec playwright test --config tests/storage/persistence.config.ts"
+    "test:storage:persistence": "pnpm exec playwright test --config tests/storage/persistence.config.ts",
+    "test:dal:proof": "node scripts/test-dal-proof.mjs"
   },
   "devDependencies": {
     "@babel/parser": "8.0.6",

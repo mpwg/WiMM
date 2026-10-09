@@ -16,7 +16,8 @@
     "tests/importers/**/*.ts",
     "packages/importers/tests/**/*.ts",
     "tests/storage/**/*.ts",
-    "tests/core-bindings/**/*.ts"
+    "tests/core-bindings/**/*.ts",
+    "tests/dal-proof/**/*.ts"
   ],
   "exclude": [
     "node_modules",
