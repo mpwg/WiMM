@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { AtomicBatch, UUID } from '@wimm/contracts';
 import type { DomainChangeSet, DomainDependencies } from '@wimm/domain';
-import { toStoredAggregate, type StoredAggregate, type StoredProjection, type PendingOperation } from '@wimm/storage';
+import { StorageFailureError, toStoredAggregate, type StoredAggregate, type StoredProjection, type PendingOperation } from '@wimm/storage';
 import type { ApplicationActivity } from './activity.js';
 import { FinanceModel } from './finance-model.js';
 import { FinanceHistory } from './history.js';
@@ -20,6 +20,7 @@ export class FinanceApplication {
   private value: FinanceApplicationState = { aggregates: [], status: 'loading', saving: false, historyVersion: 0, message: undefined };
   private readonly listeners = new Set<() => void>();
   private active = true;
+  private writeOutcomeUnknown = false;
   private modelSource: readonly StoredAggregate[] | undefined;
   private cachedModel: FinanceModel | undefined;
   constructor(readonly spaceId: UUID, private readonly storage: WorkspaceStorage, readonly dependencies: DomainDependencies, private readonly isProfileChanging: () => boolean, private readonly activity?: ApplicationActivity) {}
@@ -40,6 +41,7 @@ export class FinanceApplication {
     } catch { if (this.active) this.publish({ status: 'error', message: 'Die lokalen Daten konnten nicht gelesen werden.' }); }
   }
   async execute(change: DomainChangeSet, record = true): Promise<void> {
+    if (this.writeOutcomeUnknown) throw new StorageFailureError('COMMIT_UNKNOWN', 'unknown');
     if (!this.active || this.value.saving || this.isProfileChanging()) throw new Error('Bitte warten Sie auf die laufende Speicherung oder den Bereichswechsel.');
     if (change.spaceId !== this.spaceId) throw new Error('Die Änderung gehört zu einem anderen Bereich.');
     const release = this.activity?.beginFinance();
@@ -50,7 +52,8 @@ export class FinanceApplication {
         await this.storage.applyAtomicBatch({ expectedRevisions: change.expectedRevisions.map((entry) => ({ handle: entry.id, expectedRevision: entry.expectedRevision })), aggregates: change.aggregates.map(toStoredAggregate), outbox: [], projections: [] });
       } catch (error) {
         this.publish({ message: 'Die Eingaben wurden nicht gespeichert.' });
-        if (error instanceof Error && /revision|stale/i.test(error.message)) {
+        if (error instanceof StorageFailureError && error.commitState === 'unknown') { this.writeOutcomeUnknown = true; this.publish({ message: error.message }); }
+        if (error instanceof StorageFailureError && error.code === 'REVISION_CONFLICT' && error.commitState === 'notCommitted') {
           try { const aggregates = await this.storage.query({ spaceId: this.spaceId }); if (this.active) this.publish({ aggregates }); }
           catch { /* Ursprünglicher Schreibfehler und Entwurf bleiben erhalten. */ }
         }

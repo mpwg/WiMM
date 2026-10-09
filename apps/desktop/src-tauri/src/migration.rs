@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Registrierte Vorwärtsschritte; Sicherung und vollständiger Ausgangsstand vor DDL.
+use crate::storage_failure::{
+    StorageFailure, StorageFailureCode, commit_error, failure, storage_error,
+};
 use crate::{
     backups::{BackupReceipt, BackupState, read_backup},
     storage::{StorageState, assert_supported_schema, snapshot_in_transaction},
@@ -49,9 +52,6 @@ pub struct MigrationInput {
     snapshot_bytes: Vec<u8>,
     backup: BackupReceipt,
 }
-const ERROR: &str =
-    "Die Migration konnte nicht bestätigt werden. Der Originalbestand bleibt erhalten.";
-const STALE: &str = "Der Ausgangsstand der Migration ist nicht mehr aktuell.";
 
 // Nur abgeleitete lokale Indizes; keine Finanzpayloads, Entwürfe oder Epochen ändern.
 const INDEX_DDL: &str = "
@@ -90,14 +90,14 @@ pub fn migrate(
     backups: &Connection,
     input: MigrationInput,
     cancelled: impl Fn() -> bool,
-) -> Result<(), String> {
+) -> Result<(), StorageFailure> {
     let plan = &input.plan;
     if plan.expected_migration_number != 0
         || plan.from.storage_schema_version != 1
         || plan.from.domain_schema_version != 1
         || plan.steps.len() != 1
     {
-        return Err("Die angeforderte Migration ist nicht registriert.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     let step = &plan.steps[0];
     if step.number != 1
@@ -107,21 +107,24 @@ pub fn migrate(
         || step.to.domain_schema_version != 1
         || step.destructive
     {
-        return Err("Die angeforderte Migration ist nicht registriert.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     if cancelled() {
-        return Err(ERROR.into());
+        return Err(failure(StorageFailureCode::Cancelled));
     }
     let mut expected = input.expected_snapshot;
     if expected.get("syncState") == Some(&Value::Null) {
-        expected.as_object_mut().ok_or(ERROR)?.remove("syncState");
+        expected
+            .as_object_mut()
+            .ok_or_else(|| failure(StorageFailureCode::WriteFailed))?
+            .remove("syncState");
     }
-    let encoded: Value = serde_json::from_slice(&input.snapshot_bytes).map_err(|_| ERROR)?;
+    let encoded: Value = serde_json::from_slice(&input.snapshot_bytes).map_err(storage_error)?;
     if encoded != expected
         || URL_SAFE_NO_PAD.encode(Sha256::digest(&input.snapshot_bytes))
             != input.backup.snapshot_hash
     {
-        return Err("Die Sicherungsbasis passt nicht zum Ausgangsstand.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     for (field, value) in [
         ("profileId", &input.backup.profile_id),
@@ -129,48 +132,48 @@ pub fn migrate(
         ("epoch", &input.backup.epoch),
     ] {
         if expected.get(field).and_then(Value::as_str) != Some(value) {
-            return Err("Die Sicherungsbasis passt nicht zum Ausgangsstand.".into());
+            return Err(failure(StorageFailureCode::WriteFailed));
         }
     }
     read_backup(backups, &input.backup)?;
-    assert_supported_schema(connection).map_err(|_| ERROR)?;
+    assert_supported_schema(connection).map_err(storage_error)?;
     let tx = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
-        .map_err(|_| ERROR)?;
+        .map_err(storage_error)?;
     let version: String = tx
         .query_row(
             "SELECT value FROM storage_meta WHERE key='storageSchemaVersion'",
             [],
             |row| row.get(0),
         )
-        .map_err(|_| ERROR)?;
-    let journal_exists: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='storage_migrations')", [], |row| row.get(0)).map_err(|_| ERROR)?;
+        .map_err(storage_error)?;
+    let journal_exists: bool = tx.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='storage_migrations')", [], |row| row.get(0)).map_err(storage_error)?;
     let last: Option<u32> = if journal_exists {
         tx.query_row("SELECT max(number) FROM storage_migrations", [], |row| {
             row.get(0)
         })
         .optional()
-        .map_err(|_| ERROR)?
+        .map_err(storage_error)?
         .flatten()
     } else {
         None
     };
     if version != "1" || last.unwrap_or(0) != plan.expected_migration_number {
-        return Err(STALE.into());
+        return Err(failure(StorageFailureCode::RevisionConflict));
     }
     let actual = serde_json::to_value(snapshot_in_transaction(
         &tx,
         &input.backup.profile_id,
         &input.backup.space_id,
     )?)
-    .map_err(|_| ERROR)?;
+    .map_err(storage_error)?;
     if actual != expected {
-        return Err(STALE.into());
+        return Err(failure(StorageFailureCode::RevisionConflict));
     }
     if cancelled() {
-        return Err(ERROR.into());
+        return Err(failure(StorageFailureCode::Cancelled));
     }
-    tx.execute_batch(INDEX_DDL).map_err(|_| ERROR)?;
+    tx.execute_batch(INDEX_DDL).map_err(storage_error)?;
     tx.execute(
         "INSERT INTO storage_migrations VALUES(1,1,2,1,?1,?2,?3,?4,?5)",
         params![
@@ -181,16 +184,16 @@ pub fn migrate(
             input.backup.epoch
         ],
     )
-    .map_err(|_| ERROR)?;
+    .map_err(storage_error)?;
     tx.execute(
         "UPDATE storage_meta SET value='2' WHERE key='storageSchemaVersion'",
         [],
     )
-    .map_err(|_| ERROR)?;
+    .map_err(storage_error)?;
     if cancelled() {
-        return Err(ERROR.into());
+        return Err(failure(StorageFailureCode::Cancelled));
     }
-    tx.commit().map_err(|_| ERROR.to_string())
+    tx.commit().map_err(commit_error)
 }
 
 #[tauri::command]
@@ -198,25 +201,34 @@ pub async fn storage_migrate(
     app: tauri::AppHandle,
     migration_id: String,
     input: MigrationInput,
-) -> Result<(), String> {
+) -> Result<(), StorageFailure> {
     if !crate::backups::valid_uuid(&migration_id) {
-        return Err("Die Migrations-ID ist nicht gültig.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     let flag = Arc::new(AtomicBool::new(false));
     {
         let registry = app.state::<MigrationCancellationState>();
-        let mut entries = registry.0.lock().map_err(|_| ERROR)?;
+        let mut entries = registry
+            .0
+            .lock()
+            .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
         if entries.contains_key(&migration_id) {
-            return Err("Die Migrations-ID wird bereits verwendet.".into());
+            return Err(failure(StorageFailureCode::OperationIdReused));
         }
         entries.insert(migration_id.clone(), flag.clone());
     }
     let worker_app = app.clone();
     let result = tauri::async_runtime::spawn_blocking(move || {
         let backup_state = worker_app.state::<BackupState>();
-        let backup_connection = backup_state.0.lock().map_err(|_| ERROR)?;
+        let backup_connection = backup_state
+            .0
+            .lock()
+            .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
         let storage_state = worker_app.state::<StorageState>();
-        let mut connection = storage_state.0.lock().map_err(|_| ERROR)?;
+        let mut connection = storage_state
+            .0
+            .lock()
+            .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
         migrate(&mut connection, &backup_connection, input, || {
             flag.load(Ordering::Acquire)
         })
@@ -225,19 +237,24 @@ pub async fn storage_migrate(
     app.state::<MigrationCancellationState>()
         .0
         .lock()
-        .map_err(|_| ERROR)?
+        .map_err(|_| StorageFailure::unknown(StorageFailureCode::ResourceUnavailable))?
         .remove(&migration_id);
-    result.map_err(|_| ERROR.to_string())?
+    result.map_err(|_| StorageFailure::unknown(StorageFailureCode::CommitUnknown))?
 }
 #[tauri::command]
 pub fn storage_cancel_migration(
     state: tauri::State<'_, MigrationCancellationState>,
     migration_id: String,
-) -> Result<(), String> {
+) -> Result<(), StorageFailure> {
     if !crate::backups::valid_uuid(&migration_id) {
-        return Err("Die Migrations-ID ist nicht gültig.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
-    if let Some(flag) = state.0.lock().map_err(|_| ERROR)?.get(&migration_id) {
+    if let Some(flag) = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?
+        .get(&migration_id)
+    {
         flag.store(true, Ordering::Release);
     }
     Ok(())
@@ -511,17 +528,17 @@ pub struct PendingQuery {
     state: String,
     limit: u32,
 }
-fn require_indexes(db: &Connection) -> Result<(), String> {
-    assert_supported_schema(db).map_err(|_| ERROR)?;
+fn require_indexes(db: &Connection) -> Result<(), StorageFailure> {
+    assert_supported_schema(db).map_err(storage_error)?;
     let version: String = db
         .query_row(
             "SELECT value FROM storage_meta WHERE key='storageSchemaVersion'",
             [],
             |row| row.get(0),
         )
-        .map_err(|_| ERROR)?;
+        .map_err(storage_error)?;
     if version != "2" {
-        return Err("Die Indexabfrage benötigt die gesicherte Migration.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     Ok(())
 }
@@ -529,7 +546,7 @@ pub fn query_transactions(
     db: &Connection,
     profile: &str,
     query: TransactionQuery,
-) -> Result<Vec<Value>, String> {
+) -> Result<Vec<Value>, StorageFailure> {
     require_indexes(db)?;
     if query.limit == 0
         || query.limit > 1000
@@ -555,7 +572,7 @@ pub fn query_transactions(
             .zip(query.through_date.as_ref())
             .is_some_and(|(from, through)| from > through)
     {
-        return Err("Die Indexabfrage ist nicht gültig.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     let from = query.from_date.as_deref().unwrap_or("");
     let through = query.through_date.as_deref().unwrap_or("9999-12-31");
@@ -574,9 +591,9 @@ pub fn query_transactions(
         "category" => {
             "SELECT json_set(a.payload,'$.handle',a.handle,'$.spaceId',a.space_id,'$.revision',a.revision) FROM transaction_categories i JOIN aggregates a ON a.profile_id=i.profile_id AND a.handle=i.handle WHERE i.profile_id=?1 AND i.space_id=?2 AND i.category_id=?3 AND i.date BETWEEN ?4 AND ?5 AND (i.date,i.handle)>(?6,?7) ORDER BY i.date,i.handle LIMIT ?8"
         }
-        _ => return Err("Die Indexabfrage ist nicht gültig.".into()),
+        _ => return Err(failure(StorageFailureCode::WriteFailed)),
     };
-    let mut statement = db.prepare(sql).map_err(|_| ERROR)?;
+    let mut statement = db.prepare(sql).map_err(storage_error)?;
     statement
         .query_map(
             params![
@@ -591,15 +608,15 @@ pub fn query_transactions(
             ],
             |row| row.get::<_, String>(0),
         )
-        .map_err(|_| ERROR)?
-        .map(|row| serde_json::from_str(&row.map_err(|_| ERROR)?).map_err(|_| ERROR.to_string()))
+        .map_err(storage_error)?
+        .map(|row| serde_json::from_str(&row.map_err(storage_error)?).map_err(storage_error))
         .collect()
 }
 pub fn query_pending(
     db: &Connection,
     profile: &str,
     query: PendingQuery,
-) -> Result<Vec<Value>, String> {
+) -> Result<Vec<Value>, StorageFailure> {
     require_indexes(db)?;
     if query.limit == 0
         || query.limit > 1000
@@ -610,16 +627,16 @@ pub fn query_pending(
             "queued" | "sending" | "accepted" | "conflict" | "blocked" | "forbidden" | "invalid"
         )
     {
-        return Err("Die Indexabfrage ist nicht gültig.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
-    let mut statement=db.prepare("SELECT payload FROM outbox WHERE profile_id=?1 AND space_id=?2 AND state=?3 ORDER BY CASE WHEN json_type(payload,'$.createdAt')='text' THEN json_extract(payload,'$.createdAt') WHEN json_type(payload,'$.draft.occurredAt')='text' THEN json_extract(payload,'$.draft.occurredAt') ELSE '' END,operation_id LIMIT ?4").map_err(|_|ERROR)?;
+    let mut statement=db.prepare("SELECT payload FROM outbox WHERE profile_id=?1 AND space_id=?2 AND state=?3 ORDER BY CASE WHEN json_type(payload,'$.createdAt')='text' THEN json_extract(payload,'$.createdAt') WHEN json_type(payload,'$.draft.occurredAt')='text' THEN json_extract(payload,'$.draft.occurredAt') ELSE '' END,operation_id LIMIT ?4").map_err(storage_error)?;
     statement
         .query_map(
             params![profile, query.space_id, query.state, query.limit],
             |row| row.get::<_, String>(0),
         )
-        .map_err(|_| ERROR)?
-        .map(|row| serde_json::from_str(&row.map_err(|_| ERROR)?).map_err(|_| ERROR.to_string()))
+        .map_err(storage_error)?
+        .map(|row| serde_json::from_str(&row.map_err(storage_error)?).map_err(storage_error))
         .collect()
 }
 #[tauri::command]
@@ -627,8 +644,11 @@ pub fn storage_query_indexed_transactions(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     query: TransactionQuery,
-) -> Result<Vec<Value>, String> {
-    let db = state.0.lock().map_err(|_| ERROR)?;
+) -> Result<Vec<Value>, StorageFailure> {
+    let db = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     query_transactions(&db, &profile_id, query)
 }
 #[tauri::command]
@@ -636,8 +656,11 @@ pub fn storage_query_indexed_pending(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     query: PendingQuery,
-) -> Result<Vec<Value>, String> {
-    let db = state.0.lock().map_err(|_| ERROR)?;
+) -> Result<Vec<Value>, StorageFailure> {
+    let db = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     query_pending(&db, &profile_id, query)
 }
 
@@ -654,7 +677,7 @@ pub fn query_imported(
     db: &Connection,
     profile: &str,
     query: ImportQuery,
-) -> Result<Vec<Value>, String> {
+) -> Result<Vec<Value>, StorageFailure> {
     require_indexes(db)?;
     if !crate::backups::valid_uuid(profile)
         || !crate::backups::valid_uuid(&query.space_id)
@@ -664,9 +687,9 @@ pub fn query_imported(
         || query.limit == 0
         || query.limit > 1000
     {
-        return Err("Die Indexabfrage ist nicht gültig.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
-    let mut statement=db.prepare("SELECT DISTINCT json_set(t.payload,'$.handle',t.handle,'$.spaceId',t.space_id,'$.revision',t.revision) FROM aggregates f JOIN aggregates t ON t.profile_id=f.profile_id AND t.handle=json_extract(f.payload,'$.transactionId') AND t.space_id=f.space_id WHERE f.profile_id=?1 AND f.space_id=?2 AND json_extract(f.payload,'$.aggregateType')='importFingerprint' AND json_extract(f.payload,'$.deletedAt') IS NULL AND json_extract(f.payload,'$.accountId')=?3 AND json_extract(f.payload,'$.parserSource')=?4 AND json_extract(f.payload,'$.externalId')=?5 AND json_extract(t.payload,'$.aggregateType')='transaction' AND json_extract(t.payload,'$.deletedAt') IS NULL ORDER BY json_extract(t.payload,'$.date'),t.handle LIMIT ?6").map_err(|_|ERROR)?;
+    let mut statement=db.prepare("SELECT DISTINCT json_set(t.payload,'$.handle',t.handle,'$.spaceId',t.space_id,'$.revision',t.revision) FROM aggregates f JOIN aggregates t ON t.profile_id=f.profile_id AND t.handle=json_extract(f.payload,'$.transactionId') AND t.space_id=f.space_id WHERE f.profile_id=?1 AND f.space_id=?2 AND json_extract(f.payload,'$.aggregateType')='importFingerprint' AND json_extract(f.payload,'$.deletedAt') IS NULL AND json_extract(f.payload,'$.accountId')=?3 AND json_extract(f.payload,'$.parserSource')=?4 AND json_extract(f.payload,'$.externalId')=?5 AND json_extract(t.payload,'$.aggregateType')='transaction' AND json_extract(t.payload,'$.deletedAt') IS NULL ORDER BY json_extract(t.payload,'$.date'),t.handle LIMIT ?6").map_err(storage_error)?;
     statement
         .query_map(
             params![
@@ -679,8 +702,8 @@ pub fn query_imported(
             ],
             |row| row.get::<_, String>(0),
         )
-        .map_err(|_| ERROR)?
-        .map(|row| serde_json::from_str(&row.map_err(|_| ERROR)?).map_err(|_| ERROR.to_string()))
+        .map_err(storage_error)?
+        .map(|row| serde_json::from_str(&row.map_err(storage_error)?).map_err(storage_error))
         .collect()
 }
 #[tauri::command]
@@ -688,7 +711,10 @@ pub fn storage_query_imported_transactions(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     query: ImportQuery,
-) -> Result<Vec<Value>, String> {
-    let db = state.0.lock().map_err(|_| ERROR)?;
+) -> Result<Vec<Value>, StorageFailure> {
+    let db = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     query_imported(&db, &profile_id, query)
 }

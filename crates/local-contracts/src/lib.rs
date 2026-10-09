@@ -6,6 +6,7 @@ pub mod errors;
 pub mod models;
 #[cfg(feature = "native-bindings")]
 mod native;
+pub mod persistence_errors;
 pub mod ports;
 pub mod scalars;
 #[cfg(feature = "contract-schema")]

@@ -9,6 +9,7 @@ mod backups;
 mod core_contract;
 mod migration;
 mod storage;
+mod storage_failure;
 use storage::{StorageState, initialize_storage};
 use tauri::{Emitter, Manager};
 mod platform;

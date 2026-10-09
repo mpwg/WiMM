@@ -30,3 +30,7 @@ Native Rust-Assertions prüfen Commit, unveränderte ältere Sicherung, Kontextp
 ## Architekturstand vom 9. Oktober 2026
 
 Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.
+
+## Strukturierte Fehlergrenzen
+
+AR03 ersetzt native Text-/Regexerkennung durch Rust-abgeleitete StorageFailure-Codes und expliziten Commitstatus. Deutsche Meldungen entstehen im Client; fremde Payloads/Diagnosetexte werden verworfen. Unklare/ungültige Writeantworten sperren Wiederholungswrites in der aktiven Anwendung. Durable Receipts folgen separat. [Abnahme und Grenzen](../../docs/ar03-errors.md), Prüfung `pnpm test:contracts:storage-errors`.

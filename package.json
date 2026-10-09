@@ -80,7 +80,8 @@
     "test:contracts:state:native": "node scripts/test-typed-state-bindings.mjs",
     "test:contracts:state:wasm": "pnpm check:contracts:generated && node scripts/test-typed-state-wasm.mjs",
     "test:contracts:commands:native": "node scripts/test-typed-command-bindings.mjs",
-    "test:contracts:commands:wasm": "pnpm check:contracts:generated && node scripts/test-typed-command-wasm.mjs"
+    "test:contracts:commands:wasm": "pnpm check:contracts:generated && node scripts/test-typed-command-wasm.mjs",
+    "test:contracts:storage-errors": "pnpm check:contracts:generated && node scripts/test-storage-error-bindings.mjs && pnpm exec vitest run packages/contracts/src/storage-error-generation.test.ts"
   },
   "devDependencies": {
     "@babel/parser": "8.0.6",

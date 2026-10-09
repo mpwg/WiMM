@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { StorageFailureError, type StorageFailureCode } from './storage-failure.js';
 import type { AtomicBatch, RevisionExpectation, LocalFinancialStoragePort } from '@wimm/contracts';
 import type { Revision, UUID } from '@wimm/contracts';
 import type { P2Aggregate } from '@wimm/domain';
@@ -85,16 +86,17 @@ export interface LocalStorageAdapter extends LocalFinancialStoragePort<
   getSyncState(spaceId: UUID): Promise<SyncState | undefined>;
 }
 
-export class StorageRevisionConflictError extends Error {
+export class StorageRevisionConflictError extends StorageFailureError {
   constructor() {
-    super('Die lokale Revision ist nicht mehr aktuell.');
+    super('REVISION_CONFLICT');
     this.name = 'StorageRevisionConflictError';
   }
 }
 
-export class StorageWriteError extends Error {
-  constructor(message: string, readonly causeCode: 'QUOTA' | 'WRITE_FAILED' = 'WRITE_FAILED') {
-    super(message);
+export class StorageWriteError extends StorageFailureError {
+  constructor(message: string, causeCode: StorageFailureCode = 'WRITE_FAILED') {
+    super(causeCode);
+    this.message = message;
     this.name = 'StorageWriteError';
   }
 }

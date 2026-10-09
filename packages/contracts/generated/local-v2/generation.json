@@ -8,6 +8,7 @@
     "swift/WiMMLocalTypesFFI.modulemap",
     "kotlin/org/wimm/localcontracts/wimm_local_contracts.kt",
     "wasm/wimm_local_contracts.d.ts",
+    "schema/local-storage-failure.schema.json",
     "schema/local-snapshot.schema.json",
     "schema/local-stored-aggregate.schema.json",
     "schema/local-confirmed.schema.json",

@@ -4,6 +4,10 @@ use crate::{errors::*, models::*, ports::*, storage::*, storage_api::SnapshotOut
 use schemars::Schema;
 pub fn exports() -> Vec<(&'static str, Schema)> {
     vec![
+        (
+            "local-storage-failure.schema.json",
+            schemars::schema_for!(crate::persistence_errors::StorageFailure),
+        ),
         ("local-snapshot.schema.json", snapshot_schema()),
         (
             "local-stored-aggregate.schema.json",

@@ -21,6 +21,8 @@ tauri-plugin-opener = "=2.7.0"
 url = "=2.5.8"
 tempfile = "=3.27.0"
 
+wimm-local-contracts = { path = "../../../crates/local-contracts" }
+
 wimm-finance-core = { path = "../../../crates/finance-core" }
 
 [lints.rust]

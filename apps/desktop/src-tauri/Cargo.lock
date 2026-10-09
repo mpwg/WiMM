@@ -4517,6 +4517,7 @@ dependencies = [
  "tempfile",
  "url",
  "wimm-finance-core",
+ "wimm-local-contracts",
 ]
 
 [[package]]
@@ -4535,6 +4536,25 @@ version = "0.0.0"
 dependencies = [
  "serde",
  "serde_json",
+ "wimm-contract-primitives",
+]
+
+[[package]]
+name = "wimm-local-contracts"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "wimm-contract-primitives",
+ "wimm-finance-types",
+ "wimm-public-contracts",
+]
+
+[[package]]
+name = "wimm-public-contracts"
+version = "0.0.0"
+dependencies = [
+ "serde",
  "wimm-contract-primitives",
 ]
 

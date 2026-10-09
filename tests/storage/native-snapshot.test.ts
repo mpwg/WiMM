@@ -68,8 +68,8 @@ it('Native SQLite-Sicherung bewahrt echten verschlüsselten P5-Snapshot über Ru
     expect(saved).toEqual(ciphertext);
     expect(await protector.unseal(saved)).toEqual(source);
     expect(new TextDecoder().decode(saved)).not.toContain('aggregateType');
-    await expect(fixture.backups.persist({ profileId: source.profileId, spaceId: source.spaceId, epoch: source.epoch, snapshotHash, ciphertext: new Uint8Array([99]) })).rejects.toBe('Die verschlüsselte Sicherung wurde nicht dauerhaft bestätigt.');
-    await expect(fixture.backups.read({ ...receipt, epoch: id(9998) })).rejects.toBe('Die gespeicherte Sicherung passt nicht zum angeforderten Beleg.');
+    await expect(fixture.backups.persist({ profileId: source.profileId, spaceId: source.spaceId, epoch: source.epoch, snapshotHash, ciphertext: new Uint8Array([99]) })).rejects.toMatchObject({code:'WRITE_FAILED',commitState:'notCommitted'});
+    await expect(fixture.backups.read({ ...receipt, epoch: id(9998) })).rejects.toMatchObject({code:'WRITE_FAILED',commitState:'notCommitted'});
     const wrongKey = createEncryptedJsonSnapshotProtector<LocalSnapshot>(new Uint8Array(32).fill(8));
     await expect(wrongKey.unseal(saved)).rejects.toThrow('Der Tresor konnte nicht entsperrt werden.');
     expect(await fixture.backups.read(receipt)).toEqual(ciphertext);

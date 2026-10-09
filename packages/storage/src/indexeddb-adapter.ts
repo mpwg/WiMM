@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { normalizeStorageWriteFailure } from './storage-failure.js';
 import { Dexie, type Table, type Transaction } from 'dexie';
 import {uuidSchema,base64UrlSchema,type AtomicBatch,type RevisionExpectation,type CancellationPort,type LocalMigrationPort} from '@wimm/contracts';
 import type { UUID } from '@wimm/contracts';
@@ -92,7 +93,7 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter, LocalMigrat
       request.onblocked=()=>reject(new StorageWriteError('Die Speicherdatenbank ist durch einen anderen Client blockiert.'));
       request.onsuccess=()=>{const version=request.result.version;request.result.close();resolve(version);};
     });
-    if (![1,10,20].includes(physical)) throw new StorageWriteError('Die Speicherversion wird nicht unterstützt.');
+    if (![1,10,20].includes(physical)) throw new StorageWriteError('Die Speicherversion wird nicht unterstützt.', 'UPDATE_REQUIRED');
     this.db = new WimmDexie(this.databaseName,physical===20?2:1);
     await this.db.open();
   }
@@ -273,7 +274,7 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter, LocalMigrat
       if (row===undefined && this.db.verno===2) throw new StorageWriteError('Der Migrationsjournalstand fehlt.');
       if(this.db.verno===2&&(row?.migration===undefined||![row.migration.backupId,row.migration.profileId,row.migration.spaceId,row.migration.epoch].every(value=>uuidSchema.safeParse(value).success)||!base64UrlSchema.safeParse(row.migration.snapshotHash).success))throw new StorageWriteError('Der Migrationsjournalstand ist nicht gültig.');
       if (row !== undefined && (row.versions?.storageSchemaVersion !== this.db.verno || row.versions.domainSchemaVersion !== 1 || this.db.verno===2 && row.migrationNumber!==1)) {
-        throw new StorageWriteError('Die Storage- oder Fachversion wird nicht unterstützt. Bitte eine passende Appversion verwenden; der vorhandene Stand bleibt erhalten.');
+        throw new StorageWriteError('Die Storage- oder Fachversion wird nicht unterstützt. Bitte eine passende Appversion verwenden; der vorhandene Stand bleibt erhalten.', 'UPDATE_REQUIRED');
       }
       // Additive V1-Metadaten; kein Reset, keine neue Dexie-Version und keine Finanzmigration.
       if (row === undefined && mode === 'rw') await this.db.syncStates.add({ profileId: SCHEMA_KEY, spaceId: SCHEMA_KEY, versions: { storageSchemaVersion: 1, domainSchemaVersion: 1 } });
@@ -284,10 +285,7 @@ export class IndexedDbStorageAdapter implements LocalStorageAdapter, LocalMigrat
   private async write(operation: () => Promise<unknown>): Promise<void> {
     try { await this.checked('rw', operation); }
     catch (error) {
-      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-        throw new StorageWriteError('Der Browserspeicher ist voll. Eingaben bleiben erhalten.', 'QUOTA');
-      }
-      throw error;
+      throw normalizeStorageWriteFailure(error);
     }
   }
 }

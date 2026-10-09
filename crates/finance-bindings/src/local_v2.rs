@@ -52,3 +52,9 @@ pub fn local_port_from_json(
 ) -> Result<wimm_local_contracts::storage::LocalPortRequestV2, wimm_finance_types::ContractError> {
     serde_json::from_str(&input).map_err(|_| wimm_finance_types::ContractError::invalid_command())
 }
+#[uniffi::export]
+pub fn roundtrip_storage_failure_v2(
+    input: wimm_local_contracts::persistence_errors::StorageFailure,
+) -> Result<wimm_local_contracts::persistence_errors::StorageFailure, LocalContractError> {
+    wimm_local_contracts::persistence_errors::roundtrip_storage_failure_v2(input)
+}

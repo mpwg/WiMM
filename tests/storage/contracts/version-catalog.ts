@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { StorageFailureError } from '../../../packages/storage/src/index.js';
 import type { RebuildFixture } from './rebuild-catalog.js';
 import { p5Snapshot, spaceId, epoch, id, normalized, equal } from './snapshot-catalog.js';
 export interface VersionFixture extends RebuildFixture {
@@ -14,7 +15,7 @@ export async function runVersionCase(kind: typeof versionCases[number], fixture:
       const attempts = [() => storage.initializeArea(spaceId, epoch), () => storage.readAggregate(id(10)), () => storage.query({ spaceId }), () => storage.loadConfirmed(spaceId), () => storage.loadPending(spaceId), () => storage.getSyncState(spaceId), () => storage.exportSnapshot(spaceId), () => storage.applyAtomicBatch({ expectedRevisions: [], aggregates: [], outbox: [], projections: [] }), () => storage.saveSyncPage({ state: before.syncState!, confirmed: [], removeOperationIds: [], projections: [] }), () => storage.replaceSnapshot(before), () => storage.rebuildProjections(spaceId)];
       for (const attempt of attempts) {
         let rejected = false;
-        try { await attempt(); } catch (error) { rejected = /version.*nicht unterstützt/i.test(String(error)); }
+        try { await attempt(); } catch (error) { rejected = error instanceof StorageFailureError && error.code === 'UPDATE_REQUIRED' && error.commitState === 'notCommitted'; }
         if (!rejected) throw new Error('Unbekannte Storage-/Fachversion wird nicht kontrolliert abgewiesen.');
       }
     });

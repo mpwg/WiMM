@@ -1745,6 +1745,64 @@ public func FfiConverterTypeSnapshotOutcomeV2_lower(_ value: SnapshotOutcomeV2) 
 }
 
 
+public struct StorageFailure: Equatable, Hashable {
+    public var contractVersion: UInt32
+    public var code: StorageFailureCode
+    public var commitState: FailureCommitState
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: UInt32, code: StorageFailureCode, commitState: FailureCommitState) {
+        self.contractVersion = contractVersion
+        self.code = code
+        self.commitState = commitState
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension StorageFailure: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeStorageFailure: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> StorageFailure {
+        return
+            try StorageFailure(
+                contractVersion: FfiConverterUInt32.read(from: &buf),
+                code: FfiConverterTypeStorageFailureCode.read(from: &buf),
+                commitState: FfiConverterTypeFailureCommitState.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: StorageFailure, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.contractVersion, into: &buf)
+        FfiConverterTypeStorageFailureCode.write(value.code, into: &buf)
+        FfiConverterTypeFailureCommitState.write(value.commitState, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeStorageFailure_lift(_ buf: RustBuffer) throws -> StorageFailure {
+    return try FfiConverterTypeStorageFailure.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeStorageFailure_lower(_ value: StorageFailure) -> RustBuffer {
+    return FfiConverterTypeStorageFailure.lower(value)
+}
+
+
 public struct StorageMigrationPlan: Equatable, Hashable {
     public var expectedMigrationNumber: LocalRevision
     public var from: StorageVersions
@@ -2181,6 +2239,72 @@ public func FfiConverterTypeCommitOutcomeV2_lift(_ buf: RustBuffer) throws -> Co
 #endif
 public func FfiConverterTypeCommitOutcomeV2_lower(_ value: CommitOutcomeV2) -> RustBuffer {
     return FfiConverterTypeCommitOutcomeV2.lower(value)
+}
+
+
+
+
+public enum FailureCommitState: Equatable, Hashable {
+
+    case notCommitted
+    case unknown
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension FailureCommitState: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeFailureCommitState: FfiConverterRustBuffer {
+    typealias SwiftType = FailureCommitState
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> FailureCommitState {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .notCommitted
+
+        case 2: return .unknown
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: FailureCommitState, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case .notCommitted:
+            writeInt(&buf, Int32(1))
+
+
+        case .unknown:
+            writeInt(&buf, Int32(2))
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFailureCommitState_lift(_ buf: RustBuffer) throws -> FailureCommitState {
+    return try FfiConverterTypeFailureCommitState.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeFailureCommitState_lower(_ value: FailureCommitState) -> RustBuffer {
+    return FfiConverterTypeFailureCommitState.lower(value)
 }
 
 
@@ -2958,6 +3082,128 @@ public func FfiConverterTypeSnapshotStatus_lift(_ buf: RustBuffer) throws -> Sna
 #endif
 public func FfiConverterTypeSnapshotStatus_lower(_ value: SnapshotStatus) -> RustBuffer {
     return FfiConverterTypeSnapshotStatus.lower(value)
+}
+
+
+
+
+public enum StorageFailureCode: Equatable, Hashable {
+
+    case revisionConflict
+    case quota
+    case resourceUnavailable
+    case writeFailed
+    case updateRequired
+    case epochMismatch
+    case cancelled
+    case commitUnknown
+    case invalidResponse
+    case operationIdReused
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension StorageFailureCode: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeStorageFailureCode: FfiConverterRustBuffer {
+    typealias SwiftType = StorageFailureCode
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> StorageFailureCode {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .revisionConflict
+
+        case 2: return .quota
+
+        case 3: return .resourceUnavailable
+
+        case 4: return .writeFailed
+
+        case 5: return .updateRequired
+
+        case 6: return .epochMismatch
+
+        case 7: return .cancelled
+
+        case 8: return .commitUnknown
+
+        case 9: return .invalidResponse
+
+        case 10: return .operationIdReused
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: StorageFailureCode, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case .revisionConflict:
+            writeInt(&buf, Int32(1))
+
+
+        case .quota:
+            writeInt(&buf, Int32(2))
+
+
+        case .resourceUnavailable:
+            writeInt(&buf, Int32(3))
+
+
+        case .writeFailed:
+            writeInt(&buf, Int32(4))
+
+
+        case .updateRequired:
+            writeInt(&buf, Int32(5))
+
+
+        case .epochMismatch:
+            writeInt(&buf, Int32(6))
+
+
+        case .cancelled:
+            writeInt(&buf, Int32(7))
+
+
+        case .commitUnknown:
+            writeInt(&buf, Int32(8))
+
+
+        case .invalidResponse:
+            writeInt(&buf, Int32(9))
+
+
+        case .operationIdReused:
+            writeInt(&buf, Int32(10))
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeStorageFailureCode_lift(_ buf: RustBuffer) throws -> StorageFailureCode {
+    return try FfiConverterTypeStorageFailureCode.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeStorageFailureCode_lower(_ value: StorageFailureCode) -> RustBuffer {
+    return FfiConverterTypeStorageFailureCode.lower(value)
 }
 
 

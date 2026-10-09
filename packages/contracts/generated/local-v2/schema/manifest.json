@@ -21,6 +21,7 @@
     }
   ],
   "files": [
+    "local-storage-failure.schema.json",
     "local-snapshot.schema.json",
     "local-stored-aggregate.schema.json",
     "local-confirmed.schema.json",
@@ -53,5 +54,11 @@
   ],
   "requiresRustRelationalValidation": true,
   "scope": "local",
+  "storageFailureExport": {
+    "error": "local-binding-error.schema.json",
+    "name": "roundtrip_storage_failure_v2",
+    "request": "local-storage-failure.schema.json",
+    "result": "local-storage-failure.schema.json"
+  },
   "storageOrExportMigration": false
 }

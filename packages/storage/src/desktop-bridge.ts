@@ -5,6 +5,7 @@ import type { UUID } from '@wimm/contracts';
 import { rebuildStoredProjections } from './projection-rebuild.js';
 import type { ProjectionRebuild, ConfirmedAggregate, LocalSnapshot, LocalStorageAdapter, PendingOperation, StoredAggregate, StoredProjection, SyncPage, SyncState } from './contracts.js';
 import { StorageRevisionConflictError, StorageWriteError } from './contracts.js';
+import { decodeStorageFailure } from './storage-failure.js';
 import { validateLocalSnapshot } from './snapshot-validation.js';
 
 /** Begrenzter Desktopport; sein Rust-Gegenstück akzeptiert keine SQL- oder Pfadkommandos. */
@@ -35,10 +36,15 @@ export function createTauriStorageBridge(
   invoke: <T>(command: DesktopStorageCommand, arguments_: Record<string, unknown>) => Promise<T>
 ): DesktopStorageBridge {
   async function call<T>(command: DesktopStorageCommand, arguments_: Record<string, unknown>): Promise<T> {
-    try { return await invoke<T>(command, arguments_); }
+    try {
+      const result = await invoke<T>(command, arguments_);
+      if (['storage_apply_batch','storage_save_sync_page','storage_replace_snapshot','storage_rebuild_projections'].includes(command) && result != null) throw { contractVersion: 2, code: 'INVALID_RESPONSE', commitState: 'unknown' };
+      return result;
+    }
     catch (error) {
-      if (error === 'Die lokale Revision ist nicht mehr aktuell.') throw new StorageRevisionConflictError();
-      throw error;
+      const failure = decodeStorageFailure(error);
+      if (failure.code === 'REVISION_CONFLICT' && failure.commitState === 'notCommitted') throw new StorageRevisionConflictError();
+      throw failure;
     }
   }
   return {

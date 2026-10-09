@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Separater lokaler Chiffratspeicher: kein SQL-/Pfadport und kein Finanzklartext.
+use crate::storage_failure::{
+    StorageFailure, StorageFailureCode, commit_error, failure, storage_error,
+};
 use rusqlite::{Connection, OptionalExtension, TransactionBehavior, params};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -22,9 +25,6 @@ pub struct BackupInput {
     pub receipt: BackupReceipt,
     pub ciphertext: Vec<u8>,
 }
-
-const WRITE_ERROR: &str = "Die verschlüsselte Sicherung wurde nicht dauerhaft bestätigt.";
-const READ_ERROR: &str = "Die gespeicherte Sicherung passt nicht zum angeforderten Beleg.";
 
 pub(crate) fn valid_uuid(value: &str) -> bool {
     let bytes = value.as_bytes();
@@ -96,39 +96,42 @@ pub fn initialize_backups(connection: &Connection) -> rusqlite::Result<()> {
     tx.commit()
 }
 
-pub fn read_backup(connection: &Connection, receipt: &BackupReceipt) -> Result<Vec<u8>, String> {
+pub fn read_backup(
+    connection: &Connection,
+    receipt: &BackupReceipt,
+) -> Result<Vec<u8>, StorageFailure> {
     if !valid_receipt(receipt) {
-        return Err(READ_ERROR.into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
-    assert_schema(connection).map_err(|_| READ_ERROR.to_string())?;
+    assert_schema(connection).map_err(storage_error)?;
     connection.query_row("SELECT ciphertext FROM encrypted_backups WHERE backup_id=?1 AND profile_id=?2 AND space_id=?3 AND epoch=?4 AND snapshot_hash=?5",
         params![receipt.backup_id, receipt.profile_id, receipt.space_id, receipt.epoch, receipt.snapshot_hash], |row| row.get::<_, Vec<u8>>(0))
-        .map_err(|_| READ_ERROR.to_string())
-        .and_then(|bytes| if bytes.is_empty() { Err(READ_ERROR.into()) } else { Ok(bytes) })
+        .map_err(storage_error)
+        .and_then(|bytes| if bytes.is_empty() { Err(failure(StorageFailureCode::WriteFailed)) } else { Ok(bytes) })
 }
 
 pub fn persist_backup(
     connection: &mut Connection,
     input: BackupInput,
-) -> Result<BackupReceipt, String> {
+) -> Result<BackupReceipt, StorageFailure> {
     if !valid_receipt(&input.receipt) || input.ciphertext.is_empty() {
-        return Err("Die Sicherungshülle ist nicht gültig.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
-    assert_schema(connection).map_err(|_| WRITE_ERROR.to_string())?;
+    assert_schema(connection).map_err(storage_error)?;
     let durability: i64 = connection
         .pragma_query_value(None, "synchronous", |row| row.get(0))
-        .map_err(|_| WRITE_ERROR.to_string())?;
+        .map_err(storage_error)?;
     if durability < 2 {
-        return Err(WRITE_ERROR.into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     let tx = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
-        .map_err(|_| WRITE_ERROR.to_string())?;
+        .map_err(storage_error)?;
     tx.execute("INSERT INTO encrypted_backups(backup_id,profile_id,space_id,epoch,snapshot_hash,ciphertext) VALUES(?1,?2,?3,?4,?5,?6)",
-        params![input.receipt.backup_id,input.receipt.profile_id,input.receipt.space_id,input.receipt.epoch,input.receipt.snapshot_hash,input.ciphertext]).map_err(|_| WRITE_ERROR.to_string())?;
-    tx.commit().map_err(|_| WRITE_ERROR.to_string())?;
-    if read_backup(connection, &input.receipt)? != input.ciphertext {
-        return Err(WRITE_ERROR.into());
+        params![input.receipt.backup_id,input.receipt.profile_id,input.receipt.space_id,input.receipt.epoch,input.receipt.snapshot_hash,input.ciphertext]).map_err(storage_error)?;
+    tx.commit().map_err(commit_error)?;
+    if read_backup(connection, &input.receipt).map_err(|_| StorageFailure::unknown(StorageFailureCode::CommitUnknown))? != input.ciphertext {
+        return Err(StorageFailure::unknown(StorageFailureCode::CommitUnknown));
     }
     Ok(input.receipt)
 }
@@ -137,8 +140,11 @@ pub fn persist_backup(
 pub fn storage_persist_encrypted_backup(
     state: tauri::State<'_, BackupState>,
     input: BackupInput,
-) -> Result<BackupReceipt, String> {
-    let mut connection = state.0.lock().map_err(|_| WRITE_ERROR.to_string())?;
+) -> Result<BackupReceipt, StorageFailure> {
+    let mut connection = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     persist_backup(&mut connection, input)
 }
 
@@ -146,8 +152,11 @@ pub fn storage_persist_encrypted_backup(
 pub fn storage_read_encrypted_backup(
     state: tauri::State<'_, BackupState>,
     receipt: BackupReceipt,
-) -> Result<Vec<u8>, String> {
-    let connection = state.0.lock().map_err(|_| READ_ERROR.to_string())?;
+) -> Result<Vec<u8>, StorageFailure> {
+    let connection = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     read_backup(&connection, &receipt)
 }
 
@@ -193,7 +202,10 @@ mod tests {
         let mut db = Connection::open_in_memory().unwrap();
         initialize_backups(&db).unwrap();
         db.execute_batch("CREATE TRIGGER fail_backup BEFORE INSERT ON encrypted_backups BEGIN SELECT RAISE(ABORT,'synthetischer Schreibfehler'); END;").unwrap();
-        assert_eq!(persist_backup(&mut db, input()).unwrap_err(), WRITE_ERROR);
+        assert_eq!(
+            persist_backup(&mut db, input()).unwrap_err().code,
+            StorageFailureCode::WriteFailed
+        );
         assert_eq!(
             db.query_row("SELECT count(*) FROM encrypted_backups", [], |row| row
                 .get::<_, i64>(0))

@@ -477,6 +477,12 @@ export interface Split {
     amount: MoneyCents;
 }
 
+export interface StorageFailure {
+    contractVersion: number;
+    code: StorageFailureCode;
+    commitState: FailureCommitState;
+}
+
 export interface StorageMigrationPlan {
     expectedMigrationNumber: Ordinal;
     from: StorageVersions;
@@ -601,6 +607,8 @@ export type EngineBindingVersion = number;
 
 export type EntityId = string;
 
+export type FailureCommitState = "notCommitted" | "unknown";
+
 export type FileHash = string;
 
 export type FinanceDate = string;
@@ -683,6 +691,8 @@ export type SnapshotStatus = "snapshot";
 
 export type SnapshotStorageVersion = number;
 
+export type StorageFailureCode = "REVISION_CONFLICT" | "QUOTA" | "RESOURCE_UNAVAILABLE" | "WRITE_FAILED" | "UPDATE_REQUIRED" | "EPOCH_MISMATCH" | "CANCELLED" | "COMMIT_UNKNOWN" | "INVALID_RESPONSE" | "OPERATION_ID_REUSED";
+
 export type StoragePersistenceOutcome = { status: "unsupported"; supported: UnsupportedFlag } | { status: "granted"; supported: SupportedFlag } | { status: "denied"; supported: SupportedFlag } | { status: "error"; supported: SupportedFlag };
 
 export type StoredProjection = { kind: "balance"; spaceId: EntityId; key: EntityId; payload: MoneyCents } | { kind: "accountBalance"; spaceId: EntityId; key: EntityId; payload: BalancePayload } | { kind: "consumption"; spaceId: EntityId; key: NonEmptyText; payload: Consumption };
@@ -704,6 +714,8 @@ export type ValidationStatus = "valid";
 
 export function roundtrip_local_snapshot_v2(input: LocalSnapshot): SnapshotOutcomeV2;
 
+export function roundtrip_storage_failure_v2(input: StorageFailure): StorageFailure;
+
 export function validate_local_migration_form_v2(input: StorageMigrationPlan): LocalFormOutcome;
 
 export function validate_local_port_form_v2(input: LocalPortRequestV2): LocalFormOutcome;
@@ -717,6 +729,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly roundtrip_local_snapshot_v2: (a: any) => [number, number, number];
+    readonly roundtrip_storage_failure_v2: (a: any) => [number, number, number];
     readonly validate_local_migration_form_v2: (a: any) => [number, number, number];
     readonly validate_local_port_form_v2: (a: any) => [number, number, number];
     readonly validate_public_operation_form_v2: (a: any) => [number, number, number];

@@ -11,3 +11,4 @@ export * from './memory-adapter.js';
 export * from './orchestrator.js';
 export * from './tab-coordination.js';
 export { validateLocalSnapshot } from './snapshot-validation.js';
+export * from './storage-failure.js';

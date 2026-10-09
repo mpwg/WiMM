@@ -851,6 +851,14 @@ public func roundtripLocalSnapshotV2(snapshot: LocalSnapshot)throws  -> Snapshot
     )
 })
 }
+public func roundtripStorageFailureV2(input: StorageFailure)throws  -> StorageFailure  {
+    return try  FfiConverterTypeStorageFailure_lift(try rustCallWithError(FfiConverterTypeLocalContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_roundtrip_storage_failure_v2(
+        FfiConverterTypeStorageFailure_lower(input),uniffiCallStatus
+    )
+})
+}
 public func validateLocalMigrationFormV2(plan: StorageMigrationPlan)throws  -> LocalFormOutcome  {
     return try  FfiConverterTypeLocalFormOutcome_lift(try rustCallWithError(FfiConverterTypeLocalContractError_lift) {
         uniffiCallStatus in
@@ -953,6 +961,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_wimm_core_bindings_checksum_func_roundtrip_local_snapshot_v2() != 43357) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_func_roundtrip_storage_failure_v2() != 60306) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_wimm_core_bindings_checksum_func_validate_local_migration_form_v2() != 59983) {

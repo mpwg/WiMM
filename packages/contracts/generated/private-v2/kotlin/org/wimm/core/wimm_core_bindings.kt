@@ -35,12 +35,14 @@ import org.wimm.localcontracts.FfiConverterTypeLocalFormOutcome
 import org.wimm.localcontracts.FfiConverterTypeLocalPortRequestV2
 import org.wimm.localcontracts.FfiConverterTypeLocalSnapshot
 import org.wimm.localcontracts.FfiConverterTypeSnapshotOutcomeV2
+import org.wimm.localcontracts.FfiConverterTypeStorageFailure
 import org.wimm.localcontracts.FfiConverterTypeStorageMigrationPlan
 import org.wimm.localcontracts.LocalContractException
 import org.wimm.localcontracts.LocalFormOutcome
 import org.wimm.localcontracts.LocalPortRequestV2
 import org.wimm.localcontracts.LocalSnapshot
 import org.wimm.localcontracts.SnapshotOutcomeV2
+import org.wimm.localcontracts.StorageFailure
 import org.wimm.localcontracts.StorageMigrationPlan
 import org.wimm.privatecontracts.CalculationOutcome
 import org.wimm.privatecontracts.CalculationRequest
@@ -75,6 +77,7 @@ import org.wimm.localcontracts.RustBuffer as RustBufferLocalFormOutcome
 import org.wimm.localcontracts.RustBuffer as RustBufferLocalPortRequestV2
 import org.wimm.localcontracts.RustBuffer as RustBufferLocalSnapshot
 import org.wimm.localcontracts.RustBuffer as RustBufferSnapshotOutcomeV2
+import org.wimm.localcontracts.RustBuffer as RustBufferStorageFailure
 import org.wimm.localcontracts.RustBuffer as RustBufferStorageMigrationPlan
 import org.wimm.privatecontracts.RustBuffer as RustBufferCalculationOutcome
 import org.wimm.privatecontracts.RustBuffer as RustBufferCalculationRequest
@@ -750,6 +753,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_roundtrip_local_snapshot_v2(
     ): Int
+    external fun uniffi_wimm_core_bindings_checksum_func_roundtrip_storage_failure_v2(
+    ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_validate_local_migration_form_v2(
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_validate_local_port_form_v2(
@@ -800,6 +805,8 @@ internal object UniffiLib {
     ): RustBufferCommandOutcomeV2.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_roundtrip_local_snapshot_v2(`snapshot`: RustBufferLocalSnapshot.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBufferSnapshotOutcomeV2.ByValue
+    external fun uniffi_wimm_core_bindings_fn_func_roundtrip_storage_failure_v2(`input`: RustBufferStorageFailure.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBufferStorageFailure.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_validate_local_migration_form_v2(`plan`: RustBufferStorageMigrationPlan.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBufferLocalFormOutcome.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_validate_local_port_form_v2(`request`: RustBufferLocalPortRequestV2.ByValue,uniffi_out_err: UniffiRustCallStatus,
@@ -957,6 +964,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_roundtrip_local_snapshot_v2() and 0xFFFF) != 43357) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_func_roundtrip_storage_failure_v2() and 0xFFFF) != 60306) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_local_migration_form_v2() and 0xFFFF) != 59983) {
@@ -1415,6 +1425,8 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 
 
 
+
+
 object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<ContractException> {
     override fun lift(error_buf: RustBuffer.ByValue): ContractException =
         org.wimm.privatecontracts.ContractException.ErrorHandler.lift(
@@ -1542,6 +1554,18 @@ object PublicContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHa
 
 
         FfiConverterTypeLocalSnapshot.lower(`snapshot`),_status)
+}
+    )
+    }
+
+
+    @Throws(LocalContractException::class) fun `roundtripStorageFailureV2`(`input`: StorageFailure): StorageFailure {
+            return FfiConverterTypeStorageFailure.lift(
+    uniffiRustCallWithError(LocalContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_func_roundtrip_storage_failure_v2(
+
+
+        FfiConverterTypeStorageFailure.lower(`input`),_status)
 }
     )
     }

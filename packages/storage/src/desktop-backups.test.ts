@@ -21,7 +21,7 @@ describe('Begrenzter nativer Sicherungsport', () => {
   it('akzeptiert weder fremden Beleg noch manipuliertes Chiffrat oder ungültige Bytewerte', async () => {
     for (const [stored, bytes] of [[{ ...receipt, snapshotHash: 'fremd' }, [0]], [receipt, [0, 255]], [receipt, [0, 255, 1, 256]], [receipt, [0, 255, 1, -1]], [receipt, [0, 255, 1, 1.5]], [null, []]] as const) {
       const port = new DesktopEncryptedBackupPort({ next: () => id }, async command => (command === 'storage_persist_encrypted_backup' ? stored : bytes) as never);
-      await expect(port.persist(input)).rejects.toThrow('dauerhaft bestätigt');
+      await expect(port.persist(input)).rejects.toMatchObject({code:'COMMIT_UNKNOWN',commitState:'unknown'});
     }
   });
   it('verhindert native Aufrufe bei ungültiger Hülle und gibt Schreibfehler weiter', async () => {
@@ -30,7 +30,7 @@ describe('Begrenzter nativer Sicherungsport', () => {
     await expect(port.persist({ ...input, ciphertext: new Uint8Array() })).rejects.toThrow('gültig');
     await expect(port.persist({ ...input, epoch: 'fremd' })).rejects.toThrow('gültig');
     expect(calls).toBe(0);
-    await expect(port.persist(input)).rejects.toThrow('Synthetischer Schreibfehler');
+    await expect(port.persist(input)).rejects.toMatchObject({code:'INVALID_RESPONSE',commitState:'unknown'});
     expect(calls).toBe(1);
   });
 });

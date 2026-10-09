@@ -1968,6 +1968,49 @@ public object FfiConverterTypeSnapshotOutcomeV2: FfiConverterRustBuffer<Snapshot
 
 
 
+data class StorageFailure (
+    var `contractVersion`: kotlin.UInt
+    ,
+    var `code`: StorageFailureCode
+    ,
+    var `commitState`: FailureCommitState
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeStorageFailure: FfiConverterRustBuffer<StorageFailure> {
+    override fun read(buf: ByteBuffer): StorageFailure {
+        return StorageFailure(
+            FfiConverterUInt.read(buf),
+            FfiConverterTypeStorageFailureCode.read(buf),
+            FfiConverterTypeFailureCommitState.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: StorageFailure) = (
+            FfiConverterUInt.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeStorageFailureCode.allocationSize(value.`code`) +
+            FfiConverterTypeFailureCommitState.allocationSize(value.`commitState`)
+    )
+
+    override fun write(value: StorageFailure, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`contractVersion`, buf)
+            FfiConverterTypeStorageFailureCode.write(value.`code`, buf)
+            FfiConverterTypeFailureCommitState.write(value.`commitState`, buf)
+    }
+}
+
+
+
 data class StorageMigrationPlan (
     var `expectedMigrationNumber`: LocalRevision
     ,
@@ -2346,6 +2389,40 @@ public object FfiConverterTypeCommitOutcomeV2 : FfiConverterRustBuffer<CommitOut
                 Unit
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+
+enum class FailureCommitState {
+
+    NOT_COMMITTED,
+    UNKNOWN;
+
+
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeFailureCommitState: FfiConverterRustBuffer<FailureCommitState> {
+    override fun read(buf: ByteBuffer) = try {
+        FailureCommitState.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: FailureCommitState) = 4UL
+
+    override fun write(value: FailureCommitState, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
     }
 }
 
@@ -3219,6 +3296,48 @@ public object FfiConverterTypeSnapshotStatus: FfiConverterRustBuffer<SnapshotSta
     override fun allocationSize(value: SnapshotStatus) = 4UL
 
     override fun write(value: SnapshotStatus, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+
+enum class StorageFailureCode {
+
+    REVISION_CONFLICT,
+    QUOTA,
+    RESOURCE_UNAVAILABLE,
+    WRITE_FAILED,
+    UPDATE_REQUIRED,
+    EPOCH_MISMATCH,
+    CANCELLED,
+    COMMIT_UNKNOWN,
+    INVALID_RESPONSE,
+    OPERATION_ID_REUSED;
+
+
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeStorageFailureCode: FfiConverterRustBuffer<StorageFailureCode> {
+    override fun read(buf: ByteBuffer) = try {
+        StorageFailureCode.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: StorageFailureCode) = 4UL
+
+    override fun write(value: StorageFailureCode, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
     }
 }

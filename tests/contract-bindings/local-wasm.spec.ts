@@ -42,3 +42,14 @@ test('Vollständiger Snapshotrundlauf und elf Portformen im unabhängigen lokale
     expect(result).toMatchObject({ contractVersion: 2, code: 'INVALID_LOCAL_CONTRACT' });
   }
 });
+test('Speicherfehlercodes und Commitstatus über echtes WASM ohne Payloadleck', async ({page}) => {
+  await page.goto(`/tests/local-wasm.html?wasmUrl=${encodeURIComponent(`/@fs/${resolve('test-results/contract-bindings-generation/local-wasm/wimm_local_contracts.js')}`)}`);
+  await page.waitForFunction(()=>window.storageFailureProbe!==undefined);
+  for (const code of ['REVISION_CONFLICT','QUOTA','RESOURCE_UNAVAILABLE','WRITE_FAILED','UPDATE_REQUIRED','EPOCH_MISMATCH','CANCELLED','COMMIT_UNKNOWN','INVALID_RESPONSE','OPERATION_ID_REUSED']) {
+    const input={contractVersion:2,code,commitState:code==='COMMIT_UNKNOWN'?'unknown':'notCommitted'};
+    expect(await page.evaluate(value=>window.storageFailureProbe(value),input)).toEqual(input);
+  }
+  for(const input of [{contractVersion:99,code:'QUOTA',commitState:'notCommitted'},{contractVersion:2,code:'COMMIT_UNKNOWN',commitState:'notCommitted'},{contractVersion:2,code:'SECRET',commitState:'notCommitted'},{contractVersion:2,code:'QUOTA',commitState:'notCommitted',payload:'secret'}]) {
+    expect(await page.evaluate(value=>window.storageFailureProbe(value),input)).toEqual({contractVersion:2,code:'INVALID_LOCAL_CONTRACT',detail:'Die lokale Vertragsform ist ungültig.'});
+  }
+});

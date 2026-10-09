@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StorageFailure",
+  "type": "object",
+  "properties": {
+    "code": {
+      "$ref": "#/$defs/StorageFailureCode"
+    },
+    "commitState": {
+      "$ref": "#/$defs/FailureCommitState"
+    },
+    "contractVersion": {
+      "$ref": "#/$defs/PublicBindingVersion"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "code",
+    "commitState"
+  ],
+  "$defs": {
+    "FailureCommitState": {
+      "type": "string",
+      "enum": [
+        "notCommitted",
+        "unknown"
+      ]
+    },
+    "PublicBindingVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "StorageFailureCode": {
+      "type": "string",
+      "enum": [
+        "REVISION_CONFLICT",
+        "QUOTA",
+        "RESOURCE_UNAVAILABLE",
+        "WRITE_FAILED",
+        "UPDATE_REQUIRED",
+        "EPOCH_MISMATCH",
+        "CANCELLED",
+        "COMMIT_UNKNOWN",
+        "INVALID_RESPONSE",
+        "OPERATION_ID_REUSED"
+      ]
+    }
+  }
+}

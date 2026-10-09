@@ -90,3 +90,7 @@ Der neue lokale Commitvertrag bindet Profil, Bereich, Epoche, Operations-ID und 
 Clientcryptoports kapseln etablierte libsodium-Primitive nativ/WASM und bewahren Suite/KDF/AAD/Domain-Separatoren/Legacy/Recovery/Export. Private Schlüssel bleiben clientseitig; öffentliche Server-Signaturprüfung unabhängig. Kein eigener unsafe-FFI-Wrapper. ORM-/VFS-/DSL-/Bindingeignung muss praktisch nachgewiesen sein; bei fehlendem Nachweis Rückfrage vor Ersatzwahl.
 
 Lokale und öffentliche Servermigrationen verwenden getrennte Modelle/Journale auf gemeinsamem technischem Unterbau. API und Serverports sind unabhängig von Axum/SQL. Blockierende ORM-Arbeit wird begrenzt ausgeführt; Worker-/Tab-/HTTP-Abbruch darf kein tatsächliches Commitresultat erfinden. Build-/Binding-/Fach-/Storage-/Crypto-/Protokollkompatibilität wird vor Assetupdates/Migration geprüft, Epoche bleibt separate Dimension.
+
+## Strukturierte Speicherfehler — AR03
+
+[AR03 #117](ar03-errors.md) überträgt StorageFailure mit Bindingversion 2, stabilem Code und Commitstatus notCommitted/unknown über Rust/Tauri/WASM und native Sprachbindings. Keine Nutzdaten/Secrets/Diagnosetexte in der Hülle; deutsche Meldungen ausschließlich im Client. Unbekannte/manipulierte Antworten gelten als unklar, sperren Wiederholungswrites und bestätigen weder Entwurf noch Historie. Durable Operationsreceipts bleiben AR04.

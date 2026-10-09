@@ -27,3 +27,21 @@ it('blockiert Profilwechselkonflikt und erhält den Bestand bei Schreibfehler', 
   await expect(app.execute(change)).rejects.toThrow('Quota');
   expect(app.getSnapshot()).toMatchObject({ aggregates: [], saving: false, message: 'Die Eingaben wurden nicht gespeichert.' });
 });
+it('lädt nach strukturiertem CAS-Konflikt neu, niemals nach einem ähnlich benannten Text', async () => {
+  const { StorageRevisionConflictError } = await import('@wimm/storage');
+  for (const error of [new StorageRevisionConflictError(), new Error('stale revision')]) {
+    const query = vi.fn<() => Promise<never[]>>(async () => []);
+    const apply = vi.fn<() => Promise<void>>(async () => { throw error; });
+    const app = new FinanceApplication(id, {query,applyAtomicBatch:apply},deps,()=>false);
+    await app.load(); await expect(app.execute(change)).rejects.toBe(error);
+    expect(query).toHaveBeenCalledTimes(error instanceof StorageRevisionConflictError ? 2 : 1); expect(apply).toHaveBeenCalledOnce(); expect(app.history).toBeDefined();
+  }
+});
+it('blockiert weitere Writes bei unklarem Commit ohne Entwurf oder Historie zu bestätigen', async () => {
+  const { StorageFailureError } = await import('@wimm/storage');
+  const apply = vi.fn<() => Promise<void>>(async () => { throw new StorageFailureError('INVALID_RESPONSE','unknown'); });
+  const app = new FinanceApplication(id,{query:async()=>[],applyAtomicBatch:apply},deps,()=>false);
+  await app.load(); await expect(app.execute(change)).rejects.toThrow('Speicherantwort');
+  await expect(app.execute(change)).rejects.toThrow('Speicherabschluss');
+  expect(apply).toHaveBeenCalledOnce(); expect(app.getSnapshot()).toMatchObject({aggregates:[],historyVersion:0,saving:false});
+});

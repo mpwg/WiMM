@@ -519,6 +519,12 @@ export interface Split {
     amount: MoneyCents;
 }
 
+export interface StorageFailure {
+    contractVersion: number;
+    code: StorageFailureCode;
+    commitState: FailureCommitState;
+}
+
 export interface StorageMigrationPlan {
     expectedMigrationNumber: Ordinal;
     from: StorageVersions;
@@ -651,6 +657,8 @@ export type EngineBindingVersion = number;
 
 export type EntityId = string;
 
+export type FailureCommitState = "notCommitted" | "unknown";
+
 export type FileHash = string;
 
 export type FinanceDate = string;
@@ -731,6 +739,8 @@ export type SnapshotStatus = "snapshot";
 
 export type SnapshotStorageVersion = number;
 
+export type StorageFailureCode = "REVISION_CONFLICT" | "QUOTA" | "RESOURCE_UNAVAILABLE" | "WRITE_FAILED" | "UPDATE_REQUIRED" | "EPOCH_MISMATCH" | "CANCELLED" | "COMMIT_UNKNOWN" | "INVALID_RESPONSE" | "OPERATION_ID_REUSED";
+
 export type StoredProjection = { kind: "balance"; spaceId: EntityId; key: EntityId; payload: MoneyCents } | { kind: "accountBalance"; spaceId: EntityId; key: EntityId; payload: BalancePayload } | { kind: "consumption"; spaceId: EntityId; key: NonEmptyText; payload: Consumption };
 
 export type StoredRevision = number;
@@ -800,6 +810,8 @@ export function reverse_v2(request: ReverseRequest): CommandOutcomeV2;
 
 export function roundtrip_local_snapshot_v2(input: LocalSnapshot): SnapshotOutcomeV2;
 
+export function roundtrip_storage_failure_v2(input: StorageFailure): StorageFailure;
+
 export function validate_json(request: string): string;
 
 export function validate_local_migration_form_v2(input: StorageMigrationPlan): LocalFormOutcome;
@@ -838,6 +850,7 @@ export interface InitOutput {
     readonly reverse_json: (a: number, b: number) => [number, number];
     readonly reverse_v2: (a: any) => [number, number, number];
     readonly roundtrip_local_snapshot_v2: (a: any) => [number, number, number];
+    readonly roundtrip_storage_failure_v2: (a: any) => [number, number, number];
     readonly validate_json: (a: number, b: number) => [number, number];
     readonly validate_local_migration_form_v2: (a: any) => [number, number, number];
     readonly validate_local_port_form_v2: (a: any) => [number, number, number];

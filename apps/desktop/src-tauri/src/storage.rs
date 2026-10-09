@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+use crate::storage_failure::{
+    StorageFailure, StorageFailureCode, commit_error, failure, storage_error,
+};
 use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior, params};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -73,10 +76,6 @@ pub struct LocalSnapshot {
     projections: Vec<Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
     sync_state: Option<SyncState>,
-}
-
-fn storage_error(error: impl std::fmt::Display) -> String {
-    format!("Speicherfehler: {error}")
 }
 
 pub(crate) fn assert_supported_schema(connection: &Connection) -> rusqlite::Result<()> {
@@ -176,7 +175,7 @@ pub fn initialize_storage(connection: &Connection) -> rusqlite::Result<()> {
 fn assert_expected_revisions(
     transaction: &Transaction<'_>,
     batch: &StorageBatch,
-) -> Result<(), String> {
+) -> Result<(), StorageFailure> {
     for expected in &batch.expected_revisions {
         let current: Option<i64> = transaction
             .query_row(
@@ -187,7 +186,7 @@ fn assert_expected_revisions(
             .optional()
             .map_err(storage_error)?;
         if current.unwrap_or(0) != expected.expected_revision {
-            return Err("Die lokale Revision ist nicht mehr aktuell.".into());
+            return Err(failure(StorageFailureCode::RevisionConflict));
         }
     }
     Ok(())
@@ -197,22 +196,22 @@ fn assert_expected_revisions(
 pub fn storage_apply_batch(
     state: tauri::State<'_, StorageState>,
     batch: StorageBatch,
-) -> Result<(), String> {
+) -> Result<(), StorageFailure> {
     let mut connection = state
         .0
         .lock()
-        .map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     apply_batch(&mut connection, batch)
 }
 
-fn apply_batch(connection: &mut Connection, batch: StorageBatch) -> Result<(), String> {
+fn apply_batch(connection: &mut Connection, batch: StorageBatch) -> Result<(), StorageFailure> {
     assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection.transaction().map_err(storage_error)?;
     write_batch(&transaction, &batch)?;
-    transaction.commit().map_err(storage_error)
+    transaction.commit().map_err(commit_error)
 }
 
-fn write_batch(transaction: &Transaction<'_>, batch: &StorageBatch) -> Result<(), String> {
+fn write_batch(transaction: &Transaction<'_>, batch: &StorageBatch) -> Result<(), StorageFailure> {
     assert_supported_schema(transaction).map_err(storage_error)?;
     assert_expected_revisions(transaction, batch)?;
     for aggregate in &batch.aggregates {
@@ -227,15 +226,15 @@ fn write_batch(transaction: &Transaction<'_>, batch: &StorageBatch) -> Result<()
         let operation_id = operation
             .get("operationId")
             .and_then(Value::as_str)
-            .ok_or("Die Operations-ID fehlt.")?;
+            .ok_or_else(|| failure(StorageFailureCode::WriteFailed))?;
         let space_id = operation
             .get("spaceId")
             .and_then(Value::as_str)
-            .ok_or("Die Bereichs-ID fehlt.")?;
+            .ok_or_else(|| failure(StorageFailureCode::WriteFailed))?;
         let operation_state = operation
             .get("state")
             .and_then(Value::as_str)
-            .ok_or("Der Operationsstatus fehlt.")?;
+            .ok_or_else(|| failure(StorageFailureCode::WriteFailed))?;
         transaction.execute(
             "INSERT INTO outbox(profile_id, operation_id, space_id, state, payload) VALUES (?1, ?2, ?3, ?4, ?5)
              ON CONFLICT(profile_id, operation_id) DO UPDATE SET state = excluded.state, payload = excluded.payload",
@@ -246,15 +245,15 @@ fn write_batch(transaction: &Transaction<'_>, batch: &StorageBatch) -> Result<()
         let space_id = projection
             .get("spaceId")
             .and_then(Value::as_str)
-            .ok_or("Die Projektionsbereichs-ID fehlt.")?;
+            .ok_or_else(|| failure(StorageFailureCode::WriteFailed))?;
         let kind = projection
             .get("kind")
             .and_then(Value::as_str)
-            .ok_or("Die Projektionsart fehlt.")?;
+            .ok_or_else(|| failure(StorageFailureCode::WriteFailed))?;
         let key = projection
             .get("key")
             .and_then(Value::as_str)
-            .ok_or("Der Projektionsschlüssel fehlt.")?;
+            .ok_or_else(|| failure(StorageFailureCode::WriteFailed))?;
         transaction.execute(
             "INSERT INTO projections(profile_id, space_id, projection_kind, projection_key, payload) VALUES (?1, ?2, ?3, ?4, ?5)
              ON CONFLICT(profile_id, space_id, projection_kind, projection_key) DO UPDATE SET payload = excluded.payload",
@@ -269,11 +268,11 @@ pub fn storage_read_aggregate(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     handle: String,
-) -> Result<Option<Value>, String> {
+) -> Result<Option<Value>, StorageFailure> {
     let connection = state
         .0
         .lock()
-        .map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     assert_supported_schema(&connection).map_err(storage_error)?;
     connection
         .query_row(
@@ -292,11 +291,11 @@ pub fn storage_query_aggregates(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     space_id: String,
-) -> Result<Vec<Value>, String> {
+) -> Result<Vec<Value>, StorageFailure> {
     let connection = state
         .0
         .lock()
-        .map_err(|_| "Der Speicher ist gesperrt.".to_string())?;
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     assert_supported_schema(&connection).map_err(storage_error)?;
     let mut statement = connection
         .prepare("SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2")
@@ -316,7 +315,7 @@ fn read_rows(
     sql: &str,
     profile_id: &str,
     space_id: &str,
-) -> Result<Vec<Value>, String> {
+) -> Result<Vec<Value>, StorageFailure> {
     assert_supported_schema(connection).map_err(storage_error)?;
     let mut statement = connection.prepare(sql).map_err(storage_error)?;
     let rows = statement
@@ -333,7 +332,7 @@ fn get_sync_state(
     connection: &Connection,
     profile_id: &str,
     space_id: &str,
-) -> Result<Option<SyncState>, String> {
+) -> Result<Option<SyncState>, StorageFailure> {
     assert_supported_schema(connection).map_err(storage_error)?;
     connection
         .query_row(
@@ -360,7 +359,7 @@ fn get_local_epoch(
     connection: &Connection,
     profile_id: &str,
     space_id: &str,
-) -> Result<Option<String>, String> {
+) -> Result<Option<String>, StorageFailure> {
     connection
         .query_row(
             "SELECT value FROM storage_meta WHERE key = ?1",
@@ -376,7 +375,7 @@ fn write_local_epoch(
     profile_id: &str,
     space_id: &str,
     epoch: &str,
-) -> Result<(), String> {
+) -> Result<(), StorageFailure> {
     transaction.execute("INSERT INTO storage_meta(key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = excluded.value", params![local_epoch_key(profile_id, space_id), epoch]).map_err(storage_error)?;
     Ok(())
 }
@@ -386,7 +385,7 @@ pub(crate) fn initialize_area(
     profile_id: &str,
     space_id: &str,
     proposed_epoch: &str,
-) -> Result<String, String> {
+) -> Result<String, StorageFailure> {
     assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
@@ -399,11 +398,14 @@ pub(crate) fn initialize_area(
         .or(confirmed)
         .unwrap_or_else(|| proposed_epoch.into());
     write_local_epoch(&transaction, profile_id, space_id, &epoch)?;
-    transaction.commit().map_err(storage_error)?;
+    transaction.commit().map_err(commit_error)?;
     Ok(epoch)
 }
 
-fn write_sync_state(transaction: &Transaction<'_>, state: &SyncState) -> Result<(), String> {
+fn write_sync_state(
+    transaction: &Transaction<'_>,
+    state: &SyncState,
+) -> Result<(), StorageFailure> {
     transaction.execute("INSERT INTO sync_state(profile_id, space_id, epoch, cursor) VALUES (?1, ?2, ?3, ?4) ON CONFLICT(profile_id, space_id) DO UPDATE SET epoch = excluded.epoch, cursor = excluded.cursor", params![state.profile_id, state.space_id, state.epoch, state.cursor]).map_err(storage_error)?;
     Ok(())
 }
@@ -413,22 +415,22 @@ fn write_confirmed(
     profile_id: &str,
     space_id: &str,
     confirmed: &[ConfirmedAggregate],
-) -> Result<(), String> {
+) -> Result<(), StorageFailure> {
     for entry in confirmed {
         if entry.space_id != space_id || entry.aggregate.space_id != space_id {
-            return Err("Bestätigte Daten gehören zu einem anderen Bereich.".into());
+            return Err(failure(StorageFailureCode::WriteFailed));
         }
         transaction.execute("INSERT INTO confirmed(profile_id, handle, space_id, epoch, revision, payload) VALUES (?1, ?2, ?3, ?4, ?5, ?6) ON CONFLICT(profile_id, handle) DO UPDATE SET space_id = excluded.space_id, epoch = excluded.epoch, revision = excluded.revision, payload = excluded.payload", params![profile_id, entry.aggregate.handle, entry.space_id, entry.epoch, entry.aggregate.revision, serde_json::to_string(entry).map_err(storage_error)?]).map_err(storage_error)?;
     }
     Ok(())
 }
 
-fn assert_area_rows(rows: &[Value], space_id: &str) -> Result<(), String> {
+fn assert_area_rows(rows: &[Value], space_id: &str) -> Result<(), StorageFailure> {
     if rows
         .iter()
         .any(|row| row.get("spaceId").and_then(Value::as_str) != Some(space_id))
     {
-        return Err("Die gespeicherten Daten gehören zu einem anderen Bereich.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     Ok(())
 }
@@ -437,9 +439,9 @@ fn save_sync_page(
     connection: &mut Connection,
     profile_id: &str,
     page: SyncPage,
-) -> Result<(), String> {
+) -> Result<(), StorageFailure> {
     if page.state.profile_id != profile_id {
-        return Err("Die Syncseite gehört zu einem anderen Profil.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     assert_area_rows(&page.projections, &page.state.space_id)?;
     if page
@@ -447,7 +449,7 @@ fn save_sync_page(
         .iter()
         .any(|entry| entry.epoch != page.state.epoch)
     {
-        return Err("Die Bestätigungsepoche passt nicht zur Syncseite.".into());
+        return Err(failure(StorageFailureCode::EpochMismatch));
     }
     assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection.transaction().map_err(storage_error)?;
@@ -482,18 +484,18 @@ fn save_sync_page(
         &page.state.space_id,
         &page.state.epoch,
     )?;
-    transaction.commit().map_err(storage_error)
+    transaction.commit().map_err(commit_error)
 }
 
 pub(crate) fn export_snapshot(
     connection: &mut Connection,
     profile_id: &str,
     space_id: &str,
-) -> Result<LocalSnapshot, String> {
+) -> Result<LocalSnapshot, StorageFailure> {
     assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection.transaction().map_err(storage_error)?;
     let snapshot = snapshot_in_transaction(&transaction, profile_id, space_id)?;
-    transaction.commit().map_err(storage_error)?;
+    transaction.commit().map_err(commit_error)?;
     Ok(snapshot)
 }
 
@@ -501,7 +503,7 @@ pub(crate) fn snapshot_in_transaction(
     transaction: &Transaction<'_>,
     profile_id: &str,
     space_id: &str,
-) -> Result<LocalSnapshot, String> {
+) -> Result<LocalSnapshot, StorageFailure> {
     let sync_state = get_sync_state(transaction, profile_id, space_id)?;
     let confirmed: Vec<ConfirmedAggregate> = read_rows(
         transaction,
@@ -519,7 +521,7 @@ pub(crate) fn snapshot_in_transaction(
         .map(|state| state.epoch.clone())
         .or(local_epoch)
         .or_else(|| confirmed.first().map(|entry| entry.epoch.clone()))
-        .ok_or("Für den Bereich fehlt eine Epoche.")?;
+        .ok_or_else(|| failure(StorageFailureCode::EpochMismatch))?;
     let aggregates = read_rows(transaction, "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile_id, space_id)?.into_iter().map(serde_json::from_value).collect::<Result<_, _>>().map_err(storage_error)?;
     let snapshot = LocalSnapshot {
         storage_schema_version: transaction
@@ -556,12 +558,12 @@ fn replace_snapshot(
     connection: &mut Connection,
     profile_id: &str,
     snapshot: LocalSnapshot,
-) -> Result<(), String> {
+) -> Result<(), StorageFailure> {
     if snapshot.profile_id != profile_id {
-        return Err("Der Snapshot gehört zu einem anderen Profil.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     if !matches!(snapshot.storage_schema_version, 1 | 2) || snapshot.domain_schema_version != 1 {
-        return Err("Die Snapshotversion wird nicht unterstützt.".into());
+        return Err(failure(StorageFailureCode::UpdateRequired));
     }
     if snapshot
         .aggregates
@@ -573,7 +575,7 @@ fn replace_snapshot(
                 || state.epoch != snapshot.epoch
         })
     {
-        return Err("Der Snapshot enthält fremde Bereichsdaten.".into());
+        return Err(failure(StorageFailureCode::WriteFailed));
     }
     assert_area_rows(&snapshot.pending, &snapshot.space_id)?;
     assert_area_rows(&snapshot.projections, &snapshot.space_id)?;
@@ -582,7 +584,7 @@ fn replace_snapshot(
         .iter()
         .any(|entry| entry.epoch != snapshot.epoch)
     {
-        return Err("Die Bestätigungsepoche passt nicht zum Snapshot.".into());
+        return Err(failure(StorageFailureCode::EpochMismatch));
     }
     assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection.transaction().map_err(storage_error)?;
@@ -625,7 +627,7 @@ fn replace_snapshot(
                 .optional()
                 .map_err(storage_error)?;
             if current.is_some_and(|space_id| space_id != snapshot.space_id) {
-                return Err("Ein Snapshothandle gehört zu einem anderen Bereich.".into());
+                return Err(failure(StorageFailureCode::WriteFailed));
             }
         }
     }
@@ -668,7 +670,7 @@ fn replace_snapshot(
     if let Some(state) = snapshot.sync_state {
         write_sync_state(&transaction, &state)?;
     }
-    transaction.commit().map_err(storage_error)
+    transaction.commit().map_err(commit_error)
 }
 
 #[tauri::command]
@@ -677,8 +679,11 @@ pub fn storage_initialize_area(
     profile_id: String,
     space_id: String,
     proposed_epoch: String,
-) -> Result<String, String> {
-    let mut connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
+) -> Result<String, StorageFailure> {
+    let mut connection = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     initialize_area(&mut connection, &profile_id, &space_id, &proposed_epoch)
 }
 
@@ -687,8 +692,11 @@ pub fn storage_load_confirmed(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     space_id: String,
-) -> Result<Vec<Value>, String> {
-    let connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
+) -> Result<Vec<Value>, StorageFailure> {
+    let connection = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     read_rows(
         &connection,
         "SELECT payload FROM confirmed WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle",
@@ -702,8 +710,11 @@ pub fn storage_load_pending(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     space_id: String,
-) -> Result<Vec<Value>, String> {
-    let connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
+) -> Result<Vec<Value>, StorageFailure> {
+    let connection = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     read_rows(
         &connection,
         "SELECT payload FROM outbox WHERE profile_id = ?1 AND space_id = ?2 ORDER BY operation_id",
@@ -717,8 +728,11 @@ pub fn storage_get_sync_state(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     space_id: String,
-) -> Result<Option<SyncState>, String> {
-    let connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
+) -> Result<Option<SyncState>, StorageFailure> {
+    let connection = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     get_sync_state(&connection, &profile_id, &space_id)
 }
 
@@ -727,8 +741,11 @@ pub fn storage_save_sync_page(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     page: SyncPage,
-) -> Result<(), String> {
-    let mut connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
+) -> Result<(), StorageFailure> {
+    let mut connection = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     save_sync_page(&mut connection, &profile_id, page)
 }
 
@@ -737,8 +754,11 @@ pub fn storage_export_snapshot(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     space_id: String,
-) -> Result<LocalSnapshot, String> {
-    let mut connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
+) -> Result<LocalSnapshot, StorageFailure> {
+    let mut connection = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     export_snapshot(&mut connection, &profile_id, &space_id)
 }
 
@@ -747,8 +767,11 @@ pub fn storage_replace_snapshot(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     snapshot: LocalSnapshot,
-) -> Result<(), String> {
-    let mut connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
+) -> Result<(), StorageFailure> {
+    let mut connection = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     replace_snapshot(&mut connection, &profile_id, snapshot)
 }
 
@@ -765,7 +788,7 @@ fn rebuild_projections(
     connection: &mut Connection,
     profile_id: &str,
     rebuild: ProjectionRebuild,
-) -> Result<(), String> {
+) -> Result<(), StorageFailure> {
     assert_area_rows(&rebuild.projections, &rebuild.space_id)?;
     assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection
@@ -784,7 +807,7 @@ fn rebuild_projections(
         .collect::<Result<Vec<_>, _>>()?;
     expected.sort_by(|a, b| a["handle"].as_str().cmp(&b["handle"].as_str()));
     if actual != expected {
-        return Err("Die lokale Revision ist nicht mehr aktuell.".into());
+        return Err(failure(StorageFailureCode::RevisionConflict));
     }
     transaction
         .execute(
@@ -802,7 +825,7 @@ fn rebuild_projections(
             projections: rebuild.projections,
         },
     )?;
-    transaction.commit().map_err(storage_error)
+    transaction.commit().map_err(commit_error)
 }
 
 #[tauri::command]
@@ -810,8 +833,11 @@ pub fn storage_rebuild_projections(
     state: tauri::State<'_, StorageState>,
     profile_id: String,
     rebuild: ProjectionRebuild,
-) -> Result<(), String> {
-    let mut connection = state.0.lock().map_err(|_| "Der Speicher ist gesperrt.")?;
+) -> Result<(), StorageFailure> {
+    let mut connection = state
+        .0
+        .lock()
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
     rebuild_projections(&mut connection, &profile_id, rebuild)
 }
 
@@ -835,7 +861,7 @@ mod tests {
             let args = &request["arguments"];
             let profile = args["profileId"].as_str().unwrap_or_default();
             let space = args["spaceId"].as_str().unwrap_or_default();
-            let result: Result<Value, String> = (|| {
+            let result: Result<Value, StorageFailure> = (|| {
                 match request["command"].as_str().unwrap() {
                     "storage_persist_encrypted_backup" => serde_json::to_value(crate::backups::persist_backup(&mut backups, serde_json::from_value(args["input"].clone()).map_err(storage_error)?)?).map_err(storage_error),
                     "storage_read_encrypted_backup" => serde_json::to_value(crate::backups::read_backup(&backups, &serde_json::from_value(args["receipt"].clone()).map_err(storage_error)?)?).map_err(storage_error),
@@ -870,7 +896,7 @@ mod tests {
                     },
                     "storage_query_aggregates" => read_rows(&connection, "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile, space).map(Value::Array),
                     "storage_load_pending" => read_rows(&connection, "SELECT payload FROM outbox WHERE profile_id = ?1 AND space_id = ?2 ORDER BY operation_id", profile, space).map(Value::Array),
-                    _ => Err("Unbekanntes Testkommando.".into()),
+                    _ => Err(failure(StorageFailureCode::WriteFailed)),
                 }
             })();
             let response = match result {

@@ -6,7 +6,7 @@ const wasm = await import(/* @vite-ignore */ url) as typeof Binding;
 const response = await fetch(url.replace(/\.js$/, '_bg.wasm'));
 if (!response.ok) throw new Error('Die lokale WASM-Testdatei ist nicht lesbar.');
 await wasm.default({ module_or_path: await response.arrayBuffer() });
-declare global { interface Window { localMigrationProbe: (request: unknown) => unknown; localSnapshotProbe: (request: unknown) => unknown; localPortProbe: (request: unknown) => unknown } }
+declare global { interface Window { localMigrationProbe: (request: unknown) => unknown; localSnapshotProbe: (request: unknown) => unknown; localPortProbe: (request: unknown) => unknown; storageFailureProbe: (request: unknown) => unknown } }
 window.localMigrationProbe = request => {
   try { return wasm.validate_local_migration_form_v2(request as Binding.StorageMigrationPlan); }
   catch (error) { return error; }
@@ -18,4 +18,8 @@ window.localSnapshotProbe = request => {
 window.localPortProbe = request => {
   try { return wasm.validate_local_port_form_v2(request as Binding.LocalPortRequestV2); }
   catch (error) { return error; }
+};
+window.storageFailureProbe = request => {
+  try { return wasm.roundtrip_storage_failure_v2(request as Binding.StorageFailure); }
+  catch(error) { return error; }
 };
