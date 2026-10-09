@@ -1,244 +1,209 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Bestehende Regeln und Importklassifizierung; keine Dateiparser oder Persistenz.
+//! Typisierte Regelanwendung und Importklassifizierung; JSON nur an der Grenze.
 use crate::{
-    CoreResult,
-    aggregate_schema::{self, array, integer, kind, live, string},
-    projections, state_validation,
+    CoreResult, command_contracts::COMMAND_ERROR, models::*, projections, scalars::*,
+    typed_automation as automation,
 };
-use serde_json::{Value, json};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 use unicode_normalization::UnicodeNormalization;
-const INVALID: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
-pub fn active_reference<'a>(
-    all: &'a [Value],
-    space: &str,
-    id: &Value,
-    ty: &str,
-) -> CoreResult<&'a Value> {
-    all.iter()
-        .find(|a| {
-            a["id"] == *id
-                && kind(a) == ty
-                && a["spaceId"] == space
-                && live(a)
-                && a["archived"] != true
-        })
-        .ok_or((
-            "INVALID_COMMAND",
-            "Die Referenz ist nicht im aktiven Bereich verfügbar.",
-        ))
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct RuleRequest {
+    contract_version: u32,
+    domain_schema_version: u32,
+    space_id: EntityId,
+    aggregates: Vec<Aggregate>,
+    candidate: ImportCandidate,
 }
-pub fn fingerprint(row: &Value) -> CoreResult<String> {
-    if let Some(s) = row.get("sourceFingerprint") {
-        return Ok(string(s)?.to_string());
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ImportRequest {
+    contract_version: u32,
+    domain_schema_version: u32,
+    space_id: EntityId,
+    aggregates: Vec<Aggregate>,
+    account_id: EntityId,
+    candidates: Vec<ImportCandidate>,
+}
+#[derive(Deserialize)]
+#[serde(tag = "calculationType")]
+enum Calculation {
+    #[serde(rename = "rule.apply")]
+    RuleApply(RuleRequest),
+    #[serde(rename = "import.classify")]
+    ImportClassify(ImportRequest),
+}
+fn fold(text: &str) -> String {
+    text.nfc().collect::<String>().to_lowercase()
+}
+fn matches(condition: &RuleCondition, row: &ImportCandidate) -> bool {
+    if condition.field == ConditionField::Amount {
+        let ConditionValue::Money(other) = condition.value else {
+            return false;
+        };
+        return match condition.operator {
+            ConditionOperator::Equals => row.amount == other,
+            ConditionOperator::Gte => row.amount >= other,
+            ConditionOperator::Lte => row.amount <= other,
+            ConditionOperator::Contains => false,
+        };
     }
-    let text = |field: &str| {
-        state_validation::normal_text(row[field].as_str().unwrap_or("")).to_lowercase()
+    let value = match condition.field {
+        ConditionField::Date => row.date.as_str(),
+        ConditionField::Payee => row.payee.as_deref().unwrap_or(""),
+        ConditionField::Memo => row.memo.as_deref().unwrap_or(""),
+        ConditionField::Amount => return false,
     };
-    Ok(json!([row["date"], row["amount"], text("payee"), text("memo")]).to_string())
-}
-pub fn validate_rule(rule: &Value, all: &[Value]) -> CoreResult<()> {
-    state_validation::rule(rule)?;
-    for action in array(&rule["actions"])? {
-        if action["field"] != "clearance" {
-            active_reference(
-                all,
-                string(&rule["spaceId"])?,
-                &action["value"],
-                if action["field"] == "categoryId" {
-                    "category"
-                } else {
-                    "payee"
-                },
-            )?;
-        }
+    let ConditionValue::Text(other) = &condition.value else {
+        return false;
+    };
+    match condition.operator {
+        ConditionOperator::Equals => value == other,
+        ConditionOperator::Contains => fold(value).contains(&fold(other)),
+        ConditionOperator::Gte => value >= other.as_str(),
+        ConditionOperator::Lte => value <= other.as_str(),
     }
-    Ok(())
 }
-pub fn duplicate(row: &Value, account: &Value, all: &[Value]) -> CoreResult<&'static str> {
-    let fp = fingerprint(row)?;
-    let source = row["parserSource"].as_str().unwrap_or("csv");
-    let external = row["externalId"].as_str().filter(|s| !s.is_empty());
-    let same: Vec<_> = all
-        .iter()
-        .filter(|a| {
-            kind(a) == "importFingerprint"
-                && a["accountId"] == *account
-                && external.is_some_and(|id| a["parserSource"] == source && a["externalId"] == id)
-        })
-        .collect();
-    if same.iter().any(|a| a["fingerprint"] != fp) {
-        return Ok("conflict");
-    }
-    Ok(if external.is_some() {
-        if same.is_empty() { "new" } else { "duplicate" }
-    } else if all.iter().any(|a| {
-        kind(a) == "importFingerprint" && a["accountId"] == *account && a["fingerprint"] == fp
-    }) {
-        "duplicate"
-    } else {
-        "new"
-    })
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ClassificationRow {
+    source_row: PositiveOrdinal,
+    classification: automation::Classification,
 }
 pub fn calculate(decoded: Value) -> CoreResult<Value> {
-    let space = decoded["spaceId"]
-        .as_str()
-        .filter(|s| crate::valid_id(s))
-        .ok_or(INVALID)?;
-    let all = array(&decoded["aggregates"]).map_err(|_| INVALID)?;
-    for a in all {
-        aggregate_schema::aggregate(a).map_err(|_| INVALID)?;
-    }
-    let ty = decoded["calculationType"].as_str().unwrap_or("");
-    if ty == "rule.apply" {
-        if decoded.as_object().is_none_or(|o| o.len() != 6) {
-            return Err(INVALID);
-        }
-        aggregate_schema::candidate(&decoded["candidate"]).map_err(|_| INVALID)?;
-        let mut result = decoded["candidate"].clone();
-        result["sourceFingerprint"] = json!(fingerprint(&result)?);
-        let mut rules: Vec<_> = all
-            .iter()
-            .filter(|a| {
-                kind(a) == "rule" && a["enabled"] == true && live(a) && a["spaceId"] == space
-            })
-            .collect();
-        rules.sort_by(|a, b| {
-            a["order"].as_i64().cmp(&b["order"].as_i64()).then_with(|| {
-                projections::uuid_order(
-                    a["id"].as_str().unwrap_or(""),
-                    b["id"].as_str().unwrap_or(""),
-                )
-            })
-        });
-        let mut applied = vec![];
-        for rule in rules {
-            validate_rule(rule, all)?;
-            let mut matches = true;
-            for c in array(&rule["conditions"])? {
-                let field = string(&c["field"])?;
-                let value = result.get(field).cloned().unwrap_or(json!(""));
-                let other = &c["value"];
-                let matched = match c["operator"].as_str().unwrap_or("") {
-                    "equals" => value == *other,
-                    "contains" => value
-                        .as_str()
-                        .unwrap_or("")
-                        .nfc()
-                        .collect::<String>()
-                        .to_lowercase()
-                        .contains(
-                            &other
-                                .as_str()
-                                .unwrap_or("")
-                                .nfc()
-                                .collect::<String>()
-                                .to_lowercase(),
-                        ),
-                    "gte" => {
-                        if field == "amount" {
-                            integer(&value)? >= integer(other)?
-                        } else {
-                            value.as_str() >= other.as_str()
+    let request: Calculation = serde_json::from_value(decoded).map_err(|_| COMMAND_ERROR)?;
+    match request {
+        Calculation::RuleApply(request) => {
+            if request.contract_version != 1 || request.domain_schema_version != 1 {
+                return Err(COMMAND_ERROR);
+            }
+            let mut result = request.candidate;
+            result.source_fingerprint = Some(NonEmptyText::new(automation::fingerprint(&result))?);
+            let all = &request.aggregates;
+            let mut rules = all
+                .iter()
+                .filter_map(|a| {
+                    if let Aggregate::Rule(rule) = a
+                        && rule.enabled
+                        && a.is_live()
+                        && rule.space_id == request.space_id
+                    {
+                        Some(rule)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+            rules.sort_by(|a, b| {
+                a.order
+                    .cmp(&b.order)
+                    .then_with(|| projections::uuid_order(a.id.as_str(), b.id.as_str()))
+            });
+            let mut applied = vec![];
+            for rule in rules {
+                automation::validate_rule(rule, all)?;
+                if !rule
+                    .conditions
+                    .as_slice()
+                    .iter()
+                    .all(|c| matches(c, &result))
+                {
+                    continue;
+                }
+                for action in rule.actions.as_slice() {
+                    match action {
+                        RuleAction::CategoryId(id) => result.category_id = Some(id.clone()),
+                        RuleAction::Clearance(clearance) => result.clearance = Some(*clearance),
+                        RuleAction::PayeeId(id) => {
+                            result.payee_id = Some(id.clone());
+                            let Aggregate::Payee(payee) = automation::active(
+                                all,
+                                &request.space_id,
+                                id,
+                                AggregateKind::Payee,
+                            )?
+                            else {
+                                return Err(COMMAND_ERROR);
+                            };
+                            result.payee = Some(payee.name.as_str().to_owned());
                         }
                     }
-                    "lte" => {
-                        if field == "amount" {
-                            integer(&value)? <= integer(other)?
-                        } else {
-                            value.as_str() <= other.as_str()
-                        }
-                    }
-                    _ => false,
-                };
-                if !matched {
-                    matches = false;
+                }
+                applied.push(rule.id.clone());
+                if rule.stop_processing {
                     break;
                 }
             }
-            if !matches {
-                continue;
+            Ok(
+                serde_json::json!({"contractVersion":1,"status":"ruleApplied","candidate":result,"appliedRuleIds":applied}),
+            )
+        }
+        Calculation::ImportClassify(request) => {
+            if request.contract_version != 1 || request.domain_schema_version != 1 {
+                return Err(COMMAND_ERROR);
             }
-            for action in array(&rule["actions"])? {
-                let field = string(&action["field"])?;
-                result[field] = action["value"].clone();
-                if field == "payeeId" {
-                    result["payee"] =
-                        active_reference(all, space, &action["value"], "payee")?["name"].clone();
+            // space_id ist ein geprüfter Requestbereich; V1 klassifiziert anhand des expliziten Kontos.
+            let _space = request.space_id;
+            let mut identities = BTreeMap::<(String, String), BTreeSet<String>>::new();
+            let mut contents = BTreeSet::new();
+            for a in &request.aggregates {
+                if let Aggregate::ImportFingerprint(fp) = a
+                    && a.is_live()
+                    && fp.account_id == request.account_id
+                {
+                    let fingerprint = fp.fingerprint.as_str().to_owned();
+                    contents.insert(fingerprint.clone());
+                    if let Some(id) = fp.external_id.as_deref().filter(|s| !s.is_empty()) {
+                        identities
+                            .entry((fp.parser_source.as_str().to_owned(), id.to_owned()))
+                            .or_default()
+                            .insert(fingerprint);
+                    }
                 }
             }
-            applied.push(rule["id"].clone());
-            if rule["stopProcessing"] == true {
-                break;
+            let mut rows = vec![];
+            let mut positions = BTreeMap::new();
+            for row in request.candidates {
+                let fp = automation::fingerprint(&row);
+                let key = row
+                    .external_id
+                    .as_deref()
+                    .filter(|s| !s.is_empty())
+                    .map(|id| (automation::source(&row).to_owned(), id.to_owned()));
+                let same = key.as_ref().and_then(|key| identities.get(key));
+                let classification = if same.is_some_and(|values| values.iter().any(|s| s != &fp)) {
+                    automation::Classification::Conflict
+                } else if key.is_some() {
+                    if same.is_some_and(|s| !s.is_empty()) {
+                        automation::Classification::Duplicate
+                    } else {
+                        automation::Classification::New
+                    }
+                } else if contents.contains(&fp) {
+                    automation::Classification::Duplicate
+                } else {
+                    automation::Classification::New
+                };
+                let result = ClassificationRow {
+                    source_row: row.source_row,
+                    classification,
+                };
+                let n = *positions.entry(row.source_row).or_insert_with(|| {
+                    rows.push(ClassificationRow {
+                        source_row: row.source_row,
+                        classification,
+                    });
+                    rows.len() - 1
+                });
+                rows[n] = result;
+                contents.insert(fp.clone());
+                if let Some(key) = key {
+                    identities.entry(key).or_default().insert(fp);
+                }
             }
-        }
-        return Ok(
-            json!({"contractVersion":1,"status":"ruleApplied","candidate":result,"appliedRuleIds":applied}),
-        );
-    }
-    if ty != "import.classify"
-        || decoded.as_object().is_none_or(|o| o.len() != 7)
-        || !decoded["accountId"].as_str().is_some_and(crate::valid_id)
-    {
-        return Err(INVALID);
-    }
-    let candidates = array(&decoded["candidates"]).map_err(|_| INVALID)?;
-    for row in candidates {
-        aggregate_schema::candidate(row).map_err(|_| INVALID)?;
-    }
-    let mut identities = BTreeMap::<(String, String), BTreeSet<String>>::new();
-    let mut contents = BTreeSet::new();
-    for f in all.iter().filter(|a| {
-        kind(a) == "importFingerprint" && live(a) && a["accountId"] == decoded["accountId"]
-    }) {
-        let fp = string(&f["fingerprint"])?.to_string();
-        contents.insert(fp.clone());
-        if let Some(id) = f["externalId"].as_str().filter(|s| !s.is_empty()) {
-            identities
-                .entry((string(&f["parserSource"])?.to_string(), id.to_string()))
-                .or_default()
-                .insert(fp);
+            Ok(serde_json::json!({"contractVersion":1,"status":"classified","rows":rows}))
         }
     }
-    let mut rows = vec![];
-    let mut positions = BTreeMap::new();
-    for row in candidates {
-        let fp = fingerprint(row)?;
-        let key = row["externalId"]
-            .as_str()
-            .filter(|s| !s.is_empty())
-            .map(|id| {
-                (
-                    row["parserSource"].as_str().unwrap_or("csv").to_string(),
-                    id.to_string(),
-                )
-            });
-        let same = key.as_ref().and_then(|key| identities.get(key));
-        let classification = if same.is_some_and(|values| values.iter().any(|s| s != &fp)) {
-            "conflict"
-        } else if key.is_some() {
-            if same.is_some_and(|s| !s.is_empty()) {
-                "duplicate"
-            } else {
-                "new"
-            }
-        } else if contents.contains(&fp) {
-            "duplicate"
-        } else {
-            "new"
-        };
-        let result = json!({"sourceRow":row["sourceRow"],"classification":classification});
-        let index = *positions
-            .entry(integer(&row["sourceRow"])?)
-            .or_insert_with(|| {
-                rows.push(result.clone());
-                rows.len() - 1
-            });
-        rows[index] = result;
-        contents.insert(fp.clone());
-        if let Some(key) = key {
-            identities.entry(key).or_default().insert(fp);
-        }
-    }
-    Ok(json!({"contractVersion":1,"status":"classified","rows":rows}))
 }

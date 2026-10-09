@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Fälligkeiten aus dem gregorianischen Kalender, ohne Uhr oder Zeitzone.
-use crate::{
-    CoreResult, MAX_SAFE,
-    aggregate_schema::{self, array, integer, kind, string},
-    calendar,
-};
+use crate::{CoreResult, MAX_SAFE, aggregate_schema, calendar};
 use serde_json::{Value, json};
 fn days(year: i128, month: i128) -> i128 {
     match month {
@@ -46,27 +42,18 @@ fn from_ordinal(n: i128) -> Option<String> {
     }
     Some(format!("{low:04}-{month:02}-{:02}", rest + 1))
 }
-pub fn due_dates(schedule: &Value, through: &str) -> CoreResult<Vec<String>> {
-    let start = string(&schedule["startDate"])?;
-    calendar::parse_finance_date(start)?;
+pub(crate) fn typed_due_dates(
+    schedule: &crate::models::Schedule,
+    through: &str,
+) -> CoreResult<Vec<String>> {
+    let start = schedule.start_date.as_str();
     calendar::parse_finance_date(through)?;
-    let interval = integer(&schedule["interval"])? as i128;
-    if interval < 1
-        || !["weekly", "monthly", "yearly"].contains(&schedule["frequency"].as_str().unwrap_or(""))
-    {
-        return Err((
-            "INVALID_COMMAND",
-            "Der Rhythmus benötigt ein positives ganzzahliges Intervall.",
-        ));
+    let interval = schedule.interval.value() as i128;
+    let end = schedule.end_date.as_ref().map(|d| d.as_str());
+    if end.is_some_and(|end| end < start) {
+        return Err(("INVALID_COMMAND", "Das Enddatum liegt vor dem Startdatum."));
     }
-    let end = schedule.get("endDate").map(string).transpose()?;
-    if let Some(end) = end {
-        calendar::parse_finance_date(end)?;
-        if end < start {
-            return Err(("INVALID_COMMAND", "Das Enddatum liegt vor dem Startdatum."));
-        }
-    }
-    if schedule["enabled"] == false {
+    if !schedule.enabled {
         return Ok(vec![]);
     }
     let year: i128 = start[..4].parse().map_err(|_| aggregate_schema::INVALID)?;
@@ -81,11 +68,11 @@ pub fn due_dates(schedule: &Value, through: &str) -> CoreResult<Vec<String>> {
                 "Das Intervall überschreitet die Ganzzahlgrenze.",
             ));
         }
-        let date = if schedule["frequency"] == "weekly" {
+        let date = if schedule.frequency == crate::models::Frequency::Weekly {
             from_ordinal(ordinal(year, month, day) + delta * 7)
         } else {
             let target = month - 1
-                + if schedule["frequency"] == "monthly" {
+                + if schedule.frequency == crate::models::Frequency::Monthly {
                     delta
                 } else {
                     delta * 12
@@ -111,33 +98,47 @@ pub fn due_dates(schedule: &Value, through: &str) -> CoreResult<Vec<String>> {
     }
     Ok(dates)
 }
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Request {
+    contract_version: u32,
+    domain_schema_version: u32,
+    space_id: crate::scalars::EntityId,
+    schedule_id: crate::scalars::EntityId,
+    aggregates: Vec<crate::models::Aggregate>,
+    through: crate::scalars::FinanceDate,
+}
+#[derive(serde::Deserialize)]
+#[serde(tag = "calculationType")]
+enum Calculation {
+    #[serde(rename = "schedule.dueDates")]
+    DueDates(Request),
+}
 pub fn calculate(decoded: Value) -> CoreResult<Value> {
     const INVALID: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
-    if decoded.as_object().is_none_or(|o| o.len() != 7)
-        || decoded["calculationType"] != "schedule.dueDates"
-        || !decoded["spaceId"].as_str().is_some_and(crate::valid_id)
-        || !decoded["scheduleId"].as_str().is_some_and(crate::valid_id)
-        || calendar::parse_finance_date(decoded["through"].as_str().unwrap_or("")).is_err()
-    {
+    let Calculation::DueDates(request) = serde_json::from_value(decoded).map_err(|_| INVALID)?;
+    if request.contract_version != 1 || request.domain_schema_version != 1 {
         return Err(INVALID);
     }
-    let all = array(&decoded["aggregates"]).map_err(|_| INVALID)?;
-    for a in all {
-        aggregate_schema::aggregate(a).map_err(|_| INVALID)?;
-    }
-    let schedule = all
+    let schedule = request
+        .aggregates
         .iter()
-        .find(|a| {
-            a["id"] == decoded["scheduleId"]
-                && kind(a) == "schedule"
-                && a["spaceId"] == decoded["spaceId"]
+        .find_map(|a| {
+            if let crate::models::Aggregate::Schedule(schedule) = a
+                && schedule.id == request.schedule_id
+                && schedule.space_id == request.space_id
+            {
+                Some(schedule)
+            } else {
+                None
+            }
         })
         .ok_or((
             "INVALID_AGGREGATE",
             "Die Dauerzahlung fehlt im aktuellen Bereich.",
         ))?;
     Ok(
-        json!({"contractVersion":1,"status":"dueDates","dates":due_dates(schedule,string(&decoded["through"])?)?}),
+        json!({"contractVersion":1,"status":"dueDates","dates":typed_due_dates(schedule,request.through.as_str())?}),
     )
 }
 #[cfg(test)]

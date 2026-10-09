@@ -1,361 +1,330 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Fachliche Gegenbefehle verändern nur Aktionsaggregate, niemals Bereichssnapshots.
+//! Typisierte Gegenbefehle verändern Aktionsaggregate, niemals Bereichssnapshots.
 use crate::{
     CoreResult,
-    aggregate_schema::{self, array, kind, string},
-    financial_commands as financial,
-    master_commands::{Expectation, Request},
+    aggregate_schema::INVALID,
+    command_contracts::{self, COMMAND_ERROR, ChangeSet, Context, Expectation, Request, Scope},
+    models::*,
+    scalars::*,
 };
-use serde_json::{Value, json};
+use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
-const INVALID: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
-fn action(request: &Request, command: Value, expected: Vec<Expectation>) -> Value {
-    json!({"contractVersion":1,"domainSchemaVersion":1,"spaceId":request.space_id,"aggregates":request.aggregates,"command":command,"expectedRevisions":expected.iter().map(|e|json!({"id":e.id,"expectedRevision":e.expected_revision})).collect::<Vec<_>>(),"context":{"operationId":request.context.operation_id,"occurredAt":request.context.occurred_at,"generatedIds":request.context.generated_ids}})
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct Target {
+    id: EntityId,
+    #[serde(default, deserialize_with = "present")]
+    previous: Option<Aggregate>,
 }
-fn expectations(aggs: &[&Value], current: &BTreeMap<&str, &Value>) -> CoreResult<Vec<Expectation>> {
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ReverseRequest {
+    contract_version: u32,
+    domain_schema_version: u32,
+    space_id: EntityId,
+    aggregates: Vec<Aggregate>,
+    expected_revisions: Vec<Expectation>,
+    context: Context,
+    targets: NonEmptyVec<Target>,
+}
+impl ReverseRequest {
+    fn scope(&self) -> Scope<'_> {
+        Scope {
+            space_id: &self.space_id,
+            aggregates: &self.aggregates,
+            context: &self.context,
+        }
+    }
+    fn child(&self, command: Command, expected_revisions: Vec<Expectation>) -> Request {
+        Request {
+            contract_version: 1,
+            domain_schema_version: 1,
+            space_id: self.space_id.clone(),
+            aggregates: self.aggregates.clone(),
+            command,
+            expected_revisions,
+            context: self.context.clone(),
+        }
+    }
+}
+fn expectations(
+    aggs: &[&Aggregate],
+    current: &BTreeMap<&EntityId, &Aggregate>,
+) -> CoreResult<Vec<Expectation>> {
     let mut ids = BTreeSet::new();
     aggs.iter()
-        .filter(|a| ids.insert(a["id"].as_str().unwrap_or("")))
+        .filter(|a| ids.insert(a.id()))
         .map(|a| {
-            let id = string(&a["id"])?;
             Ok(Expectation {
-                id: id.to_string(),
-                expected_revision: current
-                    .get(id)
-                    .map(|a| crate::aggregate_schema::integer(&a["revision"]))
-                    .transpose()?
-                    .unwrap_or(0),
+                id: a.id().clone(),
+                expected_revision: Revision::new(
+                    current
+                        .get(a.id())
+                        .map(|a| a.revision().value())
+                        .unwrap_or(0),
+                )?,
             })
         })
         .collect()
 }
 pub fn reverse_json(input: &str) -> String {
-    crate::output(reverse(crate::decode(input).and_then(|mut v| {
-        let object = v.as_object_mut().ok_or(INVALID)?;
-        if object.len() != 7 {
-            return Err(INVALID);
-        }
-        let targets = object.remove("targets").ok_or(INVALID)?;
-        object.insert(
-            "command".to_string(),
-            json!({"commandType":"transaction.save"}),
-        );
-        Ok((v, targets))
-    })))
+    crate::output((|| {
+        let request: ReverseRequest =
+            serde_json::from_value(crate::decode(input)?).map_err(|_| COMMAND_ERROR)?;
+        command_contracts::to_wire(reverse(request)?)
+    })())
 }
-fn reverse(input: CoreResult<(Value, Value)>) -> CoreResult<Value> {
-    let (v, targets) = input?;
-    let request: Request = serde_json::from_value(v).map_err(|_| INVALID)?;
-    if !crate::valid_id(&request.space_id)
-        || !crate::valid_id(&request.context.operation_id)
-        || !aggregate_schema::timestamp(&request.context.occurred_at)
-        || request
-            .context
-            .generated_ids
-            .iter()
-            .any(|id| !crate::valid_id(id))
-    {
-        return Err(INVALID);
+fn reverse(request: ReverseRequest) -> CoreResult<ChangeSet> {
+    if request.contract_version != 1 || request.domain_schema_version != 1 {
+        return Err(COMMAND_ERROR);
     }
-    for a in &request.aggregates {
-        aggregate_schema::aggregate(a).map_err(|_| INVALID)?;
-    }
-    let targets = array(&targets).map_err(|_| INVALID)?;
-    if targets.is_empty() {
-        return Err(INVALID);
-    }
-    let current: BTreeMap<&str, &Value> = request
-        .aggregates
-        .iter()
-        .map(|a| Ok((string(&a["id"])?, a)))
-        .collect::<CoreResult<_>>()?;
+    let scope = request.scope();
+    let current = scope.current();
     let mut desired = vec![];
     let mut positions = BTreeMap::new();
-    for target in targets {
-        if target
-            .as_object()
-            .is_none_or(|o| o.keys().any(|k| !["id", "previous"].contains(&k.as_str())))
-            || !target["id"].as_str().is_some_and(crate::valid_id)
-        {
-            return Err(INVALID);
-        }
-        if let Some(previous) = target.get("previous") {
-            aggregate_schema::aggregate(previous).map_err(|_| INVALID)?;
-            if !["transaction", "transfer", "reconciliation"].contains(&kind(previous)) {
-                return Err((
-                    "INVALID_COMMAND",
-                    "Nur Finanzaktionen besitzen Gegenbefehle.",
-                ));
-            }
+    for target in request.targets.as_slice() {
+        if target.previous.as_ref().is_some_and(|a| {
+            !matches!(
+                a,
+                Aggregate::Transaction(_) | Aggregate::Transfer(_) | Aggregate::Reconciliation(_)
+            )
+        }) {
+            return Err((
+                "INVALID_COMMAND",
+                "Nur Finanzaktionen besitzen Gegenbefehle.",
+            ));
         }
         let head = current
-            .get(string(&target["id"])?)
+            .get(&target.id)
             .copied()
             .filter(|a| {
-                ["transaction", "transfer", "reconciliation"].contains(&kind(a))
-                    && a["spaceId"] == request.space_id
+                matches!(
+                    a,
+                    Aggregate::Transaction(_)
+                        | Aggregate::Transfer(_)
+                        | Aggregate::Reconciliation(_)
+                ) && a.space_id() == &request.space_id
             })
             .ok_or((
                 "REVISION_CONFLICT",
                 "Die Aktion gehört nicht zum aktuellen Bereich.",
             ))?;
-        let previous = target.get("previous");
-        let mut value = if previous.is_none_or(|a| a.get("deletedAt").is_some()) {
+        let mut value = if target.previous.as_ref().is_none_or(|a| !a.is_live()) {
             let mut a = head.clone();
-            a["deletedAt"] = json!(request.context.occurred_at);
+            *a.deleted_at_mut() = Some(request.context.occurred_at.clone());
             a
         } else {
-            let mut a = previous.ok_or(INVALID)?.clone();
-            a.as_object_mut().ok_or(INVALID)?.remove("deletedAt");
-            a["revision"] = head["revision"].clone();
+            let mut a = target.previous.as_ref().ok_or(COMMAND_ERROR)?.clone();
+            *a.deleted_at_mut() = None;
+            *a.revision_mut() = head.revision();
             a
         };
-        value = financial::revise(value, &request.context.occurred_at)?;
-        let id = string(&target["id"])?;
-        if let Some(n) = positions.get(id) {
+        value = command_contracts::revise(value, &request.context.occurred_at)?;
+        if let Some(n) = positions.get(&target.id) {
             desired[*n] = value;
         } else {
-            positions.insert(id.to_string(), desired.len());
+            positions.insert(target.id.clone(), desired.len());
             desired.push(value);
         }
     }
-    financial::inspect_changes(
-        &desired,
-        &request.space_id,
-        &request.expected_revisions,
-        &current,
-        &request,
-    )?;
-    let (checked, expected) = financial::prepare_financial(
+    command_contracts::inspect_changes(&desired, &request.expected_revisions, &scope)?;
+    let (checked, expected) = crate::typed_financial::prepare(
         desired.clone(),
         request.expected_revisions.clone(),
-        &request,
+        &scope,
     )?;
-    financial::inspect_changes(&checked, &request.space_id, &expected, &current, &request)?;
+    command_contracts::inspect_changes(&checked, &expected, &scope)?;
     let mut children = vec![];
     let mut owned = BTreeSet::new();
-    for entry in desired.iter().filter(|a| kind(a) == "reconciliation") {
-        let mut transactions = vec![];
-        for id in array(&entry["transactionIds"])? {
-            owned.insert(string(id)?.to_string());
-            transactions.push(
-                current
-                    .get(string(id)?)
-                    .copied()
-                    .ok_or(("INVALID_AGGREGATE", "Die Abgleichbuchung fehlt."))?,
-            );
-        }
-        let account = current
-            .get(string(&entry["accountId"])?)
-            .copied()
-            .ok_or(aggregate_schema::INVALID)?;
-        let mut reads = vec![
-            current
-                .get(string(&entry["id"])?)
-                .copied()
-                .ok_or(aggregate_schema::INVALID)?,
-        ];
-        reads.extend(transactions.iter().copied());
-        let mut child_request = request.clone();
-        let command = if entry.get("deletedAt").is_some() {
-            json!({"commandType":"reconciliation.unlock","reconciliationId":entry["id"]})
-        } else {
-            for a in request.aggregates.iter().filter(|a| {
-                kind(a) == "transaction"
-                    && a.get("deletedAt").is_none()
-                    && a["accountId"] == entry["accountId"]
-                    && a["clearance"] == "reconciled"
-                    && a["date"].as_str() <= entry["statementDate"].as_str()
-                    && !owned.contains(a["id"].as_str().unwrap_or(""))
-            }) {
-                reads.push(a);
+    for a in &desired {
+        if let Aggregate::Reconciliation(entry) = a {
+            let mut transactions = vec![];
+            for id in entry.transaction_ids.as_slice() {
+                owned.insert(id.clone());
+                transactions.push(
+                    current
+                        .get(id)
+                        .copied()
+                        .ok_or(("INVALID_AGGREGATE", "Die Abgleichbuchung fehlt."))?,
+                );
             }
-            child_request
-                .context
-                .generated_ids
-                .insert(0, string(&entry["id"])?.to_string());
-            json!({"commandType":"reconciliation.confirm","accountId":entry["accountId"],"statementDate":entry["statementDate"],"statementBalance":entry["statementBalance"],"selectedTransactionIds":entry["transactionIds"]})
-        };
-        reads.push(account);
-        let mut result = crate::reconciliation_commands::execute_with_record(
-            action(&child_request, command, expectations(&reads, &current)?),
-            Some(entry.clone()),
-        )?;
-        if entry.get("deletedAt").is_some() {
-            for a in result["changeSet"]["aggregates"]
-                .as_array_mut()
-                .ok_or(INVALID)?
-            {
-                if kind(a) == "transaction"
-                    && let Some(target) = desired.iter().find(|v| v["id"] == a["id"])
-                {
-                    if target["clearance"] != "cleared" && target["clearance"] != "uncleared" {
-                        return Err(("INVALID_COMMAND", "Ungültiger Gegenbefehl zum Entsperren."));
+            let account = current.get(&entry.account_id).copied().ok_or(INVALID)?;
+            let mut reads = vec![current.get(&entry.id).copied().ok_or(INVALID)?];
+            reads.extend(transactions);
+            let command = if entry.deleted_at.is_some() {
+                Command::ReconciliationUnlock(ReconciliationUnlock {
+                    reconciliation_id: entry.id.clone(),
+                })
+            } else {
+                for a in request.aggregates.iter().filter(|a|matches!(a,Aggregate::Transaction(tx) if a.is_live() && tx.account_id==entry.account_id && tx.clearance==Clearance::Reconciled && tx.date<=entry.statement_date && !owned.contains(&tx.id))){reads.push(a);}
+                Command::ReconciliationConfirm(ReconciliationConfirm {
+                    account_id: entry.account_id.clone(),
+                    statement_date: entry.statement_date.clone(),
+                    statement_balance: entry.statement_balance,
+                    selected_transaction_ids: entry.transaction_ids.clone(),
+                })
+            };
+            reads.push(account);
+            let mut child = request.child(command, expectations(&reads, &current)?);
+            if entry.deleted_at.is_none() {
+                child.context.generated_ids.insert(0, entry.id.clone());
+            }
+            let mut result =
+                crate::reconciliation_commands::execute_typed(child, Some(entry.clone()))?;
+            if entry.deleted_at.is_some() {
+                for a in &mut result.aggregates {
+                    if let Aggregate::Transaction(tx) = a
+                        && let Some(Aggregate::Transaction(target)) =
+                            desired.iter().find(|v| v.id() == &tx.id)
+                    {
+                        if ![Clearance::Cleared, Clearance::Uncleared].contains(&target.clearance) {
+                            return Err((
+                                "INVALID_COMMAND",
+                                "Ungültiger Gegenbefehl zum Entsperren.",
+                            ));
+                        }
+                        tx.clearance = target.clearance;
                     }
-                    a["clearance"] = target["clearance"].clone();
                 }
             }
+            children.push(result);
         }
-        children.push(result);
     }
-    for entry in desired.iter().filter(|a| kind(a) == "transfer") {
-        let deleting = entry.get("deletedAt").is_some();
-        let values = if deleting {
-            &request.aggregates
-        } else {
-            &desired
-        };
-        let source = values
-            .iter()
-            .find(|a| a["id"] == entry["sourceTransactionId"])
-            .ok_or((
-                "INVALID_AGGREGATE",
-                "Der Gegenbefehl benötigt beide Umbuchungsseiten.",
-            ))?;
-        let target = values
-            .iter()
-            .find(|a| a["id"] == entry["targetTransactionId"])
-            .ok_or((
-                "INVALID_AGGREGATE",
-                "Der Gegenbefehl benötigt beide Umbuchungsseiten.",
-            ))?;
-        owned.insert(string(&source["id"])?.to_string());
-        owned.insert(string(&target["id"])?.to_string());
-        let transfer = if deleting {
-            current
-                .get(string(&entry["id"])?)
-                .copied()
-                .ok_or(aggregate_schema::INVALID)?
-        } else {
-            entry
-        };
-        let mut reads = vec![transfer, source, target];
-        for field in ["sourceAccountId", "targetAccountId"] {
-            reads.push(
-                current
-                    .get(string(&entry[field])?)
-                    .copied()
-                    .ok_or(aggregate_schema::INVALID)?,
-            );
+    for a in &desired {
+        if let Aggregate::Transfer(entry) = a {
+            let deleting = entry.deleted_at.is_some();
+            let values = if deleting {
+                &request.aggregates
+            } else {
+                &desired
+            };
+            let source = values
+                .iter()
+                .find(|a| a.id() == &entry.source_transaction_id)
+                .ok_or((
+                    "INVALID_AGGREGATE",
+                    "Der Gegenbefehl benötigt beide Umbuchungsseiten.",
+                ))?;
+            let target = values
+                .iter()
+                .find(|a| a.id() == &entry.target_transaction_id)
+                .ok_or((
+                    "INVALID_AGGREGATE",
+                    "Der Gegenbefehl benötigt beide Umbuchungsseiten.",
+                ))?;
+            owned.insert(source.id().clone());
+            owned.insert(target.id().clone());
+            let transfer = if deleting {
+                current.get(&entry.id).copied().ok_or(INVALID)?
+            } else {
+                a
+            };
+            let mut reads = vec![transfer, source, target];
+            for id in [&entry.source_account_id, &entry.target_account_id] {
+                reads.push(current.get(id).copied().ok_or(INVALID)?);
+            }
+            if let Some(id) = &entry.budget_category_id {
+                let category = current.get(id).copied().ok_or(INVALID)?;
+                reads.push(category);
+                let Aggregate::Category(c) = category else {
+                    return Err(INVALID);
+                };
+                reads.push(current.get(&c.group_id).copied().ok_or(INVALID)?);
+            }
+            let command = if deleting {
+                Command::TransferDelete(AggregateCommand {
+                    aggregate_id: entry.id.clone(),
+                })
+            } else {
+                Command::TransferSave(SaveCommand {
+                    aggregates: NonEmptyVec::new(vec![
+                        transfer.clone(),
+                        source.clone(),
+                        target.clone(),
+                    ])?,
+                })
+            };
+            children.push(crate::transfer_commands::execute_typed(
+                request.child(command, expectations(&reads, &current)?),
+            )?);
         }
-        if let Some(id) = entry.get("budgetCategoryId") {
-            let category = current
-                .get(string(id)?)
-                .copied()
-                .ok_or(aggregate_schema::INVALID)?;
-            reads.push(category);
-            reads.push(
-                current
-                    .get(string(&category["groupId"])?)
-                    .copied()
-                    .ok_or(aggregate_schema::INVALID)?,
-            );
-        }
-        let command = if deleting {
-            json!({"commandType":"transfer.delete","aggregateId":entry["id"]})
-        } else {
-            json!({"commandType":"transfer.save","aggregates":[transfer,source,target]})
-        };
-        children.push(crate::transfer_commands::execute(action(
-            &request,
-            command,
-            expectations(&reads, &current)?,
-        ))?);
     }
-    for entry in desired
-        .iter()
-        .filter(|a| kind(a) == "transaction" && !owned.contains(a["id"].as_str().unwrap_or("")))
-    {
-        let head = current
-            .get(string(&entry["id"])?)
-            .copied()
-            .ok_or(aggregate_schema::INVALID)?;
-        if entry["kind"] == "transfer" {
-            let mut before = head.clone();
-            let mut after = entry.clone();
-            for value in [&mut before, &mut after] {
-                let o = value.as_object_mut().ok_or(INVALID)?;
-                o.remove("revision");
-                o.remove("updatedAt");
+    for a in &desired {
+        if let Aggregate::Transaction(entry) = a
+            && !owned.contains(&entry.id)
+        {
+            let head = current.get(&entry.id).copied().ok_or(INVALID)?;
+            if entry.kind == TransactionKind::Transfer {
+                let mut after = a.clone();
+                *after.revision_mut() = head.revision();
+                *after.updated_at_mut() = head.updated_at().clone();
+                if *head != after {
+                    return Err((
+                        "INVALID_COMMAND",
+                        "Eine einzelne Umbuchungsseite darf nicht geändert werden.",
+                    ));
+                }
+                continue;
             }
-            if before != after {
-                return Err((
-                    "INVALID_COMMAND",
-                    "Eine einzelne Umbuchungsseite darf nicht geändert werden.",
-                ));
+            let mut reads = vec![head];
+            let mut refs = vec![&entry.account_id];
+            refs.extend(entry.splits.iter().map(|s| &s.category_id));
+            if let Some(id) = &entry.payee_id {
+                refs.push(id);
             }
-            continue;
+            for id in refs {
+                reads.push(
+                    current
+                        .get(id)
+                        .copied()
+                        .ok_or(("INVALID_AGGREGATE", "Eine Referenz fehlt."))?,
+                );
+            }
+            let command = if entry.deleted_at.is_some() {
+                Command::TransactionDelete(AggregateCommand {
+                    aggregate_id: entry.id.clone(),
+                })
+            } else {
+                Command::TransactionSave(SaveCommand {
+                    aggregates: NonEmptyVec::new(vec![a.clone()])?,
+                })
+            };
+            children.push(crate::typed_financial::execute(
+                request.child(command, expectations(&reads, &current)?),
+            )?);
         }
-        let mut reads = vec![head];
-        let mut refs = vec![&entry["accountId"]];
-        refs.extend(array(&entry["splits"])?.iter().map(|s| &s["categoryId"]));
-        if let Some(id) = entry.get("payeeId") {
-            refs.push(id);
-        }
-        for id in refs {
-            reads.push(
-                current
-                    .get(string(id)?)
-                    .copied()
-                    .ok_or(("INVALID_AGGREGATE", "Eine Referenz fehlt."))?,
-            );
-        }
-        let command = if entry.get("deletedAt").is_some() {
-            json!({"commandType":"transaction.delete","aggregateId":entry["id"]})
-        } else {
-            json!({"commandType":"transaction.save","aggregates":[entry]})
-        };
-        children.push(financial::execute(action(
-            &request,
-            command,
-            expectations(&reads, &current)?,
-        ))?);
     }
     let mut changes = vec![];
     let mut index = BTreeMap::new();
     let mut all_expected = request.expected_revisions.clone();
-    let mut command = "reconciliation.unlock".to_string();
-    for (n, child) in children.iter().enumerate() {
-        let result = &child["changeSet"];
+    let mut command = "reconciliation.unlock".to_owned();
+    for (n, child) in children.into_iter().enumerate() {
         if n == 0 {
-            command = string(&result["commandType"])?.to_string();
+            command = child.command_type;
         }
-        for a in array(&result["aggregates"])? {
-            let id = string(&a["id"])?;
-            if let Some(n) = index.get(id) {
-                changes[*n] = a.clone();
+        for a in child.aggregates {
+            if let Some(n) = index.get(a.id()) {
+                changes[*n] = a;
             } else {
-                index.insert(id.to_string(), changes.len());
-                changes.push(a.clone());
+                index.insert(a.id().clone(), changes.len());
+                changes.push(a);
             }
         }
-        for e in array(&result["expectedRevisions"])? {
-            let id = string(&e["id"])?;
-            let revision = crate::aggregate_schema::integer(&e["expectedRevision"])?;
-            if let Some(old) = all_expected.iter_mut().find(|e| e.id == id) {
-                old.expected_revision = revision;
+        for e in child.expected_revisions {
+            if let Some(old) = all_expected.iter_mut().find(|old| old.id == e.id) {
+                old.expected_revision = e.expected_revision;
             } else {
-                all_expected.push(Expectation {
-                    id: id.to_string(),
-                    expected_revision: revision,
-                });
+                all_expected.push(e);
             }
         }
     }
     for a in desired {
-        let id = string(&a["id"])?;
-        if !index.contains_key(id) {
-            index.insert(id.to_string(), changes.len());
+        if !index.contains_key(a.id()) {
+            index.insert(a.id().clone(), changes.len());
             changes.push(a);
         }
     }
-    financial::inspect_changes(
-        &changes,
-        &request.space_id,
-        &all_expected,
-        &current,
-        &request,
-    )?;
+    command_contracts::inspect_changes(&changes, &all_expected, &scope)?;
     let (changes, expected) = if [
         "reconciliation.confirm",
         "reconciliation.unlock",
@@ -365,10 +334,15 @@ fn reverse(input: CoreResult<(Value, Value)>) -> CoreResult<Value> {
     {
         (changes, all_expected)
     } else {
-        financial::prepare_financial(changes, all_expected, &request)?
+        crate::typed_financial::prepare(changes, all_expected, &scope)?
     };
-    financial::inspect_changes(&changes, &request.space_id, &expected, &current, &request)?;
-    Ok(
-        json!({"contractVersion":1,"status":"changed","changeSet":{"spaceId":request.space_id,"commandType":command,"operationId":request.context.operation_id,"occurredAt":request.context.occurred_at,"expectedRevisions":expected.iter().map(|e|json!({"id":e.id,"expectedRevision":e.expected_revision})).collect::<Vec<_>>(),"aggregates":changes}}),
-    )
+    command_contracts::inspect_changes(&changes, &expected, &scope)?;
+    Ok(ChangeSet {
+        space_id: request.space_id,
+        command_type: command,
+        operation_id: request.context.operation_id,
+        occurred_at: request.context.occurred_at,
+        expected_revisions: expected,
+        aggregates: changes,
+    })
 }

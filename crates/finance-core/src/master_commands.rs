@@ -3,8 +3,7 @@
 use crate::{CoreResult, aggregate_schema, state_validation};
 use serde::Deserialize;
 use serde_json::Value;
-use std::collections::{BTreeMap, BTreeSet};
-const INVALID: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
+use std::collections::BTreeSet;
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct Expectation {
@@ -18,26 +17,8 @@ pub(crate) struct Context {
     pub(crate) occurred_at: String,
     pub(crate) generated_ids: Vec<String>,
 }
-#[derive(Clone, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub(crate) struct Request {
-    pub(crate) contract_version: u32,
-    pub(crate) domain_schema_version: u32,
-    pub(crate) space_id: String,
-    pub(crate) aggregates: Vec<Value>,
-    pub(crate) command: Value,
-    pub(crate) expected_revisions: Vec<Expectation>,
-    pub(crate) context: Context,
-}
 fn fail<T>(code: &'static str, message: &'static str) -> CoreResult<T> {
     Err((code, message))
-}
-pub(crate) fn normalize(a: Value, ty: &str) -> CoreResult<Value> {
-    serde_json::to_value(normalize_typed(
-        crate::models::Aggregate::from_wire(&a)?,
-        ty,
-    )?)
-    .map_err(|_| aggregate_schema::INVALID)
 }
 pub(crate) fn normalize_typed(
     a: crate::models::Aggregate,
@@ -94,32 +75,6 @@ pub(crate) fn normalize_typed(
         _ => return Err(aggregate_schema::INVALID),
     }
     Ok(a)
-}
-pub(crate) fn expected(
-    request: &Request,
-    current: &BTreeMap<&str, &Value>,
-) -> CoreResult<BTreeMap<String, i64>> {
-    let all = current
-        .values()
-        .map(|a| crate::models::Aggregate::from_wire(a))
-        .collect::<CoreResult<Vec<_>>>()?;
-    let space = crate::scalars::EntityId::new(request.space_id.clone()).map_err(|_| INVALID)?;
-    let context = crate::financial_commands::context(request)?;
-    let scope = crate::command_contracts::Scope {
-        space_id: &space,
-        aggregates: &all,
-        context: &context,
-    };
-    let heads = scope.current();
-    let values = crate::command_contracts::expected(
-        &scope,
-        &crate::financial_commands::typed_expected(&request.expected_revisions)?,
-        &heads,
-    )?;
-    Ok(values
-        .into_iter()
-        .map(|(id, revision)| (id.as_str().to_owned(), revision.value()))
-        .collect())
 }
 pub fn execute(decoded: Value) -> CoreResult<Value> {
     use crate::{

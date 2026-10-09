@@ -1,6 +1,6 @@
 # AR01 — Typisierung des bestehenden Fachkerns
 
-Stand: 9. Oktober 2026. Datierter Abschnittsnachweis für [AR01 #115](https://github.com/mpwg/WiMM/issues/115); Gesamtfolge in [#114](https://github.com/mpwg/WiMM/issues/114), Freigabe in [Aufgaben](tasks.md). AR01 ist noch nicht vollständig umgesetzt. Dieser Abschnitt ersetzt keine Abnahme der Rust-Clientanwendung oder Produktumschaltung.
+Stand: 9. Oktober 2026. Datierter Abschnittsnachweis für [AR01 #115](https://github.com/mpwg/WiMM/issues/115); Gesamtfolge in [#114](https://github.com/mpwg/WiMM/issues/114), Freigabe in [Aufgaben](tasks.md). AR01 ist vollständig typisiert und mit dem aktuellen Fach-/Bindingkatalog abgenommen. Dieser Abschnitt ersetzt keine Abnahme der Rust-Clientanwendung oder Produktumschaltung.
 
 ## Geprüfter Abschnitt
 
@@ -18,13 +18,13 @@ Der Befehlsabschnitt ergänzt typisierte Request-/Kontext-/Erwartungs-/Änderung
 
 Binding- und Fachschemaversion bleiben eins. UUID-Schreibweise, Zeitstempelpräzision, Tombstones sowie Unterschied zwischen fehlenden Feldern und vorhandenem `null` bleiben erhalten. Nur das erforderliche Kandidatenfeld der Importzeile darf ausdrücklich `null` sein. Importmappings bleiben gemäß bestehendem Vertrag opake JSON-Payloads; ihre Struktur wird hier nicht verschärft. Äquivalente JSON-Zahlformen werden an der Grenze in sichere Ganzzahlen umgewandelt; Geldberechnungen verwenden ausschließlich Integer.
 
-Abgleich, Empfängermerge, Automatisierungsabläufe und Gegenbefehle verwenden teilweise noch dynamische Daten. Ihre Übergangsadapter deserialisieren Modelle und serialisieren Ergebnisse; JSON ist dadurch noch nicht ausschließlich die äußere Bindinggrenze. Insbesondere ist noch kein begrenzter Ansichtsport oder optimierter Bereichslesevorgang aus AR07 umgesetzt. Neue Funktionalität und Datenmigrationen sind nicht Bestandteil dieses Abschnitts.
+Alle verbleibenden Handler einschließlich Abgleich, Empfängermerge, Regelanwendung, Importklassifizierung, Import-/Dauerzahlungsbefehlen, Fälligkeiten und Gegenbefehlen sind jetzt umgestellt. Undo/Redo ruft die typisierten Handler direkt auf; die bisherigen Übergangsadapter und internen JSON-Befehlsrekonstruktionen sind entfernt. JSON wird ausschließlich an der kompatiblen äußeren Ein-/Ausgabegrenze verarbeitet. Einzige formatgebundene Ausnahme bleibt die kanonische V1-Fingerprintserialisierung eines festen typisierten Tupels. Insbesondere ist noch kein begrenzter Ansichtsport oder optimierter Bereichslesevorgang aus AR07 umgesetzt. Neue Funktionalität und Datenmigrationen sind nicht Bestandteil dieses Abschnitts.
 
 ## Kriterienmatrix
 
 | Kriterium aus #115 | Status | Aktueller Beleg |
 | --- | --- | --- |
-| Alle Handler arbeiten typisiert; unmögliche Feldkombinationen nicht frei konstruierbar | offen | Formmodelle, skalare Konstruktoren, Basisprojektionen, Cacheprüfung und historische Bestandsvalidierung vorhanden; verbleibende dynamische Abläufe siehe Abschnittsgrenze |
+| Alle Handler arbeiten typisiert; unmögliche Feldkombinationen nicht frei konstruierbar | erfüllt | Alle 22 Befehle, Berechnungen, Projektionen und Gegenbefehle arbeiten auf geprüften Rust-Feldtypen; keine dynamischen Feldzugriffe in interner Fachlogik. Typisierte Regelaktionen und skalare Konstruktoren verhindern strukturwidrige Feldwerte; bestandsabhängige Invarianten werden kontrolliert geprüft |
 | Bestehender positiver/negativer K04-Katalog nativ, WASM, Swift und Kotlin unverändert | erfüllt | `pnpm test:core:bindings`: je 479 unveränderte K04-Fälle plus zehn UTC-Generatorregressionen in Rust nativ, Swift/UniFFI, Kotlin/UniFFI, WASM/Node und tatsächlichem Chromium/WASM |
 | Kein ORM/UI/HTTP/Storage im Kern; unsafe-Verbot unverändert | erfüllt | `pnpm check:core`: Paket-/Root-/Workspace-Grenzen, Rustfmt, Clippy mit Warnungen als Fehler, native Workspace-Assertions |
 | README des Abschnitts aktuell | erfüllt | [Rust-Fachkern-README](../crates/finance-core/README.md): neue Modelle, native Prüfungen und verbleibende Übergangsgrenze beschrieben |
@@ -35,7 +35,7 @@ Lokale Abschnittslogs: `test-results/architecture-implementation/ar01-model-core
 
 ## Fortsetzung
 
-Das erste offene freigegebene Paket bleibt AR01. Als Nächstes werden verbleibende Handler und Querreferenzprüfungen auf dieselben Modelle umgestellt. Erst danach folgt die vollständige erneute Paketabnahme und die gemeinsame Vertragsgenerierung aus AR02; die bestehende JSON-Kompatibilitätsgrenze bleibt bis dahin verbindlich.
+Nächstes freigegebenes Architekturpaket ist die gemeinsame Vertragsgenerierung AR02/#116. Die bestehende JSON-Kompatibilitätsgrenze bleibt verbindlich. Die eigentliche Rust-Clientanwendung, Produktumschaltung und Datenmigrationen folgen der Abhängigkeitsfolge in #114.
 
 ## #128 — UTC-Generatorprüfung der Regelreihenfolge
 
@@ -51,3 +51,10 @@ Die tatsächliche native Vorherreproduktion liefert mit `2026-10-09T25:00:00Z` e
 Aktuelle lokale Logs: `test-results/architecture-implementation/ar01-command-core.log` und `ar01-command-bindings.log`. Vorherreproduktion in `reorder-invalid-time-before-result.jsonl`. Veröffentlichung, rückgelesene Belege und Schließungsgrund stehen in #128. Der Abschluss dieses begrenzten Defekts schließt AR01 nicht.
 
 Die acht negativen Browserfälle rufen das echte Rust-WASM-Binding mit rohem JSON direkt auf; sie werden dadurch nicht vor dem Rustaufruf von Zod abgefangen. Die zwei gültigen Browserfälle laufen über den unveränderten TypeScript-Bindingadapter. Dessen Eingabeprüfung wurde nicht abgeschwächt.
+
+
+## Aktuelle vollständige AR01-Abnahme
+
+9. Oktober 2026, aktive Arbeitskopie, macOS arm64, unveränderter synthetischer K04-Katalog plus getrennte UTC-Generatorregressionen. `pnpm check:core` vollständig erfolgreich: native Workspace-Assertions, 16 direkte Kernunittests, vier Katalogtests und ein UTC-Integrationstest mit zehn Fällen; Paket-/unsafe-Grenzen, Rustfmt und Clippy mit Warnungen als Fehler. `pnpm test:core:bindings` erneut erfolgreich: je 489 tatsächliche Fälle in Rust, Swift/UniFFI, Kotlin/UniFFI, WASM/Node und Chromium/WASM. Dokumentationsvalidator, seine drei Tests und Whitespaceprüfung bestanden. Paket-README aktualisiert. Logs ar01-complete-core.log/ar01-complete-bindings.log unter test-results/architecture-implementation; veröffentlichter Commit und Schließung in #115. Alle drei Issuekriterien erfüllt.
+
+Die übergreifende Produkt-CI auf 80c3648 bleibt wegen des unabhängigen [Leistungsbefunds #129](https://github.com/mpwg/WiMM/issues/129) fehlgeschlagen: Desktop-Frontend-Kaltöffnung 2.065,6 ms bei 50.000 Buchungen, verbindliche Grenze unter 2.000 ms. Das ist kein offenes Fachtypisierungs- oder Bindingkriterium und wird nicht durch AR01 geschlossen. Keine native Tauri-/Geräte-/Leistungsabnahme aus dem Fachkatalog ableiten.

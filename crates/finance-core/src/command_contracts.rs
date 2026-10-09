@@ -236,3 +236,17 @@ pub fn to_wire(changes: ChangeSet) -> CoreResult<serde_json::Value> {
     )
     .map_err(|_| INVALID)
 }
+
+#[derive(Debug, Clone)]
+pub enum CommandResult {
+    Changed(ChangeSet),
+    Unchanged,
+}
+impl CommandResult {
+    pub fn to_wire(self) -> CoreResult<serde_json::Value> {
+        match self {
+            Self::Changed(change) => to_wire(change),
+            Self::Unchanged => Ok(serde_json::json!({"contractVersion":1,"status":"unchanged"})),
+        }
+    }
+}

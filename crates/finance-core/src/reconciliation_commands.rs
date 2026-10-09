@@ -1,364 +1,379 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Abgleich ohne Geldmutation; verbundene Transfers werden gemeinsam entsperrt.
+//! Typisierter Abgleich ohne Geldmutation; verbundene Transfers gemeinsam entsperren.
 use crate::{
     CoreResult,
-    aggregate_schema::{self, array, integer, kind, live, string},
-    financial_commands as financial,
-    master_commands::{Expectation, Request},
-    projections,
+    aggregate_schema::INVALID,
+    command_contracts::{self, COMMAND_ERROR, ChangeSet, Expectation, Request},
+    models::{
+        Aggregate, AggregateKind, Clearance, Command, Reconciliation, Transaction, TransactionKind,
+    },
+    scalars::{EntityId, MoneyCents, Revision, StoredRevision},
+    typed_financial,
 };
-use serde_json::{Value, json};
+use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
-const COMMAND: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
-fn read<'a>(current: &BTreeMap<&str, &'a Value>, id: &Value, ty: &str) -> CoreResult<&'a Value> {
+fn read<'a>(
+    current: &BTreeMap<&EntityId, &'a Aggregate>,
+    id: &EntityId,
+    kind: AggregateKind,
+) -> CoreResult<&'a Aggregate> {
     current
-        .get(string(id)?)
+        .get(id)
         .copied()
-        .filter(|a| kind(a) == ty)
+        .filter(|a| a.kind() == kind)
         .ok_or(("INVALID_AGGREGATE", "Eine Abgleichbuchung fehlt."))
 }
-fn add_expected(expected: &mut Vec<Expectation>, a: &Value) -> CoreResult<()> {
-    let id = string(&a["id"])?;
-    if !expected.iter().any(|e| e.id == id) {
+fn tx<'a>(
+    current: &BTreeMap<&EntityId, &'a Aggregate>,
+    id: &EntityId,
+) -> CoreResult<&'a Transaction> {
+    let Aggregate::Transaction(tx) = read(current, id, AggregateKind::Transaction)? else {
+        return Err(INVALID);
+    };
+    Ok(tx)
+}
+fn add_expected(expected: &mut Vec<Expectation>, a: &Aggregate) -> CoreResult<()> {
+    if !expected.iter().any(|e| &e.id == a.id()) {
         expected.push(Expectation {
-            id: id.to_string(),
-            expected_revision: integer(&a["revision"])?,
+            id: a.id().clone(),
+            expected_revision: Revision::new(a.revision().value())?,
         });
     }
     Ok(())
 }
 pub fn execute(decoded: Value) -> CoreResult<Value> {
-    execute_with_record(decoded, None)
+    let request: Request = serde_json::from_value(decoded).map_err(|_| COMMAND_ERROR)?;
+    command_contracts::to_wire(execute_typed(request, None)?)
 }
-pub(crate) fn execute_with_record(
-    decoded: Value,
-    override_record: Option<Value>,
-) -> CoreResult<Value> {
-    let request: Request = serde_json::from_value(decoded).map_err(|_| COMMAND)?;
-    if request.contract_version != 1
-        || request.domain_schema_version != 1
-        || !crate::valid_id(&request.space_id)
-        || !crate::valid_id(&request.context.operation_id)
-        || !aggregate_schema::timestamp(&request.context.occurred_at)
-        || request
-            .context
-            .generated_ids
-            .iter()
-            .any(|id| !crate::valid_id(id))
-    {
-        return Err(COMMAND);
-    }
-    for a in &request.aggregates {
-        aggregate_schema::aggregate(a).map_err(|_| COMMAND)?;
-    }
-    let current: BTreeMap<&str, &Value> = request
-        .aggregates
-        .iter()
-        .map(|a| Ok((string(&a["id"])?, a)))
-        .collect::<CoreResult<_>>()?;
-    let command = string(&request.command["commandType"])?;
+pub(crate) fn execute_typed(
+    request: Request,
+    override_record: Option<Reconciliation>,
+) -> CoreResult<ChangeSet> {
+    request.check_versions()?;
+    let current = request.current();
     let time = &request.context.occurred_at;
     let space = &request.space_id;
     let mut expected = request.expected_revisions.clone();
     let mut changes = vec![];
-    if command == "reconciliation.confirm" {
-        if request.command.as_object().is_none_or(|o| o.len() != 5)
-            || !request.command["accountId"]
-                .as_str()
-                .is_some_and(crate::valid_id)
-            || crate::calendar::parse_finance_date(
-                request.command["statementDate"].as_str().unwrap_or(""),
-            )
-            .is_err()
-            || integer(&request.command["statementBalance"]).is_err()
-        {
-            return Err(COMMAND);
-        }
-        let ids = array(&request.command["selectedTransactionIds"]).map_err(|_| COMMAND)?;
-        if ids.is_empty()
-            || ids
-                .iter()
-                .any(|id| !id.as_str().is_some_and(crate::valid_id))
-        {
-            return Err(COMMAND);
-        }
-        let mut unique = BTreeSet::new();
-        for id in ids {
-            if !unique.insert(string(id)?) {
-                return Err((
-                    "DUPLICATE_REFERENCE",
-                    "Eine Abgleichbuchung darf nur einmal vorkommen.",
-                ));
-            }
-        }
-        let account = read(&current, &request.command["accountId"], "account")?;
-        let rec = if let Some(record) = override_record.as_ref() {
-            record.clone()
-        } else {
-            let id = request.context.generated_ids.first().ok_or((
-                "INVALID_GENERATOR",
-                "Die erzeugte Aggregat-ID ist ungültig.",
-            ))?;
-            let rec = json!({"id":id,"spaceId":space,"revision":1,"createdAt":time,"updatedAt":time,"aggregateType":"reconciliation","accountId":account["id"],"statementDate":request.command["statementDate"],"statementBalance":request.command["statementBalance"],"transactionIds":ids});
-            rec
-        };
-        let selected = ids
-            .iter()
-            .map(|id| read(&current, id, "transaction"))
-            .collect::<CoreResult<Vec<_>>>()?;
-        for tx in &selected {
-            financial::normalize((*tx).clone())?;
-            if tx["spaceId"] != *space || tx["accountId"] != account["id"] || !live(tx) {
-                return Err((
-                    "INVALID_AGGREGATE",
-                    "Eine Abgleichbuchung passt nicht zum Kontoauszug.",
-                ));
-            }
-        }
-        let previous: Vec<_> = request
-            .aggregates
-            .iter()
-            .filter(|a| {
-                kind(a) == "transaction"
-                    && live(a)
-                    && a["accountId"] == account["id"]
-                    && a["clearance"] == "reconciled"
-                    && a["date"].as_str() <= request.command["statementDate"].as_str()
-                    && !ids.contains(&a["id"])
-            })
-            .collect();
-        let mut sum = 0;
-        for tx in previous.iter().chain(&selected) {
-            financial::normalize((*tx).clone())?;
-            if tx["spaceId"] != *space
-                || tx["date"].as_str() > request.command["statementDate"].as_str()
-            {
-                return Err((
-                    "INVALID_AGGREGATE",
-                    "Die Auszugsauswahl enthält unpassende oder doppelte Buchungen.",
-                ));
-            }
-            sum = projections::add(
-                sum,
-                integer(&tx["amount"])?,
-                "Die Geldsumme überschreitet den sicheren Centbereich.",
-            )?;
-        }
-        let difference = projections::add(
-            integer(&rec["statementBalance"])?,
-            -sum,
-            "Die Auszugsdifferenz überschreitet den sicheren Centbereich.",
-        )?;
-        if difference != 0 {
-            return Err((
-                "INVALID_COMMAND",
-                "Die Auszugsdifferenz muss vor der Bestätigung null sein.",
-            ));
-        }
-        if selected.iter().any(|tx| tx["clearance"] == "reconciled") {
-            return Err((
-                "INVALID_COMMAND",
-                "Bereits abgeglichene Buchungen gehören zum bestätigten Ausgangssaldo.",
-            ));
-        }
-        changes.push(rec);
-        for tx in &selected {
-            let mut a = (*tx).clone();
-            a["clearance"] = json!("reconciled");
-            changes.push(financial::revise(a, time)?);
-            add_expected(&mut expected, tx)?;
-        }
-        for tx in &previous {
-            add_expected(&mut expected, tx)?;
-        }
-        add_expected(&mut expected, account)?;
-    } else {
-        if request.command.as_object().is_none_or(|o| o.len() != 2)
-            || !request.command["reconciliationId"]
-                .as_str()
-                .is_some_and(crate::valid_id)
-        {
-            return Err(COMMAND);
-        }
-        let rec = read(
-            &current,
-            &request.command["reconciliationId"],
-            "reconciliation",
-        )?;
-        if !live(rec) {
-            return Err((
-                "INVALID_COMMAND",
-                "Der zugehörige vollständige Abgleich fehlt.",
-            ));
-        }
-        let initial = array(&rec["transactionIds"])?;
-        let seed = initial.first().ok_or(aggregate_schema::INVALID)?;
-        let txs: Vec<_> = request
-            .aggregates
-            .iter()
-            .filter(|a| kind(a) == "transaction" && live(a))
-            .collect();
-        let recs: Vec<_> = request
-            .aggregates
-            .iter()
-            .filter(|a| kind(a) == "reconciliation" && live(a))
-            .collect();
-        let mut ids = if override_record.is_some() {
-            initial
-                .iter()
-                .map(|id| Ok(string(id)?.to_string()))
-                .collect::<CoreResult<BTreeSet<_>>>()?
-        } else {
-            BTreeSet::from([string(seed)?.to_string()])
-        };
-        let mut groups = if override_record.is_some() {
-            BTreeSet::from([string(&rec["id"])?.to_string()])
-        } else {
-            BTreeSet::new()
-        };
-        let mut expanded = override_record.is_none();
-        while expanded {
-            expanded = false;
-            for tx in txs
-                .iter()
-                .filter(|a| ids.contains(a["id"].as_str().unwrap_or("")))
-                .copied()
-                .collect::<Vec<_>>()
-            {
-                if let Some(id) = tx.get("transferId") {
-                    let transfer = current
-                        .get(string(id)?)
-                        .copied()
-                        .filter(|a| kind(a) == "transfer" && live(a))
-                        .ok_or(("INVALID_AGGREGATE", "Die vollständige Umbuchung fehlt."))?;
-                    let source = txs
-                        .iter()
-                        .find(|a| a["id"] == transfer["sourceTransactionId"]);
-                    let target = txs
-                        .iter()
-                        .find(|a| a["id"] == transfer["targetTransactionId"]);
-                    let valid = if let (Some(source), Some(target)) = (source, target) {
-                        source["kind"] == "transfer"
-                            && target["kind"] == "transfer"
-                            && source["transferId"] == transfer["id"]
-                            && target["transferId"] == transfer["id"]
-                            && source["accountId"] == transfer["sourceAccountId"]
-                            && target["accountId"] == transfer["targetAccountId"]
-                            && source["date"] == transfer["date"]
-                            && target["date"] == transfer["date"]
-                            && integer(&source["amount"])? == -integer(&transfer["amount"])?
-                            && target["amount"] == transfer["amount"]
-                    } else {
-                        false
-                    };
-                    if !valid {
-                        return Err((
-                            "INVALID_AGGREGATE",
-                            "Die vollständigen Umbuchungsseiten passen nicht zum Abgleich.",
-                        ));
-                    }
-                    for field in ["sourceTransactionId", "targetTransactionId"] {
-                        if ids.insert(string(&transfer[field])?.to_string()) {
-                            expanded = true;
-                        }
-                    }
+    let command_type = match &request.command {
+        Command::ReconciliationConfirm(command) => {
+            let ids = command.selected_transaction_ids.as_slice();
+            let mut unique = BTreeSet::new();
+            for id in ids {
+                if !unique.insert(id) {
+                    return Err((
+                        "DUPLICATE_REFERENCE",
+                        "Eine Abgleichbuchung darf nur einmal vorkommen.",
+                    ));
                 }
             }
-            for rec in &recs {
-                let id = string(&rec["id"])?;
-                if !groups.contains(id)
-                    && array(&rec["transactionIds"])?
-                        .iter()
-                        .any(|id| ids.contains(id.as_str().unwrap_or("")))
+            let account = read(&current, &command.account_id, AggregateKind::Account)?;
+            let rec = if let Some(record) = override_record.as_ref() {
+                record.clone()
+            } else {
+                Reconciliation {
+                    id: request
+                        .context
+                        .generated_ids
+                        .first()
+                        .ok_or((
+                            "INVALID_GENERATOR",
+                            "Die erzeugte Aggregat-ID ist ungültig.",
+                        ))?
+                        .clone(),
+                    space_id: space.clone(),
+                    revision: StoredRevision::new(1)?,
+                    created_at: time.clone(),
+                    updated_at: time.clone(),
+                    deleted_at: None,
+                    account_id: account.id().clone(),
+                    statement_date: command.statement_date.clone(),
+                    statement_balance: command.statement_balance,
+                    transaction_ids: command.selected_transaction_ids.clone(),
+                }
+            };
+            let selected = ids
+                .iter()
+                .map(|id| tx(&current, id))
+                .collect::<CoreResult<Vec<_>>>()?;
+            for tx in &selected {
+                typed_financial::normalize((*tx).clone())?;
+                if &tx.space_id != space
+                    || &tx.account_id != account.id()
+                    || tx.deleted_at.is_some()
                 {
-                    groups.insert(id.to_string());
-                    for id in array(&rec["transactionIds"])? {
-                        ids.insert(string(id)?.to_string());
-                    }
-                    expanded = true;
-                }
-            }
-        }
-        if groups.is_empty() {
-            return Err((
-                "INVALID_COMMAND",
-                "Der zugehörige vollständige Abgleich fehlt.",
-            ));
-        }
-        let mut changed_index = BTreeMap::<String, usize>::new();
-        for rec in recs
-            .iter()
-            .filter(|a| groups.contains(a["id"].as_str().unwrap_or("")))
-        {
-            let ids = array(&rec["transactionIds"])?;
-            if ids
-                .iter()
-                .map(|id| id.as_str().unwrap_or(""))
-                .collect::<BTreeSet<_>>()
-                .len()
-                != ids.len()
-            {
-                return Err((
-                    "DUPLICATE_REFERENCE",
-                    "Eine Abgleichbuchung darf nur einmal vorkommen.",
-                ));
-            }
-            let account = read(&current, &rec["accountId"], "account")?;
-            let mut tomb = (*rec).clone();
-            tomb["deletedAt"] = tomb["updatedAt"].clone();
-            changes.push(financial::revise(tomb, time)?);
-            add_expected(&mut expected, rec)?;
-            for id in array(&rec["transactionIds"])? {
-                let tx = read(&current, id, "transaction")?;
-                financial::normalize(tx.clone())?;
-                if tx["spaceId"] != *space || tx["accountId"] != rec["accountId"] || !live(tx) {
                     return Err((
                         "INVALID_AGGREGATE",
                         "Eine Abgleichbuchung passt nicht zum Kontoauszug.",
                     ));
                 }
-                if tx["clearance"] != "reconciled" {
+            }
+            let previous = request
+                .aggregates
+                .iter()
+                .filter_map(|a| {
+                    if let Aggregate::Transaction(tx) = a
+                        && a.is_live()
+                        && &tx.account_id == account.id()
+                        && tx.clearance == Clearance::Reconciled
+                        && tx.date <= command.statement_date
+                        && !ids.contains(&tx.id)
+                    {
+                        Some(tx)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+            let mut sum = MoneyCents::new(0)?;
+            for tx in previous.iter().chain(&selected) {
+                typed_financial::normalize((*tx).clone())?;
+                if &tx.space_id != space || tx.date > command.statement_date {
                     return Err((
-                        "INVALID_COMMAND",
-                        "Nur abgeglichene Buchungen können gemeinsam entsperrt werden.",
+                        "INVALID_AGGREGATE",
+                        "Die Auszugsauswahl enthält unpassende oder doppelte Buchungen.",
                     ));
                 }
-                let mut a = tx.clone();
-                a["clearance"] = json!("cleared");
-                let a = financial::revise(a, time)?;
-                let id = string(id)?.to_string();
-                if let Some(n) = changed_index.get(&id) {
-                    changes[*n] = a;
-                } else {
-                    changed_index.insert(id, changes.len());
-                    changes.push(a);
-                }
-                add_expected(&mut expected, tx)?;
+                sum = sum.checked_add(tx.amount).map_err(|(code, _)| {
+                    (
+                        code,
+                        "Die Geldsumme überschreitet den sicheren Centbereich.",
+                    )
+                })?;
+            }
+            let difference = rec
+                .statement_balance
+                .checked_add(MoneyCents::new(-sum.cents())?)
+                .map_err(|(code, _)| {
+                    (
+                        code,
+                        "Die Auszugsdifferenz überschreitet den sicheren Centbereich.",
+                    )
+                })?;
+            if difference.cents() != 0 {
+                return Err((
+                    "INVALID_COMMAND",
+                    "Die Auszugsdifferenz muss vor der Bestätigung null sein.",
+                ));
+            }
+            if selected
+                .iter()
+                .any(|tx| tx.clearance == Clearance::Reconciled)
+            {
+                return Err((
+                    "INVALID_COMMAND",
+                    "Bereits abgeglichene Buchungen gehören zum bestätigten Ausgangssaldo.",
+                ));
+            }
+            changes.push(Aggregate::Reconciliation(rec));
+            for tx in &selected {
+                let mut a = (*tx).clone();
+                a.clearance = Clearance::Reconciled;
+                changes.push(command_contracts::revise(Aggregate::Transaction(a), time)?);
+                add_expected(&mut expected, &Aggregate::Transaction((*tx).clone()))?;
+            }
+            for tx in &previous {
+                add_expected(&mut expected, &Aggregate::Transaction((*tx).clone()))?;
             }
             add_expected(&mut expected, account)?;
+            "reconciliation.confirm"
         }
-        for tx in txs
-            .iter()
-            .filter(|a| override_record.is_none() && ids.contains(a["id"].as_str().unwrap_or("")))
-        {
-            let id = string(&tx["id"])?;
-            if !changed_index.contains_key(id) {
-                if tx["clearance"] == "reconciled" {
+        Command::ReconciliationUnlock(command) => {
+            let record = read(
+                &current,
+                &command.reconciliation_id,
+                AggregateKind::Reconciliation,
+            )?;
+            let Aggregate::Reconciliation(rec) = record else {
+                return Err(INVALID);
+            };
+            if !record.is_live() {
+                return Err((
+                    "INVALID_COMMAND",
+                    "Der zugehörige vollständige Abgleich fehlt.",
+                ));
+            }
+            let initial = rec.transaction_ids.as_slice();
+            let seed = initial.first().ok_or(INVALID)?;
+            let txs = request
+                .aggregates
+                .iter()
+                .filter_map(|a| {
+                    if let Aggregate::Transaction(tx) = a
+                        && a.is_live()
+                    {
+                        Some(tx)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+            let recs = request
+                .aggregates
+                .iter()
+                .filter_map(|a| {
+                    if let Aggregate::Reconciliation(rec) = a
+                        && a.is_live()
+                    {
+                        Some(rec)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+            let mut ids = if override_record.is_some() {
+                initial.iter().cloned().collect::<BTreeSet<_>>()
+            } else {
+                BTreeSet::from([seed.clone()])
+            };
+            let mut groups = if override_record.is_some() {
+                BTreeSet::from([rec.id.clone()])
+            } else {
+                BTreeSet::new()
+            };
+            let mut expanded = override_record.is_none();
+            while expanded {
+                expanded = false;
+                for tx in txs
+                    .iter()
+                    .filter(|a| ids.contains(&a.id))
+                    .copied()
+                    .collect::<Vec<_>>()
+                {
+                    if let Some(id) = &tx.transfer_id {
+                        let Aggregate::Transfer(transfer) = current
+                            .get(id)
+                            .copied()
+                            .filter(|a| a.kind() == AggregateKind::Transfer && a.is_live())
+                            .ok_or(("INVALID_AGGREGATE", "Die vollständige Umbuchung fehlt."))?
+                        else {
+                            return Err(INVALID);
+                        };
+                        let source = txs.iter().find(|a| a.id == transfer.source_transaction_id);
+                        let target = txs.iter().find(|a| a.id == transfer.target_transaction_id);
+                        let valid = if let (Some(source), Some(target)) = (source, target) {
+                            source.kind == TransactionKind::Transfer
+                                && target.kind == TransactionKind::Transfer
+                                && source.transfer_id.as_ref() == Some(&transfer.id)
+                                && target.transfer_id.as_ref() == Some(&transfer.id)
+                                && source.account_id == transfer.source_account_id
+                                && target.account_id == transfer.target_account_id
+                                && source.date == transfer.date
+                                && target.date == transfer.date
+                                && source.amount.cents() == -transfer.amount.cents()
+                                && target.amount == transfer.amount
+                        } else {
+                            false
+                        };
+                        if !valid {
+                            return Err((
+                                "INVALID_AGGREGATE",
+                                "Die vollständigen Umbuchungsseiten passen nicht zum Abgleich.",
+                            ));
+                        }
+                        for id in [
+                            &transfer.source_transaction_id,
+                            &transfer.target_transaction_id,
+                        ] {
+                            if ids.insert(id.clone()) {
+                                expanded = true;
+                            }
+                        }
+                    }
+                }
+                for rec in &recs {
+                    if !groups.contains(&rec.id)
+                        && rec
+                            .transaction_ids
+                            .as_slice()
+                            .iter()
+                            .any(|id| ids.contains(id))
+                    {
+                        groups.insert(rec.id.clone());
+                        ids.extend(rec.transaction_ids.as_slice().iter().cloned());
+                        expanded = true;
+                    }
+                }
+            }
+            if groups.is_empty() {
+                return Err((
+                    "INVALID_COMMAND",
+                    "Der zugehörige vollständige Abgleich fehlt.",
+                ));
+            }
+            let mut changed_index = BTreeMap::<EntityId, usize>::new();
+            for rec in recs.iter().filter(|a| groups.contains(&a.id)) {
+                let rec_ids = rec.transaction_ids.as_slice();
+                if rec_ids.iter().collect::<BTreeSet<_>>().len() != rec_ids.len() {
                     return Err((
-                        "INVALID_COMMAND",
-                        "Der zugehörige vollständige Abgleich fehlt.",
+                        "DUPLICATE_REFERENCE",
+                        "Eine Abgleichbuchung darf nur einmal vorkommen.",
                     ));
                 }
-                changes.push(financial::revise((*tx).clone(), time)?);
+                let account = read(&current, &rec.account_id, AggregateKind::Account)?;
+                let mut tomb = (*rec).clone();
+                tomb.deleted_at = Some(tomb.updated_at.clone());
+                changes.push(command_contracts::revise(
+                    Aggregate::Reconciliation(tomb),
+                    time,
+                )?);
+                add_expected(&mut expected, &Aggregate::Reconciliation((*rec).clone()))?;
+                for id in rec_ids {
+                    let tx = tx(&current, id)?;
+                    typed_financial::normalize(tx.clone())?;
+                    if &tx.space_id != space
+                        || tx.account_id != rec.account_id
+                        || tx.deleted_at.is_some()
+                    {
+                        return Err((
+                            "INVALID_AGGREGATE",
+                            "Eine Abgleichbuchung passt nicht zum Kontoauszug.",
+                        ));
+                    }
+                    if tx.clearance != Clearance::Reconciled {
+                        return Err((
+                            "INVALID_COMMAND",
+                            "Nur abgeglichene Buchungen können gemeinsam entsperrt werden.",
+                        ));
+                    }
+                    let mut a = tx.clone();
+                    a.clearance = Clearance::Cleared;
+                    let a = command_contracts::revise(Aggregate::Transaction(a), time)?;
+                    if let Some(n) = changed_index.get(id) {
+                        changes[*n] = a;
+                    } else {
+                        changed_index.insert(id.clone(), changes.len());
+                        changes.push(a);
+                    }
+                    add_expected(&mut expected, &Aggregate::Transaction(tx.clone()))?;
+                }
+                add_expected(&mut expected, account)?;
             }
-            add_expected(&mut expected, tx)?;
-            if let Some(id) = tx.get("transferId") {
-                add_expected(&mut expected, read(&current, id, "transfer")?)?;
+            for tx in txs
+                .iter()
+                .filter(|a| override_record.is_none() && ids.contains(&a.id))
+            {
+                if !changed_index.contains_key(&tx.id) {
+                    if tx.clearance == Clearance::Reconciled {
+                        return Err((
+                            "INVALID_COMMAND",
+                            "Der zugehörige vollständige Abgleich fehlt.",
+                        ));
+                    }
+                    changes.push(command_contracts::revise(
+                        Aggregate::Transaction((*tx).clone()),
+                        time,
+                    )?);
+                }
+                add_expected(&mut expected, &Aggregate::Transaction((*tx).clone()))?;
+                if let Some(id) = &tx.transfer_id {
+                    add_expected(&mut expected, read(&current, id, AggregateKind::Transfer)?)?;
+                }
             }
+            "reconciliation.unlock"
         }
-    }
-    financial::inspect_changes(&changes, space, &expected, &current, &request)?;
-    Ok(
-        json!({"contractVersion":1,"status":"changed","changeSet":{"spaceId":space,"commandType":command,"operationId":request.context.operation_id,"occurredAt":time,"expectedRevisions":expected.iter().map(|e|json!({"id":e.id,"expectedRevision":e.expected_revision})).collect::<Vec<_>>(),"aggregates":changes}}),
-    )
+        _ => return Err(COMMAND_ERROR),
+    };
+    command_contracts::inspect_changes(&changes, &expected, &request.scope())?;
+    Ok(request.changed(command_type, changes, expected))
 }

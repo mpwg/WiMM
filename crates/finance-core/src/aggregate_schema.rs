@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Strikter sprachneutraler Formvertrag für sämtliche vorhandenen Finanzaggregate.
-use crate::{CoreResult, MAX_SAFE, calendar};
+use crate::{CoreResult, calendar};
 use serde_json::Value;
 pub const INVALID: (&str, &str) = (
     "INVALID_AGGREGATE",
@@ -11,17 +11,6 @@ pub fn string(v: &Value) -> CoreResult<&str> {
 }
 pub fn array(v: &Value) -> CoreResult<&[Value]> {
     v.as_array().map(Vec::as_slice).ok_or(INVALID)
-}
-pub fn integer(v: &Value) -> CoreResult<i64> {
-    v.as_i64()
-        .filter(|n| (-MAX_SAFE..=MAX_SAFE).contains(n))
-        .ok_or(INVALID)
-}
-pub fn kind(v: &Value) -> &str {
-    v["aggregateType"].as_str().unwrap_or("")
-}
-pub fn live(v: &Value) -> bool {
-    v.get("deletedAt").is_none()
 }
 pub fn timestamp(s: &str) -> bool {
     let b = s.as_bytes();
@@ -58,11 +47,6 @@ pub fn js_space(c: char) -> bool {
     matches!(c, '\u{0009}'..='\u{000d}' | '\u{0020}' | '\u{00a0}' | '\u{1680}' | '\u{2000}'..='\u{200a}' | '\u{2028}' | '\u{2029}' | '\u{202f}' | '\u{205f}' | '\u{3000}' | '\u{feff}')
 }
 /// JSON ist ausschließlich die Formgrenze; keine zweite Laufzeitschemapflege.
-pub(crate) fn candidate(v: &Value) -> CoreResult<()> {
-    serde_json::from_value::<crate::models::ImportCandidate>(v.clone())
-        .map(|_| ())
-        .map_err(|_| INVALID)
-}
 pub fn aggregate(v: &Value) -> CoreResult<()> {
     crate::models::Aggregate::from_wire(v).map(|_| ())
 }

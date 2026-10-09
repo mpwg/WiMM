@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Typisierte Basisprojektionen mit unveränderter V1-Reihenfolge und Centprüfung.
 use crate::{
-    CoreResult, MAX_SAFE,
+    CoreResult,
     aggregate_schema::INVALID,
     models::{Aggregate, GroupKind, Transaction, TransactionKind},
     scalars::{EntityId, MoneyCents},
@@ -13,14 +13,6 @@ pub fn uuid_order(a: &str, b: &str) -> Ordering {
     a.to_ascii_lowercase()
         .cmp(&b.to_ascii_lowercase())
         .then_with(|| b.cmp(a))
-}
-pub fn add(a: i64, b: i64, message: &'static str) -> CoreResult<i64> {
-    let n = a as i128 + b as i128;
-    if !(-(MAX_SAFE as i128)..=MAX_SAFE as i128).contains(&n) {
-        Err(("MONEY_OVERFLOW", message))
-    } else {
-        Ok(n as i64)
-    }
 }
 fn sum(a: MoneyCents, b: MoneyCents, message: &'static str) -> CoreResult<MoneyCents> {
     a.checked_add(b).map_err(|(code, _)| (code, message))
@@ -177,6 +169,7 @@ pub fn rebuild(all: &[Value]) -> CoreResult<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::MAX_SAFE;
     use serde_json::json;
     fn aggregate(index: u32, mut fields: Value) -> Aggregate {
         let object = fields.as_object_mut().unwrap();

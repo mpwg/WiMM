@@ -80,14 +80,7 @@ fn transaction_fields(
     }
     Ok(())
 }
-pub(crate) fn rule(a: &Value) -> CoreResult<()> {
-    use crate::models::Aggregate;
-    let Aggregate::Rule(a) = Aggregate::from_wire(a)? else {
-        return Err(INVALID);
-    };
-    typed_rule(&a)
-}
-fn typed_rule(a: &crate::models::Rule) -> CoreResult<()> {
+pub(crate) fn typed_rule(a: &crate::models::Rule) -> CoreResult<()> {
     use crate::models::{ConditionField, ConditionOperator, ConditionValue};
     for c in a.conditions.as_slice() {
         if c.field == ConditionField::Amount {
@@ -122,14 +115,7 @@ fn typed_rule(a: &crate::models::Rule) -> CoreResult<()> {
     }
     Ok(())
 }
-pub(crate) fn import_batch(a: &Value) -> CoreResult<()> {
-    use crate::models::Aggregate;
-    let Aggregate::ImportBatch(a) = Aggregate::from_wire(a)? else {
-        return Err(INVALID);
-    };
-    typed_import_batch(&a)
-}
-fn typed_import_batch(a: &crate::models::ImportBatch) -> CoreResult<()> {
+pub(crate) fn typed_import_batch(a: &crate::models::ImportBatch) -> CoreResult<()> {
     use crate::models::ImportDecision;
     let rows = a.rows.as_slice();
     let ids = rows.iter().map(|r| r.source_row).collect::<BTreeSet<_>>();
