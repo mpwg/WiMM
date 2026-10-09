@@ -12,7 +12,8 @@
       "integrity": "sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==",
       "gitHead": "0fba0b8e649909613cfce0999b149cd08f4a4987",
       "originalNotice": "licenses/private-schema-validation/ajv-LICENSE.txt",
-      "localChanges": "Keine Fremdänderungen; unveränderte bereits gesperrte transitive Version jetzt zusätzlich direkt für Schemaabnahme verwendet."
+      "localChanges": "Keine Fremdänderungen; unveränderte bereits gesperrte transitive Version jetzt zusätzlich direkt für Schemaabnahme verwendet.",
+      "originalNoticeSha256": "a05350a88e318e4f5f2c2a1ff1e2e88daa4dd38e6e78b71cccae422bdc762cc3"
     },
     {
       "name": "ajv-formats",
@@ -23,7 +24,9 @@
       "integrity": "sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==",
       "gitHead": "1fb3fa7d967f919ff924bb34aef73a2f39ab0de3",
       "originalNotice": "licenses/private-schema-validation/ajv-formats-LICENSE.txt",
-      "localChanges": "Keine Fremdänderungen; unveränderte bereits gesperrte transitive Version jetzt zusätzlich direkt für Schemaabnahme verwendet."
+      "localChanges": "Keine Fremdänderungen; unveränderte bereits gesperrte transitive Version jetzt zusätzlich direkt für Schemaabnahme verwendet.",
+      "originalNoticeSha256": "9df3bb69929a3b650ed73b3bfa1756725aaff0ac296461605753547004eafeaf"
     }
-  ]
+  ],
+  "originalNoticeWhitespace": "Die Ajv-Lizenz bleibt bytegenau erhalten. Ausschließlich ihre originale zusätzliche EOF-Leerzeile ist pfadgenau in .gitattributes von blank-at-eof ausgenommen."
 }
