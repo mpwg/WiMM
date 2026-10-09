@@ -14,16 +14,17 @@ Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungss
 
 ## DAL — Gemeinsamer Rust-DAL: Konzept und Issuetracking
 
-- Status: in Arbeit (9. Oktober 2026); ausschließlich Konzept- und Trackinganlage.
+- Status: Konzept- und Trackinganlage erledigt (9. Oktober 2026); DAL01–DAL07 bleiben offen, nicht zur Implementierung freigegeben.
 - Freigabe: Nutzerauftrag „erst mal ein konzept anlegen und github issues dafür. noch keine implementierung“, anschließend ausdrückliche Umsetzung dieses Dokumentationsplans. Freigegeben sind Dokumentation, vorgeschlagene ADR, GitHub-Issues und zusammengehörige Dokumentationscommits. DAL01–DAL07 sind **offen, nicht zur Implementierung freigegeben**, einschließlich Machbarkeitstests, Prototypen, Installationen und Datenmigrationen. Frühere Gesamtfreigaben für K-/Speicherdeltas erweitern diesen neuen Auftrag nicht.
 - Voraussetzungen: aktive Arbeitskopie, bestehende Fach-/E2EE-/Speicherverträge und Duplikatprüfung gegen #77/#82–#85/#91/#97–#102.
 - Schritte: [Konzept](rust-dal.md) mit Bestand/Ziel, ORM-/DSL-Kandidaten, Bibliotheksgrenzen, Browserpersistenz und gesicherter Migration; ADR-049 als vorgeschlagen; Gesamtübersicht und sieben Einzelissues mit Voraussetzungen und Abnahmekriterien anlegen und rücklesen.
-- Ergebnis: gemeinsamer Rust-DAL als Architekturvorschlag; Diesel zuerst prüfen, SeaORM als Alternative. Die bestehende PWA bleibt IndexedDB. Bestehende K-/P3-Freigaben und Issuekriterien bleiben erhalten.
+- Ergebnis: [Konzept](rust-dal.md), [Gesamtübersicht #105](https://github.com/mpwg/WiMM/issues/105) und sieben Einzelissues #106–#112 mit Voraussetzungen und Abnahmekriterien angelegt; gemeinsamer Rust-DAL als Architekturvorschlag, Diesel zuerst prüfen, SeaORM als Alternative. Die bestehende PWA bleibt IndexedDB. Bestehende K-/P3-Freigaben und Issuekriterien bleiben erhalten.
 - Verträge: [ADR-049](decisions.md#adr-049--gemeinsamer-rust-dal-mit-orm-als-architekturvorschlag), [Architektur](architecture.md), [K-Konzept](core-and-sql-portability.md), K01-Speicherports; keine Code-/API-/Schema-/Abhängigkeitsänderung.
 - Abnahme: widerspruchsfreie Freigaben, korrekte Dokumentationslinks und ADR-Nummerierung, acht offene rückgelesene GitHub-Issues mit gegenseitigen Abhängigkeitslinks und ohne neue Implementierungsfreigabe.
 - Prüfungen: Dokumentationsvalidator, Whitespace-/Freigabeprüfung und GitHub-Rücklesen; keine Produktprüfungen für diesen Dokumentationsauftrag.
-- Prüfbelege: folgen nach Dokumentationsprüfung und Issueanlage; keine ORM-/WASM-/Bindingnachweise behauptet.
+- Prüfbelege: `node scripts/check-documentation.mjs`, drei Tests mit `node --test scripts/check-documentation.test.mjs` und `git diff --check` bestanden. ADR-049/Abschnittsüberschriften eindeutig; Gesamtübersicht #105 und alle sieben Einzelissues #106–#112 mit exaktem Inhalt, offenem Zustand, Freigabegrenze und gegenseitigen Abhängigkeitslinks rückgelesen. Zwölf Bestandsissues #77/#82–#85/#91/#97–#102 unverändert rückgelesen. Konzeptzwischencommit `0d6afc7`; Trackingabschluss im nachfolgenden Dokumentationscommit. Keine ORM-/WASM-/Bindingnachweise und keine Produktimplementierung.
 - Einschränkungen: ORM-, VFS-, Schema-DSL- und Fastify-Bindingeignung noch nicht praktisch nachgewiesen. Native Produkt-Apps, neue P6–P11-Funktionen, Releases und Clusterbetrieb bleiben außerhalb des Auftrags.
+- Nächster Schritt: gesonderten Implementierungsauftrag abwarten; DAL01 weder automatisch beginnen noch aus früheren K-/Speicherfreigaben ableiten.
 
 ## K — Rust-Fachkern und SQL-Portabilität
 

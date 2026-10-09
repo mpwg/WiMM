@@ -75,7 +75,17 @@ Desktop soll bestehende SQLite-Bestände zunächst ohne Fachformatwechsel öffne
 
 ## Tracking und bestehende Zuständigkeiten
 
-GitHub führt Reihenfolge, Voraussetzungen, Fortschritt und Prüfbelege. Die Einzelissueverweise werden nach Anlage hier ergänzt; sie sind Einstieg, keine zweite laufende Deltaliste.
+GitHub führt Reihenfolge, Voraussetzungen, Fortschritt und Prüfbelege in der [Gesamtübersicht #105](https://github.com/mpwg/WiMM/issues/105). Die folgende Tabelle ist Einstieg, keine zweite laufende Deltaliste. Alle sieben Einzelissues sind offen, nicht zur Implementierung freigegeben.
+
+| ID | Aufgabe | Voraussetzungen |
+| --- | --- | --- |
+| DAL01 | [Diesel, Browserpersistenz, Rust-Bindings und Migrations-DSL praktisch nachweisen](https://github.com/mpwg/WiMM/issues/106) | Gesonderter Implementierungsauftrag |
+| DAL02 | [Gemeinsame Rust-DAL-Verträge und Bibliotheksgrenzen bereitstellen](https://github.com/mpwg/WiMM/issues/107) | [DAL01](https://github.com/mpwg/WiMM/issues/106) |
+| DAL03 | [Nativen SQLite-Zugriff auf ORM und versionierte Rust-Migrationen umstellen](https://github.com/mpwg/WiMM/issues/108) | [DAL02](https://github.com/mpwg/WiMM/issues/107) |
+| DAL04 | [Persistenten SQLite/WASM-DAL in die PWA einbinden](https://github.com/mpwg/WiMM/issues/109) | [DAL02](https://github.com/mpwg/WiMM/issues/107) |
+| DAL05 | [IndexedDB-Bestände gesichert nach SQLite übernehmen](https://github.com/mpwg/WiMM/issues/110) | [DAL03](https://github.com/mpwg/WiMM/issues/108), [DAL04](https://github.com/mpwg/WiMM/issues/109) |
+| DAL06 | [Rust-DAL an Fastify und die Server-SQL-Adapter anbinden](https://github.com/mpwg/WiMM/issues/111) | [DAL02](https://github.com/mpwg/WiMM/issues/107), K06–K09-Verträge (#97–#100) |
+| DAL07 | [Plattformübergreifende Konformität und vollständige DAL-Umstellung abnehmen](https://github.com/mpwg/WiMM/issues/112) | [DAL03](https://github.com/mpwg/WiMM/issues/108), [DAL04](https://github.com/mpwg/WiMM/issues/109), [DAL05](https://github.com/mpwg/WiMM/issues/110), [DAL06](https://github.com/mpwg/WiMM/issues/111) |
 
 | Bestehendes Paket | Abgrenzung zum DAL-Vorschlag |
 | --- | --- |
@@ -100,3 +110,9 @@ DAL01 benötigt nach gesonderter Freigabe dieselbe kleine lokale DAL-Implementie
 DAL07 verlangt einen gemeinsamen katalogisierten lokalen Contractbestand auf echter nativer SQLite und echter persistenter Browser-SQLite sowie eine getrennte Serversuite auf echter SQLite/PostgreSQL/MySQL. Memory und Mockbindings genügen nur für Unit-Tests. Pflichtfälle: atomarer Rollback, CAS/Parallelität, Idempotenz, konsistente Snapshots/Cursor, Profil-/Bereichstrennung, Migrationabbruch, Restore, dauerhafter Prozessneustart, Offlinecache und Quota/Disk-full; Simulation und tatsächliche Ressourcenfehler ausdrücklich unterscheiden.
 
 Browsermatrix: Chromium, Firefox, WebKit sowie physische iOS-PWA im Rahmen der bestehenden Geräteabnahme. Native Desktopmatrix: macOS arm64/x86_64, Windows und Linux; fehlende Systeme bleiben offene Kriterien. 50.000-Buchungen-Fälle behalten die bestehenden Grenzen, insbesondere Kaltöffnen unter 2.000 ms und Filter-/Scroll-p95 unter 100 ms. Maßgeblich sind aktuelle [Prüfstrategie](testing.md), [Datenmodell](data-model.md), [Fachmodell](domain.md) und die verlinkten Einzelissues; historische grüne Läufe ersetzen keine neuen Nachweise.
+
+## Abnahmesnapshot der Konzeptanlage am 9. Oktober 2026
+
+Konzept, vorgeschlagene ADR-049, fünf zugehörige Dokumentationseinträge und acht offene GitHub-Issues #105–#112 sind angelegt. Dokumentationsvalidator, seine drei Tests und Whitespaceprüfung bestanden; ADR-Nummerierung und Abschnittsüberschriften sind eindeutig. Alle acht Issues wurden mit exaktem Inhalt, Freigabegrenzen und gegenseitigen Abhängigkeiten rückgelesen. Die zwölf geprüften Bestandsissues #77/#82–#85/#91/#97–#102 blieben unverändert. Konzeptzwischencommit: `0d6afc7`; Trackingabschluss im nachfolgenden Dokumentationscommit.
+
+Diese Abnahme betrifft ausschließlich Konzept und Tracking. Kein Prototyp, keine Installation, keine Abhängigkeits-/Code-/Schemaänderung, keine Datenmigration und kein praktischer ORM-/Browser-/Bindingnachweis in diesem Auftrag. Nächster Schritt ist ein gesonderter Implementierungsauftrag; bis dahin bleiben DAL01–DAL07 offen und nicht freigegeben.

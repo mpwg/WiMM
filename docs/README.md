@@ -18,7 +18,7 @@ Die [vollständige K04-Fachmigration](handoffs/k04-2026-10-08.md) ist mit native
 
 ## Architekturvorschlag: gemeinsamer Rust-DAL
 
-Das [Rust-DAL-Konzept](rust-dal.md) ergänzt am 9. Oktober 2026 den Vorschlag einer gemeinsamen ORM-Persistenzbasis mit Diesel als bevorzugtem Kandidaten und künftigem SQLite/WASM in der PWA. [ADR-049](decisions.md#adr-049--gemeinsamer-rust-dal-mit-orm-als-architekturvorschlag) ist vorgeschlagen; [Auftrag und Status](tasks.md#dal--gemeinsamer-rust-dal-konzept-und-issuetracking) erlauben ausschließlich Konzept- und Issueanlage. DAL01–DAL07 einschließlich Machbarkeitsprototypen sind offen, nicht zur Implementierung freigegeben. Die verbindliche Bestandsarchitektur mit IndexedDB in der PWA und die bisherigen K-/P3-Freigaben bleiben erhalten.
+Das [Rust-DAL-Konzept](rust-dal.md) ergänzt am 9. Oktober 2026 den Vorschlag einer gemeinsamen ORM-Persistenzbasis mit Diesel als bevorzugtem Kandidaten und künftigem SQLite/WASM in der PWA. [ADR-049](decisions.md#adr-049--gemeinsamer-rust-dal-mit-orm-als-architekturvorschlag) ist vorgeschlagen; [Auftrag und Status](tasks.md#dal--gemeinsamer-rust-dal-konzept-und-issuetracking) erlauben ausschließlich Konzept- und Issueanlage. DAL01–DAL07 einschließlich Machbarkeitsprototypen sind offen, nicht zur Implementierung freigegeben. Die verbindliche Bestandsarchitektur mit IndexedDB in der PWA und die bisherigen K-/P3-Freigaben bleiben erhalten. [Gesamtübersicht #105](https://github.com/mpwg/WiMM/issues/105) führt die sieben DAL-Einzelissues #106–#112.
 
 ## Lesereihenfolge
 
