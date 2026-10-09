@@ -12,7 +12,7 @@ Ein Beleg entsteht nach FULL-Commit und vollständigem Rücklesen. Backup-ID, Pr
 
 LOCAL_INDEX_MIGRATION_PLAN registriert Schritt 1 von Storage 1/Fachversion 1 nach Storage 2/Fachversion 1. LocalMigrationCoordinator verschlüsselt und bestätigt den Originalsnapshot vor dem Schritt. DesktopMigrationPort übergibt ausschließlich den festen Plan, den vollständigen Ausgangsstand und dessen JSON-Bytes; Rust prüft Hash, gespeicherten Beleg und Snapshot erneut innerhalb BEGIN IMMEDIATE. IndexedDbStorageAdapter.migrate verlangt eine injizierte MigrationBackupVerification, etwa createMigrationBackupVerifier aus application, und prüft den vollständigen Originalstand im expliziten Dexie-Upgrade. Ohne Sicherungsverifikation wird kein Upgrade ausgeführt. Beide Ports führen Indexaufbau, Versionsfortschritt und Journal atomar aus.
 
-Bekannte V1-/V2-Datenbanken öffnen ohne automatische Migration; unbekannte Versionen bleiben erhalten. IndexQueryPorts bieten begrenzte Seiten für Konto/Datum/ID, Splitkategorie/Datum, direkte Importreferenz, externe Importquell-ID und Outboxzustand/Reihenfolge. Fachänderungen und Referenzzeilen bleiben zusammen atomar. Alte Snapshots und unveränderte Originalentwürfe bleiben kompatibel. [Aktueller Abnahmesnapshot für #82/#83](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/storage-index-migration-2026-10-09.md), ADR-048. Die Startkoordination der Anwendung folgt mit K05.
+Bekannte V1-/V2-Datenbanken öffnen ohne automatische Migration; unbekannte Versionen bleiben erhalten. IndexQueryPorts bieten begrenzte Seiten für Konto/Datum/ID, Splitkategorie/Datum, direkte Importreferenz, externe Importquell-ID und Outboxzustand/Reihenfolge. Fachänderungen und Referenzzeilen bleiben zusammen atomar. Alte Snapshots und unveränderte Originalentwürfe bleiben kompatibel. [Historischer Abnahmesnapshot für #82/#83](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/storage-index-migration-2026-10-09.md), ADR-048. Die Startkoordination der Anwendung folgt mit K05.
 
 ## Prüfung
 
@@ -25,7 +25,7 @@ pnpm test:storage:native
 env -u NO_COLOR pnpm test:storage:migrations
 ```
 
-Native Rust-Assertions prüfen Commit, unveränderte ältere Sicherung, Kontextprüfung, ungültige Hüllen, synthetischen SQLite-Schreibfehler, Durability-Abweisung und echten Rust-Prozessneustart. Die native Vertragsserie prüft zusätzlich den authentifizierten P5-Snapshot-Roundtrip mit libsodium über den TypeScript-Port und tatsächliche Rust-/SQLite-Prozesse. Das belegt keine Tauri-GUI-, physische Disk-full- oder Stromausfallabnahme. Aktuelle Kriterien: [Abnahmesnapshot vom 9. Oktober 2026](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/migration-2026-10-09.md).
+Native Rust-Assertions prüfen Commit, unveränderte ältere Sicherung, Kontextprüfung, ungültige Hüllen, synthetischen SQLite-Schreibfehler, Durability-Abweisung und echten Rust-Prozessneustart. Die native Vertragsserie prüft zusätzlich den authentifizierten P5-Snapshot-Roundtrip mit libsodium über den TypeScript-Port und tatsächliche Rust-/SQLite-Prozesse. Das belegt keine Tauri-GUI-, physische Disk-full- oder Stromausfallabnahme. Historische Kriterienbelege: [Abnahmesnapshot vom 9. Oktober 2026](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/migration-2026-10-09.md).
 
 ## Architekturstand vom 9. Oktober 2026
 

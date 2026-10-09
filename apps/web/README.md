@@ -10,7 +10,7 @@ Die gemeinsame Oberfläche übernimmt Grünakzent, warme Flächen, die Wortmarke
 
 Buchungen und Konten werden über geschützte Dialoge bearbeitet; mobil füllen diese den Bildschirm. Import führt durch vier ausdrücklich bestätigte Schritte. Budget, Teilen und Familienausgleich sind weiterhin spätere Fachpakete. Es werden keine simulierten Konzeptdaten übernommen. Prüfung: `pnpm test:ux`; aktuelle Belege und offene Plattformprüfungen stehen in der UX-Übergabe.
 
-Aktuelle UX-Abnahme vom 5. Oktober 2026: [Kriterien und Prüfbelege](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/ux.md). Die Oberfläche ist implementiert; aktuelle Gesamtabnahme bleibt offen; vollständige Geräte-/Screenreader- und weitere native Plattformbelege sowie die gesamte Zoommatrix sind noch offen.
+Historische UX-Abnahme vom 5. Oktober 2026: [Kriterien und Prüfbelege](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/ux.md). Die Oberfläche ist implementiert; aktuelle Gesamtabnahme bleibt offen; vollständige Geräte-/Screenreader- und weitere native Plattformbelege sowie die gesamte Zoommatrix sind noch offen.
 
 ## Architekturstand vom 9. Oktober 2026
 

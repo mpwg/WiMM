@@ -38,7 +38,7 @@ Parserauswahl und Herkunft stehen in der [P5.1-Übergabe](https://github.com/mpw
 
 ## P5-Nachprüfung vom 8. Oktober 2026
 
-Die [aktuelle Kriterienmatrix](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/p5-review-2026-10-08.md) bestätigt Parser-/Fach-/Browser-/Speicher-/Offline-Kernabläufe, belegt aber zusätzliche Funktions- und Abnahmelücken. [Gesamtabnahme #71](https://github.com/mpwg/WiMM/issues/71) verknüpft alle Einzelissues. P5 ist weder vollständig umgesetzt noch vollständig abgenommen; frühere native Belege bleiben historisch.
+Die [datierte Kriterienmatrix](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/p5-review-2026-10-08.md) bestätigt Parser-/Fach-/Browser-/Speicher-/Offline-Kernabläufe, belegt aber zusätzliche Funktions- und Abnahmelücken. [Gesamtabnahme #71](https://github.com/mpwg/WiMM/issues/71) verknüpft alle Einzelissues. P5 ist weder vollständig umgesetzt noch vollständig abgenommen; frühere native Belege bleiben historisch.
 
 ## Architekturstand vom 9. Oktober 2026
 

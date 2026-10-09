@@ -4,7 +4,7 @@ Stand: 9. Oktober 2026. Aktueller Auftrag, Implementierungsfreigaben und zusamme
 
 ## Aktueller Auftrag — Architekturreview und Neuausrichtung
 
-- Status: in Arbeit; Abschlussbelege in [Reviewabnahme](review-evidence.md#reviewabnahme).
+- Status: erledigt (9. Oktober 2026); aktuelle Abschlussbelege in [Reviewabnahme](review-evidence.md#reviewabnahme).
 - Freigabe: ausdrücklicher Nutzerauftrag vom 9. Oktober 2026 zur Umsetzung des vollständig zitierten Plans. Er umfasst grundlegende Architekturentscheidungen, detailliertes Konzept, vollständige Dokumentations-/Issuebereinigung sowie eigene Zwischencommits und Veröffentlichung gemäß bestehender Gitfreigabe.
 - Ergebnis: [Review](architecture-review.md), verbindliche [Architektur](architecture.md), ADR-050–052 in [Entscheidungen](decisions.md), [Gesamtübersicht #114](https://github.com/mpwg/WiMM/issues/114) und elf eigenständige Verbesserungsissues.
 - Verträge: Fach-/Daten-/E2EE-/Transport-/Exportinvarianten erhalten; neue Rust-Anwendung, lokale Operationsreceipts, typisierte Bindings, gemeinsamer DAL und öffentlicher Axum/Tokio-Server als Ziel.

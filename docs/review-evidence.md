@@ -69,4 +69,22 @@ Stand: 9. Oktober 2026. Review-Ausgangsstand `84d730cc6e10d70cf6ac6ff9bc28c4a9c4
 
 ## Reviewabnahme
 
-Status: laufende Dokumentations-/Issueprüfung. Konkrete Prüfergebnisse und abgeschlossene Kriterien werden nach vollständigem Rücklesen ergänzt. Dieser Abschnitt bewertet ausschließlich Review/Bereinigung, nicht Produktmigration oder Plattformabnahme.
+Abnahmesnapshot vom 9. Oktober 2026. **Review, Architekturentscheidung, Dokumentationsbereinigung und Issuepflege vollständig erfüllt.** Die neue Produktarchitektur bleibt offen. Architekturzwischencommit: `7e7243e10a98b166dc11d2ce78500fd962b7bfb4`; abschließende Beleg-/READMEkorrekturen im nachfolgenden Dokumentationscommit.
+
+| Kriterium | Ergebnis | Konkreter Beleg |
+| --- | --- | --- |
+| Architekturbereiche vollständig bewertet | erfüllt | 16 Befunde F01–F16, Bestand/Ziel, Codebezüge, Alternativen, Aufwand und Migrationsfolge im Review |
+| Verbesserungen einzeln verfolgt | erfüllt | Gesamtübersicht #114, elf eigenständige Issues #115–#125; übrige Anforderungen in aktualisierten K-/DAL-/Funktionsissues |
+| Bestehende Issues vollständig abgeglichen | erfüllt | 84 vollständige Ausgangsbeschreibungen; 96 Beschreibungen/Titel/Zustände rückgelesen, keine Inhaltsabweichung; offene stateReason-Leerwerte sind APIrepräsentation ohne Abschlussgrund |
+| Überflüssige Issues korrekt ersetzt | erfüllt | #91/#105/#111 mit Nachfolger und historischem Kriterienstand; GitHub stateReason jeweils NOT_PLANNED |
+| Bestehende Kriterien bewahrt | erfüllt | 446 ursprüngliche Checklistenfelder erhalten bzw. explizit technisch neu zugeordnet; 471 Felder in den aktualisierten Bestandsissues; neue AR-Kriterien zusätzlich |
+| Veraltete Dokumente entfernt, gültige Inhalte erhalten | erfüllt | 50 versionierte Konzepte/Teilpläne/Übergaben entfernt; 222 Abnahme-/Prüf-/Vertragsfelder in acceptance-catalog.md; frühere Herkunft über die unveränderlichen Links oben |
+| Aktive Links/Formate/Verträge konsistent | erfüllt | node scripts/check-documentation.mjs und git diff --check bestanden; sämtliche aktuellen Issue-Dokumentziele vorhanden; keine aktive lokale Referenz auf entfernte Dateien |
+| Validatorfehlerpfade geprüft | erfüllt | node --test scripts/check-documentation.test.mjs: alle drei Tests bestanden, keine Skips |
+| Bestandsarchitektur geprüft | erfüllt | node scripts/check-package-graph.mjs, node scripts/check-application.mjs, node scripts/check-core-architecture.mjs bestanden; eigene globale unsafe-Sperren erhalten |
+| Neue Voraussetzungen widerspruchsfrei | erfüllt | Explizite Voraussetzungengraphen von elf AR- und 13 weitergeführten K-/DAL-Aufgaben azyklisch; keine neue automatische Produkt-/Prototypfreigabe |
+| Produkt-/Plattformgrenzen sichtbar | erfüllt | tasks.md, Architektur und alle neuen Issues trennen Ziel/Freigabe/Bestand; ORM/VFS/native Crypto/Rust-Anwendung/Axum noch ohne Umsetzungsnachweis |
+
+Prüfprotokolle dieses Auftrags liegen lokal unter test-results/architecture-review: Ausgangs-/Endissues, erwartete Texte, Kriterienübernahme, Dokumentinventar/-übernahme/-löschliste und Rückleseverifikation. Diese Artefakte enthalten öffentliche Issues und synthetische/technische Metadaten, keine Finanz-/Schlüssel-/Providersecrets. Ignorierte fremde Diagnoseunterlagen sind erhalten. Paket-/Produktquellen und Lockfiles wurden nicht geändert; lediglich Dokumentation und die Issuevorlagenbeschreibung wurden angepasst.
+
+Nicht ausgeführt: Produktimplementierung, ORM-/VFS-/Crypto-/Axum-Prototyp, neue Datenmigration, native GUI-/Geräte-/Ressourcen-/Screenreaderabnahme, unabhängiges Kryptoaudit oder Release. Die aktuellen Dokumentations-/Graphprüfungen belegen ausschließlich den beschriebenen Reviewauftrag. Historische Belege oben bleiben historisch. Nächster Schritt: gesondertes Implementierungspaket anhand #114 wählen; bei fehlender technischer Eignung oder offener Produktentscheidung rückfragen.
