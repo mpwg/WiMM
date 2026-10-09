@@ -14,7 +14,19 @@ Der aktualisierte Messpfad startet weiterhin bei Navigation/Reload und umfasst M
 | --- | --- | --- |
 | Ursache/Messgrenze belegen, tatsächliche Kaltöffnung erhalten | erfüllt für Messgrenze | Vorhercode misst nach Testtreiberprüfung; Browsermarker jetzt nach sichtbarer vollständiger Liste und zwei Frames. Lokal separat gemessener zusätzlicher Testtreiberaufwand von 76/109 ms; damaliger CI-Anteil bleibt unbekannt |
 | Beide Clients unter 2.000 ms, Filter-/Scroll-p95 unter 100 ms, Orakel erhalten | erfüllt lokal | Tatsächliche Chromium-/IndexedDB-Fälle auf macOS arm64: Web etwa 498 ms, Desktop-Frontend etwa 505 ms; warme Öffnung 32/19 ms, Filter-/Scroll-p95 etwa 35/34 ms. Wiederholter vollständiger Zweifalllauf bestanden |
-| Aktueller unabhängiger Ubuntu-Nachweis ohne gelockerte Grenze | offen | Dedizierter CI-Job eingerichtet; erst nach tatsächlichem erfolgreichem Lauf erfüllen |
+| Aktueller unabhängiger Ubuntu-Nachweis ohne gelockerte Grenze | erfüllt | [CI 37925825424, Leistungsjob 113804387690](https://github.com/mpwg/WiMM/actions/runs/37925825424/job/113804387690) auf 970b913 erfolgreich; beide tatsächlichen Chromium-/IndexedDB-Fälle und unveränderte Orakel bestanden |
 | README, Matrix und Tracking aktuell; Clientgrenze klar | erfüllt für Abschnitt | [Prüf-README](../tests/acceptance/README.md), diese Matrix und #129/#57/#114; Desktop-Frontend ausdrücklich kein Tauri-Systemnachweis |
 
 Lokale Logs: test-results/architecture-implementation/performance-129-local-after.log und performance-129-local-after-metrics.json. Synthetisch: 50.000 Buchungen, zehn Konten, 100 Kategorien, 36 Monate, 1.000 SharedExpenses. `pnpm typecheck`, `pnpm lint`, Dokumentationsvalidator, seine drei Tests und Whitespaceprüfung. Issue erst nach allen erfüllten Kriterien schließen; aktueller Commit und konkrete CI-/Umgebungswerte werden dort rückgelesen.
+
+
+## Vollständige aktuelle Abnahme
+
+Ubuntu x64, tatsächliches Chromium/IndexedDB, AMD EPYC 9V74, 16,77 GB gemeldeter RAM; [unabhängiger Leistungsjob](https://github.com/mpwg/WiMM/actions/runs/37925825424/job/113804387690) auf 970b913 erfolgreich. Artefakt leistungsbelege-50000 vollständig rückgelesen: beide Tests passed, exakter unveränderter Datensatz und alle vier Grenzwerte geprüft. Alle Issuekriterien erfüllt; #129 wird mit diesem Nachweis geschlossen. Der übergreifende Projektjob und die P4-Gesamtabnahme bleiben getrennt.
+
+| Client | Kaltöffnung | Warme Öffnung | Filter-p95 | Scroll-p95 | Zusätzliche Testtreiberzeit |
+| --- | --- | --- | --- | --- | --- |
+| Web | 1.265,6 ms | 21,4 ms | 50,1 ms | 33,8 ms | 109,3 ms |
+| Desktop-Frontend | 1.318,7 ms | 16,9 ms | 50,0 ms | 33,5 ms | 66,5 ms |
+
+Die Browsermarker fehlen vor Öffnung und nach Reload; die tatsächliche vollständige sichtbare Liste wird vor Festhalten des Zeitpunkts geprüft. Kein Retry oder Warmwert-Ersatz. Gesicherte CI-Dateien unter test-results/architecture-implementation/performance-ci-970b913, ausgewertete Werte in performance-ci-970b913-metrics.json. Keine Aussage, dass der alte CI-Lauf die Appgrenze erfüllte, und kein nativer Tauri-/Gerätebeleg.
