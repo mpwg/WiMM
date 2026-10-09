@@ -1,0 +1,17 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import {expect,test} from '@playwright/test';
+import {migrationCases} from './contracts/migration-catalog.js';
+declare global{interface Window{migrationProbe:(scenario:typeof migrationCases[number])=>Promise<void>}}
+for(const scenario of migrationCases){test(`Echte IndexedDB-Vorwärtsmigration: ${scenario}`,async({page})=>{await page.goto('/tests/storage-migrations.html');await page.waitForFunction(()=>typeof window.migrationProbe==='function');await expect(page.evaluate(name=>window.migrationProbe(name),scenario)).resolves.toBeUndefined();});}
+import type {} from '../../apps/web/tests/storage-migrations.js';
+test('Echte IndexedDB-Indizes: atomare Änderung, Tombstone, CAS, Snapshot und Outboxreihenfolge',async({page})=>{await page.goto('/tests/storage-migrations.html');await page.waitForFunction(()=>typeof window.indexMaintenanceProbe==='function');await expect(page.evaluate(()=>window.indexMaintenanceProbe())).resolves.toBeUndefined();});
+test('50.000 Buchungen: echte IndexedDB-Migration und Indexabfragen',async({page},info)=>{test.setTimeout(120_000);await page.goto('/tests/storage-migrations.html');await page.waitForFunction(()=>typeof window.indexPerformanceProbe==='function');const metrics=await page.evaluate(async()=>{try{return await window.indexPerformanceProbe();}catch(error){const e=error as {name?:string;message?:string;stack?:string};throw new Error(`Synthetischer 50k-Lauf: ${e.name}: ${e.message}\n${e.stack}`);}});console.info('WIMM_INDEX_METRICS_INDEXEDDB',JSON.stringify(metrics));await info.attach('Indexabfragen-50000',{body:JSON.stringify(metrics),contentType:'application/json'});});
+test('IndexedDB-Abbruch nach Index-/Journalschreiben rollt Schema und Daten zurück',async({page})=>{await page.goto('/tests/storage-migrations.html');await page.waitForFunction(()=>typeof window.migrationAbortAfterJournalProbe==='function');expect(await page.evaluate(()=>window.migrationAbortAfterJournalProbe())).toBe(true);});
+test('Vollständiger Chromium-Prozessneustart erhält Migration, Journal, Indizes und Originalbackup',async()=>{
+ const {chromium}=await import('@playwright/test');const {mkdir,mkdtemp}=await import('node:fs/promises');const {resolve}=await import('node:path');await mkdir('test-results/storage-migration-profiles',{recursive:true});const profile=await mkdtemp(resolve('test-results/storage-migration-profiles/profile-'));let context=await chromium.launchPersistentContext(profile,{headless:true});
+ try{
+  let page=await context.newPage();await page.goto('http://127.0.0.1:5188/tests/storage-migrations.html');await page.waitForFunction(()=>typeof window.migrationProcessProbe==='function');expect(await page.evaluate(()=>window.migrationProcessProbe('migrate'))).toBe(true);
+  await context.close();context=await chromium.launchPersistentContext(profile,{headless:true});page=await context.newPage();await page.goto('http://127.0.0.1:5188/tests/storage-migrations.html');await page.waitForFunction(()=>typeof window.migrationProcessProbe==='function');expect(await page.evaluate(()=>window.migrationProcessProbe('read'))).toBe(true);
+ }finally{await context.close();}
+});
+test('Echte IndexedDB-Indexmigration hält Profile mit denselben Handles getrennt',async({page})=>{await page.goto('/tests/storage-migrations.html');await page.waitForFunction(()=>typeof window.indexProfileProbe==='function');await expect(page.evaluate(()=>window.indexProfileProbe())).resolves.toBeUndefined();});

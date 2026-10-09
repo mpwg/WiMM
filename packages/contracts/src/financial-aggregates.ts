@@ -47,6 +47,6 @@ const projection = z.discriminatedUnion('kind', [
   z.object({ spaceId: uuidSchema, kind: z.literal('consumption'), key: text, payload: consumptionPayloadSchema }).strict()
 ]);
 const syncState = z.object({ profileId: uuidSchema, spaceId: uuidSchema, epoch: uuidSchema, cursor: z.string().regex(/^(0|[1-9]\d*)$/) }).strict();
-const pending = z.object({ operationId: uuidSchema, spaceId: uuidSchema, expectedRevisions: z.array(z.object({ handle: uuidSchema, expectedRevision: revisionSchema }).strict()), dependsOn: z.array(uuidSchema), state: z.enum(['queued', 'sending', 'accepted', 'conflict', 'blocked', 'forbidden', 'invalid']), draft: z.json(), retryCount: ordinal }).strict();
-export const localSnapshotSchema = z.object({ storageSchemaVersion: z.literal(1), domainSchemaVersion: z.literal(1), profileId: uuidSchema, spaceId: uuidSchema, epoch: uuidSchema,
+const pending = z.object({ operationId: uuidSchema, spaceId: uuidSchema, expectedRevisions: z.array(z.object({ handle: uuidSchema, expectedRevision: revisionSchema }).strict()), dependsOn: z.array(uuidSchema), state: z.enum(['queued', 'sending', 'accepted', 'conflict', 'blocked', 'forbidden', 'invalid']), draft: z.json(), retryCount: ordinal, createdAt: utcTimestampSchema.optional() }).strict();
+export const localSnapshotSchema = z.object({ storageSchemaVersion: z.union([z.literal(1),z.literal(2)]), domainSchemaVersion: z.literal(1), profileId: uuidSchema, spaceId: uuidSchema, epoch: uuidSchema,
   aggregates: z.array(storedFinancialAggregateSchema), confirmed: z.array(z.object({ spaceId: uuidSchema, epoch: uuidSchema, aggregate: storedFinancialAggregateSchema }).strict()), pending: z.array(pending), projections: z.array(projection), syncState: syncState.optional() }).strict();

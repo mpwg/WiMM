@@ -7,6 +7,7 @@ use rusqlite::Connection;
 mod backups;
 #[cfg(test)]
 mod core_contract;
+mod migration;
 mod storage;
 use storage::{StorageState, initialize_storage};
 use tauri::{Emitter, Manager};
@@ -158,6 +159,7 @@ fn main() {
             let backup_connection = Connection::open(directory.join("wimm-backups.sqlite3"))?;
             backups::initialize_backups(&backup_connection)?;
             app.manage(backups::BackupState(Mutex::new(backup_connection)));
+            app.manage(migration::MigrationCancellationState::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -177,7 +179,12 @@ fn main() {
             storage::storage_replace_snapshot,
             storage::storage_rebuild_projections,
             backups::storage_persist_encrypted_backup,
-            backups::storage_read_encrypted_backup
+            backups::storage_read_encrypted_backup,
+            migration::storage_migrate,
+            migration::storage_cancel_migration,
+            migration::storage_query_indexed_transactions,
+            migration::storage_query_indexed_pending,
+            migration::storage_query_imported_transactions
         ])
         .run(tauri::generate_context!())
         .expect("Die Desktop-Anwendung konnte nicht gestartet werden.");

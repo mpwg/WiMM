@@ -7,6 +7,15 @@ function same(a:Uint8Array,b:Uint8Array){return a.length===b.length&&a.every((va
 /** Eigenständiger Chiffratspeicher; vollständig bestätigter strikter Commit und anschließendes Rücklesen. */
 export class BrowserEncryptedBackupPort implements EncryptedBackupPort {
  constructor(private readonly ids:IdSourcePort,private readonly databaseName='wimm:encrypted-backups'){}
+ async read(receipt:EncryptedBackupReceipt):Promise<Uint8Array>{
+  if(![receipt.backupId,receipt.profileId,receipt.spaceId,receipt.epoch].every(id=>uuidSchema.safeParse(id).success)||!base64UrlSchema.safeParse(receipt.snapshotHash).success)throw new Error('Die Sicherungshülle ist nicht gültig.');
+  const db=await open(this.databaseName);
+  try{
+   const stored=await new Promise<Record>((resolve,reject)=>{const tx=db.transaction('backups','readonly');const request=tx.objectStore('backups').get(receipt.backupId);let value:Record|undefined;request.onsuccess=()=>{value=request.result as Record|undefined;};tx.oncomplete=()=>{if(value===undefined)reject(new Error('Die Sicherung fehlt beim Rücklesen.'));else resolve(value);};tx.onabort=()=>reject(new Error('Die Sicherung kann nicht überprüft werden.'));tx.onerror=()=>reject(new Error('Die Sicherung kann nicht überprüft werden.'));});
+   if(stored.backupId!==receipt.backupId||stored.profileId!==receipt.profileId||stored.spaceId!==receipt.spaceId||stored.epoch!==receipt.epoch||stored.snapshotHash!==receipt.snapshotHash||!(stored.ciphertext instanceof Uint8Array)||stored.ciphertext.length===0)throw new Error('Die gespeicherte Sicherung passt nicht zum angeforderten Beleg.');
+   return stored.ciphertext.slice();
+  }finally{db.close();}
+ }
  async persist(input:Input):Promise<EncryptedBackupReceipt>{
   const backupId=this.ids.next();
   if(![backupId,input.profileId,input.spaceId,input.epoch].every(id=>uuidSchema.safeParse(id).success)||!base64UrlSchema.safeParse(input.snapshotHash).success||!(input.ciphertext instanceof Uint8Array)||input.ciphertext.byteLength===0)throw new Error('Die Sicherungshülle ist nicht gültig.');

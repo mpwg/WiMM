@@ -76,3 +76,12 @@ it('Native SQLite-Sicherung bewahrt echten verschlüsselten P5-Snapshot über Ru
     expect(normalized(await fixture.storage.exportSnapshot(snapshot.spaceId))).toEqual(source);
   } finally { await fixture.close(); }
 }, 30_000);
+
+import { migrationCases,runMigrationCase } from './contracts/migration-catalog.js';
+for(const scenario of migrationCases){it(`Gesicherte SQLite-Vorwärtsmigration: ${scenario}`,async()=>{await expect(runMigrationCase(scenario,await sqliteFixture())).resolves.toBeUndefined();},30_000);}
+import {runIndexMaintenanceCase} from './contracts/migration-catalog.js';
+it('SQLite-Indizes bleiben bei Änderung, Tombstone, CAS-Fehler und Snapshotersatz atomar',async()=>{await expect(runIndexMaintenanceCase(await sqliteFixture())).resolves.toBeUndefined();},30_000);
+import {runIndexPerformanceCase} from './contracts/migration-catalog.js';
+it('50.000 Buchungen: gesicherte SQLite-Migration und tatsächliche Indexabfragen',async()=>{const metrics=await runIndexPerformanceCase(await sqliteFixture());expect(metrics.count).toBe(50_000);await (await import('node:fs/promises')).writeFile('test-results/migration-index-metrics-sqlite.json',JSON.stringify(metrics,null,2));},120_000);
+import {runIndexProfileCase} from './contracts/migration-catalog.js';
+it('SQLite-Indexmigration und Abfragen bewahren fremde Profile mit denselben Handles',async()=>{await expect(runIndexProfileCase(await sqliteFixture())).resolves.toBeUndefined();},30_000);

@@ -26,7 +26,7 @@ pub struct BackupInput {
 const WRITE_ERROR: &str = "Die verschlüsselte Sicherung wurde nicht dauerhaft bestätigt.";
 const READ_ERROR: &str = "Die gespeicherte Sicherung passt nicht zum angeforderten Beleg.";
 
-fn valid_uuid(value: &str) -> bool {
+pub(crate) fn valid_uuid(value: &str) -> bool {
     let bytes = value.as_bytes();
     bytes.len() == 36
         && bytes.iter().enumerate().all(|(index, byte)| {

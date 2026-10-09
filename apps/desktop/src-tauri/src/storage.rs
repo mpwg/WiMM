@@ -71,6 +71,7 @@ pub struct LocalSnapshot {
     confirmed: Vec<ConfirmedAggregate>,
     pending: Vec<Value>,
     projections: Vec<Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     sync_state: Option<SyncState>,
 }
 
@@ -78,7 +79,7 @@ fn storage_error(error: impl std::fmt::Display) -> String {
     format!("Speicherfehler: {error}")
 }
 
-fn assert_supported_schema(connection: &Connection) -> rusqlite::Result<()> {
+pub(crate) fn assert_supported_schema(connection: &Connection) -> rusqlite::Result<()> {
     let has_meta: bool = connection.query_row(
         "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'storage_meta')",
         [],
@@ -108,8 +109,28 @@ fn assert_supported_schema(connection: &Connection) -> rusqlite::Result<()> {
         )
         .optional()?;
     // Vorhandene V1-Datenbanken ohne gesonderte Fachversionszeile sind bekannte Legacybestände.
-    if storage.as_deref() != Some("1") || domain.as_deref().is_some_and(|version| version != "1") {
+    if !matches!(storage.as_deref(), Some("1" | "2"))
+        || domain.as_deref().is_some_and(|version| version != "1")
+    {
         return Err(rusqlite::Error::InvalidParameterName("Die Storage- oder Fachversion wird nicht unterstützt. Bitte eine passende Appversion verwenden; der vorhandene Stand bleibt erhalten.".into()));
+    }
+    if storage.as_deref() == Some("2") {
+        let journal:bool=connection.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='storage_migrations')",[],|row|row.get(0))?;
+        if !journal || domain.as_deref() != Some("1") {
+            return Err(rusqlite::Error::InvalidParameterName(
+                "Der Migrationsjournalstand ist nicht vollständig.".into(),
+            ));
+        }
+        let number: Option<u32> =
+            connection.query_row("SELECT max(number) FROM storage_migrations", [], |row| {
+                row.get(0)
+            })?;
+        let indexes:u32=connection.query_row("SELECT count(*) FROM sqlite_master WHERE type='index' AND name IN ('transactions_by_account_date','transactions_by_category_date','transactions_by_import_reference','outbox_by_state_created','rules_by_order','occurrences_by_schedule_date','import_sources_by_external')",[],|row|row.get(0))?;
+        if number != Some(1) || indexes != 7 {
+            return Err(rusqlite::Error::InvalidParameterName(
+                "Der Migrationsjournalstand ist nicht vollständig.".into(),
+            ));
+        }
     }
     Ok(())
 }
@@ -360,7 +381,7 @@ fn write_local_epoch(
     Ok(())
 }
 
-fn initialize_area(
+pub(crate) fn initialize_area(
     connection: &mut Connection,
     profile_id: &str,
     space_id: &str,
@@ -464,16 +485,26 @@ fn save_sync_page(
     transaction.commit().map_err(storage_error)
 }
 
-fn export_snapshot(
+pub(crate) fn export_snapshot(
     connection: &mut Connection,
     profile_id: &str,
     space_id: &str,
 ) -> Result<LocalSnapshot, String> {
     assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection.transaction().map_err(storage_error)?;
-    let sync_state = get_sync_state(&transaction, profile_id, space_id)?;
+    let snapshot = snapshot_in_transaction(&transaction, profile_id, space_id)?;
+    transaction.commit().map_err(storage_error)?;
+    Ok(snapshot)
+}
+
+pub(crate) fn snapshot_in_transaction(
+    transaction: &Transaction<'_>,
+    profile_id: &str,
+    space_id: &str,
+) -> Result<LocalSnapshot, String> {
+    let sync_state = get_sync_state(transaction, profile_id, space_id)?;
     let confirmed: Vec<ConfirmedAggregate> = read_rows(
-        &transaction,
+        transaction,
         "SELECT payload FROM confirmed WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle",
         profile_id,
         space_id,
@@ -482,16 +513,22 @@ fn export_snapshot(
     .map(serde_json::from_value)
     .collect::<Result<_, _>>()
     .map_err(storage_error)?;
-    let local_epoch = get_local_epoch(&transaction, profile_id, space_id)?;
+    let local_epoch = get_local_epoch(transaction, profile_id, space_id)?;
     let epoch = sync_state
         .as_ref()
         .map(|state| state.epoch.clone())
         .or(local_epoch)
         .or_else(|| confirmed.first().map(|entry| entry.epoch.clone()))
         .ok_or("Für den Bereich fehlt eine Epoche.")?;
-    let aggregates = read_rows(&transaction, "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile_id, space_id)?.into_iter().map(serde_json::from_value).collect::<Result<_, _>>().map_err(storage_error)?;
+    let aggregates = read_rows(transaction, "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle", profile_id, space_id)?.into_iter().map(serde_json::from_value).collect::<Result<_, _>>().map_err(storage_error)?;
     let snapshot = LocalSnapshot {
-        storage_schema_version: 1,
+        storage_schema_version: transaction
+            .query_row(
+                "SELECT CAST(value AS INTEGER) FROM storage_meta WHERE key='storageSchemaVersion'",
+                [],
+                |row| row.get(0),
+            )
+            .map_err(storage_error)?,
         domain_schema_version: 1,
         profile_id: profile_id.into(),
         space_id: space_id.into(),
@@ -499,20 +536,19 @@ fn export_snapshot(
         aggregates,
         confirmed,
         pending: read_rows(
-            &transaction,
+            transaction,
             "SELECT payload FROM outbox WHERE profile_id = ?1 AND space_id = ?2 ORDER BY operation_id",
             profile_id,
             space_id,
         )?,
         projections: read_rows(
-            &transaction,
+            transaction,
             "SELECT payload FROM projections WHERE profile_id = ?1 AND space_id = ?2 ORDER BY projection_kind, projection_key",
             profile_id,
             space_id,
         )?,
         sync_state,
     };
-    transaction.commit().map_err(storage_error)?;
     Ok(snapshot)
 }
 
@@ -524,7 +560,7 @@ fn replace_snapshot(
     if snapshot.profile_id != profile_id {
         return Err("Der Snapshot gehört zu einem anderen Profil.".into());
     }
-    if snapshot.storage_schema_version != 1 || snapshot.domain_schema_version != 1 {
+    if !matches!(snapshot.storage_schema_version, 1 | 2) || snapshot.domain_schema_version != 1 {
         return Err("Die Snapshotversion wird nicht unterstützt.".into());
     }
     if snapshot
@@ -803,6 +839,10 @@ mod tests {
                 match request["command"].as_str().unwrap() {
                     "storage_persist_encrypted_backup" => serde_json::to_value(crate::backups::persist_backup(&mut backups, serde_json::from_value(args["input"].clone()).map_err(storage_error)?)?).map_err(storage_error),
                     "storage_read_encrypted_backup" => serde_json::to_value(crate::backups::read_backup(&backups, &serde_json::from_value(args["receipt"].clone()).map_err(storage_error)?)?).map_err(storage_error),
+                    "storage_migrate" => crate::migration::migrate(&mut connection, &backups, serde_json::from_value(args["input"].clone()).map_err(storage_error)?, || false).map(|()|Value::Null),
+                    "storage_query_indexed_transactions" => crate::migration::query_transactions(&connection,profile,serde_json::from_value(args["query"].clone()).map_err(storage_error)?).map(Value::Array),
+                    "storage_query_imported_transactions" => crate::migration::query_imported(&connection,profile,serde_json::from_value(args["query"].clone()).map_err(storage_error)?).map(Value::Array),
+                    "storage_query_indexed_pending" => crate::migration::query_pending(&connection,profile,serde_json::from_value(args["query"].clone()).map_err(storage_error)?).map(Value::Array),
                     "storage_initialize_area" => initialize_area(&mut connection, profile, space, args["proposedEpoch"].as_str().unwrap()).map(Value::String),
                     "storage_apply_batch" => apply_batch(&mut connection, serde_json::from_value(args["batch"].clone()).map_err(storage_error)?).map(|()| Value::Null),
                     "storage_save_sync_page" => save_sync_page(&mut connection, profile, serde_json::from_value(args["page"].clone()).map_err(storage_error)?).map(|()| Value::Null),

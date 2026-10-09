@@ -1,0 +1,11 @@
+{
+  "snapshotDate": "2026-10-09",
+  "scope": "Direkte native Hilfsbibliotheken für #82; vollständiges Register bleibt #72",
+  "projectLicense": "AGPL-3.0-or-later",
+  "source": "cargo metadata --locked und crates.io-Versionseinträge; beide Versionen waren bereits transitiv im nativen Cargo.lock gesperrt",
+  "dependencies": [
+    {"name":"sha2","version":"0.10.9","publishedAt":"2025-04-30T14:38:09.894118Z","license":"MIT OR Apache-2.0","upstream":"https://github.com/RustCrypto/hashes","source":"https://crates.io/api/v1/crates/sha2/0.10.9","checksum":"a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283"},
+    {"name":"base64","version":"0.22.1","publishedAt":"2024-04-30T23:16:40.343739Z","license":"MIT OR Apache-2.0","upstream":"https://github.com/marshallpierce/rust-base64","source":"https://crates.io/api/v1/crates/base64/0.22.1","checksum":"72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"}
+  ],
+  "notes":"Keine Übernahme von Fremdquelltext; vorhandene MIT-/Apache-2.0-Hinweise erhalten. Keine eigene Kryptografie oder neue Bibliotheksversion. wimm-finance-core wird nun als produktive lokale Abhängigkeit für die native Kalenderprüfung verwendet; die Fachengine-Umschaltung bleibt K05."
+}

@@ -4,6 +4,10 @@
 
 Das Gesamtpaket ist erneut in Arbeit und nicht vollständig abgenommen. Die [aktuelle Kriterienmatrix](handoffs/p1-p3-review-2026-10-08.md) ordnet jedes Kriterium den aktuellen Prüfbelegen und GitHub-Issues zu; [Gesamtabnahme #87](https://github.com/mpwg/WiMM/issues/87) führt Fortschritt und Voraussetzungen. Die folgenden ursprünglichen Ergebnisse und Prüfbelege bleiben als Historie erhalten. Der Nutzerauftrag vom 8. Oktober 2026 umfasst nun die systematische Behebung der offenen Issues.
 
+## Stand vom 9. Oktober 2026
+
+Die [gesicherte registrierte Indexmigration #82/#83](handoffs/storage-index-migration-2026-10-09.md) besitzt aktuelle gemeinsame SQLite-/IndexedDB-Belege einschließlich Hash-/Backupbindung, vollständigem atomarem Originalvergleich, Journal, Abbruch/Rollback, Prozessneustart und 50.000-Buchungen-Abfragen. P3 bleibt bis zur vollständigen gemeinsamen Adapter- und Plattformabnahme in Arbeit; aktuelle Fortschritte stehen in #84/#86/#85/#77 und #87. Die folgenden Absätze bleiben historische Abnahmesnapshots vom 8. Oktober.
+
 ## Auftrag und Reihenfolge
 
 Seit dem ausdrücklichen Auftrag zu #91 gilt die Rust-Umstellung vor weiterem großem TypeScript-Fachausbau. #75 besitzt inzwischen vollständige gemeinsame SQLite-/IndexedDB-Mergebelege. Der minimale Abschnitt aus #82 weist unbekannte Storage-/Fachversionen vor Zugriff ab und erhält Legacybestände; die größere Migrations-/Backupgrundlage wird nach K01 umgesetzt. Die Gesamt-Abnahme von #82 bleibt offen.

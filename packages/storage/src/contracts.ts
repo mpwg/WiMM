@@ -26,6 +26,7 @@ export interface PendingOperation {
   readonly state: PendingState;
   readonly draft: unknown;
   readonly retryCount: number;
+  readonly createdAt?: string;
 }
 
 export interface StoredProjection {

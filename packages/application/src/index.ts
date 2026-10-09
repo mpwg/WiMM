@@ -15,3 +15,4 @@ import type { FinanceApplication } from './finance-application.js';
 export interface ApplicationRuntime { readonly dependencies: DomainDependencies; readonly importPreparation: BackgroundExecutionPort<ImportPreparationInput, DomainChangeSet | null>; readonly importPreview: BackgroundExecutionPort<ImportPreviewInput, ImportPreviewOutput>; financeForScope(profileId: UUID, spaceId: UUID): FinanceApplication }
 
 export * from './migration-coordinator.js';
+export * from './migration-backup-verifier.js';

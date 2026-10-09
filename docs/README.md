@@ -45,3 +45,5 @@ Bankabruf, Kinderrollen, Mehrwährung, Wertpapierkurse, Beleg-OCR, Steuerfunktio
 [Gesicherte #82-Migrationsvorbereitung vom 8. Oktober](handoffs/migration-2026-10-08.md) dokumentiert Koordination und echten Browser-Chiffratspeicher; die vollständige native/Adapter-Migration bleibt offen.
 
 [Nativer #82-Chiffratspeicher vom 9. Oktober](handoffs/migration-2026-10-09.md) ergänzt den tatsächlichen Rust-/SQLite-Prozessneustart und verschlüsselten P5-Roundtrip; die vollständige Adaptermigration bleibt offen.
+
+[Gesicherte Indexmigration und tatsächliche Abfragebasis vom 9. Oktober](handoffs/storage-index-migration-2026-10-09.md) dokumentieren den registrierten V1→V2-Schritt, Originalvergleich, Journal, Prozessneustarts und 50.000-Buchungen-Abfragen für #82/#83.

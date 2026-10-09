@@ -24,7 +24,8 @@ export class LocalMigrationCoordinator {
   if(snapshot.spaceId!==this.spaceId||snapshot.storageSchemaVersion!==plan.from.storageSchemaVersion||snapshot.domainSchemaVersion!==plan.from.domainSchemaVersion)throw new StorageWriteError('Der Migrationsplan passt nicht zum aktuellen Ausgangsstand.');
   cancelled(cancellation);
   let receipt:EncryptedBackupReceipt|undefined;
-  if(plan.steps.some(step=>step.destructive)){
+  // Auch der erste additive Indexausbau benötigt einen belegten Originalsnapshot.
+  {
    const snapshotHash=await this.ports.snapshotHash(snapshot);if(!base64UrlSchema.safeParse(snapshotHash).success)throw new StorageWriteError('Die Sicherungsbasis kann nicht überprüft werden.');cancelled(cancellation);
    const ciphertext=await this.ports.protector.seal(snapshot);cancelled(cancellation);
    if(!(ciphertext instanceof Uint8Array)||ciphertext.byteLength===0)throw new StorageWriteError('Die verschlüsselte Sicherung ist nicht verfügbar.');

@@ -88,3 +88,5 @@ Protokollversion 1 akzeptiert bekannte verschlüsselte Hüllen/Cryptosuites; Fac
 ## Quellen und Lizenz
 
 Projektlizenz: AGPL-3.0-or-later. Fremdcode wird mit Herkunftscommit und ursprünglichem Hinweis dokumentiert. Fundamentale Architekturgrundlagen: [SQLite-Transaktionen](https://www.sqlite.org/lang_transaction.html), [Dexie](https://dexie.org/docs/Dexie/Dexie), [Tauri](https://v2.tauri.app/security/capabilities/), [Fastify-Validierung](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/).
+
+Der [registrierte lokale Indexschritt](handoffs/storage-index-migration-2026-10-09.md) konkretisiert ADR-048: Anwendung und Cryptoadapter bereiten den bestätigten verschlüsselten Originalsnapshot vor, die Speicheradapter prüfen unmittelbar vor dem atomaren Versions-/Journal-/Indexcommit denselben vollständigen Stand. Bekannte V1-/V2-Speicher öffnen ohne automatischen Upgrade. Fachschema und Epoche bleiben getrennt; die Produktstartkoordination folgt mit K05.

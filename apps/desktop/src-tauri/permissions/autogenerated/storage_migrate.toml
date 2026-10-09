@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-storage-migrate"
+description = "Enables the storage_migrate command without any pre-configured scope."
+commands.allow = ["storage_migrate"]
+
+[[permission]]
+identifier = "deny-storage-migrate"
+description = "Denies the storage_migrate command without any pre-configured scope."
+commands.deny = ["storage_migrate"]

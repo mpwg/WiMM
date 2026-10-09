@@ -35,7 +35,7 @@
     "test:rust": "node scripts/check-rust.mjs test",
     "test:ui-unit": "pnpm --filter @wimm/ui test",
     "test:toolchain": "node --test scripts/check-toolchain.test.mjs",
-    "check:all": "pnpm check:docs && pnpm test:docs && pnpm test:clean && pnpm check:package-graph && pnpm check:application && pnpm test:package-graph && pnpm typecheck:contracts && pnpm typecheck && pnpm lint && pnpm check:rust && pnpm check:core && pnpm test:toolchain && pnpm test && pnpm test:application && pnpm test:storage:native && pnpm test:core:wrapper && pnpm test:core:wasm && pnpm test:ui && pnpm test:ui:integration && pnpm test:ui:matrix && pnpm test:ux && pnpm build && pnpm test:ui:offline && pnpm test:importers:worker",
+    "check:all": "pnpm check:docs && pnpm test:docs && pnpm test:clean && pnpm check:package-graph && pnpm check:application && pnpm test:package-graph && pnpm typecheck:contracts && pnpm typecheck && pnpm lint && pnpm check:rust && pnpm check:core && pnpm test:toolchain && pnpm test && pnpm test:application && pnpm test:storage:native && pnpm test:storage:migrations && pnpm test:core:wrapper && pnpm test:core:wasm && pnpm test:ui && pnpm test:ui:integration && pnpm test:ui:matrix && pnpm test:ux && pnpm build && pnpm test:ui:offline && pnpm test:importers:worker",
     "test:ui:build": "node scripts/test-ui.mjs --build",
     "test:ui:offline": "node scripts/test-ui-offline.mjs",
     "test:ui:integration": "pnpm exec playwright test --config tests/workspace/config.ts",
@@ -60,7 +60,8 @@
     "test:core:wrapper": "pnpm --filter @wimm/core-bindings test",
     "check:core:architecture": "node scripts/check-core-architecture.mjs",
     "check:application": "node scripts/check-application.mjs",
-    "test:application": "pnpm --filter @wimm/application test"
+    "test:application": "pnpm --filter @wimm/application test",
+    "test:storage:migrations": "pnpm exec playwright test --config tests/storage/backups.config.ts && pnpm exec playwright test --config tests/storage/migrations.config.ts"
   },
   "devDependencies": {
     "@babel/parser": "8.0.6",

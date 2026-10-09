@@ -87,7 +87,8 @@ export class LocalAreaService {
       dependsOn: [],
       state: 'queued',
       draft: changeSet,
-      retryCount: 0
+      retryCount: 0,
+      createdAt: changeSet.occurredAt
     };
   }
 }

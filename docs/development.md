@@ -115,3 +115,5 @@ Der Workflow `.github/workflows/ci.yml` installiert auf `ubuntu-latest` die offi
 ### Agentenspezifische Automatik
 
 Agenten verwenden dieselben Projektprüfungen wie menschliche Mitwirkende. Laufzeitspezifische Hooks erst bei einem konkreten Bedarf und nach Prüfung der unterstützten Umgebung ergänzen. Hooks erstellen keine Commits, Pushes, Veröffentlichungen oder Taskabschlüsse automatisch; nach jedem abgeschlossenen Abschnitt ist der verpflichtende Zwischencommit gemäß [AGENTS.md](../AGENTS.md) manuell zu erstellen. Hookerfolg entscheidet nicht über fachliche Abnahme. Auch spätere Automatik erhält die zentrale Spezifikation und ersetzt sie nicht durch pro Agent kopierte Regeln.
+
+Die gemeinsame reale Migrations-/Indexsuite läuft mit `pnpm test:storage:migrations` nacheinander für Browser-Chiffratspeicher und IndexedDB-Upgrade. `pnpm test:storage:native` verwendet denselben Katalog gegen echte Rust-/SQLite-Prozesse. Die zentrale CI-Serie enthält beide Befehle einschließlich der 50.000-Buchungen-Indexbasis; Logs und Messwerte liegen unter test-results.

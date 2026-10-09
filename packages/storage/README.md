@@ -6,7 +6,13 @@ Lokale atomare Speicherports für IndexedDB, SQLite und den Testadapter. Der Des
 
 DesktopEncryptedBackupPort implementiert EncryptedBackupPort mit injizierter ID-Quelle und begrenztem Invoke-Port. Der Aufrufer verschlüsselt den vollständigen Ausgangssnapshot mit dem vorhandenen SnapshotProtector und liefert seinen Hash. Native SQLite speichert nur Chiffrat und Belegmetadaten in der separaten Datei wimm-backups.sqlite3; die Finanzdatenbank bleibt davon getrennt. Die Brücke akzeptiert keine frei gewählten Pfade oder SQL-Anweisungen.
 
-Ein Beleg entsteht nach FULL-Commit und vollständigem Rücklesen. Backup-ID, Profil, Bereich, Epoche und Snapshot-Hash müssen exakt passen. Doppelte IDs überschreiben keine ältere Sicherung. Fehler, unbekannte Sicherungsschemas und abgeschwächte Durability liefern keinen Erfolgsbeleg. read(receipt) liest nur das exakt gebundene Chiffrat; Entschlüsselung und Inhaltsvalidierung bleiben beim Aufrufer. Das ist eine lokale Migrationsvoraussetzung für [#82](https://github.com/mpwg/WiMM/issues/82), keine vollständige P10-Sicherung oder bereits abgenommene Migration.
+Ein Beleg entsteht nach FULL-Commit und vollständigem Rücklesen. Backup-ID, Profil, Bereich, Epoche und Snapshot-Hash müssen exakt passen. Doppelte IDs überschreiben keine ältere Sicherung. Fehler, unbekannte Sicherungsschemas und abgeschwächte Durability liefern keinen Erfolgsbeleg. read(receipt) liest nur das exakt gebundene Chiffrat; Entschlüsselung und Inhaltsvalidierung bleiben beim Aufrufer. Das ist eine lokale Migrationsvoraussetzung für [#82](https://github.com/mpwg/WiMM/issues/82), keine vollständige P10-Sicherung. Der Sicherungsport allein führt keine Migration aus.
+
+## Gesicherte Vorwärtsmigration und Indexabfragen
+
+LOCAL_INDEX_MIGRATION_PLAN registriert Schritt 1 von Storage 1/Fachversion 1 nach Storage 2/Fachversion 1. LocalMigrationCoordinator verschlüsselt und bestätigt den Originalsnapshot vor dem Schritt. DesktopMigrationPort übergibt ausschließlich den festen Plan, den vollständigen Ausgangsstand und dessen JSON-Bytes; Rust prüft Hash, gespeicherten Beleg und Snapshot erneut innerhalb BEGIN IMMEDIATE. IndexedDbStorageAdapter.migrate verlangt eine injizierte MigrationBackupVerification, etwa createMigrationBackupVerifier aus application, und prüft den vollständigen Originalstand im expliziten Dexie-Upgrade. Ohne Sicherungsverifikation wird kein Upgrade ausgeführt. Beide Ports führen Indexaufbau, Versionsfortschritt und Journal atomar aus.
+
+Bekannte V1-/V2-Datenbanken öffnen ohne automatische Migration; unbekannte Versionen bleiben erhalten. IndexQueryPorts bieten begrenzte Seiten für Konto/Datum/ID, Splitkategorie/Datum, direkte Importreferenz, externe Importquell-ID und Outboxzustand/Reihenfolge. Fachänderungen und Referenzzeilen bleiben zusammen atomar. Alte Snapshots und unveränderte Originalentwürfe bleiben kompatibel. [Aktueller Abnahmesnapshot für #82/#83](../../docs/handoffs/storage-index-migration-2026-10-09.md), ADR-048. Die Startkoordination der Anwendung folgt mit K05.
 
 ## Prüfung
 
@@ -16,7 +22,7 @@ Aus der aktiven Repository-Arbeitskopie:
 pnpm test:storage
 pnpm check:rust
 pnpm test:storage:native
-env -u NO_COLOR pnpm exec playwright test --config tests/storage/backups.config.ts
+env -u NO_COLOR pnpm test:storage:migrations
 ```
 
 Native Rust-Assertions prüfen Commit, unveränderte ältere Sicherung, Kontextprüfung, ungültige Hüllen, synthetischen SQLite-Schreibfehler, Durability-Abweisung und echten Rust-Prozessneustart. Die native Vertragsserie prüft zusätzlich den authentifizierten P5-Snapshot-Roundtrip mit libsodium über den TypeScript-Port und tatsächliche Rust-/SQLite-Prozesse. Das belegt keine Tauri-GUI-, physische Disk-full- oder Stromausfallabnahme. Aktuelle Kriterien: [Abnahmesnapshot vom 9. Oktober 2026](../../docs/handoffs/migration-2026-10-09.md).
