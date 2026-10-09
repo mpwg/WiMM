@@ -7,10 +7,14 @@ for (const desktop of [false, true]) test(`50.000 Buchungen: ${desktop ? 'Deskto
   await expect(page.locator('.overview-hero')).toContainText('-€');
   await expect(page.locator('.overview-hero')).toContainText('50.000,00');
   expect(await page.evaluate(() => window.workspaceTest.fixture())).toEqual({ transactions: 50000, accounts: 10, categories: 100, months: 36, sharedExpenseLoad: 1000 });
+  expect(await page.evaluate(() => window.workspaceTest.coldListPaintedAt())).toBeUndefined();
   await page.reload();
+  expect(await page.evaluate(() => window.workspaceTest.coldListPaintedAt())).toBeUndefined();
   await page.getByRole('button', { name: 'Buchungen', exact: true }).click();
   await expect(page.getByText('50000 Buchungen', { exact: true })).toBeVisible();
-  const coldOpen = await page.evaluate(() => performance.now());
+  await expect.poll(() => page.evaluate(() => window.workspaceTest.coldListPaintedAt())).not.toBeUndefined();
+  const { coldOpen, assertedAt } = await page.evaluate(() => ({ coldOpen: window.workspaceTest.coldListPaintedAt()!, assertedAt: performance.now() }));
+  expect(coldOpen).toBeGreaterThan(0); expect(coldOpen).toBeLessThanOrEqual(assertedAt);
   await page.getByRole('button', { name: 'Übersicht', exact: true }).click();
   const results = await page.evaluate(async () => {
     const frame = () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
@@ -42,7 +46,7 @@ for (const desktop of [false, true]) test(`50.000 Buchungen: ${desktop ? 'Deskto
     const p95 = (values: number[]) => [...values].sort((a, b) => a - b)[Math.ceil(values.length * 0.95) - 1]!;
     return { open, filter, scroll, filterP95: p95(filter), scrollP95: p95(scroll), counts, countText: document.querySelector('[data-transaction-count]')?.textContent };
   });
-  await info.attach('Messung', { body: JSON.stringify({ ...results, coldOpen, browser: browser.version(), fixture: { transactions: 50000, accounts: 10, categories: 100, months: 36, syntheticSharedExpenses: 1000 }, environment: { platform: platform(), release: release(), architecture: arch(), cpu: cpus()[0]?.model, memoryBytes: totalmem(), ci: Boolean(process.env.CI), method: 'Vite-Testseite mit echtem IndexedDB, zwei Animationsframes bis Darstellung; 5 warme Vorläufe, 30 Messungen' } }), contentType: 'application/json' });
+  await info.attach('Messung', { body: JSON.stringify({ ...results, coldOpen, assertedAt, assertionOverhead: assertedAt - coldOpen, browser: browser.version(), fixture: { transactions: 50000, accounts: 10, categories: 100, months: 36, syntheticSharedExpenses: 1000 }, environment: { platform: platform(), release: release(), architecture: arch(), cpu: cpus()[0]?.model, memoryBytes: totalmem(), ci: Boolean(process.env.CI), method: 'Vite-Testseite mit echtem IndexedDB; Kaltöffnung ab Navigation, erste vollständige sichtbare Liste nach zwei Animationsframes im Browser erfasst; Testtreiberoverhead separat; 5 warme Vorläufe, 30 Messungen' } }), contentType: 'application/json' });
   expect(results.countText).toBe('50000 Buchungen'); expect(Math.max(...results.counts)).toBeLessThanOrEqual(16);
   expect(coldOpen).toBeLessThan(2000); expect(results.open).toBeLessThan(2000); expect(results.filterP95).toBeLessThan(100); expect(results.scrollP95).toBeLessThan(100);
 });

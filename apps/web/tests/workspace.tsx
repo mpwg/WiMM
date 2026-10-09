@@ -55,6 +55,7 @@ if (await adapter.readAggregate(accountId) === undefined) {
   await adapter.applyAtomicBatch({ expectedRevisions: [], aggregates: initial.map(toStoredAggregate), outbox: [], projections: performanceFixture ? Array.from({ length: 1000 }, (_, index) => ({ spaceId, kind: 'synthetic-shared-expense-load', key: String(index), payload: { id: id(200000 + index), amount: 100, source: 'private_advance', reimbursementSource: 'household', categoryId, shares: [{ participantId: id(300000), amount: 50 }, { participantId: id(300001), amount: 50 }] } })) : [] });
 }
 let mode = 'normal'; let release: (() => void) | undefined;
+let coldListPaintedAt: number | undefined;
 const storage: WorkspaceStorage = {
   query: (query) => adapter.query(query),
   applyAtomicBatch: async (batch) => {
@@ -72,9 +73,10 @@ const storage: WorkspaceStorage = {
   }
 };
 declare global { interface Window { workspaceTest: {
-  mode(value: string): void; release(): void; read(): Promise<readonly StoredAggregate[]>; stale(id: string): Promise<void>; fixture(): Promise<{ transactions: number; accounts: number; categories: number; months: number; sharedExpenseLoad: number }>;
+  mode(value: string): void; release(): void; read(): Promise<readonly StoredAggregate[]>; stale(id: string): Promise<void>; coldListPaintedAt(): number | undefined; fixture(): Promise<{ transactions: number; accounts: number; categories: number; months: number; sharedExpenseLoad: number }>;
 } } }
 window.workspaceTest = {
+  coldListPaintedAt: () => coldListPaintedAt,
   mode(value) { mode = value; }, release() { release?.(); }, read: () => adapter.query({ spaceId }),
   async fixture() {
     const aggregates = await adapter.query({ spaceId });
@@ -102,4 +104,24 @@ const area = { id: spaceId, kind: 'private', label: 'Synthetischer Bereich' } as
 const profileApplication = new ProfileApplication({ load: async () => ({ kind: 'missing' }), change: async () => { throw new Error('Keine Profiländerung im Finanzfixture'); } }, { next: () => crypto.randomUUID() }, new ApplicationActivity());
 const runtime = createBrowserApplicationRuntime(() => storage, profileApplication);
 const context = { runtime, activity: profileApplication.activity, profileChanging: false, isProfileChanging: () => false, platform: createBrowserPlatformServices(), activeArea: area, profile: { profileId, areas: [area] }, selectArea: () => undefined, createHousehold: async () => undefined, lock: async () => undefined } as unknown as UnlockedAppContext;
-createRoot(document.getElementById('root')!).render(<FinanceWorkspace context={context} desktop={parameters.get('desktop') === 'true'} />);
+const rootElement = document.getElementById('root')!;
+if (performanceFixture) {
+  // Navigationszeit bis zur ersten tatsächlich dargestellten vollständigen Liste.
+  // Die Playwright-Poll-/Transportzeit nach der Darstellung gehört nicht zur Appzeit.
+  const visibleList = () => {
+    const counter = rootElement.querySelector('[data-transaction-count]');
+    const row = rootElement.querySelector('tr[data-transaction-id]');
+    return counter?.textContent === `${count} Buchungen` && row !== null && row.getBoundingClientRect().height > 0;
+  };
+  let awaitingPaint = false;
+  const observer = new MutationObserver(() => {
+    if (awaitingPaint || !visibleList()) return;
+    awaitingPaint = true;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (visibleList()) { coldListPaintedAt = performance.now(); observer.disconnect(); }
+      else awaitingPaint = false;
+    }));
+  });
+  observer.observe(rootElement, { subtree: true, childList: true, characterData: true, attributes: true });
+}
+createRoot(rootElement).render(<FinanceWorkspace context={context} desktop={parameters.get('desktop') === 'true'} />);

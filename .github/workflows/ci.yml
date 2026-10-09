@@ -15,6 +15,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  performance:
+    name: Kaltöffnung und warme Listenreaktion mit 50.000 Buchungen
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Quellcode auschecken
+        uses: actions/checkout@v7
+      - name: pnpm einrichten
+        uses: pnpm/action-setup@v6
+        with:
+          version: 12.8.1
+      - name: Node einrichten
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26.10.0
+          cache: pnpm
+      - name: Abhängigkeiten und tatsächlichen Browser einrichten
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: Beide Leistungsfälle ohne gelockerte Grenze prüfen
+        run: pnpm test:ui:performance
+      - name: Messungen und Browserbelege sichern
+        if: always()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: leistungsbelege-50000
+          path: |
+            test-results/p4-6-matrix.json
+            test-results/p4-6-matrix/
+          if-no-files-found: error
+          retention-days: 7
   dal-proof:
     name: DAL01 auf nativer SQLite und drei Browsern
     runs-on: ubuntu-latest

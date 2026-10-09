@@ -41,6 +41,7 @@
     "test:ui:integration": "pnpm exec playwright test --config tests/workspace/config.ts",
     "test:ui:acceptance": "node scripts/test-ui-acceptance.mjs",
     "test:ui:matrix": "node scripts/test-ui-acceptance.mjs --matrix",
+    "test:ui:performance": "node scripts/test-ui-acceptance.mjs --performance",
     "test:ui:zoom": "node scripts/test-ui-acceptance.mjs --zoom",
     "test:importers": "pnpm --filter @wimm/importers test",
     "test:importers:worker": "pnpm exec playwright test --config tests/importers/config.ts",
