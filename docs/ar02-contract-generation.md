@@ -14,7 +14,7 @@ Optionale present-Felder bleiben ohne null: Schemaattribute beschreiben ihren vo
 
 | Kriterium aus #116 | Status | Abschnittsnachweis |
 | --- | --- | --- |
-| TS-/Swift-/Kotlin-Verträge reproduzierbar, getrennte öffentliche/lokale/private Module, versionierte Fehler-/Exportformen | offen | Gemeinsame private Rust-Modelle und sämtliche fünf typisierten Engineaktionen vorhanden; Schemas für alle fünf privaten Engineaktionen vorhanden; lokale/öffentliche Module und vollständige Kompatibilitätsformen fehlen |
+| TS-/Swift-/Kotlin-Verträge reproduzierbar, getrennte öffentliche/lokale/private Module, versionierte Fehler-/Exportformen | offen | Private und öffentliche Rust-/TS-/Swift-/Kotlin-Module samt privaten Engineaktionen/öffentlichen Formguards und Schemas vorhanden; lokale Module und vollständige Kompatibilitätsformen fehlen |
 | Identische positive/negative Grenz-/Form-/Unicode-/Datums-/Null-/Zahlenfälle | offen | Geld-, Befehls- und Bestandskataloge in tatsächlichem Rust/Swift/Kotlin/WASM/Chromium; vollständiger Schema-/Bindingvergleich noch auszuführen |
 | Absichtlicher Vertragsdrift lässt CI scheitern | erfüllt für V2-Sprachabschnitt; gesamt offen | Versionierte Geldsignaturen, CI-Prüfmodus und tatsächlich injizierte Enumvariante mit Driftablehnung ohne Umschreiben. Vollständige Schema-/Modulabdeckung noch offen |
 | README und Herkunft/Lizenzen | erfüllt für private Abschnitte | Werkzeug-/Binding-READMEs, Schema-/WASM-/Validatorregister mit Version, Datum, ursprünglichen Lizenzen und Checksummen; vollständige Modulabnahme offen |
