@@ -11,3 +11,10 @@ AGPL-3.0-or-later. Die Bibliothek implementiert sämtliche bestehenden Finanzreg
 ## Architekturstand vom 9. Oktober 2026
 
 Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.
+
+
+## AR01 — schrittweise Typisierung
+
+Erster Abschnitt: scalars::MoneyCents und scalars::Revision besitzen private Werte, geprüfte Konstruktoren und sichere JSON-Grenzdeserialisierung. Die bestehende assert_money-Prüfung verwendet bereits MoneyCents; bestehende Fehlercodes/Centgrenzen bleiben unverändert. Revision null bleibt nur als Neuanlageerwartung zulässig, negative/überlaufende Werte werden abgewiesen. JSON-Zahlformen 1.0/1e3 bleiben als Grenzkonvertierung kompatibel, keine Gleitkomma-Geldarithmetik.
+
+Aktuelle Abschnittsprüfung: drei neue direkte Rust-Grenz-/JSON-/Revisionstests, vollständiger nativer Fachkatalog und je 479 tatsächlich ausgeführte Vergleichsfälle in Rust, Swift/UniFFI, Kotlin/UniFFI, WASM/Node und Chromium/WASM bestanden. Dieser Abschnitt schließt AR01/#115 nicht: Aggregate, Befehle und verbleibende dynamische Handler werden anschließend vollständig typisiert. [Aktueller Auftrag](../../docs/tasks.md), [AR01](https://github.com/mpwg/WiMM/issues/115).

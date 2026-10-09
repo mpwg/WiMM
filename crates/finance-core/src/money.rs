@@ -3,10 +3,7 @@
 use crate::{CoreResult, MAX_SAFE};
 
 pub fn assert_money(value: i64) -> CoreResult<i64> {
-    safe_integer(
-        value,
-        "Der Geldbetrag muss ein sicherer ganzzahliger Centbetrag sein.",
-    )
+    crate::scalars::MoneyCents::new(value).map(crate::scalars::MoneyCents::cents)
 }
 fn safe_integer(value: i64, message: &'static str) -> CoreResult<i64> {
     if !(-MAX_SAFE..=MAX_SAFE).contains(&value) {

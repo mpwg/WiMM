@@ -26,6 +26,7 @@ pub use state_validation::{project_json, validate_json};
 pub mod money;
 #[cfg(feature = "contract-probe")]
 mod primitive_probe;
+pub mod scalars;
 #[cfg(feature = "contract-probe")]
 pub use primitive_probe::primitive_json;
 
