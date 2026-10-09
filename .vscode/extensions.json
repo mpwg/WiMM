@@ -7,6 +7,29 @@
     "tauri-apps.tauri-vscode",
     "oxc.oxc-vscode",
     "rust-lang.rust-analyzer",
-    "TypeScriptTeam.native-preview"
+    "TypeScriptTeam.native-preview",
+    "llvm-vs-code-extensions.lldb-dap",
+    "vitest.explorer",
+    "tamasfe.even-better-toml",
+    "bierner.markdown-mermaid",
+    "GitHub.vscode-github-actions",
+    "eamodio.gitlens",
+    "qwtel.sqlite-viewer",
+    "mechatroner.rainbow-csv"
+  ],
+  "unwantedRecommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "donjayamanne.githistory",
+    "christian-kohler.npm-intellisense",
+    "repreng.csv",
+    "astro-build.astro-vscode",
+    "unifiedjs.vscode-mdx",
+    "GitHub.codespaces",
+    "ms-vscode-remote.remote-containers",
+    "ms-azuretools.vscode-containers",
+    "ms-edgedevtools.vscode-edge-devtools",
+    "ms-vscode.powershell",
+    "ms-vscode.vscode-websearchforcopilot"
   ]
 }

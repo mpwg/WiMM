@@ -70,6 +70,14 @@ Spezifiziert, nicht implementierungsfreigegeben. [P10-Spezifikation](p10-backup.
 
 Spezifiziert, nicht implementierungsfreigegeben. [P11-Spezifikation](p11-release.md); AGPL-Quellcode, Fremdhinweise, native Plattformen, Signierung und unabhängige Prüfung. Fehlende Secrets blockieren nur betroffene Distribution. Kein Release-/Deploymentauftrag durch Paketabschluss.
 
+## VS-Code-Erweiterungen — Zusatzauftrag vom 9. Oktober 2026
+
+- Auftrag: WiMM-Empfehlungen ergänzen, unnötige Erweiterungen nur im Workspace deaktivieren; keine globale Deinstallation und kein neues Profil.
+- Status: Konfiguration umgesetzt; manuelle Editorabnahme und vollständige Workspace-Deaktivierung noch offen.
+- Ergebnis: Rust Analyzer erfasst Root-Workspace und separaten Tauri-Crate; Even Better TOML installiert; Erweiterungsempfehlungen und unerwünschte Empfehlungen sowie [Einrichtung](development.md#vs-code-arbeitsbereich) ergänzt. Bestehende Playwright-Empfehlung und fremde Rust-Änderungen bleiben erhalten.
+- Prüfungen: 17 Empfehlungen und 13 unerwünschte Empfehlungen ohne Duplikate/Überschneidungen; alle 39 Erweiterungen einschließlich der 38 vorher vorhandenen installiert. JSON-/Konfigurationsprüfung, `pnpm check:docs`, `pnpm test:docs` und Whitespaceprüfung bestanden.
+- Offene Abnahme: Nutzer führt **Disable (Workspace)** und erneutes Öffnen aus; tatsächliche Rust-/TypeScript-/Oxc-Diagnosen, Vitest-/Playwright-Testentdeckung, TOML und Mermaid im Editor noch nicht bestätigt.
+
 ## Fortsetzung und Abschlussregeln
 
 Der frühere Haltepunkt ist durch den jetzigen ausdrücklichen Architektur-Implementierungsauftrag überwunden. Die neuen Pakete werden nach #114 geordnet bearbeitet. Fehlende Windows-/Linux-/Intel-Mac-/physische iOS-Nachweise bleiben offen; verfügbare unabhängige Arbeit wird innerhalb des freigegebenen Umfangs fortgesetzt.

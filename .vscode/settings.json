@@ -27,6 +27,7 @@
   ],
   "oxc.typeAware": true,
   "rust-analyzer.linkedProjects": [
+    "Cargo.toml",
     "apps/desktop/src-tauri/Cargo.toml"
   ],
   "js/ts.experimental.useTsgo": true,
