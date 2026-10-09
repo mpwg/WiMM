@@ -9,7 +9,7 @@ publish = false
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
-uuid.workspace = true
+wimm-contract-primitives = { path = "../contract-primitives" }
 uniffi = { workspace = true, optional = true }
 tsify = { version = "=0.5.8", default-features = false, features = ["json"], optional = true }
 wasm-bindgen = { workspace = true, optional = true }

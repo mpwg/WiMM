@@ -87,6 +87,38 @@ export interface Context {
     generatedIds: EntityId[];
 }
 
+export interface ContractIssue {
+    path: NonEmptyString;
+    code: NonEmptyString;
+}
+
+export interface EncryptedOperation {
+    header: EncryptedOperationHeader;
+    nonce: Base64Url;
+    ciphertext: Base64Url;
+    signature: Base64Url;
+}
+
+export interface EncryptedOperationHeader {
+    protocolVersion: ProtocolVersion;
+    cryptoSuite: CryptoSuite;
+    operationId: PublicId;
+    deviceId: PublicId;
+    spaceId: PublicId;
+    epoch: PublicId;
+    keyVersion: PositiveRevision;
+    rosterHash: Base64Url;
+    dependsOn: PublicId[];
+    reads: ExistingHandle[];
+    writes: WriteHandle[];
+}
+
+export interface ExistingHandle {
+    handle: PublicId;
+    expectedRevision: PositiveRevision;
+    previousCiphertextHash: Base64Url;
+}
+
 export interface Expectation {
     id: EntityId;
     expectedRevision: Revision;
@@ -176,6 +208,23 @@ export interface ImportRow {
     issues: string[];
 }
 
+export interface KeyRoster {
+    protocolVersion: ProtocolVersion;
+    cryptoSuite: CryptoSuite;
+    spaceId: PublicId;
+    rosterVersion: PositiveRevision;
+    previousManifestHash?: Base64Url;
+    epoch: PublicId;
+    keyVersion: PositiveRevision;
+    members: KeyRosterMember[];
+}
+
+export interface KeyRosterMember {
+    userId: PublicId;
+    identityPublicKey: Base64Url;
+    role: Role;
+}
+
 export interface MoneyParseRequest {
     contractVersion: EngineBindingVersion;
     domainSchemaVersion: DomainSchemaVersion;
@@ -217,6 +266,18 @@ export interface ProjectionRequest {
 export interface ProjectionSet {
     accountBalances: AccountBalance[];
     consumption: Consumption;
+}
+
+export interface PublicError {
+    code: PublicErrorCode;
+    message: NonEmptyString;
+    fields?: ContractIssue[];
+    requestId?: NonEmptyString;
+}
+
+export interface PublicValidationOutcome {
+    contractVersion: number;
+    status: PublicValidationStatus;
 }
 
 export interface Reconciliation {
@@ -352,6 +413,11 @@ export interface ScheduleSkip {
     dueDate: FinanceDate;
 }
 
+export interface SignedKeyRoster {
+    roster: KeyRoster;
+    signature: Base64Url;
+}
+
 export interface Split {
     id: EntityId;
     categoryId: EntityId;
@@ -411,11 +477,20 @@ export interface ValidationOutcome {
     status: ValidationStatus;
 }
 
+export interface WriteHandle {
+    handle: PublicId;
+    expectedRevision: PublicRevision;
+    proposedRevision: PositiveRevision;
+    previousCiphertextHash?: Base64Url;
+}
+
 export type AccountType = "checking" | "cash" | "savings" | "credit" | "other";
 
 export type Aggregate = ({ aggregateType: "account" } & Account) | ({ aggregateType: "financialRevision" } & FinancialRevision) | ({ aggregateType: "categoryGroup" } & CategoryGroup) | ({ aggregateType: "category" } & Category) | ({ aggregateType: "payee" } & Payee) | ({ aggregateType: "transaction" } & Transaction) | ({ aggregateType: "transfer" } & Transfer) | ({ aggregateType: "reconciliation" } & Reconciliation) | ({ aggregateType: "importMapping" } & ImportMapping) | ({ aggregateType: "importBatch" } & ImportBatch) | ({ aggregateType: "importFingerprint" } & ImportFingerprint) | ({ aggregateType: "rule" } & Rule) | ({ aggregateType: "schedule" } & Schedule) | ({ aggregateType: "scheduleOccurrence" } & ScheduleOccurrence);
 
 export type AggregateKind = "Account" | "FinancialRevision" | "CategoryGroup" | "Category" | "Payee" | "Transaction" | "Transfer" | "Reconciliation" | "ImportMapping" | "ImportBatch" | "ImportFingerprint" | "Rule" | "Schedule" | "ScheduleOccurrence";
+
+export type Base64Url = string;
 
 export type CalculationOutcome = { status: "money"; contractVersion: number; value: MoneyCents } | { status: "ruleApplied"; contractVersion: number; candidate: ImportCandidate; appliedRuleIds: EntityId[] } | { status: "classified"; contractVersion: number; rows: ClassificationRow[] } | { status: "dueDates"; contractVersion: number; dates: FinanceDate[] };
 
@@ -439,6 +514,8 @@ export type ConditionValue = string | MoneyCents;
 
 export type ContractError = { contractVersion: number; code: string; detail: string };
 
+export type CryptoSuite = "XCHACHA20_POLY1305_IETF_ED25519_V1";
+
 export type DomainSchemaVersion = number;
 
 export type EngineBindingVersion = number;
@@ -461,6 +538,8 @@ export type ImportState = "ready" | "partial" | "completed";
 
 export type MoneyCents = number;
 
+export type NonEmptyString = string;
+
 export type NonEmptyText = string;
 
 export type NonEmptyVec<T> = BoundedVec<T>;
@@ -473,9 +552,25 @@ export type ParserSource = "csv" | "camt053" | "ofx" | "qfx";
 
 export type PositiveOrdinal = number;
 
+export type PositiveRevision = number;
+
 export type ProjectionStatus = "projected";
 
+export type ProtocolVersion = number;
+
+export type PublicContractError = { contractVersion: number; code: PublicErrorCode; detail: string };
+
+export type PublicErrorCode = "INVALID_ENVELOPE" | "INVALID_SIGNATURE" | "UNSUPPORTED_CRYPTO_SUITE" | "REVISION_CONFLICT" | "EPOCH_MISMATCH" | "KEY_VERSION_MISMATCH" | "ROSTER_MISMATCH" | "OPERATION_ID_REUSED" | "DEPENDENCY_NOT_ACCEPTED" | "UPDATE_REQUIRED";
+
+export type PublicId = string;
+
+export type PublicRevision = number;
+
+export type PublicValidationStatus = "formValid";
+
 export type Revision = number;
+
+export type Role = "admin" | "member" | "viewer";
 
 export type RuleAction = { field: "categoryId"; value: EntityId } | { field: "payeeId"; value: EntityId } | { field: "clearance"; value: ImportClearance };
 
@@ -542,6 +637,10 @@ export function reverse_v2(request: ReverseRequest): CommandOutcomeV2;
 
 export function validate_json(request: string): string;
 
+export function validate_public_operation_form_v2(input: EncryptedOperation): PublicValidationOutcome;
+
+export function validate_public_roster_form_v2(input: SignedKeyRoster): PublicValidationOutcome;
+
 export function validate_v2(request: ValidationRequest): ValidationOutcome;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -570,6 +669,8 @@ export interface InitOutput {
     readonly reverse_json: (a: number, b: number) => [number, number];
     readonly reverse_v2: (a: any) => [number, number, number];
     readonly validate_json: (a: number, b: number) => [number, number];
+    readonly validate_public_operation_form_v2: (a: any) => [number, number, number];
+    readonly validate_public_roster_form_v2: (a: any) => [number, number, number];
     readonly validate_v2: (a: any) => [number, number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;

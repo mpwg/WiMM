@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PublicContractError",
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/PublicErrorCode"
+        },
+        "contractVersion": {
+          "$ref": "#/$defs/PublicBindingVersion"
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "contractVersion",
+        "code",
+        "detail"
+      ]
+    }
+  ],
+  "$defs": {
+    "PublicBindingVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "PublicErrorCode": {
+      "type": "string",
+      "enum": [
+        "INVALID_ENVELOPE",
+        "INVALID_SIGNATURE",
+        "UNSUPPORTED_CRYPTO_SUITE",
+        "REVISION_CONFLICT",
+        "EPOCH_MISMATCH",
+        "KEY_VERSION_MISMATCH",
+        "ROSTER_MISMATCH",
+        "OPERATION_ID_REUSED",
+        "DEPENDENCY_NOT_ACCEPTED",
+        "UPDATE_REQUIRED"
+      ]
+    }
+  }
+}

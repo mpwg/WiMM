@@ -9,11 +9,12 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 
 [features]
 default = ["native"]
-native = ["dep:uniffi", "wimm-finance-types/native-bindings"]
-wasm = ["dep:wasm-bindgen", "dep:tsify", "dep:js-sys", "wimm-finance-types/wasm-bindings"]
+native = ["wimm-public-contracts/native-bindings", "dep:uniffi", "wimm-finance-types/native-bindings"]
+wasm = ["wimm-public-contracts/wasm-bindings", "dep:wasm-bindgen", "dep:tsify", "dep:js-sys", "wimm-finance-types/wasm-bindings"]
 contract-probe = ["wimm-finance-core/contract-probe"]
 
 [dependencies]
+wimm-public-contracts = { path = "../public-contracts" }
 wimm-finance-core = { path = "../finance-core" }
 wimm-finance-types = { path = "../finance-types" }
 uniffi = { workspace = true, optional = true }

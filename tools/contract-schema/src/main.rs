@@ -69,8 +69,11 @@ fn exports() -> Vec<(&'static str, String)> {
     exports
 }
 fn run(args: &[String]) -> Result<(), String> {
+    run_exports(args, exports())
+}
+fn run_exports(args: &[String], data: Vec<(&str, String)>) -> Result<(), String> {
     if args.is_empty() {
-        for (name, body) in exports() {
+        for (name, body) in &data {
             println!("{name}\n{body}");
         }
         return Ok(());
@@ -82,7 +85,7 @@ fn run(args: &[String]) -> Result<(), String> {
     if args[0] == "--write" {
         fs::create_dir_all(root).map_err(|e| e.to_string())?;
     }
-    let exports = exports();
+    let exports = data;
     if args[0] == "--check" {
         let mut actual = Vec::new();
         for entry in fs::read_dir(root).map_err(|e| e.to_string())? {
@@ -121,6 +124,34 @@ fn run(args: &[String]) -> Result<(), String> {
 }
 fn main() {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
+    if args.first().is_some_and(|a| a == "--public") {
+        if let Err(error) = run_exports(&args[1..], public_exports()) {
+            eprintln!("{error}");
+            std::process::exit(1);
+        }
+        return;
+    }
+    if args == ["--probe-public-v2"] {
+        use std::io::BufRead;
+        for line in std::io::stdin().lock().lines() {
+            let valid = line
+                .ok()
+                .and_then(|l| serde_json::from_str::<serde_json::Value>(&l).ok())
+                .is_some_and(|v| match v["action"].as_str() {
+                    Some("operation") => serde_json::from_value::<
+                        wimm_public_contracts::envelopes::EncryptedOperation,
+                    >(v["request"].clone())
+                    .is_ok(),
+                    Some("roster") => serde_json::from_value::<
+                        wimm_public_contracts::envelopes::SignedKeyRoster,
+                    >(v["request"].clone())
+                    .is_ok(),
+                    _ => false,
+                });
+            println!("{}", serde_json::json!({"valid":valid}));
+        }
+        return;
+    }
     if args == ["--probe-private-v2"] {
         use std::io::BufRead;
         for line in std::io::stdin().lock().lines() {
@@ -141,6 +172,19 @@ fn main() {
         std::process::exit(1);
     }
 }
+fn public_exports() -> Vec<(&'static str, String)> {
+    let mut exports = wimm_public_contracts::schema::exports()
+        .into_iter()
+        .map(|(name, schema)| (name, serde_json::to_string_pretty(&schema).unwrap() + "\n"))
+        .collect::<Vec<_>>();
+    let manifest = serde_json::json!({"scope":"public","bindingVersion":2,"protocolVersion":1,"files":exports.iter().map(|(name,_)|*name).collect::<Vec<_>>(),"requiresRustRelationalValidation":true,"exports":[{"name":"validate_public_operation_form_v2","request":"public-operation.schema.json","result":"public-form-outcome.schema.json","error":"public-binding-error.schema.json"},{"name":"validate_public_roster_form_v2","request":"public-signed-roster.schema.json","result":"public-form-outcome.schema.json","error":"public-binding-error.schema.json"}]});
+    exports.push((
+        "manifest.json",
+        serde_json::to_string_pretty(&manifest).unwrap() + "\n",
+    ));
+    exports
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

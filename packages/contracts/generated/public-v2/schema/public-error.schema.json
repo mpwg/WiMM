@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PublicError",
+  "type": "object",
+  "properties": {
+    "code": {
+      "$ref": "#/$defs/PublicErrorCode"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ContractIssue"
+      }
+    },
+    "message": {
+      "$ref": "#/$defs/NonEmptyString"
+    },
+    "requestId": {
+      "$ref": "#/$defs/NonEmptyString"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "code",
+    "message"
+  ],
+  "$defs": {
+    "ContractIssue": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/NonEmptyString"
+        },
+        "path": {
+          "$ref": "#/$defs/NonEmptyString"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "code"
+      ]
+    },
+    "NonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "PublicErrorCode": {
+      "type": "string",
+      "enum": [
+        "INVALID_ENVELOPE",
+        "INVALID_SIGNATURE",
+        "UNSUPPORTED_CRYPTO_SUITE",
+        "REVISION_CONFLICT",
+        "EPOCH_MISMATCH",
+        "KEY_VERSION_MISMATCH",
+        "ROSTER_MISMATCH",
+        "OPERATION_ID_REUSED",
+        "DEPENDENCY_NOT_ACCEPTED",
+        "UPDATE_REQUIRED"
+      ]
+    }
+  }
+}

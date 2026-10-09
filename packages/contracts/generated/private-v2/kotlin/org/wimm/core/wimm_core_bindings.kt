@@ -50,6 +50,14 @@ import org.wimm.privatecontracts.Request
 import org.wimm.privatecontracts.ReverseRequest
 import org.wimm.privatecontracts.ValidationOutcome
 import org.wimm.privatecontracts.ValidationRequest
+import org.wimm.publiccontracts.EncryptedOperation
+import org.wimm.publiccontracts.FfiConverterTypeEncryptedOperation
+import org.wimm.publiccontracts.FfiConverterTypePublicContractError
+import org.wimm.publiccontracts.FfiConverterTypePublicValidationOutcome
+import org.wimm.publiccontracts.FfiConverterTypeSignedKeyRoster
+import org.wimm.publiccontracts.PublicContractException
+import org.wimm.publiccontracts.PublicValidationOutcome
+import org.wimm.publiccontracts.SignedKeyRoster
 import org.wimm.privatecontracts.RustBuffer as RustBufferCalculationOutcome
 import org.wimm.privatecontracts.RustBuffer as RustBufferCalculationRequest
 import org.wimm.privatecontracts.RustBuffer as RustBufferCommandOutcomeV2
@@ -60,6 +68,10 @@ import org.wimm.privatecontracts.RustBuffer as RustBufferRequest
 import org.wimm.privatecontracts.RustBuffer as RustBufferReverseRequest
 import org.wimm.privatecontracts.RustBuffer as RustBufferValidationOutcome
 import org.wimm.privatecontracts.RustBuffer as RustBufferValidationRequest
+import org.wimm.publiccontracts.RustBuffer as RustBufferEncryptedOperation
+import org.wimm.publiccontracts.RustBuffer as RustBufferPublicContractError
+import org.wimm.publiccontracts.RustBuffer as RustBufferPublicValidationOutcome
+import org.wimm.publiccontracts.RustBuffer as RustBufferSignedKeyRoster
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
 // A rust-owned buffer is represented by its capacity, its current length, and a
@@ -718,6 +730,10 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_execute_v2(
     ): Int
+    external fun uniffi_wimm_core_bindings_checksum_func_validate_public_operation_form_v2(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_func_validate_public_roster_form_v2(
+    ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_reverse_v2(
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_project_v2(
@@ -738,6 +754,7 @@ internal object UniffiLib {
     init {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "wimm_core_bindings"))
         org.wimm.privatecontracts.uniffiEnsureInitialized()
+        org.wimm.publiccontracts.uniffiEnsureInitialized()
 
     }
 
@@ -756,6 +773,10 @@ internal object UniffiLib {
     ): RustBufferCalculationOutcome.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_execute_v2(`request`: RustBufferRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBufferCommandOutcomeV2.ByValue
+    external fun uniffi_wimm_core_bindings_fn_func_validate_public_operation_form_v2(`operation`: RustBufferEncryptedOperation.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBufferPublicValidationOutcome.ByValue
+    external fun uniffi_wimm_core_bindings_fn_func_validate_public_roster_form_v2(`roster`: RustBufferSignedKeyRoster.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBufferPublicValidationOutcome.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_reverse_v2(`request`: RustBufferReverseRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBufferCommandOutcomeV2.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_project_v2(`request`: RustBufferProjectionRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
@@ -902,6 +923,12 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_execute_v2() and 0xFFFF) != 55143) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_public_operation_form_v2() and 0xFFFF) != 24232) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_public_roster_form_v2() and 0xFFFF) != 56443) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_reverse_v2() and 0xFFFF) != 47223) {
@@ -1332,6 +1359,12 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 
 
 
+
+
+
+
+
+
 object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<ContractException> {
     override fun lift(error_buf: RustBuffer.ByValue): ContractException =
         org.wimm.privatecontracts.ContractException.ErrorHandler.lift(
@@ -1343,7 +1376,20 @@ object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<
         )
 }
 
- fun `calculateJson`(`request`: kotlin.String): kotlin.String {
+
+
+
+
+object PublicContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<PublicContractException> {
+    override fun lift(error_buf: RustBuffer.ByValue): PublicContractException =
+        org.wimm.publiccontracts.PublicContractException.ErrorHandler.lift(
+            RustBufferPublicContractError.ByValue().apply {
+                capacity = error_buf.capacity
+                len = error_buf.len
+                data = error_buf.data
+            }
+        )
+} fun `calculateJson`(`request`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_wimm_core_bindings_fn_func_calculate_json(
@@ -1421,6 +1467,30 @@ object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<
 
 
         FfiConverterTypeRequest.lower(`request`),_status)
+}
+    )
+    }
+
+
+    @Throws(PublicContractException::class) fun `validatePublicOperationFormV2`(`operation`: EncryptedOperation): PublicValidationOutcome {
+            return FfiConverterTypePublicValidationOutcome.lift(
+    uniffiRustCallWithError(PublicContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_func_validate_public_operation_form_v2(
+
+
+        FfiConverterTypeEncryptedOperation.lower(`operation`),_status)
+}
+    )
+    }
+
+
+    @Throws(PublicContractException::class) fun `validatePublicRosterFormV2`(`roster`: SignedKeyRoster): PublicValidationOutcome {
+            return FfiConverterTypePublicValidationOutcome.lift(
+    uniffiRustCallWithError(PublicContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_func_validate_public_roster_form_v2(
+
+
+        FfiConverterTypeSignedKeyRoster.lower(`roster`),_status)
 }
     )
     }

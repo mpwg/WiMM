@@ -843,6 +843,22 @@ public func executeV2(request: Request)throws  -> CommandOutcomeV2  {
     )
 })
 }
+public func validatePublicOperationFormV2(operation: EncryptedOperation)throws  -> PublicValidationOutcome  {
+    return try  FfiConverterTypePublicValidationOutcome_lift(try rustCallWithError(FfiConverterTypePublicContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_validate_public_operation_form_v2(
+        FfiConverterTypeEncryptedOperation_lower(operation),uniffiCallStatus
+    )
+})
+}
+public func validatePublicRosterFormV2(roster: SignedKeyRoster)throws  -> PublicValidationOutcome  {
+    return try  FfiConverterTypePublicValidationOutcome_lift(try rustCallWithError(FfiConverterTypePublicContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_validate_public_roster_form_v2(
+        FfiConverterTypeSignedKeyRoster_lower(roster),uniffiCallStatus
+    )
+})
+}
 public func reverseV2(request: ReverseRequest)throws  -> CommandOutcomeV2  {
     return try  FfiConverterTypeCommandOutcomeV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
         uniffiCallStatus in
@@ -912,6 +928,12 @@ private let initializationResult: InitializationResult = {
     if (uniffi_wimm_core_bindings_checksum_func_execute_v2() != 55143) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_wimm_core_bindings_checksum_func_validate_public_operation_form_v2() != 24232) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_func_validate_public_roster_form_v2() != 56443) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_wimm_core_bindings_checksum_func_reverse_v2() != 47223) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -926,6 +948,7 @@ private let initializationResult: InitializationResult = {
     }
 
     uniffiEnsureWimmFinanceTypesInitialized()
+    uniffiEnsureWimmPublicContractsInitialized()
     return InitializationResult.ok
 }()
 

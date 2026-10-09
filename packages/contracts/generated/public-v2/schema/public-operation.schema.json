@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EncryptedOperation",
+  "type": "object",
+  "properties": {
+    "ciphertext": {
+      "$ref": "#/$defs/Base64Url"
+    },
+    "header": {
+      "$ref": "#/$defs/EncryptedOperationHeader"
+    },
+    "nonce": {
+      "$ref": "#/$defs/Base64Url"
+    },
+    "signature": {
+      "$ref": "#/$defs/Base64Url"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "header",
+    "nonce",
+    "ciphertext",
+    "signature"
+  ],
+  "$defs": {
+    "Base64Url": {
+      "type": "string",
+      "maxLength": 65536,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "CryptoSuite": {
+      "type": "string",
+      "enum": [
+        "XCHACHA20_POLY1305_IETF_ED25519_V1"
+      ]
+    },
+    "EncryptedOperationHeader": {
+      "type": "object",
+      "properties": {
+        "cryptoSuite": {
+          "$ref": "#/$defs/CryptoSuite"
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PublicId"
+          },
+          "maxItems": 500
+        },
+        "deviceId": {
+          "$ref": "#/$defs/PublicId"
+        },
+        "epoch": {
+          "$ref": "#/$defs/PublicId"
+        },
+        "keyVersion": {
+          "$ref": "#/$defs/PositiveRevision"
+        },
+        "operationId": {
+          "$ref": "#/$defs/PublicId"
+        },
+        "protocolVersion": {
+          "$ref": "#/$defs/ProtocolVersion"
+        },
+        "reads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExistingHandle"
+          },
+          "maxItems": 500
+        },
+        "rosterHash": {
+          "$ref": "#/$defs/Base64Url"
+        },
+        "spaceId": {
+          "$ref": "#/$defs/PublicId"
+        },
+        "writes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WriteHandle"
+          },
+          "maxItems": 500,
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "protocolVersion",
+        "cryptoSuite",
+        "operationId",
+        "deviceId",
+        "spaceId",
+        "epoch",
+        "keyVersion",
+        "rosterHash",
+        "dependsOn",
+        "reads",
+        "writes"
+      ]
+    },
+    "ExistingHandle": {
+      "type": "object",
+      "properties": {
+        "expectedRevision": {
+          "$ref": "#/$defs/PositiveRevision"
+        },
+        "handle": {
+          "$ref": "#/$defs/PublicId"
+        },
+        "previousCiphertextHash": {
+          "$ref": "#/$defs/Base64Url"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "handle",
+        "expectedRevision",
+        "previousCiphertextHash"
+      ]
+    },
+    "PositiveRevision": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 1
+    },
+    "ProtocolVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "PublicId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    },
+    "PublicRevision": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 0
+    },
+    "WriteHandle": {
+      "type": "object",
+      "properties": {
+        "expectedRevision": {
+          "$ref": "#/$defs/PublicRevision"
+        },
+        "handle": {
+          "$ref": "#/$defs/PublicId"
+        },
+        "previousCiphertextHash": {
+          "$ref": "#/$defs/Base64Url"
+        },
+        "proposedRevision": {
+          "$ref": "#/$defs/PositiveRevision"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "handle",
+        "expectedRevision",
+        "proposedRevision"
+      ]
+    }
+  }
+}

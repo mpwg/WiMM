@@ -4494,6 +4494,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "wimm-contract-primitives"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "uuid",
+]
+
+[[package]]
 name = "wimm-desktop"
 version = "0.0.0"
 dependencies = [
@@ -4527,7 +4535,7 @@ version = "0.0.0"
 dependencies = [
  "serde",
  "serde_json",
- "uuid",
+ "wimm-contract-primitives",
 ]
 
 [[package]]

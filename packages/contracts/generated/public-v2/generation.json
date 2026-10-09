@@ -1,0 +1,24 @@
+{
+  "bindingVersion": 2,
+  "protocolVersion": 1,
+  "scope": "public",
+  "files": [
+    "swift/WiMMPublicTypes.swift",
+    "swift/WiMMPublicTypesFFI.h",
+    "swift/WiMMPublicTypesFFI.modulemap",
+    "kotlin/org/wimm/publiccontracts/wimm_public_contracts.kt",
+    "wasm/wimm_public_contracts.d.ts",
+    "schema/public-error.schema.json",
+    "schema/public-form-outcome.schema.json",
+    "schema/public-binding-error.schema.json",
+    "schema/public-operation.schema.json",
+    "schema/public-header.schema.json",
+    "schema/public-roster.schema.json",
+    "schema/public-signed-roster.schema.json",
+    "schema/manifest.json"
+  ],
+  "generators": {
+    "uniffi": "0.32.2",
+    "wasmBindgen": "0.2.129"
+  }
+}

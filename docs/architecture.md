@@ -51,7 +51,7 @@ flowchart TD
 
 ## Fach- und Anwendungsschnittstellen
 
-[Gemeinsame Verträge](core-contracts.md) trennen Binding-, Fach-, Storage-, Crypto-/Export- und Transportversion von Epoche. Typisierte Rust-Verträge werden Quelle für Sprachtypen/Formschemas; JSON bleibt kompatible Grenze und verlässt den Fachkern intern. ORM-Schema und Fachschema sind verschiedene Modelle. Formvalidierung ersetzt keine Fachvalidierung.
+[Gemeinsame Verträge](core-contracts.md) trennen Binding-, Fach-, Storage-, Crypto-/Export- und Transportversion von Epoche. Typisierte Rust-Verträge werden Quelle für Sprachtypen/Formschemas; JSON bleibt kompatible Grenze und verlässt den Fachkern intern. ORM-Schema und Fachschema sind verschiedene Modelle. Formvalidierung ersetzt keine Fachvalidierung. Die bisher umgesetzte private Typquelle wimm-finance-types und öffentliche Typquelle wimm-public-contracts teilen ausschließlich neutrale UUID-/JSON-Ganzzahlprimitive. Das öffentliche Standardmodul importiert keine privaten Fachmodelle; eine negative Abhängigkeitsprüfung erzwingt dies. Öffentliche relationale CAS-/Rosterformprüfungen liegen zusätzlich zu strukturellen Standardschemas in derselben Rust-Quelle und werden bei Serde-/Bindingannahme ausgeführt; der Exportmanifest kennzeichnet den erforderlichen Guard. Lokale Zielverträge und vollständige Modulabnahme folgen innerhalb AR02.
 
 Die Anwendung erhält deterministische IDs/Zeit, Profil-/Speicher-/Kryptoports und Abbruchsignale. Derselbe Rust-Code koordiniert native und WASM-Abläufe. TypeScript bleibt nach geprüfter Umschaltung Darstellungs-/Plattformadapter. Historie speichert sitzungsbezogene Ziele; der Fachkern berechnet Gegenbefehle gegen aktuelle Revisionen, keinen Snapshotrollback.
 

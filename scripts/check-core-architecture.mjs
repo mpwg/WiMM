@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 const metadata = JSON.parse(execFileSync('cargo', ['metadata', '--locked', '--format-version=1'], { encoding: 'utf8' }));
 const core = metadata.packages.find((entry) => entry.name === 'wimm-finance-core');
 if (!core) throw new Error('Der eigenständige Rust-Fachkern fehlt.');
-const pureDependencies = new Set(['serde', 'serde_json', 'uuid', 'chrono', 'time', 'unicode-normalization', 'num-bigint', 'num-traits', 'schemars', 'wimm-finance-types']);
+const pureDependencies = new Set(['serde', 'serde_json', 'uuid', 'chrono', 'time', 'unicode-normalization', 'num-bigint', 'num-traits', 'schemars', 'wimm-finance-types', 'wimm-contract-primitives']);
 const types = metadata.packages.find((entry) => entry.name === 'wimm-finance-types');
 if (!types) throw new Error('Die gemeinsame plattformfreie Rust-Typquelle fehlt.');
 for (const component of [core, types]) {
@@ -32,3 +32,7 @@ for (const entry of metadata.packages.filter((entry) => metadata.workspace_membe
 }
 if (!/^\[lints\.rust\]\s*\nunsafe_code\s*=\s*"forbid"/m.test(readFileSync('apps/desktop/src-tauri/Cargo.toml','utf8'))) throw new Error('Die globale Tauri-unsafe-Sperre fehlt.');
 console.log('unsafe-Code global für Workspace und separaten Tauri-Appcrate verboten.');
+
+const publicTree = execFileSync('cargo', ['tree','--locked','-p','wimm-public-contracts','--no-default-features','--edges','normal','--prefix','none','--format','{p}'], {encoding:'utf8'});
+if (/^(?:wimm-finance-(?:core|types) |uniffi(?:[_ ]|$)|wasm-bindgen |js-sys |tsify |tauri |(?:sqlx|diesel|axum|tokio) )/m.test(publicTree)) throw new Error('Die öffentliche Standardtypquelle darf keine privaten Fachmodelle, Plattformruntime oder ORM importieren.');
+console.log('Öffentliche Rust-Typquelle ohne private Fach-/Plattform-/ORM-Abhängigkeiten geprüft.');

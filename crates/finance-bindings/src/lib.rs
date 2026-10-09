@@ -3,6 +3,14 @@
 #[cfg(feature = "native")]
 uniffi::setup_scaffolding!();
 
+#[cfg(feature = "native")]
+mod public_v2;
+#[cfg(feature = "native")]
+pub use public_v2::{validate_public_operation_form_v2, validate_public_roster_form_v2};
+#[cfg(all(feature = "wasm", not(feature = "native")))]
+pub use wimm_public_contracts::api::{
+    validate_public_operation_form_v2, validate_public_roster_form_v2,
+};
 pub mod v2;
 pub use v2::{MoneyRequestV2, MoneyResultV2, MoneyStatusV2, calculate_money_v2};
 

@@ -6,6 +6,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
+wimm-public-contracts = { path = "../../crates/public-contracts", features = ["contract-schema"] }
 wimm-finance-types = { path = "../../crates/finance-types", features = ["contract-schema"] }
 serde_json.workspace = true
 

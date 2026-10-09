@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PublicValidationOutcome",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "$ref": "#/$defs/PublicBindingVersion"
+    },
+    "status": {
+      "$ref": "#/$defs/PublicValidationStatus"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "status"
+  ],
+  "$defs": {
+    "PublicBindingVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "PublicValidationStatus": {
+      "type": "string",
+      "enum": [
+        "formValid"
+      ]
+    }
+  }
+}

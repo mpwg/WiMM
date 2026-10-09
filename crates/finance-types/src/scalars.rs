@@ -60,40 +60,7 @@ impl Revision {
     }
 }
 
-struct IntegerVisitor;
-impl<'de> de::Visitor<'de> for IntegerVisitor {
-    type Value = i64;
-    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        formatter.write_str("eine sichere JSON-Ganzzahl")
-    }
-    fn visit_i64<E: de::Error>(self, value: i64) -> Result<i64, E> {
-        if (-MAX_SAFE..=MAX_SAFE).contains(&value) {
-            Ok(value)
-        } else {
-            Err(E::custom(
-                "Die JSON-Ganzzahl liegt außerhalb des sicheren Bereichs.",
-            ))
-        }
-    }
-    fn visit_u64<E: de::Error>(self, value: u64) -> Result<i64, E> {
-        if value <= MAX_SAFE as u64 {
-            Ok(value as i64)
-        } else {
-            Err(E::custom(
-                "Die JSON-Ganzzahl liegt außerhalb des sicheren Bereichs.",
-            ))
-        }
-    }
-    fn visit_f64<E: de::Error>(self, value: f64) -> Result<i64, E> {
-        // V1 akzeptiert äquivalente JSON-Zahlformen wie 1.0/1e3. Konvertierung
-        // nur bei exakt ganzzahligem sicheren Wert, niemals Geldarithmetik.
-        if value.is_finite() && value.fract() == 0.0 && value.abs() <= MAX_SAFE as f64 {
-            Ok(value as i64)
-        } else {
-            Err(E::custom("Der JSON-Wert ist keine sichere Ganzzahl."))
-        }
-    }
-}
+use wimm_contract_primitives::IntegerVisitor;
 impl<'de> Deserialize<'de> for MoneyCents {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         Self::new(deserializer.deserialize_any(IntegerVisitor)?)
@@ -362,7 +329,7 @@ mod schema_support {
     }
     string_schema!(
         EntityId,
-        schemars::json_schema!({"type":"string","minLength":36,"maxLength":36,"pattern":"^(?:00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"})
+        schemars::json_schema!({"type":"string","minLength":36,"maxLength":36,"pattern":wimm_contract_primitives::UUID_PATTERN})
     );
     string_schema!(
         FinanceDate,

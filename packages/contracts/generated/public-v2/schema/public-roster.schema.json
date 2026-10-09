@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "KeyRoster",
+  "type": "object",
+  "properties": {
+    "cryptoSuite": {
+      "$ref": "#/$defs/CryptoSuite"
+    },
+    "epoch": {
+      "$ref": "#/$defs/PublicId"
+    },
+    "keyVersion": {
+      "$ref": "#/$defs/PositiveRevision"
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/KeyRosterMember"
+      },
+      "maxItems": 500,
+      "minItems": 1
+    },
+    "previousManifestHash": {
+      "$ref": "#/$defs/Base64Url"
+    },
+    "protocolVersion": {
+      "$ref": "#/$defs/ProtocolVersion"
+    },
+    "rosterVersion": {
+      "$ref": "#/$defs/PositiveRevision"
+    },
+    "spaceId": {
+      "$ref": "#/$defs/PublicId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "protocolVersion",
+    "cryptoSuite",
+    "spaceId",
+    "rosterVersion",
+    "epoch",
+    "keyVersion",
+    "members"
+  ],
+  "$defs": {
+    "Base64Url": {
+      "type": "string",
+      "maxLength": 65536,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "CryptoSuite": {
+      "type": "string",
+      "enum": [
+        "XCHACHA20_POLY1305_IETF_ED25519_V1"
+      ]
+    },
+    "KeyRosterMember": {
+      "type": "object",
+      "properties": {
+        "identityPublicKey": {
+          "$ref": "#/$defs/Base64Url"
+        },
+        "role": {
+          "$ref": "#/$defs/Role"
+        },
+        "userId": {
+          "$ref": "#/$defs/PublicId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "userId",
+        "identityPublicKey",
+        "role"
+      ]
+    },
+    "PositiveRevision": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 1
+    },
+    "ProtocolVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "PublicId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    },
+    "Role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "member",
+        "viewer"
+      ]
+    }
+  }
+}

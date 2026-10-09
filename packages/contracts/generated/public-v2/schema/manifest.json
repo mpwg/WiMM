@@ -1,0 +1,29 @@
+{
+  "bindingVersion": 2,
+  "exports": [
+    {
+      "error": "public-binding-error.schema.json",
+      "name": "validate_public_operation_form_v2",
+      "request": "public-operation.schema.json",
+      "result": "public-form-outcome.schema.json"
+    },
+    {
+      "error": "public-binding-error.schema.json",
+      "name": "validate_public_roster_form_v2",
+      "request": "public-signed-roster.schema.json",
+      "result": "public-form-outcome.schema.json"
+    }
+  ],
+  "files": [
+    "public-error.schema.json",
+    "public-form-outcome.schema.json",
+    "public-binding-error.schema.json",
+    "public-operation.schema.json",
+    "public-header.schema.json",
+    "public-roster.schema.json",
+    "public-signed-roster.schema.json"
+  ],
+  "protocolVersion": 1,
+  "requiresRustRelationalValidation": true,
+  "scope": "public"
+}
