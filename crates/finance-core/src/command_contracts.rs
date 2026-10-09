@@ -9,12 +9,14 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 pub const COMMAND_ERROR: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Expectation {
     pub id: EntityId,
     pub expected_revision: Revision,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Context {
@@ -22,6 +24,7 @@ pub struct Context {
     pub occurred_at: UtcTimestamp,
     pub generated_ids: Vec<EntityId>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Request {
@@ -33,6 +36,7 @@ pub struct Request {
     pub expected_revisions: Vec<Expectation>,
     pub context: Context,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ChangeSet {
@@ -237,6 +241,7 @@ pub fn to_wire(changes: ChangeSet) -> CoreResult<serde_json::Value> {
     .map_err(|_| INVALID)
 }
 
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone)]
 pub enum CommandResult {
     Changed(ChangeSet),

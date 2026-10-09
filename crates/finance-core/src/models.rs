@@ -3,6 +3,7 @@
 //! Keine UI-/ORM-Entities; opaque Importmapping bleibt ein unverändertes Fremdpayload.
 use crate::{CoreResult, scalars::*};
 use serde::{Deserialize, Serialize};
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum AccountType {
@@ -12,17 +13,20 @@ pub enum AccountType {
     Credit,
     Other,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum GroupKind {
     Income,
     Expense,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum CategorySystem {
     Uncategorized,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum TransactionKind {
@@ -32,6 +36,7 @@ pub enum TransactionKind {
     Contribution,
     Settlement,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Clearance {
@@ -39,12 +44,14 @@ pub enum Clearance {
     Cleared,
     Reconciled,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ImportClearance {
     Uncleared,
     Cleared,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ParserSource {
@@ -53,6 +60,7 @@ pub enum ParserSource {
     Ofx,
     Qfx,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ImportDecision {
@@ -60,6 +68,7 @@ pub enum ImportDecision {
     Exclude,
     Separate,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ImportState {
@@ -67,6 +76,7 @@ pub enum ImportState {
     Partial,
     Completed,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ConditionField {
@@ -75,6 +85,7 @@ pub enum ConditionField {
     Payee,
     Memo,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum ConditionOperator {
@@ -83,6 +94,7 @@ pub enum ConditionOperator {
     Gte,
     Lte,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum Frequency {
@@ -90,18 +102,21 @@ pub enum Frequency {
     Monthly,
     Yearly,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum OccurrenceState {
     Confirmed,
     Skipped,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ConditionValue {
     Text(String),
     Money(MoneyCents),
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(
     tag = "field",
@@ -114,6 +129,7 @@ pub enum RuleAction {
     PayeeId(EntityId),
     Clearance(ImportClearance),
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Split {
@@ -121,6 +137,7 @@ pub struct Split {
     pub category_id: EntityId,
     pub amount: MoneyCents,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ImportCandidate {
@@ -132,59 +149,73 @@ pub struct ImportCandidate {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "ParserSource"))]
     pub parser_source: Option<ParserSource>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "String"))]
     pub payee: Option<String>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "String"))]
     pub memo: Option<String>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "String"))]
     pub external_id: Option<String>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "NonEmptyText"))]
     pub source_fingerprint: Option<NonEmptyText>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub category_id: Option<EntityId>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub payee_id: Option<EntityId>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "ImportClearance"))]
     pub clearance: Option<ImportClearance>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ImportRow {
     pub source_row: PositiveOrdinal,
     #[serde(deserialize_with = "nullable")]
+    #[cfg_attr(
+        feature = "contract-schema",
+        schemars(with = "crate::schema::RequiredNullableCandidate")
+    )]
     pub candidate: Option<ImportCandidate>,
     pub decision: ImportDecision,
     pub issues: Vec<String>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleCondition {
@@ -192,6 +223,7 @@ pub struct RuleCondition {
     pub operator: ConditionOperator,
     pub value: ConditionValue,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct TransactionTemplate {
@@ -205,20 +237,24 @@ pub struct TransactionTemplate {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub payee_id: Option<EntityId>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "String"))]
     pub note: Option<String>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub transfer_id: Option<EntityId>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Account {
@@ -232,6 +268,7 @@ pub struct Account {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub name: NonEmptyText,
     #[serde(rename = "type")]
@@ -239,6 +276,7 @@ pub struct Account {
     pub on_budget: bool,
     pub archived: bool,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct FinancialRevision {
@@ -252,8 +290,10 @@ pub struct FinancialRevision {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CategoryGroup {
@@ -267,12 +307,14 @@ pub struct CategoryGroup {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub name: NonEmptyText,
     pub kind: GroupKind,
     pub sort_order: Ordinal,
     pub archived: bool,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Category {
@@ -286,6 +328,7 @@ pub struct Category {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub name: NonEmptyText,
     pub group_id: EntityId,
@@ -296,8 +339,10 @@ pub struct Category {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "CategorySystem"))]
     pub system: Option<CategorySystem>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Payee {
@@ -311,11 +356,13 @@ pub struct Payee {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub name: NonEmptyText,
     pub aliases: Vec<NonEmptyText>,
     pub archived: bool,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Transaction {
@@ -329,6 +376,7 @@ pub struct Transaction {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub account_id: EntityId,
     pub amount: MoneyCents,
@@ -340,18 +388,21 @@ pub struct Transaction {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub payee_id: Option<EntityId>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "String"))]
     pub note: Option<String>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub transfer_id: Option<EntityId>,
     pub date: FinanceDate,
     #[serde(
@@ -359,14 +410,17 @@ pub struct Transaction {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "NonEmptyText"))]
     pub import_reference: Option<NonEmptyText>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub schedule_occurrence_id: Option<EntityId>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Transfer {
@@ -380,6 +434,7 @@ pub struct Transfer {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub date: FinanceDate,
     pub source_account_id: EntityId,
@@ -392,14 +447,17 @@ pub struct Transfer {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub budget_category_id: Option<EntityId>,
     #[serde(
         default,
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "bool"))]
     pub budget_release: Option<bool>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Reconciliation {
@@ -413,12 +471,14 @@ pub struct Reconciliation {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub account_id: EntityId,
     pub statement_date: FinanceDate,
     pub statement_balance: MoneyCents,
     pub transaction_ids: NonEmptyVec<EntityId>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ImportMapping {
@@ -432,10 +492,12 @@ pub struct ImportMapping {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub name: NonEmptyText,
     pub mapping: serde_json::Value,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ImportBatch {
@@ -449,6 +511,7 @@ pub struct ImportBatch {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub file_hash: FileHash,
     pub account_id: EntityId,
@@ -456,6 +519,7 @@ pub struct ImportBatch {
     pub committed_rows: Vec<PositiveOrdinal>,
     pub state: ImportState,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ImportFingerprint {
@@ -469,6 +533,7 @@ pub struct ImportFingerprint {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub account_id: EntityId,
     pub parser_source: NonEmptyText,
@@ -481,8 +546,10 @@ pub struct ImportFingerprint {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "String"))]
     pub external_id: Option<String>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Rule {
@@ -496,6 +563,7 @@ pub struct Rule {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub order: Ordinal,
     pub conditions: NonEmptyVec<RuleCondition>,
@@ -503,6 +571,7 @@ pub struct Rule {
     pub stop_processing: bool,
     pub enabled: bool,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Schedule {
@@ -516,6 +585,7 @@ pub struct Schedule {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub start_date: FinanceDate,
     pub frequency: Frequency,
@@ -527,8 +597,10 @@ pub struct Schedule {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "FinanceDate"))]
     pub end_date: Option<FinanceDate>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ScheduleOccurrence {
@@ -542,6 +614,7 @@ pub struct ScheduleOccurrence {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub schedule_id: EntityId,
     pub due_date: FinanceDate,
@@ -551,8 +624,10 @@ pub struct ScheduleOccurrence {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub transaction_id: Option<EntityId>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "aggregateType", rename_all = "camelCase")]
 pub enum Aggregate {
@@ -571,6 +646,7 @@ pub enum Aggregate {
     Schedule(Schedule),
     ScheduleOccurrence(ScheduleOccurrence),
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AggregateKind {
     Account,
@@ -796,16 +872,19 @@ impl Aggregate {
         serde_json::from_value(value.clone()).map_err(|_| crate::aggregate_schema::INVALID)
     }
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct SaveCommand {
     pub aggregates: NonEmptyVec<Aggregate>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AggregateCommand {
     pub aggregate_id: EntityId,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct PayeeMerge {
@@ -813,6 +892,7 @@ pub struct PayeeMerge {
     pub source_ids: NonEmptyVec<EntityId>,
     pub transaction_ids: Vec<EntityId>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReconciliationConfirm {
@@ -821,21 +901,25 @@ pub struct ReconciliationConfirm {
     pub statement_balance: MoneyCents,
     pub selected_transaction_ids: NonEmptyVec<EntityId>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReconciliationUnlock {
     pub reconciliation_id: EntityId,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct RuleReorder {
     pub rule_ids: Vec<EntityId>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ImportCommit {
     pub import_id: EntityId,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ScheduleConfirm {
@@ -846,14 +930,17 @@ pub struct ScheduleConfirm {
         deserialize_with = "present",
         skip_serializing_if = "Option::is_none"
     )]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub imported_transaction_id: Option<EntityId>,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ScheduleSkip {
     pub schedule_id: EntityId,
     pub due_date: FinanceDate,
 }
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "commandType")]
 pub enum Command {

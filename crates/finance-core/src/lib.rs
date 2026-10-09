@@ -35,6 +35,8 @@ pub mod money;
 #[cfg(feature = "contract-probe")]
 mod primitive_probe;
 pub mod scalars;
+#[cfg(feature = "contract-schema")]
+pub mod schema;
 #[cfg(feature = "contract-probe")]
 pub use primitive_probe::primitive_json;
 

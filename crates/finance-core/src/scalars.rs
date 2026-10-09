@@ -318,3 +318,78 @@ mod tests {
         assert_eq!(serde_json::from_str::<Revision>("1.0").unwrap().value(), 1);
     }
 }
+
+#[cfg(feature = "contract-schema")]
+mod schema_support {
+    use super::*;
+    use schemars::{JsonSchema, Schema, SchemaGenerator};
+    use std::borrow::Cow;
+    macro_rules! integer_schema {
+        ($name:ident,$min:expr) => {
+            impl JsonSchema for $name {
+                fn schema_name() -> Cow<'static, str> {
+                    stringify!($name).into()
+                }
+                fn json_schema(_: &mut SchemaGenerator) -> Schema {
+                    crate::schema::integer($min)
+                }
+            }
+        };
+    }
+    integer_schema!(MoneyCents, -MAX_SAFE);
+    integer_schema!(Revision, 0);
+    integer_schema!(Ordinal, 0);
+    integer_schema!(PositiveOrdinal, 1);
+    integer_schema!(StoredRevision, 1);
+    macro_rules! string_schema {
+        ($name:ident,$schema:expr) => {
+            impl JsonSchema for $name {
+                fn schema_name() -> Cow<'static, str> {
+                    stringify!($name).into()
+                }
+                fn json_schema(_: &mut SchemaGenerator) -> Schema {
+                    $schema
+                }
+            }
+        };
+    }
+    string_schema!(
+        EntityId,
+        schemars::json_schema!({"type":"string","minLength":36,"maxLength":36,"pattern":"^(?:00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"})
+    );
+    string_schema!(
+        FinanceDate,
+        schemars::json_schema!({"type":"string","format":"date","minLength":10,"maxLength":10,"pattern":"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"})
+    );
+    string_schema!(
+        UtcTimestamp,
+        schemars::json_schema!({"type":"string","format":"date-time","pattern":"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"})
+    );
+    string_schema!(NonEmptyText, crate::schema::non_empty_text());
+    string_schema!(
+        FileHash,
+        schemars::json_schema!({"type":"string","minLength":64,"maxLength":64,"pattern":"^[0-9a-f]{64}$"})
+    );
+    impl<T: JsonSchema, const MIN: usize, const MAX: usize> JsonSchema for BoundedVec<T, MIN, MAX> {
+        fn schema_name() -> Cow<'static, str> {
+            format!(
+                "BoundedVec_{}_{}_{}",
+                T::schema_name(),
+                MIN,
+                if MAX == usize::MAX {
+                    "unbounded".to_owned()
+                } else {
+                    MAX.to_string()
+                }
+            )
+            .into()
+        }
+        fn json_schema(generator: &mut SchemaGenerator) -> Schema {
+            let mut schema = schemars::json_schema!({"type":"array","items":generator.subschema_for::<T>(),"minItems":MIN});
+            if MAX < usize::MAX {
+                schema.insert("maxItems".to_owned(), serde_json::json!(MAX));
+            }
+            schema
+        }
+    }
+}

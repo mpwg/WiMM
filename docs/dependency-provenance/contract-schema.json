@@ -1,0 +1,55 @@
+{
+  "snapshotDate": "2026-10-09",
+  "scope": "AR02-Schemaprototyp; keine Gesamtabnahme #116 oder Herkunftsregister #72",
+  "projectLicense": "AGPL-3.0-or-later",
+  "dependencies": [
+    {
+      "name": "dyn-clone",
+      "version": "1.0.20",
+      "publishedAt": "2025-07-27T19:29:46.625527Z",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555",
+      "source": "https://crates.io/crates/dyn-clone/1.0.20"
+    },
+    {
+      "name": "ref-cast",
+      "version": "1.0.27",
+      "publishedAt": "2026-08-19T04:27:28.040119Z",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "7e440fb4e4b4147295338efb76001ab9e4efc0e5839df2c47fc5ac2381d365c3",
+      "source": "https://crates.io/crates/ref-cast/1.0.27"
+    },
+    {
+      "name": "ref-cast-impl",
+      "version": "1.0.27",
+      "publishedAt": "2026-08-19T04:27:24.118760Z",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "92ecd8964f8453721699a1ed72037b0db49ce2f5a5138486ee89bed6f67cdf3a",
+      "source": "https://crates.io/crates/ref-cast-impl/1.0.27"
+    },
+    {
+      "name": "schemars",
+      "version": "1.2.2",
+      "publishedAt": "2026-07-27T14:35:28.246709Z",
+      "license": "MIT",
+      "checksum": "687274d293b6cdc6e73e0fee520bf2049650090d7164f87672d212a3c530cf4a",
+      "source": "https://crates.io/crates/schemars/1.2.2"
+    },
+    {
+      "name": "schemars_derive",
+      "version": "1.2.2",
+      "publishedAt": "2026-07-27T14:35:25.339689Z",
+      "license": "MIT",
+      "checksum": "d98c67716b46af2f0b8cf752abc930f6f9aecfbf671ecfb531db8a31dbe4e2ba",
+      "source": "https://crates.io/crates/schemars_derive/1.2.2"
+    },
+    {
+      "name": "serde_derive_internals",
+      "version": "0.30.0",
+      "publishedAt": "2026-07-25T14:58:00.367023Z",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "f852137cce035d6a4df67ccce505ff6b3e9fd3a10e3e52b24dc71e650bb1a9bd",
+      "source": "https://crates.io/crates/serde_derive_internals/0.30.0"
+    }
+  ]
+}
