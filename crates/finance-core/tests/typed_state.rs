@@ -6,10 +6,10 @@ use serde_json::{Value, json};
 fn typed_state_actions_have_native_rust_assertions_for_all_representable_oracles() {
     let cases: Vec<Value> =
         serde_json::from_str(include_str!("fixtures/contract-catalog.json")).unwrap();
-    let mut counts = [0, 0, 0];
+    let mut counts = [0, 0, 0, 0];
     for case in cases {
         let method = case["method"].as_str().unwrap();
-        if !["project", "validate", "reverse"].contains(&method) {
+        if !["project", "validate", "reverse", "calculate"].contains(&method) {
             continue;
         }
         let raw = case["request"]
@@ -24,12 +24,16 @@ fn typed_state_actions_have_native_rust_assertions_for_all_representable_oracles
             let Ok(request) = wimm_finance_core::decode_validation_request_v1(&raw) else { continue; };
             counts[1] += 1;
             wimm_finance_core::validate(request).map(|()| json!({"contractVersion":1,"status":"valid"}))
-        } else {
+        } else if method == "reverse" {
             let request = wimm_finance_core::decode_reverse_request_v1(&raw).unwrap();
             counts[2] += 1;
             wimm_finance_core::reverse(request).and_then(|change_set| wimm_finance_types::command_contracts::CommandResult::Changed(change_set).to_wire())
+        } else {
+            let Ok(request) = wimm_finance_core::decode_calculation_request_v1(&raw) else { continue; };
+            counts[3] += 1;
+            wimm_finance_core::calculate(request).map(|outcome| serde_json::to_value(outcome).unwrap())
         }.unwrap_or_else(|(code, message)| json!({"contractVersion":1,"status":"rejected","error":{"code":code,"message":message}}));
         assert_eq!(output, case["expected"], "{}", case["name"]);
     }
-    assert_eq!(counts, [41, 46, 11]);
+    assert_eq!(counts, [41, 46, 11, 80]);
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Fälligkeiten aus dem gregorianischen Kalender, ohne Uhr oder Zeitzone.
 use crate::{CoreResult, MAX_SAFE, aggregate_schema, calendar};
-use serde_json::{Value, json};
+use wimm_finance_types::calculation_contracts::{CalculationOutcome, ScheduleRequest};
 fn days(year: i128, month: i128) -> i128 {
     match month {
         2 => {
@@ -98,25 +98,8 @@ pub(crate) fn typed_due_dates(
     }
     Ok(dates)
 }
-#[derive(serde::Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Request {
-    contract_version: u32,
-    domain_schema_version: u32,
-    space_id: crate::scalars::EntityId,
-    schedule_id: crate::scalars::EntityId,
-    aggregates: Vec<crate::models::Aggregate>,
-    through: crate::scalars::FinanceDate,
-}
-#[derive(serde::Deserialize)]
-#[serde(tag = "calculationType")]
-enum Calculation {
-    #[serde(rename = "schedule.dueDates")]
-    DueDates(Request),
-}
-pub fn calculate(decoded: Value) -> CoreResult<Value> {
+pub fn calculate(request: ScheduleRequest) -> CoreResult<CalculationOutcome> {
     const INVALID: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
-    let Calculation::DueDates(request) = serde_json::from_value(decoded).map_err(|_| INVALID)?;
     if request.contract_version != 1 || request.domain_schema_version != 1 {
         return Err(INVALID);
     }
@@ -137,9 +120,13 @@ pub fn calculate(decoded: Value) -> CoreResult<Value> {
             "INVALID_AGGREGATE",
             "Die Dauerzahlung fehlt im aktuellen Bereich.",
         ))?;
-    Ok(
-        json!({"contractVersion":1,"status":"dueDates","dates":typed_due_dates(schedule,request.through.as_str())?}),
-    )
+    Ok(CalculationOutcome::DueDates {
+        contract_version: 1,
+        dates: typed_due_dates(schedule, request.through.as_str())?
+            .into_iter()
+            .map(crate::scalars::FinanceDate::new)
+            .collect::<CoreResult<_>>()?,
+    })
 }
 #[cfg(test)]
 mod tests {

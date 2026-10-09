@@ -39,6 +39,8 @@ Der letzte Befehl verlangt tatsächliche Swift-/Kotlin-/Java-Werkzeuge und führ
 
 `reverse_v2` ergänzt die direkte Gegenbefehlsaktion mit gemeinsamen `ReverseRequest`-/`ReverseTarget`-Typen und demselben `CommandOutcomeV2` wie execute. previous bleibt optional/nichtnullable, targets nichtleer. Die beiden Bestandsprüfbefehle decken zusätzlich alle elf Gegenbefehlsorakel als tatsächliche typisierte Aufrufe ab: insgesamt 121 Orakel, 98 native Fachaufrufe und 23 vorgeschaltete Formablehnungen bzw. 120 WASM-Objektgrenzenaufrufe und eine JSON-Syntaxablehnung. Direkte native Kernassertions prüfen die elf vollständigen Gegenbefehlsresultate.
 
+`calculate_v2` ergänzt den gemeinsamen typisierten Request/Ergebnisvertrag für money.parse/rule.apply/import.classify/schedule.dueDates. Alle vier Berechnungen und ihre Klassifizierungs-/Fälligkeitsformen bleiben im Kern bzw. der gemeinsamen privaten Rust-Typquelle. Die Aktionsprüfbefehle decken jetzt 204 Orakel ab: 178 native typisierte Fachaufrufe/26 Formablehnungen bzw. 203 WASM-Objektgrenzenaufrufe/eine JSON-Syntaxablehnung. Zusammen mit den 176 execute-Fällen sind alle 380 produktiven Katalogorakel abgedeckt; vollständige Schema-/Modul-/Negativabnahme bleibt Teil von #116.
+
 ## Architekturstand vom 9. Oktober 2026
 
 Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.

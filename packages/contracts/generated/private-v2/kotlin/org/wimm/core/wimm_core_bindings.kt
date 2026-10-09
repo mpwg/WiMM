@@ -30,8 +30,12 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
+import org.wimm.privatecontracts.CalculationOutcome
+import org.wimm.privatecontracts.CalculationRequest
 import org.wimm.privatecontracts.ChangeSet
 import org.wimm.privatecontracts.ContractException
+import org.wimm.privatecontracts.FfiConverterTypeCalculationOutcome
+import org.wimm.privatecontracts.FfiConverterTypeCalculationRequest
 import org.wimm.privatecontracts.FfiConverterTypeChangeSet
 import org.wimm.privatecontracts.FfiConverterTypeContractError
 import org.wimm.privatecontracts.FfiConverterTypeProjectionOutcome
@@ -46,6 +50,8 @@ import org.wimm.privatecontracts.Request
 import org.wimm.privatecontracts.ReverseRequest
 import org.wimm.privatecontracts.ValidationOutcome
 import org.wimm.privatecontracts.ValidationRequest
+import org.wimm.privatecontracts.RustBuffer as RustBufferCalculationOutcome
+import org.wimm.privatecontracts.RustBuffer as RustBufferCalculationRequest
 import org.wimm.privatecontracts.RustBuffer as RustBufferChangeSet
 import org.wimm.privatecontracts.RustBuffer as RustBufferContractError
 import org.wimm.privatecontracts.RustBuffer as RustBufferProjectionOutcome
@@ -708,6 +714,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_validate_json(
     ): Int
+    external fun uniffi_wimm_core_bindings_checksum_func_calculate_v2(
+    ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_execute_v2(
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_reverse_v2(
@@ -744,6 +752,8 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_validate_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
+    external fun uniffi_wimm_core_bindings_fn_func_calculate_v2(`request`: RustBufferCalculationRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBufferCalculationOutcome.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_execute_v2(`request`: RustBufferRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_reverse_v2(`request`: RustBufferReverseRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
@@ -886,6 +896,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_json() and 0xFFFF) != 63399) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_func_calculate_v2() and 0xFFFF) != 7814) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_execute_v2() and 0xFFFF) != 24569) {
@@ -1402,6 +1415,10 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 
 
 
+
+
+
+
 object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<ContractException> {
     override fun lift(error_buf: RustBuffer.ByValue): ContractException =
         org.wimm.privatecontracts.ContractException.ErrorHandler.lift(
@@ -1467,6 +1484,18 @@ object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<
 
 
         FfiConverterString.lower(`request`),_status)
+}
+    )
+    }
+
+
+    @Throws(ContractException::class) fun `calculateV2`(`request`: CalculationRequest): CalculationOutcome {
+            return FfiConverterTypeCalculationOutcome.lift(
+    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_func_calculate_v2(
+
+
+        FfiConverterTypeCalculationRequest.lower(`request`),_status)
 }
     )
     }

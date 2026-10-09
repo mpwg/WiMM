@@ -1440,6 +1440,44 @@ public object FfiConverterTypeChangeSet: FfiConverterRustBuffer<ChangeSet> {
 
 
 
+data class ClassificationRow (
+    var `sourceRow`: PositiveOrdinal
+    ,
+    var `classification`: Classification
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeClassificationRow: FfiConverterRustBuffer<ClassificationRow> {
+    override fun read(buf: ByteBuffer): ClassificationRow {
+        return ClassificationRow(
+            FfiConverterTypePositiveOrdinal.read(buf),
+            FfiConverterTypeClassification.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ClassificationRow) = (
+            FfiConverterTypePositiveOrdinal.allocationSize(value.`sourceRow`) +
+            FfiConverterTypeClassification.allocationSize(value.`classification`)
+    )
+
+    override fun write(value: ClassificationRow, buf: ByteBuffer) {
+            FfiConverterTypePositiveOrdinal.write(value.`sourceRow`, buf)
+            FfiConverterTypeClassification.write(value.`classification`, buf)
+    }
+}
+
+
+
 data class Consumption (
     var `income`: MoneyCents
     ,
@@ -1987,6 +2025,64 @@ public object FfiConverterTypeImportMapping: FfiConverterRustBuffer<ImportMappin
 
 
 
+data class ImportRequest (
+    var `contractVersion`: EngineBindingVersion
+    ,
+    var `domainSchemaVersion`: DomainSchemaVersion
+    ,
+    var `spaceId`: EntityId
+    ,
+    var `aggregates`: List<Aggregate>
+    ,
+    var `accountId`: EntityId
+    ,
+    var `candidates`: List<ImportCandidate>
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeImportRequest: FfiConverterRustBuffer<ImportRequest> {
+    override fun read(buf: ByteBuffer): ImportRequest {
+        return ImportRequest(
+            FfiConverterTypeEngineBindingVersion.read(buf),
+            FfiConverterTypeDomainSchemaVersion.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeAggregate.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeImportCandidate.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ImportRequest) = (
+            FfiConverterTypeEngineBindingVersion.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeDomainSchemaVersion.allocationSize(value.`domainSchemaVersion`) +
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterSequenceTypeAggregate.allocationSize(value.`aggregates`) +
+            FfiConverterTypeEntityId.allocationSize(value.`accountId`) +
+            FfiConverterSequenceTypeImportCandidate.allocationSize(value.`candidates`)
+    )
+
+    override fun write(value: ImportRequest, buf: ByteBuffer) {
+            FfiConverterTypeEngineBindingVersion.write(value.`contractVersion`, buf)
+            FfiConverterTypeDomainSchemaVersion.write(value.`domainSchemaVersion`, buf)
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterSequenceTypeAggregate.write(value.`aggregates`, buf)
+            FfiConverterTypeEntityId.write(value.`accountId`, buf)
+            FfiConverterSequenceTypeImportCandidate.write(value.`candidates`, buf)
+    }
+}
+
+
+
 data class ImportRow (
     var `sourceRow`: PositiveOrdinal
     ,
@@ -2030,6 +2126,54 @@ public object FfiConverterTypeImportRow: FfiConverterRustBuffer<ImportRow> {
             FfiConverterOptionalTypeImportCandidate.write(value.`candidate`, buf)
             FfiConverterTypeImportDecision.write(value.`decision`, buf)
             FfiConverterSequenceString.write(value.`issues`, buf)
+    }
+}
+
+
+
+data class MoneyParseRequest (
+    var `contractVersion`: EngineBindingVersion
+    ,
+    var `domainSchemaVersion`: DomainSchemaVersion
+    ,
+    var `spaceId`: EntityId
+    ,
+    var `text`: kotlin.String
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeMoneyParseRequest: FfiConverterRustBuffer<MoneyParseRequest> {
+    override fun read(buf: ByteBuffer): MoneyParseRequest {
+        return MoneyParseRequest(
+            FfiConverterTypeEngineBindingVersion.read(buf),
+            FfiConverterTypeDomainSchemaVersion.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: MoneyParseRequest) = (
+            FfiConverterTypeEngineBindingVersion.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeDomainSchemaVersion.allocationSize(value.`domainSchemaVersion`) +
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterString.allocationSize(value.`text`)
+    )
+
+    override fun write(value: MoneyParseRequest, buf: ByteBuffer) {
+            FfiConverterTypeEngineBindingVersion.write(value.`contractVersion`, buf)
+            FfiConverterTypeDomainSchemaVersion.write(value.`domainSchemaVersion`, buf)
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterString.write(value.`text`, buf)
     }
 }
 
@@ -2762,6 +2906,59 @@ public object FfiConverterTypeRuleReorder: FfiConverterRustBuffer<RuleReorder> {
 
 
 
+data class RuleRequest (
+    var `contractVersion`: EngineBindingVersion
+    ,
+    var `domainSchemaVersion`: DomainSchemaVersion
+    ,
+    var `spaceId`: EntityId
+    ,
+    var `aggregates`: List<Aggregate>
+    ,
+    var `candidate`: ImportCandidate
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRuleRequest: FfiConverterRustBuffer<RuleRequest> {
+    override fun read(buf: ByteBuffer): RuleRequest {
+        return RuleRequest(
+            FfiConverterTypeEngineBindingVersion.read(buf),
+            FfiConverterTypeDomainSchemaVersion.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeAggregate.read(buf),
+            FfiConverterTypeImportCandidate.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: RuleRequest) = (
+            FfiConverterTypeEngineBindingVersion.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeDomainSchemaVersion.allocationSize(value.`domainSchemaVersion`) +
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterSequenceTypeAggregate.allocationSize(value.`aggregates`) +
+            FfiConverterTypeImportCandidate.allocationSize(value.`candidate`)
+    )
+
+    override fun write(value: RuleRequest, buf: ByteBuffer) {
+            FfiConverterTypeEngineBindingVersion.write(value.`contractVersion`, buf)
+            FfiConverterTypeDomainSchemaVersion.write(value.`domainSchemaVersion`, buf)
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterSequenceTypeAggregate.write(value.`aggregates`, buf)
+            FfiConverterTypeImportCandidate.write(value.`candidate`, buf)
+    }
+}
+
+
+
 data class SaveCommand (
     var `aggregates`: AggregateList
 
@@ -2999,6 +3196,64 @@ public object FfiConverterTypeScheduleOccurrence: FfiConverterRustBuffer<Schedul
             FfiConverterTypeFinanceDate.write(value.`dueDate`, buf)
             FfiConverterTypeOccurrenceState.write(value.`state`, buf)
             FfiConverterOptionalTypeEntityId.write(value.`transactionId`, buf)
+    }
+}
+
+
+
+data class ScheduleRequest (
+    var `contractVersion`: EngineBindingVersion
+    ,
+    var `domainSchemaVersion`: DomainSchemaVersion
+    ,
+    var `spaceId`: EntityId
+    ,
+    var `scheduleId`: EntityId
+    ,
+    var `aggregates`: List<Aggregate>
+    ,
+    var `through`: FinanceDate
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeScheduleRequest: FfiConverterRustBuffer<ScheduleRequest> {
+    override fun read(buf: ByteBuffer): ScheduleRequest {
+        return ScheduleRequest(
+            FfiConverterTypeEngineBindingVersion.read(buf),
+            FfiConverterTypeDomainSchemaVersion.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeAggregate.read(buf),
+            FfiConverterTypeFinanceDate.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ScheduleRequest) = (
+            FfiConverterTypeEngineBindingVersion.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeDomainSchemaVersion.allocationSize(value.`domainSchemaVersion`) +
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`scheduleId`) +
+            FfiConverterSequenceTypeAggregate.allocationSize(value.`aggregates`) +
+            FfiConverterTypeFinanceDate.allocationSize(value.`through`)
+    )
+
+    override fun write(value: ScheduleRequest, buf: ByteBuffer) {
+            FfiConverterTypeEngineBindingVersion.write(value.`contractVersion`, buf)
+            FfiConverterTypeDomainSchemaVersion.write(value.`domainSchemaVersion`, buf)
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterTypeEntityId.write(value.`scheduleId`, buf)
+            FfiConverterSequenceTypeAggregate.write(value.`aggregates`, buf)
+            FfiConverterTypeFinanceDate.write(value.`through`, buf)
     }
 }
 
@@ -3856,6 +4111,288 @@ public object FfiConverterTypeAggregateKind: FfiConverterRustBuffer<AggregateKin
 
 
 
+sealed class CalculationOutcome {
+
+    data class Money(
+        val `contractVersion`: kotlin.UInt,
+        val `value`: org.wimm.privatecontracts.MoneyCents) : CalculationOutcome()
+
+    {
+
+
+        companion object
+    }
+
+    data class RuleApplied(
+        val `contractVersion`: kotlin.UInt,
+        val `candidate`: org.wimm.privatecontracts.ImportCandidate,
+        val `appliedRuleIds`: List<org.wimm.privatecontracts.EntityId>) : CalculationOutcome()
+
+    {
+
+
+        companion object
+    }
+
+    data class Classified(
+        val `contractVersion`: kotlin.UInt,
+        val `rows`: List<org.wimm.privatecontracts.ClassificationRow>) : CalculationOutcome()
+
+    {
+
+
+        companion object
+    }
+
+    data class DueDates(
+        val `contractVersion`: kotlin.UInt,
+        val `dates`: List<org.wimm.privatecontracts.FinanceDate>) : CalculationOutcome()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCalculationOutcome : FfiConverterRustBuffer<CalculationOutcome>{
+    override fun read(buf: ByteBuffer): CalculationOutcome {
+        return when(buf.getInt()) {
+            1 -> CalculationOutcome.Money(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypeMoneyCents.read(buf),
+                )
+            2 -> CalculationOutcome.RuleApplied(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypeImportCandidate.read(buf),
+                FfiConverterSequenceTypeEntityId.read(buf),
+                )
+            3 -> CalculationOutcome.Classified(
+                FfiConverterUInt.read(buf),
+                FfiConverterSequenceTypeClassificationRow.read(buf),
+                )
+            4 -> CalculationOutcome.DueDates(
+                FfiConverterUInt.read(buf),
+                FfiConverterSequenceTypeFinanceDate.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: CalculationOutcome): ULong = when(value) {
+        is CalculationOutcome.Money -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypeMoneyCents.allocationSize(value.`value`)
+            )
+        }
+        is CalculationOutcome.RuleApplied -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypeImportCandidate.allocationSize(value.`candidate`)
+                + FfiConverterSequenceTypeEntityId.allocationSize(value.`appliedRuleIds`)
+            )
+        }
+        is CalculationOutcome.Classified -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterSequenceTypeClassificationRow.allocationSize(value.`rows`)
+            )
+        }
+        is CalculationOutcome.DueDates -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterSequenceTypeFinanceDate.allocationSize(value.`dates`)
+            )
+        }
+    }
+
+    override fun write(value: CalculationOutcome, buf: ByteBuffer) {
+        when(value) {
+            is CalculationOutcome.Money -> {
+                buf.putInt(1)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypeMoneyCents.write(value.`value`, buf)
+                Unit
+            }
+            is CalculationOutcome.RuleApplied -> {
+                buf.putInt(2)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypeImportCandidate.write(value.`candidate`, buf)
+                FfiConverterSequenceTypeEntityId.write(value.`appliedRuleIds`, buf)
+                Unit
+            }
+            is CalculationOutcome.Classified -> {
+                buf.putInt(3)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterSequenceTypeClassificationRow.write(value.`rows`, buf)
+                Unit
+            }
+            is CalculationOutcome.DueDates -> {
+                buf.putInt(4)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterSequenceTypeFinanceDate.write(value.`dates`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+sealed class CalculationRequest {
+
+    data class MoneyParse(
+        val v1: org.wimm.privatecontracts.MoneyParseRequest) : CalculationRequest()
+
+    {
+
+
+        companion object
+    }
+
+    data class RuleApply(
+        val v1: org.wimm.privatecontracts.RuleRequest) : CalculationRequest()
+
+    {
+
+
+        companion object
+    }
+
+    data class ImportClassify(
+        val v1: org.wimm.privatecontracts.ImportRequest) : CalculationRequest()
+
+    {
+
+
+        companion object
+    }
+
+    data class DueDates(
+        val v1: org.wimm.privatecontracts.ScheduleRequest) : CalculationRequest()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCalculationRequest : FfiConverterRustBuffer<CalculationRequest>{
+    override fun read(buf: ByteBuffer): CalculationRequest {
+        return when(buf.getInt()) {
+            1 -> CalculationRequest.MoneyParse(
+                FfiConverterTypeMoneyParseRequest.read(buf),
+                )
+            2 -> CalculationRequest.RuleApply(
+                FfiConverterTypeRuleRequest.read(buf),
+                )
+            3 -> CalculationRequest.ImportClassify(
+                FfiConverterTypeImportRequest.read(buf),
+                )
+            4 -> CalculationRequest.DueDates(
+                FfiConverterTypeScheduleRequest.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: CalculationRequest): ULong = when(value) {
+        is CalculationRequest.MoneyParse -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeMoneyParseRequest.allocationSize(value.v1)
+            )
+        }
+        is CalculationRequest.RuleApply -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeRuleRequest.allocationSize(value.v1)
+            )
+        }
+        is CalculationRequest.ImportClassify -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeImportRequest.allocationSize(value.v1)
+            )
+        }
+        is CalculationRequest.DueDates -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeScheduleRequest.allocationSize(value.v1)
+            )
+        }
+    }
+
+    override fun write(value: CalculationRequest, buf: ByteBuffer) {
+        when(value) {
+            is CalculationRequest.MoneyParse -> {
+                buf.putInt(1)
+                FfiConverterTypeMoneyParseRequest.write(value.v1, buf)
+                Unit
+            }
+            is CalculationRequest.RuleApply -> {
+                buf.putInt(2)
+                FfiConverterTypeRuleRequest.write(value.v1, buf)
+                Unit
+            }
+            is CalculationRequest.ImportClassify -> {
+                buf.putInt(3)
+                FfiConverterTypeImportRequest.write(value.v1, buf)
+                Unit
+            }
+            is CalculationRequest.DueDates -> {
+                buf.putInt(4)
+                FfiConverterTypeScheduleRequest.write(value.v1, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
 
 enum class CategorySystem {
 
@@ -3881,6 +4418,41 @@ public object FfiConverterTypeCategorySystem: FfiConverterRustBuffer<CategorySys
     override fun allocationSize(value: CategorySystem) = 4UL
 
     override fun write(value: CategorySystem, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+
+enum class Classification {
+
+    NEW,
+    DUPLICATE,
+    CONFLICT;
+
+
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeClassification: FfiConverterRustBuffer<Classification> {
+    override fun read(buf: ByteBuffer) = try {
+        Classification.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: Classification) = 4UL
+
+    override fun write(value: Classification, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
     }
 }
@@ -5791,6 +6363,34 @@ public object FfiConverterSequenceTypeCategoryConsumption: FfiConverterRustBuffe
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypeClassificationRow: FfiConverterRustBuffer<List<ClassificationRow>> {
+    override fun read(buf: ByteBuffer): List<ClassificationRow> {
+        val len = buf.getInt()
+        return List<ClassificationRow>(len) {
+            FfiConverterTypeClassificationRow.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<ClassificationRow>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeClassificationRow.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<ClassificationRow>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeClassificationRow.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeExpectation: FfiConverterRustBuffer<List<Expectation>> {
     override fun read(buf: ByteBuffer): List<Expectation> {
         val len = buf.getInt()
@@ -5809,6 +6409,34 @@ public object FfiConverterSequenceTypeExpectation: FfiConverterRustBuffer<List<E
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeExpectation.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeImportCandidate: FfiConverterRustBuffer<List<ImportCandidate>> {
+    override fun read(buf: ByteBuffer): List<ImportCandidate> {
+        val len = buf.getInt()
+        return List<ImportCandidate>(len) {
+            FfiConverterTypeImportCandidate.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<ImportCandidate>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeImportCandidate.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<ImportCandidate>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeImportCandidate.write(it, buf)
         }
     }
 }
@@ -6005,6 +6633,34 @@ public object FfiConverterSequenceTypeEntityId: FfiConverterRustBuffer<List<Enti
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeEntityId.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeFinanceDate: FfiConverterRustBuffer<List<FinanceDate>> {
+    override fun read(buf: ByteBuffer): List<FinanceDate> {
+        val len = buf.getInt()
+        return List<FinanceDate>(len) {
+            FfiConverterTypeFinanceDate.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<FinanceDate>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeFinanceDate.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<FinanceDate>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeFinanceDate.write(it, buf)
         }
     }
 }

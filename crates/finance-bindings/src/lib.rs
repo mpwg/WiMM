@@ -12,6 +12,8 @@ mod wasm_boundary;
 pub use state_v2::{project_v2, validate_v2};
 mod reverse_v2;
 pub use reverse_v2::reverse_v2;
+mod calculation_v2;
+pub use calculation_v2::calculate_v2;
 mod command_v2;
 pub use command_v2::{CommandOutcomeV2, execute_v2};
 

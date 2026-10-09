@@ -67,13 +67,7 @@ pub(crate) fn source(row: &ImportCandidate) -> &'static str {
         Some(crate::models::ParserSource::Qfx) => "qfx",
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub(crate) enum Classification {
-    New,
-    Duplicate,
-    Conflict,
-}
+pub(crate) use wimm_finance_types::calculation_contracts::Classification;
 pub(crate) fn duplicate(
     row: &ImportCandidate,
     account: &EntityId,

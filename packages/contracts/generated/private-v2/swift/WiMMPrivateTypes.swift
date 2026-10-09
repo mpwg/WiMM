@@ -1059,6 +1059,60 @@ public func FfiConverterTypeChangeSet_lower(_ value: ChangeSet) -> RustBuffer {
 }
 
 
+public struct ClassificationRow: Equatable, Hashable {
+    public var sourceRow: PositiveOrdinal
+    public var classification: Classification
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(sourceRow: PositiveOrdinal, classification: Classification) {
+        self.sourceRow = sourceRow
+        self.classification = classification
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ClassificationRow: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeClassificationRow: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ClassificationRow {
+        return
+            try ClassificationRow(
+                sourceRow: FfiConverterTypePositiveOrdinal.read(from: &buf),
+                classification: FfiConverterTypeClassification.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ClassificationRow, into buf: inout [UInt8]) {
+        FfiConverterTypePositiveOrdinal.write(value.sourceRow, into: &buf)
+        FfiConverterTypeClassification.write(value.classification, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeClassificationRow_lift(_ buf: RustBuffer) throws -> ClassificationRow {
+    return try FfiConverterTypeClassificationRow.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeClassificationRow_lower(_ value: ClassificationRow) -> RustBuffer {
+    return FfiConverterTypeClassificationRow.lower(value)
+}
+
+
 public struct Consumption: Equatable, Hashable {
     public var income: MoneyCents
     public var expense: MoneyCents
@@ -1709,6 +1763,76 @@ public func FfiConverterTypeImportMapping_lower(_ value: ImportMapping) -> RustB
 }
 
 
+public struct ImportRequest: Equatable, Hashable {
+    public var contractVersion: EngineBindingVersion
+    public var domainSchemaVersion: DomainSchemaVersion
+    public var spaceId: EntityId
+    public var aggregates: [Aggregate]
+    public var accountId: EntityId
+    public var candidates: [ImportCandidate]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: EngineBindingVersion, domainSchemaVersion: DomainSchemaVersion, spaceId: EntityId, aggregates: [Aggregate], accountId: EntityId, candidates: [ImportCandidate]) {
+        self.contractVersion = contractVersion
+        self.domainSchemaVersion = domainSchemaVersion
+        self.spaceId = spaceId
+        self.aggregates = aggregates
+        self.accountId = accountId
+        self.candidates = candidates
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ImportRequest: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeImportRequest: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ImportRequest {
+        return
+            try ImportRequest(
+                contractVersion: FfiConverterTypeEngineBindingVersion.read(from: &buf),
+                domainSchemaVersion: FfiConverterTypeDomainSchemaVersion.read(from: &buf),
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                aggregates: FfiConverterSequenceTypeAggregate.read(from: &buf),
+                accountId: FfiConverterTypeEntityId.read(from: &buf),
+                candidates: FfiConverterSequenceTypeImportCandidate.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ImportRequest, into buf: inout [UInt8]) {
+        FfiConverterTypeEngineBindingVersion.write(value.contractVersion, into: &buf)
+        FfiConverterTypeDomainSchemaVersion.write(value.domainSchemaVersion, into: &buf)
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterSequenceTypeAggregate.write(value.aggregates, into: &buf)
+        FfiConverterTypeEntityId.write(value.accountId, into: &buf)
+        FfiConverterSequenceTypeImportCandidate.write(value.candidates, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeImportRequest_lift(_ buf: RustBuffer) throws -> ImportRequest {
+    return try FfiConverterTypeImportRequest.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeImportRequest_lower(_ value: ImportRequest) -> RustBuffer {
+    return FfiConverterTypeImportRequest.lower(value)
+}
+
+
 public struct ImportRow: Equatable, Hashable {
     public var sourceRow: PositiveOrdinal
     public var candidate: ImportCandidate?
@@ -1768,6 +1892,68 @@ public func FfiConverterTypeImportRow_lift(_ buf: RustBuffer) throws -> ImportRo
 #endif
 public func FfiConverterTypeImportRow_lower(_ value: ImportRow) -> RustBuffer {
     return FfiConverterTypeImportRow.lower(value)
+}
+
+
+public struct MoneyParseRequest: Equatable, Hashable {
+    public var contractVersion: EngineBindingVersion
+    public var domainSchemaVersion: DomainSchemaVersion
+    public var spaceId: EntityId
+    public var text: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: EngineBindingVersion, domainSchemaVersion: DomainSchemaVersion, spaceId: EntityId, text: String) {
+        self.contractVersion = contractVersion
+        self.domainSchemaVersion = domainSchemaVersion
+        self.spaceId = spaceId
+        self.text = text
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension MoneyParseRequest: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeMoneyParseRequest: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> MoneyParseRequest {
+        return
+            try MoneyParseRequest(
+                contractVersion: FfiConverterTypeEngineBindingVersion.read(from: &buf),
+                domainSchemaVersion: FfiConverterTypeDomainSchemaVersion.read(from: &buf),
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                text: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: MoneyParseRequest, into buf: inout [UInt8]) {
+        FfiConverterTypeEngineBindingVersion.write(value.contractVersion, into: &buf)
+        FfiConverterTypeDomainSchemaVersion.write(value.domainSchemaVersion, into: &buf)
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterString.write(value.text, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeMoneyParseRequest_lift(_ buf: RustBuffer) throws -> MoneyParseRequest {
+    return try FfiConverterTypeMoneyParseRequest.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeMoneyParseRequest_lower(_ value: MoneyParseRequest) -> RustBuffer {
+    return FfiConverterTypeMoneyParseRequest.lower(value)
 }
 
 
@@ -2683,6 +2869,72 @@ public func FfiConverterTypeRuleReorder_lower(_ value: RuleReorder) -> RustBuffe
 }
 
 
+public struct RuleRequest: Equatable, Hashable {
+    public var contractVersion: EngineBindingVersion
+    public var domainSchemaVersion: DomainSchemaVersion
+    public var spaceId: EntityId
+    public var aggregates: [Aggregate]
+    public var candidate: ImportCandidate
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: EngineBindingVersion, domainSchemaVersion: DomainSchemaVersion, spaceId: EntityId, aggregates: [Aggregate], candidate: ImportCandidate) {
+        self.contractVersion = contractVersion
+        self.domainSchemaVersion = domainSchemaVersion
+        self.spaceId = spaceId
+        self.aggregates = aggregates
+        self.candidate = candidate
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension RuleRequest: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuleRequest: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuleRequest {
+        return
+            try RuleRequest(
+                contractVersion: FfiConverterTypeEngineBindingVersion.read(from: &buf),
+                domainSchemaVersion: FfiConverterTypeDomainSchemaVersion.read(from: &buf),
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                aggregates: FfiConverterSequenceTypeAggregate.read(from: &buf),
+                candidate: FfiConverterTypeImportCandidate.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: RuleRequest, into buf: inout [UInt8]) {
+        FfiConverterTypeEngineBindingVersion.write(value.contractVersion, into: &buf)
+        FfiConverterTypeDomainSchemaVersion.write(value.domainSchemaVersion, into: &buf)
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterSequenceTypeAggregate.write(value.aggregates, into: &buf)
+        FfiConverterTypeImportCandidate.write(value.candidate, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuleRequest_lift(_ buf: RustBuffer) throws -> RuleRequest {
+    return try FfiConverterTypeRuleRequest.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuleRequest_lower(_ value: RuleRequest) -> RustBuffer {
+    return FfiConverterTypeRuleRequest.lower(value)
+}
+
+
 public struct SaveCommand: Equatable, Hashable {
     public var aggregates: AggregateList
 
@@ -2968,6 +3220,76 @@ public func FfiConverterTypeScheduleOccurrence_lift(_ buf: RustBuffer) throws ->
 #endif
 public func FfiConverterTypeScheduleOccurrence_lower(_ value: ScheduleOccurrence) -> RustBuffer {
     return FfiConverterTypeScheduleOccurrence.lower(value)
+}
+
+
+public struct ScheduleRequest: Equatable, Hashable {
+    public var contractVersion: EngineBindingVersion
+    public var domainSchemaVersion: DomainSchemaVersion
+    public var spaceId: EntityId
+    public var scheduleId: EntityId
+    public var aggregates: [Aggregate]
+    public var through: FinanceDate
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: EngineBindingVersion, domainSchemaVersion: DomainSchemaVersion, spaceId: EntityId, scheduleId: EntityId, aggregates: [Aggregate], through: FinanceDate) {
+        self.contractVersion = contractVersion
+        self.domainSchemaVersion = domainSchemaVersion
+        self.spaceId = spaceId
+        self.scheduleId = scheduleId
+        self.aggregates = aggregates
+        self.through = through
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ScheduleRequest: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeScheduleRequest: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ScheduleRequest {
+        return
+            try ScheduleRequest(
+                contractVersion: FfiConverterTypeEngineBindingVersion.read(from: &buf),
+                domainSchemaVersion: FfiConverterTypeDomainSchemaVersion.read(from: &buf),
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                scheduleId: FfiConverterTypeEntityId.read(from: &buf),
+                aggregates: FfiConverterSequenceTypeAggregate.read(from: &buf),
+                through: FfiConverterTypeFinanceDate.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ScheduleRequest, into buf: inout [UInt8]) {
+        FfiConverterTypeEngineBindingVersion.write(value.contractVersion, into: &buf)
+        FfiConverterTypeDomainSchemaVersion.write(value.domainSchemaVersion, into: &buf)
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterTypeEntityId.write(value.scheduleId, into: &buf)
+        FfiConverterSequenceTypeAggregate.write(value.aggregates, into: &buf)
+        FfiConverterTypeFinanceDate.write(value.through, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeScheduleRequest_lift(_ buf: RustBuffer) throws -> ScheduleRequest {
+    return try FfiConverterTypeScheduleRequest.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeScheduleRequest_lower(_ value: ScheduleRequest) -> RustBuffer {
+    return FfiConverterTypeScheduleRequest.lower(value)
 }
 
 
@@ -3861,6 +4183,195 @@ public func FfiConverterTypeAggregateKind_lower(_ value: AggregateKind) -> RustB
 
 
 
+public enum CalculationOutcome: Equatable, Hashable {
+
+    case money(contractVersion: UInt32, value: MoneyCents
+    )
+    case ruleApplied(contractVersion: UInt32, candidate: ImportCandidate, appliedRuleIds: [EntityId]
+    )
+    case classified(contractVersion: UInt32, rows: [ClassificationRow]
+    )
+    case dueDates(contractVersion: UInt32, dates: [FinanceDate]
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension CalculationOutcome: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCalculationOutcome: FfiConverterRustBuffer {
+    typealias SwiftType = CalculationOutcome
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CalculationOutcome {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .money(contractVersion: try FfiConverterUInt32.read(from: &buf), value: try FfiConverterTypeMoneyCents.read(from: &buf)
+        )
+
+        case 2: return .ruleApplied(contractVersion: try FfiConverterUInt32.read(from: &buf), candidate: try FfiConverterTypeImportCandidate.read(from: &buf), appliedRuleIds: try FfiConverterSequenceTypeEntityId.read(from: &buf)
+        )
+
+        case 3: return .classified(contractVersion: try FfiConverterUInt32.read(from: &buf), rows: try FfiConverterSequenceTypeClassificationRow.read(from: &buf)
+        )
+
+        case 4: return .dueDates(contractVersion: try FfiConverterUInt32.read(from: &buf), dates: try FfiConverterSequenceTypeFinanceDate.read(from: &buf)
+        )
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: CalculationOutcome, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case let .money(contractVersion,value):
+            writeInt(&buf, Int32(1))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+            FfiConverterTypeMoneyCents.write(value, into: &buf)
+
+
+        case let .ruleApplied(contractVersion,candidate,appliedRuleIds):
+            writeInt(&buf, Int32(2))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+            FfiConverterTypeImportCandidate.write(candidate, into: &buf)
+            FfiConverterSequenceTypeEntityId.write(appliedRuleIds, into: &buf)
+
+
+        case let .classified(contractVersion,rows):
+            writeInt(&buf, Int32(3))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+            FfiConverterSequenceTypeClassificationRow.write(rows, into: &buf)
+
+
+        case let .dueDates(contractVersion,dates):
+            writeInt(&buf, Int32(4))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+            FfiConverterSequenceTypeFinanceDate.write(dates, into: &buf)
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCalculationOutcome_lift(_ buf: RustBuffer) throws -> CalculationOutcome {
+    return try FfiConverterTypeCalculationOutcome.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCalculationOutcome_lower(_ value: CalculationOutcome) -> RustBuffer {
+    return FfiConverterTypeCalculationOutcome.lower(value)
+}
+
+
+
+
+public enum CalculationRequest: Equatable, Hashable {
+
+    case moneyParse(MoneyParseRequest
+    )
+    case ruleApply(RuleRequest
+    )
+    case importClassify(ImportRequest
+    )
+    case dueDates(ScheduleRequest
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension CalculationRequest: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCalculationRequest: FfiConverterRustBuffer {
+    typealias SwiftType = CalculationRequest
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CalculationRequest {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .moneyParse(try FfiConverterTypeMoneyParseRequest.read(from: &buf)
+        )
+
+        case 2: return .ruleApply(try FfiConverterTypeRuleRequest.read(from: &buf)
+        )
+
+        case 3: return .importClassify(try FfiConverterTypeImportRequest.read(from: &buf)
+        )
+
+        case 4: return .dueDates(try FfiConverterTypeScheduleRequest.read(from: &buf)
+        )
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: CalculationRequest, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case let .moneyParse(v1):
+            writeInt(&buf, Int32(1))
+            FfiConverterTypeMoneyParseRequest.write(v1, into: &buf)
+
+
+        case let .ruleApply(v1):
+            writeInt(&buf, Int32(2))
+            FfiConverterTypeRuleRequest.write(v1, into: &buf)
+
+
+        case let .importClassify(v1):
+            writeInt(&buf, Int32(3))
+            FfiConverterTypeImportRequest.write(v1, into: &buf)
+
+
+        case let .dueDates(v1):
+            writeInt(&buf, Int32(4))
+            FfiConverterTypeScheduleRequest.write(v1, into: &buf)
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCalculationRequest_lift(_ buf: RustBuffer) throws -> CalculationRequest {
+    return try FfiConverterTypeCalculationRequest.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCalculationRequest_lower(_ value: CalculationRequest) -> RustBuffer {
+    return FfiConverterTypeCalculationRequest.lower(value)
+}
+
+
+
+
 public enum CategorySystem: Equatable, Hashable {
 
     case uncategorized
@@ -3915,6 +4426,79 @@ public func FfiConverterTypeCategorySystem_lift(_ buf: RustBuffer) throws -> Cat
 #endif
 public func FfiConverterTypeCategorySystem_lower(_ value: CategorySystem) -> RustBuffer {
     return FfiConverterTypeCategorySystem.lower(value)
+}
+
+
+
+
+public enum Classification: Equatable, Hashable {
+
+    case new
+    case duplicate
+    case conflict
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension Classification: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeClassification: FfiConverterRustBuffer {
+    typealias SwiftType = Classification
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Classification {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .new
+
+        case 2: return .duplicate
+
+        case 3: return .conflict
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: Classification, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case .new:
+            writeInt(&buf, Int32(1))
+
+
+        case .duplicate:
+            writeInt(&buf, Int32(2))
+
+
+        case .conflict:
+            writeInt(&buf, Int32(3))
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeClassification_lift(_ buf: RustBuffer) throws -> Classification {
+    return try FfiConverterTypeClassification.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeClassification_lower(_ value: Classification) -> RustBuffer {
+    return FfiConverterTypeClassification.lower(value)
 }
 
 
@@ -5848,6 +6432,31 @@ fileprivate struct FfiConverterSequenceTypeCategoryConsumption: FfiConverterRust
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterSequenceTypeClassificationRow: FfiConverterRustBuffer {
+    typealias SwiftType = [ClassificationRow]
+
+    public static func write(_ value: [ClassificationRow], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeClassificationRow.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [ClassificationRow] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [ClassificationRow]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeClassificationRow.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterSequenceTypeExpectation: FfiConverterRustBuffer {
     typealias SwiftType = [Expectation]
 
@@ -5865,6 +6474,31 @@ fileprivate struct FfiConverterSequenceTypeExpectation: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeExpectation.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeImportCandidate: FfiConverterRustBuffer {
+    typealias SwiftType = [ImportCandidate]
+
+    public static func write(_ value: [ImportCandidate], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeImportCandidate.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [ImportCandidate] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [ImportCandidate]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeImportCandidate.read(from: &buf))
         }
         return seq
     }
@@ -6040,6 +6674,31 @@ fileprivate struct FfiConverterSequenceTypeEntityId: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeEntityId.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeFinanceDate: FfiConverterRustBuffer {
+    typealias SwiftType = [FinanceDate]
+
+    public static func write(_ value: [FinanceDate], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeFinanceDate.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [FinanceDate] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [FinanceDate]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeFinanceDate.read(from: &buf))
         }
         return seq
     }

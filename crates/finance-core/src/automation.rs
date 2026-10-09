@@ -4,37 +4,11 @@ use crate::{
     CoreResult, command_contracts::COMMAND_ERROR, models::*, projections, scalars::*,
     typed_automation as automation,
 };
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 use unicode_normalization::UnicodeNormalization;
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct RuleRequest {
-    contract_version: u32,
-    domain_schema_version: u32,
-    space_id: EntityId,
-    aggregates: Vec<Aggregate>,
-    candidate: ImportCandidate,
-}
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct ImportRequest {
-    contract_version: u32,
-    domain_schema_version: u32,
-    space_id: EntityId,
-    aggregates: Vec<Aggregate>,
-    account_id: EntityId,
-    candidates: Vec<ImportCandidate>,
-}
-#[derive(Deserialize)]
-#[serde(tag = "calculationType")]
-enum Calculation {
-    #[serde(rename = "rule.apply")]
-    RuleApply(RuleRequest),
-    #[serde(rename = "import.classify")]
-    ImportClassify(ImportRequest),
-}
+use wimm_finance_types::calculation_contracts::{
+    CalculationOutcome, CalculationRequest as Calculation, ClassificationRow,
+};
 fn fold(text: &str) -> String {
     text.nfc().collect::<String>().to_lowercase()
 }
@@ -66,14 +40,7 @@ fn matches(condition: &RuleCondition, row: &ImportCandidate) -> bool {
         ConditionOperator::Lte => value <= other.as_str(),
     }
 }
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct ClassificationRow {
-    source_row: PositiveOrdinal,
-    classification: automation::Classification,
-}
-pub fn calculate(decoded: Value) -> CoreResult<Value> {
-    let request: Calculation = serde_json::from_value(decoded).map_err(|_| COMMAND_ERROR)?;
+pub fn calculate(request: Calculation) -> CoreResult<CalculationOutcome> {
     match request {
         Calculation::RuleApply(request) => {
             if request.contract_version != 1 || request.domain_schema_version != 1 {
@@ -136,9 +103,11 @@ pub fn calculate(decoded: Value) -> CoreResult<Value> {
                     break;
                 }
             }
-            Ok(
-                serde_json::json!({"contractVersion":1,"status":"ruleApplied","candidate":result,"appliedRuleIds":applied}),
-            )
+            Ok(CalculationOutcome::RuleApplied {
+                contract_version: 1,
+                candidate: result,
+                applied_rule_ids: applied,
+            })
         }
         Calculation::ImportClassify(request) => {
             if request.contract_version != 1 || request.domain_schema_version != 1 {
@@ -203,7 +172,11 @@ pub fn calculate(decoded: Value) -> CoreResult<Value> {
                     identities.entry(key).or_default().insert(fp);
                 }
             }
-            Ok(serde_json::json!({"contractVersion":1,"status":"classified","rows":rows}))
+            Ok(CalculationOutcome::Classified {
+                contract_version: 1,
+                rows,
+            })
         }
+        _ => Err(COMMAND_ERROR),
     }
 }

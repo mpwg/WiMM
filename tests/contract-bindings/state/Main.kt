@@ -9,6 +9,9 @@ import org.wimm.core.commandErrorToV1
 import org.wimm.core.reverseRequestFromV1
 import org.wimm.core.reverseV2
 import org.wimm.core.commandOutcomeToV1
+import org.wimm.core.calculationRequestFromV1
+import org.wimm.core.calculateV2
+import org.wimm.core.calculationOutcomeToV1
 import org.wimm.privatecontracts.ContractException
 fun main() {
     generateSequence(::readlnOrNull).forEach { input ->
@@ -31,6 +34,11 @@ fun main() {
                     val request = reverseRequestFromV1(parts[1])
                     typed = true
                     commandOutcomeToV1(reverseV2(request))
+                }
+                "calculate" -> {
+                    val request = calculationRequestFromV1(parts[1])
+                    typed = true
+                    calculationOutcomeToV1(calculateV2(request))
                 }
                 else -> error("Unbekannte synthetische Bindingaktion.")
             }

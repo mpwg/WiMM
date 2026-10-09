@@ -900,6 +900,14 @@ public func validateJson(request: String) -> String  {
     )
 })
 }
+public func calculateV2(request: CalculationRequest)throws  -> CalculationOutcome  {
+    return try  FfiConverterTypeCalculationOutcome_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_calculate_v2(
+        FfiConverterTypeCalculationRequest_lower(request),uniffiCallStatus
+    )
+})
+}
 public func executeV2(request: Request)throws  -> CommandOutcomeV2  {
     return try  FfiConverterTypeCommandOutcomeV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
         uniffiCallStatus in
@@ -969,6 +977,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_wimm_core_bindings_checksum_func_validate_json() != 63399) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_func_calculate_v2() != 7814) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_wimm_core_bindings_checksum_func_execute_v2() != 24569) {

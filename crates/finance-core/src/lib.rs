@@ -2,10 +2,11 @@
 //! Gemeinsamer Fachkern im Aufbau (K03/K04): keine UI, Datenbank, HTTP, Systemzeit oder Zufallsquelle.
 //! Produktmigration sämtlicher vorhandener Regeln bleibt K04/K05.
 #![forbid(unsafe_code)]
-use serde::Deserialize;
 use serde_json::{Value, json};
 mod aggregate_schema;
 mod automation;
+mod calculation_api;
+pub use calculation_api::{calculate, decode_calculation_request_v1};
 pub mod command_contracts;
 mod inverse;
 mod typed_automation;
@@ -95,16 +96,6 @@ fn valid_id(value: &str) -> bool {
     wimm_finance_types::valid_id(value)
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct MoneyRequest {
-    contract_version: u32,
-    domain_schema_version: u32,
-    space_id: String,
-    calculation_type: String,
-    text: String,
-}
-
 /// Exakte Dezimaltextverarbeitung; ausschließlich Integer, auch für Zwischenwerte.
 pub fn parse_money(text: &str) -> CoreResult<i64> {
     const INVALID: (&str, &str) = (
@@ -152,25 +143,9 @@ pub fn parse_money(text: &str) -> CoreResult<i64> {
 
 pub fn calculate_json(input: &str) -> String {
     output((|| {
-        let decoded = decode(input)?;
-        if ["rule.apply", "import.classify"]
-            .contains(&decoded["calculationType"].as_str().unwrap_or(""))
-        {
-            return automation::calculate(decoded);
-        }
-        if decoded["calculationType"] == "schedule.dueDates" {
-            return schedule_dates::calculate(decoded);
-        }
-        let request: MoneyRequest = serde_json::from_value(decoded)
-            .map_err(|_| ("INVALID_COMMAND", "Der Fachbefehl ist ungültig."))?;
-        if request.contract_version != 1
-            || request.domain_schema_version != 1
-            || request.calculation_type != "money.parse"
-            || !valid_id(&request.space_id)
-        {
-            return Err(("INVALID_COMMAND", "Der Fachbefehl ist ungültig."));
-        }
-        Ok(json!({"contractVersion":1,"status":"money","value":parse_money(&request.text)?}))
+        let request = decode_calculation_request_v1(input)?;
+        serde_json::to_value(calculate(request)?)
+            .map_err(|_| ("INVALID_COMMAND", "Der Fachbefehl ist ungültig."))
     })())
 }
 

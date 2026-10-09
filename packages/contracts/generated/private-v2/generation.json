@@ -2,7 +2,7 @@
   "bindingVersion": 2,
   "domainSchemaVersion": 1,
   "legacyBindingVersion": 1,
-  "scope": "money.parse, execute, reverse, project und validate nativ/WASM; private Modelle TS/Swift/Kotlin; weitere V2-Aktionen offen",
+  "scope": "calculate, execute, reverse, project und validate nativ/WASM; private Modelle TS/Swift/Kotlin; vollständige private Engineaktionen",
   "generators": {
     "uniffi": "0.32.2",
     "wasmBindgen": "0.2.129"

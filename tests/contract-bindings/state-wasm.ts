@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type * as Binding from '../../packages/contracts/generated/private-v2/wasm/wimm_core_bindings.js';
-export type StateAction = 'project' | 'validate' | 'reverse';
+export type StateAction = 'project' | 'validate' | 'reverse' | 'calculate';
 export function callTypedState(wasm: typeof Binding, method: StateAction, input: unknown): unknown {
   try {
-    const result = method === 'project' ? wasm.project_v2(input as Binding.ProjectionRequest) : method === 'validate' ? wasm.validate_v2(input as Binding.ValidationRequest) : wasm.reverse_v2(input as Binding.ReverseRequest);
+    const result = method === 'project' ? wasm.project_v2(input as Binding.ProjectionRequest) : method === 'validate' ? wasm.validate_v2(input as Binding.ValidationRequest) : method === 'reverse' ? wasm.reverse_v2(input as Binding.ReverseRequest) : wasm.calculate_v2(input as Binding.CalculationRequest);
     if (result.contractVersion !== 2) throw new Error('Die V2-Ergebnisversion fehlt.');
     return { ...result, contractVersion: 1 };
   } catch (error) {

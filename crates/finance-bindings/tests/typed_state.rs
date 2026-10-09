@@ -2,18 +2,18 @@
 #![forbid(unsafe_code)]
 #[cfg(feature = "native")]
 #[test]
-fn typed_state_actions_preserve_all_121_catalog_oracles() {
+fn typed_state_actions_preserve_all_204_catalog_oracles() {
     use serde_json::{Value, json};
     use wimm_finance_types::ContractError;
     let cases: Vec<Value> = serde_json::from_str(include_str!(
         "../../finance-core/tests/fixtures/contract-catalog.json"
     ))
     .unwrap();
-    let mut counts = [0, 0, 0];
-    let mut typed_counts = [0, 0, 0];
+    let mut counts = [0, 0, 0, 0];
+    let mut typed_counts = [0, 0, 0, 0];
     for case in cases {
         let method = case["method"].as_str().unwrap();
-        if !["project", "validate", "reverse"].contains(&method) {
+        if !["project", "validate", "reverse", "calculate"].contains(&method) {
             continue;
         }
         let raw = case["request"]
@@ -40,7 +40,7 @@ fn typed_state_actions_preserve_all_121_catalog_oracles() {
                     wimm_core_bindings::validate_v2(request)
                         .map(|result| serde_json::to_value(result).unwrap())
                 })
-        } else {
+        } else if method == "reverse" {
             counts[2] += 1;
             wimm_finance_core::decode_reverse_request_v1(&raw)
                 .map_err(ContractError::from)
@@ -54,6 +54,16 @@ fn typed_state_actions_preserve_all_121_catalog_oracles() {
                             value["contractVersion"] = 2.into();
                             value
                         })
+                })
+        } else {
+            counts[3] += 1;
+            wimm_finance_core::decode_calculation_request_v1(&raw)
+                .map_err(ContractError::from)
+                .and_then(|mut request| {
+                    typed_counts[3] += 1;
+                    request.set_binding_version(2);
+                    wimm_core_bindings::calculate_v2(request)
+                        .map(|result| serde_json::to_value(result).unwrap())
                 })
         };
         let output = match result {
@@ -73,6 +83,6 @@ fn typed_state_actions_preserve_all_121_catalog_oracles() {
         };
         assert_eq!(output, case["expected"], "{}", case["name"]);
     }
-    assert_eq!(counts, [50, 60, 11]);
-    assert_eq!(typed_counts, [41, 46, 11]);
+    assert_eq!(counts, [50, 60, 11, 83]);
+    assert_eq!(typed_counts, [41, 46, 11, 80]);
 }

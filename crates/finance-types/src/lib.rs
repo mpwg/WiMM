@@ -11,6 +11,7 @@ pub mod native;
 pub const MAX_SAFE: i64 = 9_007_199_254_740_991;
 pub type CoreResult<T> = Result<T, (&'static str, &'static str)>;
 pub mod aggregate_schema;
+pub mod calculation_contracts;
 pub mod calendar;
 pub mod command_contracts;
 pub mod models;

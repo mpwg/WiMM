@@ -69,6 +69,11 @@ export interface ChangeSet {
     aggregates: Aggregate[];
 }
 
+export interface ClassificationRow {
+    sourceRow: PositiveOrdinal;
+    classification: Classification;
+}
+
 export interface Consumption {
     income: MoneyCents;
     expense: MoneyCents;
@@ -155,11 +160,27 @@ export interface ImportMapping {
     mapping: unknown;
 }
 
+export interface ImportRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    accountId: EntityId;
+    candidates: ImportCandidate[];
+}
+
 export interface ImportRow {
     sourceRow: PositiveOrdinal;
     candidate: ImportCandidate | null;
     decision: ImportDecision;
     issues: string[];
+}
+
+export interface MoneyParseRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    text: string;
 }
 
 export interface Payee {
@@ -271,6 +292,14 @@ export interface RuleReorder {
     ruleIds: EntityId[];
 }
 
+export interface RuleRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    candidate: ImportCandidate;
+}
+
 export interface SaveCommand {
     aggregates: NonEmptyVec<Aggregate>;
 }
@@ -307,6 +336,15 @@ export interface ScheduleOccurrence {
     dueDate: FinanceDate;
     state: OccurrenceState;
     transactionId?: EntityId;
+}
+
+export interface ScheduleRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    scheduleId: EntityId;
+    aggregates: Aggregate[];
+    through: FinanceDate;
 }
 
 export interface ScheduleSkip {
@@ -379,7 +417,13 @@ export type Aggregate = ({ aggregateType: "account" } & Account) | ({ aggregateT
 
 export type AggregateKind = "Account" | "FinancialRevision" | "CategoryGroup" | "Category" | "Payee" | "Transaction" | "Transfer" | "Reconciliation" | "ImportMapping" | "ImportBatch" | "ImportFingerprint" | "Rule" | "Schedule" | "ScheduleOccurrence";
 
+export type CalculationOutcome = { status: "money"; contractVersion: number; value: MoneyCents } | { status: "ruleApplied"; contractVersion: number; candidate: ImportCandidate; appliedRuleIds: EntityId[] } | { status: "classified"; contractVersion: number; rows: ClassificationRow[] } | { status: "dueDates"; contractVersion: number; dates: FinanceDate[] };
+
+export type CalculationRequest = ({ calculationType: "money.parse" } & MoneyParseRequest) | ({ calculationType: "rule.apply" } & RuleRequest) | ({ calculationType: "import.classify" } & ImportRequest) | ({ calculationType: "schedule.dueDates" } & ScheduleRequest);
+
 export type CategorySystem = "uncategorized";
+
+export type Classification = "new" | "duplicate" | "conflict";
 
 export type Clearance = "uncleared" | "cleared" | "reconciled";
 
@@ -479,6 +523,8 @@ export function calculate_json(request: string): string;
 
 export function calculate_money_v2(request: MoneyRequestV2): MoneyResultV2;
 
+export function calculate_v2(request: CalculationRequest): CalculationOutcome;
+
 /**
  * K01-JSON-Vertrag; alle Facharbeit verbleibt in der unabhängigen Kernbibliothek.
  */
@@ -506,6 +552,7 @@ export interface InitOutput {
     readonly __wbg_moneyresultv2_free: (a: number, b: number) => void;
     readonly calculate_json: (a: number, b: number) => [number, number];
     readonly calculate_money_v2: (a: number) => number;
+    readonly calculate_v2: (a: any) => [number, number, number];
     readonly execute_json: (a: number, b: number) => [number, number];
     readonly execute_v2: (a: any) => [number, number, number];
     readonly moneyrequestv2_contractVersion: (a: number) => number;

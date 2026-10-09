@@ -28,7 +28,7 @@ for (const file of files) {
   await writeFile(path, original.replace(/\r\n/g, '\n').replace(/[\t ]+$/gm, '').replace(/\n*$/, '\n'));
 }
 // Versionen kennzeichnen den erzeugten Abschnitt, keine abgeschlossene Gesamt-ABI.
-await writeFile(resolve(staging, 'generation.json'), JSON.stringify({ bindingVersion: 2, domainSchemaVersion: 1, legacyBindingVersion: 1, scope: 'money.parse, execute, reverse, project und validate nativ/WASM; private Modelle TS/Swift/Kotlin; weitere V2-Aktionen offen', generators: { uniffi: '0.32.2', wasmBindgen: '0.2.129' }, files }, null, 2) + '\n');
+await writeFile(resolve(staging, 'generation.json'), JSON.stringify({ bindingVersion: 2, domainSchemaVersion: 1, legacyBindingVersion: 1, scope: 'calculate, execute, reverse, project und validate nativ/WASM; private Modelle TS/Swift/Kotlin; vollständige private Engineaktionen', generators: { uniffi: '0.32.2', wasmBindgen: '0.2.129' }, files }, null, 2) + '\n');
 for (const file of [...files, 'generation.json']) {
   const source = resolve(staging, file);
   const destination = resolve(expectedRoot, file);
