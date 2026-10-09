@@ -1,0 +1,308 @@
+{
+  "version": 1,
+  "scope": "AR11-Zielgrenzen; expliziter Bestand bis AR06, kein automatisches Baselineupdate",
+  "uiLegacy": {
+    "packages/ui/src/account-actions.tsx": [
+      {
+        "kind": "financeArithmetic",
+        "source": "absolute % 100n"
+      },
+      {
+        "kind": "financeArithmetic",
+        "source": "absolute / 100n"
+      }
+    ],
+    "packages/ui/src/application-runtime.ts": [
+      {
+        "kind": "runtime",
+        "source": "@wimm/browser-adapters",
+        "names": [
+          "*"
+        ]
+      }
+    ],
+    "packages/ui/src/automation-views.tsx": [
+      {
+        "kind": "runtime",
+        "source": "@wimm/browser-adapters",
+        "names": [
+          "cancellationForSignal"
+        ]
+      },
+      {
+        "kind": "runtime",
+        "source": "@wimm/importers",
+        "names": [
+          "MAX_IMPORT_BYTES",
+          "normalizeImportRecord"
+        ]
+      },
+      {
+        "kind": "runtime",
+        "source": "@wimm/domain",
+        "names": [
+          "moneyDecimal"
+        ]
+      }
+    ],
+    "packages/ui/src/commit-worker.ts": [
+      {
+        "kind": "runtime",
+        "source": "@wimm/domain",
+        "names": [
+          "commitImportGroup"
+        ]
+      }
+    ],
+    "packages/ui/src/import-worker.ts": [
+      {
+        "kind": "runtime",
+        "source": "@wimm/importers/worker",
+        "names": []
+      }
+    ],
+    "packages/ui/src/profile-store.ts": [
+      {
+        "kind": "runtime",
+        "source": "@wimm/browser-adapters",
+        "names": [
+          "createBrowserProfileStore"
+        ]
+      }
+    ],
+    "packages/ui/src/transactions.tsx": [
+      {
+        "kind": "financeArithmetic",
+        "source": "absolute % 100n"
+      },
+      {
+        "kind": "financeArithmetic",
+        "source": "absolute / 100n"
+      },
+      {
+        "kind": "runtime",
+        "source": "@wimm/domain",
+        "names": [
+          "parseFinanceDate",
+          "parseMoney"
+        ]
+      }
+    ],
+    "packages/ui/src/workspace.tsx": [
+      {
+        "kind": "financeArithmetic",
+        "source": "cents / 100"
+      }
+    ],
+    "apps/web/src/app.tsx": [
+      {
+        "kind": "runtime",
+        "source": "@wimm/storage",
+        "names": [
+          "IndexedDbStorageAdapter"
+        ]
+      },
+      {
+        "kind": "runtime",
+        "source": "@wimm/browser-adapters",
+        "names": [
+          "createBrowserApplicationRuntime",
+          "createBrowserProfileStore",
+          "createBrowserStoragePersistence"
+        ]
+      }
+    ],
+    "apps/desktop/src/app.tsx": [
+      {
+        "kind": "runtime",
+        "source": "@wimm/storage",
+        "names": [
+          "DesktopStorageAdapter",
+          "IndexedDbStorageAdapter",
+          "createTauriStorageBridge"
+        ]
+      },
+      {
+        "kind": "runtime",
+        "source": "@wimm/browser-adapters",
+        "names": [
+          "createBrowserApplicationRuntime",
+          "createBrowserProfileStore"
+        ]
+      }
+    ]
+  },
+  "rust": {
+    "wimm-contract-primitives": {
+      "role": "primitive",
+      "features": [
+        "wasm-data"
+      ],
+      "checkClosure": true,
+      "bindings": true,
+      "nativeAssertions": "crates/contract-primitives/src/lib.rs"
+    },
+    "wimm-public-contracts": {
+      "role": "publicTypes",
+      "features": [
+        "contract-schema",
+        "native-bindings",
+        "wasm-bindings"
+      ],
+      "checkClosure": true,
+      "bindings": true,
+      "nativeAssertions": "crates/public-contracts/tests/forms.rs"
+    },
+    "wimm-local-contracts": {
+      "role": "localTypes",
+      "features": [
+        "contract-schema",
+        "native-bindings",
+        "wasm-bindings"
+      ],
+      "checkClosure": true,
+      "bindings": true,
+      "nativeAssertions": "crates/local-contracts/tests/storage.rs"
+    },
+    "wimm-finance-types": {
+      "role": "privateTypes",
+      "features": [
+        "contract-schema",
+        "native-bindings",
+        "wasm-bindings"
+      ],
+      "checkClosure": true,
+      "bindings": true,
+      "nativeAssertions": "crates/finance-types/src/scalars.rs"
+    },
+    "wimm-finance-core": {
+      "role": "core",
+      "features": [
+        "contract-probe",
+        "contract-schema"
+      ],
+      "checkClosure": true,
+      "bindings": false,
+      "nativeAssertions": "crates/finance-core/tests/contract_catalog.rs"
+    },
+    "wimm-core-bindings": {
+      "role": "bindings",
+      "features": [
+        "contract-probe",
+        "contract-schema",
+        "default",
+        "native",
+        "wasm"
+      ],
+      "checkClosure": true,
+      "bindings": true,
+      "nativeAssertions": "crates/finance-bindings/tests/typed_money.rs"
+    },
+    "wimm-ffi-bindgen": {
+      "role": "generator",
+      "features": [],
+      "checkClosure": false,
+      "bindings": false
+    },
+    "wimm-core-probe": {
+      "role": "probe",
+      "features": [],
+      "checkClosure": false,
+      "bindings": false,
+      "nativeAssertions": "tools/core-probe/tests/process_contract.rs"
+    },
+    "wimm-wasm-glue": {
+      "role": "generator",
+      "features": [],
+      "checkClosure": false,
+      "bindings": false
+    },
+    "wimm-dal-proof": {
+      "role": "dalProof",
+      "features": [
+        "mysql-build",
+        "postgres-build"
+      ],
+      "checkClosure": true,
+      "bindings": false,
+      "nativeAssertions": "tools/dal-proof/src/lib.rs"
+    },
+    "wimm-contract-schema": {
+      "role": "generator",
+      "features": [],
+      "checkClosure": false,
+      "bindings": false,
+      "nativeAssertions": "tools/contract-schema/src/main.rs"
+    },
+    "wimm-desktop": {
+      "role": "platform",
+      "features": [],
+      "checkClosure": false,
+      "bindings": true,
+      "nativeAssertions": "apps/desktop/src-tauri/src/storage_failure.rs"
+    }
+  },
+  "plannedServerRoots": [
+    "wimm-server",
+    "wimm-server-application",
+    "wimm-server-dal",
+    "wimm-http"
+  ],
+  "catalogs": {
+    "crates/finance-core/tests/fixtures/contract-catalog.json": {
+      "count": 479,
+      "sha256": "cb49c4e2f397c9cb9a0b0a8715c1bfb663c508f1cb9da94ddf4e37b60d60a8fb"
+    },
+    "crates/finance-core/tests/fixtures/generator-context-regression.json": {
+      "count": 10,
+      "sha256": "0aabedce8ddc6b3343b30f09d84ca11e9b37123bcc553a09902f49df528e7c92"
+    },
+    "crates/local-contracts/tests/fixtures/migration-forms.json": {
+      "count": 20,
+      "sha256": "7ac5a2a928d026fdc714efa95b762899034e40456b87f6601ff37dcf5c137639"
+    },
+    "crates/local-contracts/tests/fixtures/snapshot-forms.json": {
+      "count": 40,
+      "sha256": "4de476702bd491e7f9c82dec03c61d63bc888ad641af8a3e6b996420859b9eac"
+    },
+    "crates/local-contracts/tests/fixtures/port-forms.json": {
+      "count": 15,
+      "sha256": "3d7c824ac84cf27bebcd3700537d6fc49f734f27ef545c07fe18b0aeccc0ee3a"
+    },
+    "crates/public-contracts/tests/fixtures/public-forms.json": {
+      "count": 42,
+      "sha256": "6ede9a9dda33a808c60b0c52f733fbee916997255bf080cfffc80a876d89417e"
+    }
+  },
+  "plannedRoles": {
+    "client": {
+      "allows": "Fachkern, private/lokale Portdaten, Clientkryptoports; keine ORM/UI/HTTP-Runtime"
+    },
+    "localDal": {
+      "allows": "Lokale Datenformen, Persistenzbasis; keine Finanzhandler"
+    },
+    "clientCrypto": {
+      "allows": "Cryptoverträge und native/WASM-libsodium; keine Finanzhandler/ORM/HTTP"
+    },
+    "server": {
+      "allows": "Öffentliche Verträge, Server-DAL, öffentliche Signaturprüfung; kein privater Clientabschluss"
+    },
+    "serverDal": {
+      "allows": "Öffentliche Verträge und echte SQLadapter; keine Finanzmodelle/Privatkrypto"
+    },
+    "publicCrypto": {
+      "allows": "Öffentliche Typen und Signaturprüfung; keine private Clientquelle"
+    },
+    "http": {
+      "allows": "Öffentliche Serveranwendung und Axum/Tokio; eigenes Serverbinary muss geprüft werden"
+    }
+  },
+  "legacyAssertionExemptions": {
+    "wimm-ffi-bindgen": "Unveränderter Generatorwrapper im Reviewstand 84d730c; tatsächliche generierte SDKs separat geprüft.",
+    "wimm-wasm-glue": "Unveränderter Generatorwrapper im Reviewstand 84d730c; tatsächliche native/WASM-Bindings separat geprüft."
+  },
+  "plannedServerBinaries": [
+    "wimm-server",
+    "wimm-http"
+  ]
+}

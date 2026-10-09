@@ -1,0 +1,54 @@
+{
+  "localSqliteNative": {
+    "status": "historical",
+    "runtime": "echter Rust-Prozess/SQLite, AR03 30 Fälle",
+    "commit": "307e4e5",
+    "command": "pnpm test:storage:native",
+    "backend": "sqlite",
+    "runtimeKind": "native"
+  },
+  "localSqliteBrowser": {
+    "status": "historical",
+    "runtime": "SQLite/WASM OPFS/VFS, Chromium/Firefox/WebKit",
+    "commit": "0076450",
+    "command": "pnpm test:dal:proof",
+    "backend": "sqlite",
+    "runtimeKind": "browser"
+  },
+  "serverSqlite": {
+    "status": "open",
+    "issue": 98,
+    "backend": "sqlite",
+    "runtimeKind": "native"
+  },
+  "serverPostgresql": {
+    "status": "open",
+    "issue": 99,
+    "backend": "postgresql",
+    "runtimeKind": "native"
+  },
+  "serverMysql": {
+    "status": "open",
+    "issue": 100,
+    "backend": "mysql",
+    "runtimeKind": "native"
+  },
+  "nativeGui": {
+    "status": "open",
+    "issue": 57,
+    "backend": "manual",
+    "runtimeKind": "manual"
+  },
+  "screenreader": {
+    "status": "open",
+    "issue": 50,
+    "backend": "manual",
+    "runtimeKind": "manual"
+  },
+  "physicalIos": {
+    "status": "open",
+    "issue": 56,
+    "backend": "manual",
+    "runtimeKind": "manual"
+  }
+}

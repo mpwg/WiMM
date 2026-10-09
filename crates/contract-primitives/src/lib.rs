@@ -107,3 +107,55 @@ pub trait Validate {
 
 #[cfg(feature = "wasm-data")]
 pub mod wasm_data;
+
+#[cfg(test)]
+mod native_tests {
+    use super::*;
+    use serde::de::Visitor;
+    #[test]
+    fn uuid_policies_preserve_nil_max_rfc_and_private_public_difference() {
+        for id in [
+            "00000000-0000-0000-0000-000000000000",
+            "ffffffff-ffff-ffff-ffff-ffffffffffff",
+            "00000000-0000-4000-8000-000000000001",
+        ] {
+            assert!(valid_uuid(id));
+            assert!(valid_public_uuid(id));
+        }
+        assert!(valid_uuid("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"));
+        assert!(!valid_public_uuid("FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"));
+        for id in [
+            "secret",
+            "00000000000040008000000000000001",
+            "00000000-0000-4000-0000-000000000001",
+            "00000000-0000-9000-8000-000000000001",
+        ] {
+            assert!(!valid_uuid(id));
+            assert!(!valid_public_uuid(id));
+        }
+    }
+    #[test]
+    fn integer_visitor_rejects_unsafe_signed_unsigned_fractional_and_nonfinite_values() {
+        type Error = serde::de::value::Error;
+        assert_eq!(
+            IntegerVisitor.visit_i64::<Error>(MAX_SAFE).unwrap(),
+            MAX_SAFE
+        );
+        assert_eq!(
+            IntegerVisitor.visit_i64::<Error>(-MAX_SAFE).unwrap(),
+            -MAX_SAFE
+        );
+        assert_eq!(IntegerVisitor.visit_f64::<Error>(1000.0).unwrap(), 1000);
+        assert!(IntegerVisitor.visit_i64::<Error>(MAX_SAFE + 1).is_err());
+        assert!(IntegerVisitor.visit_u64::<Error>(u64::MAX).is_err());
+        for value in [
+            1.5,
+            f64::INFINITY,
+            f64::NEG_INFINITY,
+            f64::NAN,
+            (MAX_SAFE + 1) as f64,
+        ] {
+            assert!(IntegerVisitor.visit_f64::<Error>(value).is_err());
+        }
+    }
+}
