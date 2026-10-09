@@ -19,6 +19,8 @@
     "allow-storage-export-snapshot",
     "allow-storage-replace-snapshot",
     "allow-storage-rebuild-projections",
+    "allow-storage-persist-encrypted-backup",
+    "allow-storage-read-encrypted-backup",
     "allow-platform-choose-files",
     "allow-platform-write-file",
     "allow-platform-open-url",

@@ -4,6 +4,7 @@ use std::fs;
 use std::sync::Mutex;
 
 use rusqlite::Connection;
+mod backups;
 #[cfg(test)]
 mod core_contract;
 mod storage;
@@ -154,6 +155,9 @@ fn main() {
             let connection = Connection::open(directory.join("wimm.sqlite3"))?;
             initialize_storage(&connection)?;
             app.manage(StorageState(Mutex::new(connection)));
+            let backup_connection = Connection::open(directory.join("wimm-backups.sqlite3"))?;
+            backups::initialize_backups(&backup_connection)?;
+            app.manage(backups::BackupState(Mutex::new(backup_connection)));
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -171,7 +175,9 @@ fn main() {
             storage::storage_save_sync_page,
             storage::storage_export_snapshot,
             storage::storage_replace_snapshot,
-            storage::storage_rebuild_projections
+            storage::storage_rebuild_projections,
+            backups::storage_persist_encrypted_backup,
+            backups::storage_read_encrypted_backup
         ])
         .run(tauri::generate_context!())
         .expect("Die Desktop-Anwendung konnte nicht gestartet werden.");

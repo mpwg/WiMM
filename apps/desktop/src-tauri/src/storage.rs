@@ -790,6 +790,8 @@ mod tests {
     fn contract_driver() {
         use std::io::{BufRead, Write};
         let path = std::env::var("WIMM_CONTRACT_DATABASE").unwrap();
+        let mut backups = Connection::open(format!("{path}.backups.sqlite3")).unwrap();
+        crate::backups::initialize_backups(&backups).unwrap();
         let mut connection = Connection::open(path).unwrap();
         initialize_storage(&connection).unwrap();
         for line in std::io::stdin().lock().lines() {
@@ -799,6 +801,8 @@ mod tests {
             let space = args["spaceId"].as_str().unwrap_or_default();
             let result: Result<Value, String> = (|| {
                 match request["command"].as_str().unwrap() {
+                    "storage_persist_encrypted_backup" => serde_json::to_value(crate::backups::persist_backup(&mut backups, serde_json::from_value(args["input"].clone()).map_err(storage_error)?)?).map_err(storage_error),
+                    "storage_read_encrypted_backup" => serde_json::to_value(crate::backups::read_backup(&backups, &serde_json::from_value(args["receipt"].clone()).map_err(storage_error)?)?).map_err(storage_error),
                     "storage_initialize_area" => initialize_area(&mut connection, profile, space, args["proposedEpoch"].as_str().unwrap()).map(Value::String),
                     "storage_apply_batch" => apply_batch(&mut connection, serde_json::from_value(args["batch"].clone()).map_err(storage_error)?).map(|()| Value::Null),
                     "storage_save_sync_page" => save_sync_page(&mut connection, profile, serde_json::from_value(args["page"].clone()).map_err(storage_error)?).map(|()| Value::Null),

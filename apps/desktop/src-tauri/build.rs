@@ -14,6 +14,8 @@ fn main() {
             "storage_export_snapshot",
             "storage_replace_snapshot",
             "storage_rebuild_projections",
+            "storage_persist_encrypted_backup",
+            "storage_read_encrypted_backup",
             "platform_choose_files",
             "platform_write_file",
             "platform_open_url",

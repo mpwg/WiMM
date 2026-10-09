@@ -49,3 +49,30 @@ for (const scenario of versionCases) {
     await expect(runVersionCase(scenario, await sqliteFixture())).resolves.toBeUndefined();
   }, 30_000);
 }
+
+import { createEncryptedJsonSnapshotProtector, canonicalJsonBytes } from '../../packages/crypto/src/index.js';
+import { p5Snapshot } from './contracts/snapshot-catalog.js';
+import type { LocalSnapshot } from '../../packages/storage/src/index.js';
+it('Native SQLite-Sicherung bewahrt echten verschlüsselten P5-Snapshot über Rust-Prozessneustart', async () => {
+  const fixture = await sqliteFixture();
+  try {
+    const snapshot = p5Snapshot();
+    await fixture.storage.replaceSnapshot(snapshot);
+    const source = normalized(await fixture.storage.exportSnapshot(snapshot.spaceId));
+    const protector = createEncryptedJsonSnapshotProtector<LocalSnapshot>(new Uint8Array(32).fill(7));
+    const ciphertext = await protector.seal(source);
+    const snapshotHash = Buffer.from(await crypto.subtle.digest('SHA-256', new Uint8Array(canonicalJsonBytes(source)))).toString('base64url');
+    const receipt = await fixture.backups.persist({ profileId: source.profileId, spaceId: source.spaceId, epoch: source.epoch, snapshotHash, ciphertext });
+    await fixture.restart();
+    const saved = await fixture.backups.read(receipt);
+    expect(saved).toEqual(ciphertext);
+    expect(await protector.unseal(saved)).toEqual(source);
+    expect(new TextDecoder().decode(saved)).not.toContain('aggregateType');
+    await expect(fixture.backups.persist({ profileId: source.profileId, spaceId: source.spaceId, epoch: source.epoch, snapshotHash, ciphertext: new Uint8Array([99]) })).rejects.toBe('Die verschlüsselte Sicherung wurde nicht dauerhaft bestätigt.');
+    await expect(fixture.backups.read({ ...receipt, epoch: id(9998) })).rejects.toBe('Die gespeicherte Sicherung passt nicht zum angeforderten Beleg.');
+    const wrongKey = createEncryptedJsonSnapshotProtector<LocalSnapshot>(new Uint8Array(32).fill(8));
+    await expect(wrongKey.unseal(saved)).rejects.toThrow('Der Tresor konnte nicht entsperrt werden.');
+    expect(await fixture.backups.read(receipt)).toEqual(ciphertext);
+    expect(normalized(await fixture.storage.exportSnapshot(snapshot.spaceId))).toEqual(source);
+  } finally { await fixture.close(); }
+}, 30_000);
