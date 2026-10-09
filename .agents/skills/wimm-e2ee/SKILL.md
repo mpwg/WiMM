@@ -19,3 +19,7 @@ Authentifizierte Clients sind vertrauenswürdig; keine Binarysignatur, Attestier
 - Logs, Fixtures, PRs und Issues enthalten keine realen Schlüssel oder Finanzdaten. Synthetische Testvektoren ausdrücklich kennzeichnen.
 
 Wähle passende C01–C14/S-Fälle aus [Tests](../../../docs/testing.md), dokumentiere Auswirkungen auf Protokollversionen und bekannte Grenzen. Bei Änderung der Suite/Vertrauensannahmen zuerst ADR und Verträge aktualisieren. Prüfung eines eigenen Protokolls ist kein behauptetes externes Kryptoaudit.
+
+## Architekturstand vom 9. Oktober 2026
+
+Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.

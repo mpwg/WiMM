@@ -1,42 +1,27 @@
-# Einstieg für Mitwirkende und Agenten
+# Einstieg in WiMM
 
-## In zehn Minuten orientieren
+## Aktueller Stand
 
-WhereIsMyMoney besitzt die vorhandenen Grundlagen P1 bis P3 mit Workspace, Fachkern, Crypto-Binding, lokalem Speicher und Offline-Assetbasis. Die [P1–P3-Nachprüfung](handoffs/p1-p3-review-2026-10-08.md) hat ihre vollständige Abnahme erneut geöffnet; [#87](https://github.com/mpwg/WiMM/issues/87) führt die Deltas. D5 ergänzt die Teilaufgaben bis P11. Die [verbleibenden Teilaufgaben für P4–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) benötigen weiterhin einen ausdrücklichen Auftrag. Diese Anleitung erteilt ihn nicht.
+WiMM besitzt lokale React/PWA-/Tauri-Oberflächen, eine produktive TypeScript-Fachengine, eine geprüfte eigenständige Rust-Fachgrundlage und IndexedDB-/SQLite-Bestandsadapter. Der Server besitzt bislang Health-/Metadatenrouten. Das [gemeinsame Rust-Ziel](architecture.md) mit Rust-Anwendung/DAL/Axum ist bestätigt, aber noch umzusetzen. [Review](architecture-review.md), [Aufgaben](tasks.md) und [Gesamtübersicht #114](https://github.com/mpwg/WiMM/issues/114) trennen Ziel, Freigabe und Umsetzung.
 
-1. [Arbeitsregeln](../AGENTS.md) und [Dokumentationsindex](README.md) lesen, danach die dort vorgeschriebenen Grundlagen: Fachmodell, Architektur, Entscheidungen und Aufgaben.
-2. Den tatsächlichen Nutzerauftrag mit dem [Paketstatus](tasks.md) abgleichen. Vorhandene Änderungen prüfen und bewahren; keinen Branch ungefragt wechseln.
-3. Über die [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) die aufgabenspezifischen Abschnitte und den passenden Projektskill wählen.
-4. Das konkrete Ergebnis, betroffene Verträge und Abnahmekriterien benennen. P4.1, P4.2.1 bis P4.2.7 sowie P4.3.1 bis P4.3.8 und P4.4.1 bis P4.4.7 sowie P4.5.1 bis P4.5.6 sind abgeschlossen. [P4.5.7](p4-ui.md#p457--native-systemintegration-je-zielsystem-prüfen) benötigt weitere native Plattformnachweise; unabhängig davon kann nach Auftrag P4.6.1 folgen. Die weiteren Pakete besitzen eigene verlinkte Teilpläne in der Aufgabenübersicht.
-5. Erst den begrenzten Arbeitsschritt bearbeiten, dann passende Prüfungen ausführen und die Nachweise im Paket festhalten. Nicht ausgeführte Prüfungen ausdrücklich nennen.
+## Erste Schritte
 
-Für den Zusammenhang der Komponenten anschließend das [durchgängige Buchungsbeispiel](reference-household.md#durchgängiger-ablauf-einer-buchung) lesen. Für die vollständige Lesereihenfolge bleibt der Dokumentationsindex maßgeblich.
+1. [AGENTS.md](../AGENTS.md), [Dokumentationsindex](README.md), [Fachmodell](domain.md), [Architektur](architecture.md), [Entscheidungen](decisions.md), [Aufgaben](tasks.md) lesen.
+2. Aktive Arbeitskopie, Branch, Gitstatus und betroffene aktuelle Issues prüfen. Keine andere lokale Kopie und kein früherer DevContainer.
+3. Tatsächliche Toolchain/Manifeste und Befehle aus [Entwicklung](development.md) prüfen; keine geplanten Rust-Server-/ORM-Kommandos erfinden.
+4. Für Fachbeispiele [Referenzhaushalt](reference-household.md), für Abschluss [Tests](testing.md) und [Abnahmekatalog](acceptance-catalog.md) verwenden. Reale Finanz-/Schlüsseldaten nicht in Fixtures/Logs/Issues.
 
-## Quellen und typische Stolperfallen
-
-| Frage | Verbindliche Quelle |
-| --- | --- |
-| Was soll das Produkt leisten? | [Produkt](product.md) |
-| Wie werden Geld, Budget und Ausgleich berechnet? | [Fachmodell](domain.md) und [Testreferenzen](testing.md) |
-| Welche Daten und Grenzen gibt es? | [Datenmodell](data-model.md), [Architektur](architecture.md) |
-| Was verlässt den Client? | [Verschlüsselung](encryption.md), [Synchronisierung](synchronization.md), [API](api.md) |
-| Was ist entschieden und freigegeben? | [Entscheidungen](decisions.md), [Aufgaben](tasks.md), tatsächlicher Nutzerauftrag |
-
-Finanzbefehle in der API-Dokumentation sind clientinterne Verträge, keine Klartext-HTTP-Endpunkte. Serverbestätigung ersetzt keine fachliche Prüfung durch Clients. Lokaler Speichererfolg und bestätigte Synchronisierung sind getrennte Zustände. Geteilte Ausgaben sind keine zusätzliche Kontobelastung; private Veröffentlichungen benötigen eine bestätigte Kopie. Geplante Befehle, Tests und Hooks sind erst verfügbar, wenn das betreffende Paket sie tatsächlich angelegt und geprüft hat.
-
-## Entscheidung oder Rückfrage?
+## Entscheidung oder Rückfrage
 
 | Situation | Vorgehen |
 | --- | --- |
-| Lizenz, Plattformen, E2EE, Budgetmethoden oder Rollen bereits entschieden | Festlegungen aus den ADRs anwenden, keine erneute Grundsatzentscheidung verlangen |
-| Versionskombination, Binding oder SDK-Verfügbarkeit noch zu ermitteln | Im zuständigen Paket offizielle Quellen prüfen und Ergebnis mit Datum, Herkunft und Prüfnachweis festhalten |
-| Routineentscheidung innerhalb bestehender Verträge | Selbstständig lösen und relevante Begründung dokumentieren |
-| Widerspruch zwischen verbindlichen Quellen | Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen |
-| Änderung von Produktumfang, Fachregeln oder Vertrauensmodell | Konkrete Änderung und Folgen vorlegen, Nutzerentscheidung einholen und ADR sowie Verträge gemeinsam aktualisieren |
-| Fehlende Plattform oder Signierungsgeheimnisse | Tatsächlich mögliche Arbeit fortsetzen; nur betroffene Prüfung/Distribution als ausstehend ausweisen |
-| Zwischencommit | Nach jedem abgeschlossenen Abschnitt mit zusammengehörigen Änderungen erstellen; keine fremden Dateien einschließen |
-| Push oder Veröffentlichung | Bestehende ausdrückliche Autorisierung prüfen; ein Paketabschluss allein erteilt keine Freigabe |
+| Verbindlicher Vertrag und erfüllte Voraussetzungen | Im ausdrücklich freigegebenen Umfang umsetzen |
+| Technische Tatsachen wie Importpfad oder Manifestversion | In aktiver Arbeitskopie ermitteln |
+| Fehlender ORM/VFS/Bindingnachweis | Bestand erhalten; vor Ersatzarchitektur rückfragen |
+| Neue Produktfunktion, neuer Prototyp, wesentlich geänderter Paketumfang | Gesonderten Auftrag gemäß tasks.md benötigen |
+| Widersprüchliche Spezifikation | Benennen und betroffene Quellen gemeinsam vor abhängiger Implementierung korrigieren |
+| Fehlende Plattform/Secret | Nur betroffene Abnahme/Distribution offen halten, keine Nachweise fingieren |
 
-## Abschluss und Übergabe
+## Erfolg und Historie
 
-Ein Arbeitsschritt ist abgeschlossen, wenn sein Ergebnis überprüfbar vorliegt, relevante Verträge konsistent sind und die Abnahme nachgewiesen ist. In [tasks.md](tasks.md) Ergebnis, ausgeführte Prüfungen, Plattform und Einschränkungen eintragen. Für die Übergabe die [vorhandene Vorlage](templates/handoff.md) verwenden und den nächsten konkreten freigegebenen Schritt nennen. Nach jedem abgeschlossenen Abschnitt einen Zwischencommit mit zusammengehörigen Änderungen erstellen und niemals fremde Änderungen einschließen. Pushes und Veröffentlichungen benötigen weiterhin eine ausdrückliche Autorisierung.
+UI-Speichererfolg bedeutet dauerhaft bestätigten lokalen Commit, nicht Serversync. Outbox/Entwürfe/Bestätigungen bleiben getrennt. Native Rusttests und tatsächliche DB-/Binding-/Geräteabnahmen ergänzen sich. [Belegindex](review-evidence.md) verlinkt frühere unveränderliche Abnahmen; diese sind kein Beleg neu implementierter Zielkomponenten.

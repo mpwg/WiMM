@@ -1,5 +1,7 @@
 # Oberfläche und Plattformgestaltung
 
+Architekturstand 9. Oktober 2026: [gemeinsames Rust-Ziel](architecture.md), [Review](architecture-review.md), [Freigaben](tasks.md). Diese funktionalen Verträge bleiben verbindlich; neue Zielkomponenten sind noch nicht implementiert.
+
 ## Freigegebene Neugestaltung
 
 Der Nutzerauftrag vom 5. Oktober 2026 gibt UX-01–UX-06 gemäß [UX-Konzept](ux-redesign.md) frei. Der anschließende Umsetzungsauftrag für den [klickbaren UX-Flow](assets/ux-flow-konzept.html) ersetzt den Indigoakzent durch Grünakzent und warme Flächen. Die Übersicht „Alles im Blick.“ führt mit dem echten Kontostand gesamt; letzte Buchungen und fällige Vorschläge stehen darunter. P6–P10 werden nur gestalterisch vorbereitet, nicht implementiert.
@@ -75,3 +77,7 @@ Der Start liest das lokale Profil einmal und unterscheidet fehlend, geladen, bes
 Bei fehlender sicherer lokaler Speicherkoordination erklärt die Ersteinrichtung die Ursache und nennt einen aktuellen unterstützten Browser beziehungsweise eine aktualisierte Desktop-App als nächsten Schritt. Der Fehler wird auch bei einer Profiländerung verständlich angezeigt. Allgemeine Speicher-/Kryptografiefehler bleiben generisch, damit keine internen Daten in die Meldung gelangen. Es gibt keinen unkoordinierten Schreibfallback.
 
 Während einer ausstehenden Profiländerung sind Finanzaktionen, Finanzformulare, Bereichs-/Ansichtswechsel und Finanzkurzbefehle gesperrt. Eine Statusmeldung erklärt die Wartezeit. Neue Entwürfe dürfen in dieser Zeit nicht entstehen und beim späteren Bereichscommit verloren gehen. Der Ereignis-/Speicherpfad prüft den aktuellen Profiländerungszustand unmittelbar; ein veralteter Menühandler darf die Sperre nicht umgehen. Die vorhandene Tresorsperre auf dem Desktop darf einen wartenden Bereichswechsel weiterhin abbrechen.
+
+## Anwendungsgrenze im Rust-Ziel
+
+Oberfläche hält Navigation/Fokus/Formulardrafts, abonniert die gemeinsame Rust-Anwendung und erhält begrenzte Ansichten. Keine verbindliche Geldberechnung, kein ORM-/Speicherzugriff und keine Crypto-Schlüsselverwaltung in Widgets. Eingabetextprüfung über generierte/bindingspezifische Ports; aktueller TS-Bestand bleibt bis geprüfter Umschaltung dokumentierter Übergang.

@@ -16,3 +16,7 @@ Lies [UI-Spezifikation](../../../docs/ui.md), den betreffenden Ablauf in [Produk
 - Fokus, Screenreader, Zoom, Kontrast, Touchziele und lange deutsche Texte prüfen. Native Checks nicht durch Webscreenshots als bestanden ausgeben.
 
 Übergabe nennt geänderte Ansicht, betroffene Plattformen, Screenshot-/Interaktionsbelege und verfügbare/nicht verfügbare native Prüfungen. Bei vorhandener Gestaltung deren Komponenten verbessern, statt globale Tokens für einen Einzelfall neu zu erfinden.
+
+## Architekturstand vom 9. Oktober 2026
+
+Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.

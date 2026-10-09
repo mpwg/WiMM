@@ -2,18 +2,18 @@
 
 ## Aktueller Stand
 
-D0 umfasst Dokumentationsprüfung. P1.3 ergänzt vier ausgeführte Vertragstests für öffentliche Hüllen und gemeinsame Primitive. P1.4 ergänzt sieben Crypto-Binding-/Manipulationstests mit synthetischen Daten. P1.5 ergänzt zwei Serverhüllentests für Health- und Metadaten sowie Start- und Buildsmokechecks für Web und Tauri. P1.6 ergänzt zwei Tests der Dokumentationsprüfung mit gültigen und absichtlich defekten Links, JSON und YAML. P2 ergänzt 50 Fachtests. P3 ergänzt acht Speicher-, vier zusätzliche Kryptotests, einen Service-Worker- und einen Rust-SQLite-Test. Die vorhandenen P4-Playwright-Suites prüfen Web und Desktopfrontend in Chromium; Synchronisierungsprüfungen folgen in P9. T1 ergänzt zehn isolierte Toolchainprüfungen und integriert die vorhandenen UI-Pakettests sowie Rust-Format/Clippy/Tests in die zentrale Serie. Die folgenden Datensätze und Prüfungen bleiben verbindliche Spezifikation für P4–P11.
+Bestand enthält Fach-/Crypto-/Storage-/Anwendungs-/Browser-/Rust-/Bindingprüfungen. Historische Zählungen stehen ausschließlich im [Belegindex](review-evidence.md); aktuelle Fortschritte in GitHub. Die nachfolgenden F-/S-/C-/UIkriterien bleiben verbindlich. Neue Rust-Anwendungs-/DAL-/Axum-Komponenten sind noch nicht durch diesen Review implementiert oder abgenommen.
 
 ## Testebenen und Werkzeuge
 
 | Ebene | Werkzeug ab Paket | Prüfgegenstand |
 | --- | --- | --- |
 | Dokumentation | Node, markdown-it und yaml ab P1.6 | UTF-8/LF/Zeilenenden, JSON/YAML, relative Links und lokale Anker |
-| Fachkern | Vitest ab P2 | pure Berechnungen, fachliche Invarianten, negative Fälle |
+| Fachkern | Native Rust-Assertions plus Sprach-/Browservergleiche; Vitest im Übergang | pure Berechnungen, fachliche Invarianten, negative Fälle |
 | Speicher | Vitest + echte IndexedDB/SQLite ab P3 | gleiche Contract-Suite für beide Adapter |
 | Web/Touch | Playwright ab P4 | Nutzerabläufe, Offline, Screenshots, Tastatur/Fokus |
 | Native Desktop | Plattform-Smokechecks ab P4 | echte Menüs, Dialoge, Schlüsselablage, Offline-Start |
-| API/Zugriff | Fastify-Testinjektion + HTTP ab P8 | Rechte, Auth, Serialization, Rate-Limits |
+| API/Zugriff | Rust-HTTP-Integration ab P8; Fastify nur Bestandsstub | Rechte, Auth, Serialization, Rate-Limits |
 | Synchronisierung | simuliertes Netzwerk + echte DB ab P9 | mehrere Clients, Wiederholungen und Konflikte |
 | Betrieb/Release | Integrationsprüfung ab P10 | Restore, Migration, Sicherung, Signatur/Source-Archiv |
 
@@ -133,4 +133,14 @@ Secretassertions durchsuchen die vollständigen gespeicherten beziehungsweise pr
 
 ## Native Rust-Komponentenprüfung
 
-Rust-Komponenten erhalten eigene native Rust-Assertions. `pnpm check:core` führt den gesperrten synthetischen Fachkatalog im Rust-Workspace aus, ergänzt um direkte Geld-/Kalender-, Binding- und Probeprozess-Tests. `cargo test --locked -p wimm-finance-core` prüft die produktiven Kernverträge ohne Node oder Browser; technische Probeoperationen werden zusätzlich mit contract-probe ausgeführt. `pnpm check:rust` prüft den separaten Tauri-Appcrate. Tatsächliche Swift-/Kotlin-/WASM-/Browservergleiche bleiben zusätzliche eigenständige Belege. Änderungen des Golden-Katalogs verlangen ausdrückliche Regeneration, Prüfung des Diffs und erneute native Abnahme; reguläre Tests verändern keine Sollfixtures. [Aktueller K04-Abnahmesnapshot](handoffs/k04-2026-10-08.md).
+Rust-Komponenten erhalten eigene native Rust-Assertions. `pnpm check:core` führt den gesperrten synthetischen Fachkatalog im Rust-Workspace aus, ergänzt um direkte Geld-/Kalender-, Binding- und Probeprozess-Tests. `cargo test --locked -p wimm-finance-core` prüft die produktiven Kernverträge ohne Node oder Browser; technische Probeoperationen werden zusätzlich mit contract-probe ausgeführt. `pnpm check:rust` prüft den separaten Tauri-Appcrate. Tatsächliche Swift-/Kotlin-/WASM-/Browservergleiche bleiben zusätzliche eigenständige Belege. Änderungen des Golden-Katalogs verlangen ausdrückliche Regeneration, Prüfung des Diffs und erneute native Abnahme; reguläre Tests verändern keine Sollfixtures. [Aktueller K04-Abnahmesnapshot](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/k04-2026-10-08.md).
+
+## Gemeinsames Rust-Ziel und Konformität
+
+Native Rust-Assertions für jedes neue eigene Crate einschließlich Anwendung/DAL/Server/Bindings/Werkzeuge. Ein identischer positiver/negativer Katalog für Fach- und Anwendungsbindings nativ/WASM/Swift/Kotlin; getrennte lokale SQLite-/persistente Browser-SQLite- und öffentliche Server-SQLite/PostgreSQL/MySQL-Contracts. Bestands-IndexedDB/rusqlite bleibt bis gesicherter Umschaltung Prüfbasis und Migrationsquelle, nicht dauerhafter zweiter Zielwriter.
+
+Pflichtfälle: lokale und Server-Operations-ID-/Inhaltsbindung, Antwortverlust/unklarer Commit/Neustart, CAS/Parallelität, atomare Aggregate/Outbox/Projektionen/Receipts, Syncseite/Cursor, Snapshot-/Cacheversion, Quota/Disk-full, gesicherte Schema-/Backendübernahme und Crash an Aktivierungsgrenzen. Alle sechs gerichteten Server-SQL-Wechsel. Simulierte Ressourcenfehler und echte begrenzte Testvolumes getrennt ausweisen.
+
+Native/WASM-libsodium-Interop erhält C-Vektoren/KDF-Legacy/Recovery/Exports, private/gemeinsame Trennung und Serverdump ohne Finanzklartext. Negative Architekturfixtures erzwingen kein ORM/UI/HTTP im Fachkern, keine privaten Client-/Finanzabhängigkeiten im Server, keine UI-Fachruntimeimports und kein eigenes unsafe. Generator-/Version-/Formdrift muss scheitern.
+
+Zwei tatsächliche PWA-Builds prüfen koordinierten HTML/JS/WASM/Worker-/Storagewechsel, Entwürfe, alte Tabs, abgebrochene Installation und vollständigen Offline-Neustart. Fehlende VFS/Bindingeignung blockiert Aktivierung und verlangt Entscheidung, kein stiller Memory-/IndexedDB-Fallback. 50.000 Buchungen behalten Kaltöffnen unter 2.000 ms, Filter-/Scroll-p95 unter 100 ms. Echte macOS arm64/x86_64/Windows/Linux-, physische iOS-, Screenreader- und Zoombelege bleiben separate Kriterien.

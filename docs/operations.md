@@ -2,9 +2,9 @@
 
 ## Geplanter Betrieb
 
-Eine Fastify-Serverinstanz liefert PWA und API hinter HTTPS-Reverse-Proxy. SQLite-Datei liegt auf lokalem persistentem Volume; kein Netzwerkdateisystem, Cluster oder paralleler Server auf derselben DB. Docker Compose und Images entstehen erst in P10. Offline-Desktop benötigt keinen mitgestarteten HTTP-Server.
+Ziel: Eine Axum/Tokio-Rust-Serverinstanz liefert PWA und API hinter HTTPS-Reverse-Proxy. Der heutige Fastify-Health-/Metadatenstub bleibt bis geprüfter Parität Bestand; dieser Text spezifiziert den Zielbetrieb. SQLite-Datei liegt auf lokalem persistentem Volume; kein Netzwerkdateisystem, Cluster oder paralleler Server auf derselben DB. Docker Compose und Images entstehen erst in P10. Offline-Desktop benötigt keinen mitgestarteten HTTP-Server.
 
-Statische PWA-Auslieferung ohne Backend ist ebenfalls möglich. Browser-Origin ist Teil der Speicheridentität: Wechsel von Domain oder Port migriert IndexedDB nicht; vorher exportieren und auf neuer Origin importieren.
+Statische PWA-Auslieferung ohne Backend ist ebenfalls möglich. Browser-Origin ist Teil der Speicheridentität: Wechsel von Domain oder Port migriert lokale IndexedDB-/OPFS-Daten nicht; vorher exportieren und auf neuer Origin importieren.
 
 ## Konfigurationsvertrag
 
@@ -69,4 +69,10 @@ Bei Actual-Übernahme entsteht später ein Herkunftsregister mit Repository, Pfa
 
 ## Betriebsnachweise
 
-Releasecheck umfasst Buildversion, Quellarchiv, gültige Signatur, native Startprüfung, erfolgreicher Nutzer-/Vollserverrestore, Backup-Retention und redigierte Logs. Fehlende Geheimnisse halten nur Veröffentlichung auf. Keine Deployments, Images oder Updater werden im aktuellen D0-Auftrag tatsächlich erstellt.
+Releasecheck umfasst Buildversion, Quellarchiv, gültige Signatur, native Startprüfung, erfolgreicher Nutzer-/Vollserverrestore, Backup-Retention und redigierte Logs. Fehlende Geheimnisse halten nur Veröffentlichung auf. Keine Deployments, Images oder Updater werden im aktuellen Architektur-Dokumentationsauftrag tatsächlich erstellt.
+
+## Runtime und Browser-DAL
+
+Blockierende ORM-Arbeit wird begrenzt außerhalb des HTTP-Executors ausgeführt. Abbruch/Timeout ist keine Zusage eines DBrollback; Commitstatus/Receipt derselben Operation prüfen. Kontrollierter Shutdown stoppt neue Arbeit und beendet Transaktionen. Öffentliche Verwaltung/Chiffrate/Receipts/Cursor teilen denselben Servercommit. Kein Finanzkern/privater Entschlüsselungsport im Serverbinary.
+
+Browser-SQLite-VFSanforderungen (Worker, COOP/COEP/SharedArrayBuffer, Writerführung) sind in DAL01 nachzuweisen, auch mit OIDC-Rückkehr. Offlineassets umfassen Rust-WASM/Worker; alte Tabs und inkompatible Schemas dürfen nicht gleichzeitig schreiben. Build-/Schemaaktivierung erst gesichert und bestätigt; unbekannte Version/fehlendes Asset erhält den Bestand. PostgreSQL/MySQL-DDL nicht pauschal als atomar ausgeben; gesichertes Journal/Restore/Wiederanlauf pro Backend prüfen. [Architektur](architecture.md), [Review](architecture-review.md).

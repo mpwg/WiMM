@@ -1,5 +1,7 @@
 # Sicherheit und Datenschutz
 
+Architekturstand 9. Oktober 2026: [gemeinsames Rust-Ziel](architecture.md), [Review](architecture-review.md), [Freigaben](tasks.md). Diese funktionalen Verträge bleiben verbindlich; neue Zielkomponenten sind noch nicht implementiert.
+
 ## Vertrauensmodell
 
 Ende-zu-Ende-Verschlüsselung ist Pflicht ab v1. Der Server erhält keine Finanzklartexte oder privaten Schlüssel und wird für Vertraulichkeit nicht vertraut. Authentifizierte Clients gelten nach Nutzerfestlegung als vertrauenswürdig, unabhängig von Codesignatur, Attestierung oder Buildherkunft. Anmeldung und lokale Schlüsselentsperrung sind getrennt. [Verschlüsselung](encryption.md) beschreibt Schlüsselverwaltung, signierte Nachrichten und unvermeidbare Metadaten.

@@ -1,6 +1,6 @@
 # Vorlage: Architekturentscheidung
 
-Neue ID nach der höchsten ID in [decisions.md](../decisions.md) vergeben. Bestehende Nutzerentscheidungen nicht still überschreiben; ersetzte Einträge als Historie erhalten.
+Neue ID nach der höchsten ID in [decisions.md](../decisions.md) vergeben. Bestehende Nutzerentscheidungen nicht still überschreiben; ersetzte Texte über unveränderliche Git-Commitlinks als Historie erhalten, aktuelle Zielentscheidungen eindeutig pflegen.
 
 ## [ADR-ID] — [Entscheidung]
 

@@ -1,5 +1,7 @@
 # Verpflichtende Ende-zu-Ende-Verschlüsselung
 
+Architekturstand 9. Oktober 2026: [gemeinsames Rust-Ziel](architecture.md), [Review](architecture-review.md), [Freigaben](tasks.md). Diese funktionalen Verträge bleiben verbindlich; neue Zielkomponenten sind noch nicht implementiert.
+
 ## Verbindlichkeit und Schutzumfang
 
 Diese Spezifikation ersetzt das ursprüngliche Modell eines mitlesenden Finanzservers. E2EE ist Pflicht ab v1, kein Schalter und keine spätere Erweiterung. Sämtliche Finanzinhalte werden vor Verlassen eines autorisierten Clients verschlüsselt: Kontonamen, Buchungen, Beträge, Notizen, Kategorien, Budget, freiwillige Einkommensangaben, Ziele, Familienausgleich, Teilnehmernamen, Veröffentlichungskopien und Finanzsnapshots.
@@ -10,7 +12,7 @@ Der Server ist für Finanzvertraulichkeit nicht vertrauenswürdig. Nach Nutzerfe
 
 ## Etablierte Primitive statt eigener Kryptografie
 
-`packages/crypto` kapselt eine gepflegte libsodium-WASM-Bindung für alle Clients. Keine selbst entworfenen Cipher/KDF/Signaturimplementierungen; Interoperabilität wird durch feste Testvektoren geprüft. Primitive:
+`packages/crypto` kapselt im Bestand eine gepflegte libsodium-WASM-Bindung. Im Ziel kapseln gemeinsame Rust-Clientcryptoports gepflegte native/WASM-libsodium-Bindings; öffentliche Server-Signaturprüfung bleibt separat. Keine selbst entworfenen Cipher/KDF/Signaturimplementierungen; Interoperabilität wird durch feste Testvektoren geprüft. Primitive:
 
 - XChaCha20-Poly1305-IETF für Finanzpayloads und verschlüsselte Tresore; zufälliger 32-Byte-Schlüssel und frische kryptografisch zufällige 24-Byte-Nonce je neuer Verschlüsselung.
 - Ed25519 für Identitäts-/Gerätezertifikate, Rollenmanifest, Schlüsselpakete, Operationen und Snapshotmanifeste.
@@ -93,6 +95,6 @@ Die Profilvalidierung prüft zusätzlich die mathematische Zugehörigkeit der Id
 
 ## Versionierte Passphrasehülle und Legacyhärtung
 
-[ADR-037](decisions.md#adr-037--selbstbeschreibende-passphrasehüllen-mit-kompatibler-legacyhärtung) konkretisiert den bestehenden KDFvertrag. Neue Passphrasehüllen tragen Version 2, `algorithm: argon2id` und `kdf: { opslimit: 3, memlimit: 67108864 }`. Es gelten ganze 3–6 Durchläufe und 64–256 MiB als unterstützte Grenzen, geprüft vor libsodium `crypto_pwhash`. Hüllenversion, Algorithmus, Parameter und Salt werden in der angegebenen AAD gebunden. Version/Parameter dürfen nach Manipulation nicht durch einen Legacyversuch ersetzt werden.
+[ADR-037](decisions.md#weitergeltende-produkt--und-sicherheitsentscheidungen) konkretisiert den bestehenden KDFvertrag. Neue Passphrasehüllen tragen Version 2, `algorithm: argon2id` und `kdf: { opslimit: 3, memlimit: 67108864 }`. Es gelten ganze 3–6 Durchläufe und 64–256 MiB als unterstützte Grenzen, geprüft vor libsodium `crypto_pwhash`. Hüllenversion, Algorithmus, Parameter und Salt werden in der angegebenen AAD gebunden. Version/Parameter dürfen nach Manipulation nicht durch einen Legacyversuch ersetzt werden.
 
 Historische Hüllen ohne Version und Parameter bleiben mit exakt zwei Durchläufen/64 MiB und historischer AAD lesbar. Nach erfolgreicher Passphraseentsperrung und Schlüssel-/Bereichsvalidierung erfolgt atomare Umverpackung ausschließlich der Passphrasehülle. Recovery und vorhandene Finanz-/Bereichsschlüssel bleiben unverändert. Ein fehlgeschlagener Commit oder abgebrochener Vorgang lässt das Altprofil unverändert; es bleibt über beide bisherigen Wege entschlüsselbar. Recoveryentsperrung benötigt keine Passphrase und führt deshalb keine automatische KDFmigration aus.

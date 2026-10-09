@@ -18,3 +18,7 @@ Lies [AGENTS.md](../../../AGENTS.md), [Agentenleitfaden](../../../docs/agent-gui
 6. Halte Paketstatus aktuell und übergib den nächsten konkreten Schritt mit [Übergabevorlage](../../../docs/templates/handoff.md). Für jeden Pull Request die vorhandene GitHub-Vorlage verwenden.
 
 Versionskontrolle ist die Quelle; GitHub-Issues verlinken auf Paket/ADR, ersetzen aber nicht die Fachspezifikation. Ein Issue oder dieses Skill verleiht keine zusätzlichen Veröffentlichungsrechte.
+
+## Architekturstand vom 9. Oktober 2026
+
+Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.

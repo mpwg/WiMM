@@ -1,94 +1,94 @@
 # Technische Architektur
 
-## Bestand und bestätigter Zielzustand
+Stand: 9. Oktober 2026. Verbindliches Ziel gemäß ausdrücklich bestätigtem Architekturauftrag: gemeinsamer Rust-Fachkern, Rust-Clientanwendung, lokaler Rust-DAL nativ/WASM und eigenständiger Rust-Server. [Review und Begründungen](architecture-review.md), [aktive Entscheidungen](decisions.md), [Auftrag und Freigaben](tasks.md). Die Annahme des Ziels ist keine bereits erfolgte Codeumstellung. GitHub führt den Fortschritt in [Gesamtübersicht #114](https://github.com/mpwg/WiMM/issues/114).
 
-Die folgende Komponentenstruktur beschreibt die vorhandene TypeScript-/React-Grundlage und die bisherigen P1–P11-Verträge. Das am 8. Oktober 2026 bestätigte [Portabilitätskonzept](core-and-sql-portability.md) und ADR-042–ADR-044 in den [Entscheidungen](decisions.md) legen den künftigen Rust-Fachkern, UI-freie Anwendung und SQL-Serveradapter fest. Bei Aussagen zu TypeScript-Fachberechnung, UI-Composition und ausschließlichem SQLite-Serverbetrieb gelten diese bisherigen Festlegungen nur für Bestand und Übergang bis zur jeweiligen K-Abnahme. Seit dem anschließenden ausdrücklichen Nutzerauftrag zu #91 am 8. Oktober 2026 ist K01–K11 auch zur Implementierung freigegeben. Die bestehende Architektur bleibt bis zur jeweiligen geprüften Umschaltung in Betrieb. K03 liefert inzwischen eine unabhängige Rust-Bibliothek außerhalb des Tauri-Appcrates und tatsächlich geprüfte Sprachbindings; der Referenzumfang ersetzt noch nicht die aktive TypeScript-Fachengine.
+## Bestand und Übergang
 
-## Komponenten und bisherige Struktur
+Reviewbasis ist `84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92`. `packages/domain` liefert noch die produktive TypeScript-Engine, `packages/application` UI-freie TypeScript-Controller. K01–K04 sind historische geprüfte Grundlagen; die Rust-Engine liegt in `crates/finance-core`, die Sprachbindungen in `crates/finance-bindings`. Web verwendet Dexie/IndexedDB, Desktop katalogisierte Tauri-Kommandos mit rusqlite. Fastify enthält nur Health-/Metadatenrouten. `packages/sync` ist noch ohne produktive Syncimplementierung. [Belegindex](review-evidence.md) nennt tatsächlich ausgeführte und fehlende Prüfungen.
 
-| Bereich | Verantwortung | Darf abhängen von |
+Bis zur jeweils geprüften Aktivierung bleibt der vorhandene Adapter maßgeblich. IndexedDB ist Migrationsquelle und Übergangsadapter, kein zusätzlicher dauerhafter Zielbackend. Ein gescheiterter Diesel-/VFS-Nachweis erfordert eine neue Entscheidung; er erlaubt keine stillschweigende Ersatzarchitektur. React/PWA, Tauri und die derzeitigen Parser bleiben bestehen; vollständig native Produktoberflächen sind weiterhin spätere eigene Aufträge.
+
+## Komponenten und Abhängigkeiten
+
+Die Namen noch nicht implementierter Crates beschreiben Rollen, keine angeblich vorhandenen Pakete.
+
+| Komponente | Verantwortung | Zulässige Abhängigkeiten |
 | --- | --- | --- |
-| packages/domain | Geld, Datum, Regeln, Budget, Ausgleich; pure Validatoren und Änderungsberechnung | Plattformfreie Vertragstypen |
-| packages/contracts | Validierte Ein-/Ausgaben, Fehlertypen und Versionen | Plattformfreie Schema-Bibliothek |
-| packages/crypto | Clientseitige Verschlüsselung, Tresor, Signaturen, KeyGrants | contracts, gepflegte libsodium-Bindung; keine Serverprivatschlüssel |
-| packages/storage | Adapter, Transaktionen, Projektionen, Migrationen | domain, contracts |
-| packages/sync | Verschlüsselte Outbox, Push/Pull, Revisionen, Konflikte | domain, contracts, crypto, Storage-Port |
-| packages/importers | Dateiparser, Normalisierung, Vorschau, Dubletten | domain, contracts |
-| packages/application | Clientabläufe, Profil/Sitzung, atomarer Commit, Konflikte, Historie und Importkoordination | domain, contracts, crypto, importers; injizierte Ports |
-| packages/browser-adapters | Browserpersistenz mit Locks, Uhr/IDs und begrenzte Worker | application, contracts, domain, storage, importers |
-| packages/ui | Darstellung, Eingabeentwürfe, Fokus, Navigation und Plattformtokens | application und Typen/Ansichtshelfer; React, injizierte Plattformdienste |
-| apps/web | PWA, Browserrouting, Service Worker, IndexedDB-Komposition | gemeinsame Pakete |
-| apps/desktop | Tauri-Hülle, gemeinsame React-App, Rust-Speicher-/Systembrücke | gemeinsame Pakete; begrenzte Tauri-Commands |
-| apps/server | Fastify, Identitäten, öffentliche Rechte/Zertifikate, SQLite-Chiffratspeicher und PWA | öffentliche contracts, Signaturprüfung und servergeeignete Speicherteile; kein Finanzfachkern |
+| Rust-Fachverträge | Sichere Geld-/Datums-/ID-/Revisionstypen, Befehle, Ergebnisse, Versionen | Plattformfreie Serialisierung/Schemawerkzeuge |
+| Rust-Fachkern | Regeln, vollständige Validierung, Gegenbefehle, reproduzierbare Projektionen | Fachverträge; pure Hilfsbibliotheken |
+| Rust-Clientanwendung | Profil/Sitzung, Bereich, Befehle, Historie, Konflikte, Import- und Commitkoordination | Fachkern, Fach-/Anwendungsports, Clientkryptografieports |
+| Lokaler Rust-DAL | Aggregate, Bestätigungen, Originalentwürfe, Outbox, Indizes, Caches, Snapshots und Migrationen | Lokale Speicherverträge, technische Persistenzbasis |
+| Clientkryptografie | Tresor, Schlüssel, Nachrichten, Grants, Snapshots und Export; libsodium | Gemeinsame Cryptoverträge, gepflegte native/WASM-Bindings |
+| Technische Persistenzbasis | ORM-/Schemaoperationen, Verbindungsbesitz, Migrationjournal, strukturierte Fehler | Diesel und etablierte Schema-DSL, backendinterne Treiber |
+| Öffentliche Serververträge | Hüllen, Identitäten, Manifeste, Receipts, Cursor und Servertransaktionen | Öffentliche Typen; keine privaten Fach-/Tresortypen |
+| Rust-Serveranwendung | Externe Identität, Sitzung, öffentliche Autorisierung und Chiffratabläufe | Öffentliche Serverports und öffentliche Signaturprüfung |
+| Server-Rust-DAL | Chiffrate und öffentliche Verwaltung in gemeinsamen Transaktionen | Öffentliche Serververträge, technische Persistenzbasis |
+| HTTP-Hülle | Axum/Tokio, Routen, Limits, Konfiguration, Lifecycle, Assets und Quellcodeangebot | Rust-Serveranwendung; begrenzte technische Laufzeitdienste |
+| Bindings/Adapter | Tauri, WASM/Worker, spätere Swift/Kotlin; Uhr, IDs, Dateien, Netzwerk, Schlüsselspeicher | Anwendungsports; jeweilige Plattformbibliotheken |
+| Oberflächen | Darstellung, Fokus, Navigation, Formulardrafts und verständliche Meldungen | Generierte Anwendungs-/Ansichtsbindingtypen; injizierte Plattformdienste |
 
-Keine UI-Abhängigkeiten im Fachkern; Contracts importieren nicht domain. Seit der geprüften K02-Umstellung bilden Web-/Desktop-Einstiegspunkte den Client-Composition-Root. Die UI beobachtet die plattformfreie Anwendung; konkrete Browser- und Speicheradapter werden injiziert; native Datei-, Menü-, Link- und Tokenfunktionen bleiben als `PlatformServices` injiziert. Der Server kann Finanzinhalte wegen verpflichtender E2EE nicht validieren oder berechnen. Apps gelten nach Authentifizierung als vertrauenswürdige Clients; keine Codesignatur/Attestierung als Zugangsvoraussetzung. Nachrichten-/Schlüsselsignaturen sind davon getrennte Integritätsprüfungen.
-
-## Bibliotheken und Toolchain
-
-pnpm-Workspace, TypeScript strict, React, Vite, Tauri 2, Fastify, Dexie, Zod für Verträge, gepflegte libsodium-WASM-Bindung, RFC-8785-Kanonisierung, Vitest und Playwright. SQLite im Server mit einem gepflegten Node-Binding; Desktop über Rust/SQLite. In P1 kompatible stabile Versionen und eine unterstützte Node-LTS-Version festlegen und exakt sperren. Keine beta-Abhängigkeiten als Default. Cryptoverträge stehen in [Verschlüsselung](encryption.md).
-
-Routing und UI-Zustand bleiben von persistenten Fachdaten getrennt. Kontolisten werden virtualisiert; große Imports und Berichtsprojektionen laufen im Web Worker. Lucide liefert Werkzeugicons, Systemschriften die Typografie. Native Funktionen werden über `PlatformServices` injiziert, nicht durch Plattformprüfungen in jedem Fachwidget.
-
-## Gemeinsame Anwendungsverträge
-
-[Die K01-Verträge](core-contracts.md) und `packages/contracts` legen versionierte Fachbefehle, Ergebnisse, Gegenbefehle, Projektionen und Validierung sowie UI-freie Anwendungs-/Profil-/Speicherports fest. Die vorhandenen Profil-, lokalen Finanzspeicher- und Snapshotports verwenden die generischen Vertragsdefinitionen bereits. Die TypeScript-Fachengine bleibt Vergleichsreferenz und Produktengine bis zur tatsächlichen K05-Abnahme. Serverpersistenz erhält öffentliche Verwaltung und CiphertextStore über denselben Transaktionskontext; sie importiert keinen Finanzfachkern.
-
-## Speicherports
-
-Der [gemeinsame Rust-DAL](rust-dal.md) ist seit dem Konzeptauftrag vom 9. Oktober 2026 ein zusätzlicher Architekturvorschlag: typisierte ORM-Zugriffe, Rust-Migrations-DSL und künftig SQLite/WASM auch in der PWA. [ADR-049](decisions.md#adr-049--gemeinsamer-rust-dal-mit-orm-als-architekturvorschlag) ist vorgeschlagen; DAL01–DAL07 sind [nicht zur Implementierung freigegeben](tasks.md#dal--gemeinsamer-rust-dal-konzept-und-issuetracking), auch nicht als Prototyp. Die folgenden SQLite-/IndexedDB-Speicherverträge bleiben für Bestand und freigegebenen K-/P3-Auftrag verbindlich. Lokale Finanzdaten und Serverchiffrate bleiben getrennte Ports; Fachkern und öffentliche Schnittstellen erhalten keine ORM-Abhängigkeit.
-
-`StorageAdapter` bietet `readAggregate`, `query`, `applyAtomicBatch`, `loadConfirmed`, `loadPending`, `saveSyncPage`, `exportSnapshot`, `replaceSnapshot` und `rebuildProjections`. `applyAtomicBatch` prüft erwartete lokale Revisionen und schreibt Aggregate, Outbox und Projektionen gemeinsam. `saveSyncPage` schreibt alle Seitenänderungen samt Folgekursor in einer Transaktion.
-
-Der lokale Port ergänzt `initializeArea(spaceId, proposedEpoch)` für die atomare, idempotente Epochengrundlage gemäß [ADR-040](decisions.md#adr-040--dauerhafte-lokale-epoche-ohne-synczustand). Diese Metadaten benötigen weder Serveranmeldung noch Cursor oder Outbox und bleiben von den Finanzaggregaten getrennt.
-
-Snapshotersatz verwendet vor jeder Mutation die gemeinsame Form-/Kontextprüfung und den vollständigen Fachvalidator gemäß [ADR-041](decisions.md#adr-041--gemeinsame-snapshotprüfung-vor-destruktivem-ersatz). Finanzregeln bleiben im TypeScript-Fachkern; native SQLite-Kommandos prüfen zusätzlich Metadatenbindung und fremde Handlebelegungen innerhalb der Transaktion.
-
-`rebuildProjections` berechnet Salden und Gesamt-/Monatsverbrauch aus den aktuellen lokalen Aggregaten über denselben Fachkern. IndexedDB liest und ersetzt innerhalb einer Schreibtransaktion; Memory verwendet seine Schreibwarteschlange. Der Desktopadapter liest atomar, berechnet clientseitig und übergibt den vollständigen Ausgangsbestand samt Caches an das begrenzte Rust-Kommando. Dieses vergleicht alle Aggregate vor dem atomaren Cacheersatz; veraltete Bestände erhalten einen Revisionskonflikt. Bestätigungen, Entwürfe, Cursor und Finanzaggregate werden nicht geändert. Einzelheiten in [ADR-045](decisions.md#adr-045--fachprojektionsneuaufbau-mit-vollständigem-bestandsvergleich).
-
-IndexedDB und SQLite auf Clients erfüllen dieselbe Fachspeicher-Contract-Suite. Die Desktopbrücke akzeptiert katalogisierte Batchtypen; die UI erhält keinen unbeschränkten SQL-/Dateizugriff. Der Server besitzt einen separaten CiphertextStore: opake Handles/Revisionen, verschlüsselte Bundles, öffentliche Manifeste, Receipts und Changes. Er committet diese atomar, niemals Finanzaggregate/Projektionen im Klartext.
-
-## Datenfluss
+Der Serverabhängigkeitsabschluss enthält weder Finanzkern noch lokalen Finanz-DAL oder private Entschlüsselungsfunktionen. Gemeinsame technische Infrastruktur bedeutet keine gemeinsamen Client-/Serverentities. Öffentliche Typen und öffentliche Signaturprüfung werden unabhängig von privaten Clientmodulen gebaut. ORM-Entities, Verbindungen, SQL und Treiber verlassen den DAL nicht. UI und Server dürfen keine zweite Geldberechnung implementieren.
 
 ```mermaid
-flowchart LR
-  UI[React-Oberfläche] --> CMD[Validierter Fachbefehl]
-  CMD --> DOMAIN[Plattformfreier Fachkern]
-  DOMAIN --> LOCAL[Lokaler atomarer Speicher]
-  LOCAL --> VIEW[Projektionen]
-  VIEW --> UI
-  LOCAL --> OUT[Outbox bei Serverbindung]
-  OUT --> ENC[Client: verschlüsseln und Nachricht signieren]
-  ENC --> API[API: Sitzung, öffentliche Signatur und CAS]
-  API --> DB[SQLite: Chiffrat + Receipt + Änderungslog]
-  DB --> PULL[Pull: verschlüsselte Bundles]
-  PULL --> DEC[Client: prüfen, entschlüsseln, Fachvalidierung]
-  DEC --> LOCAL
+flowchart TD
+  UI[React / spätere native Oberfläche] --> B[Anwendungsbindings]
+  B --> A[Rust-Clientanwendung]
+  A --> F[Reiner Rust-Fachkern]
+  A --> L[Lokaler Rust-DAL]
+  A --> C[Clientkryptografie]
+  A --> P[Plattformports]
+  L --> DB[SQLite nativ / SQLite-WASM mit OPFS]
+  C --> E[Signierte verschlüsselte Hüllen]
+  E --> H[Axum / Tokio]
+  H --> S[Rust-Serveranwendung]
+  S --> D[Öffentlicher Server-DAL]
+  D --> SQL[SQLite / PostgreSQL / MySQL-InnoDB]
 ```
 
-Der Lokalbetrieb durchläuft denselben Clientfachkern, benötigt aber keine Outbox. Serverbestätigung bedeutet Speicherung einer gültigen verschlüsselten Hülle, nicht serverseitige Bestätigung von Geldberechnungen. Empfänger validieren Inhalte vor Anwendung. Der UI-Erfolg eines Schreibvorgangs bedeutet dauerhafte lokale Speicherung, nicht bereits abgeschlossene Serversynchronisierung.
+## Fach- und Anwendungsschnittstellen
 
-## Lokaler und verbundener Betrieb
+[Gemeinsame Verträge](core-contracts.md) trennen Binding-, Fach-, Storage-, Crypto-/Export- und Transportversion von Epoche. Typisierte Rust-Verträge werden Quelle für Sprachtypen/Formschemas; JSON bleibt kompatible Grenze und verlässt den Fachkern intern. ORM-Schema und Fachschema sind verschiedene Modelle. Formvalidierung ersetzt keine Fachvalidierung.
 
-Der Desktopstart benötigt keine Netzwerkverbindung. Die PWA cached ausschließlich versionierte App-Assets, niemals API-Antworten im Service Worker. Nach Erstladen ist sie offline startfähig. Persistenter Browserspeicher wird angefragt; Ablehnung oder Quota-Fehler werden sichtbar und verhindern keine Exporte bestehender Daten.
+Die Anwendung erhält deterministische IDs/Zeit, Profil-/Speicher-/Kryptoports und Abbruchsignale. Derselbe Rust-Code koordiniert native und WASM-Abläufe. TypeScript bleibt nach geprüfter Umschaltung Darstellungs-/Plattformadapter. Historie speichert sitzungsbezogene Ziele; der Fachkern berechnet Gegenbefehle gegen aktuelle Revisionen, keinen Snapshotrollback.
 
-Ein eigenständiges lokales Profil besitzt einen privaten Bereich und beliebig viele Haushalte mit fachlichen Teilnehmern; es ist kein Benutzerkonto und kein Mehrbenutzer-Sicherheitsmodell. Für reine lokale Nutzung gibt es weder Anmeldung noch Benutzerverwaltung. Erst beim Serververbinden authentifiziert sich das Profil über den konfigurierten externen OIDC- oder vergleichbaren Identitätsanbieter. Verbundene Profile werden nach Serverinstanz und externer Subject-ID getrennt; mehrere Browser-Tabs koordinieren Schreib-/Syncführung über Web Locks/BroadcastChannel. Abmeldung löscht Server-Sitzungsmaterial und sperrt verbundene Bereiche; lokale Daten bleiben auf ausdrücklichen Wunsch für eine spätere Verbindung erhalten.
+Native Runtime und Browserworker halten den vollständigen erforderlichen Fachbestand. Die Oberfläche erhält begrenzte Seiten und versionierte Zustandsereignisse. Kein O(N)-Transfer des ganzen Bereichs pro kleiner UI-Aktion als Zielvertrag. Indizierte Ansichtsports begrenzen Darstellung; Mutationen werden trotzdem gegen einen vollständigen konsistenten Fachbestand geprüft. Sichere Summen, Zwischenwerte und Budget-/Ausgleichsberechnungen bleiben ausschließlich im Fachkern, auch bei SQL-Indizes.
 
-Ein lokaler Bereich wird nach bestätigter Rettungscodesicherung über `spaces/from-snapshot` als verschlüsselter, signierter Snapshot servergebunden. Ein leerer privater Initialbereich kann ausdrücklich übernommen werden; vorhandene Finanzdaten verlangen bestätigten Restore mit Backup. Teilnehmer bleiben zunächst ungebundene Personen; Familienbeitritt benötigt zusätzlich bestätigte KeyGrants. Nutzerexporte sind eigenständig verschlüsselt; ihre Schlüssel und Serverbindung verleihen keine Mitgliedschaft.
+## Lokaler Commit und Projektionen
 
-## Plattformintegration
+Ein gemeinsamer Commitdienst führt normale Befehle, Imports, Dauerzahlungen und Historie aus: Kontext prüfen → vollständigen aktuellen Bestand lesen → Fachbefehl ausführen → Änderungsmenge/Projektionen/Originalentwurf vorbereiten → atomar speichern → dauerhaftes Ergebnis übernehmen. Standalone erzeugt keine Outbox; verbundener Modus speichert die zugehörige Operation im selben Batch. Profil-, Sitzungsgeneration und Finanzrevision bleiben getrennte Schutzdimensionen.
 
-Desktop verwendet originale Fensterdekoration, Systemmenüs, Dateiöffnen/-speichern, Betriebssystem-Schlüsselspeicher und bekannte Tastenkürzel. Native Datendialoge sind auf Web/PWA durch Browserdateiauswahl ersetzt. `PlatformServices` abstrahiert Dateiimport, Export, externe Links, Menübefehle, Datenpfad und sichere Tokenspeicherung. `onMenuCommand` liefert ein abmeldbares Ereignisabonnement; `setMenuCommands` aktualisiert die Erreichbarkeit der Finanzaktionen. In P4.5 zeigt die begrenzte Rust-Dateibrücke selbst Öffnen/Speichern und verarbeitet ausschließlich bestätigte Dateien, ohne einen frei übergebenen Dateipfad zu akzeptieren. Die spätere Import-/Exportfachlogik bleibt P5/P10.
+Lokale Commitidentität bindet Profil, Bereich, Epoche, Operations-ID und unveränderten Inhalt. Receipt, Aggregate, Outbox und Projektionen teilen eine Transaktion. Lokale Receipts sind keine Serverbestätigungen. Derselbe Inhalt unter derselben ID ist idempotent; abweichender Inhalt wird abgewiesen. `committed`, `notCommitted` und `unknown` sind auch lokal unterscheidbar. Bei unklarem Ergebnis zuerst ursprüngliche Operation abfragen; kein blindes Neuanzulegen mit neuer ID. Abbruch nach Commit hebt den Write nicht auf.
 
-Tauri lädt nur gebündelte Inhalte. Netzwerkanfragen gehen über eine begrenzte native Transportbrücke zur ausdrücklich konfigurierten HTTPS-Serverorigin; keine Tokens im React-Speicher persistieren. Bei localhost ist HTTP für Entwicklung zulässig. SQLite-Schreibbatch und Konsistenzprüfung erfolgen in Rust atomar; Fachberechnungen bleiben TypeScript.
+Fehlercodes werden strukturiert durch sämtliche Bindings übertragen; Texte sind ausschließlich Darstellung. Projektionen tragen Ausgangsrevision und eigene Projektionsversion. Stale Caches werden kontrolliert neu berechnet, erhaltene Finanzdaten nie still korrigiert. Atomarer Cacheersatz prüft den zugrunde liegenden Bestand. Finanzrevision bleibt lokal und ist weder Syncaggregat noch Undo-Ziel.
 
-## Skalierung und Kompatibilität
+## DAL und Migrationen
 
-Eine Serverinstanz mit SQLite und lokalem dauerhaftem Volume ist v1-Betriebsmodell. Schreibzugriffe werden serialisiert, Leseseiten paginiert. Kein Cluster, kein Netzwerkdateisystem und keine externe Queue. SQL-Schema und finanzielle Snapshots werden durch Integrationstests mit 50.000 Buchungen geprüft.
+Diesel ist bevorzugter Kandidat für typisierte Zugriffe und denselben nativen/WASM-Code. SQLite ist lokales Ziel auf Desktop und PWA; PostgreSQL/MySQL sind ausschließlich Serverbackends. Schemaänderungen verwenden eine etablierte Rust-DSL, zunächst SeaQuery prüfen. Die Verbindung von DSL, Diesel, Ausführung, Journal und den realen Backendgarantien ist nachzuweisen. Keine selbstgebaute DbContext-/LINQ-Engine, kein Lazy Loading und kein implizites Objektgraphsave.
 
-Protokollversion 1 akzeptiert bekannte verschlüsselte Hüllen/Cryptosuites; Fachbefehle/-schemas prüfen ausschließlich Clients. Inkompatible Clients bekommen `UPDATE_REQUIRED`. Service-Worker-Updates werden angeboten, nicht während eines Imports/Dialoges erzwungen. Vor Storage-Migration wird verschlüsselt gesichert. Serverherabstufung nur durch passendes Betreiberbackup mit clientbestätigtem Wiederanlauf.
+Handgeschriebenes SQL ist nur bei belegter technischer ORM-/DSL-Lücke erlaubt: Zweck, fehlende Funktion, betroffene Backends und echte Prüfungen adapterintern dokumentieren, Werte binden. Keine freien SQL-/Dateipfadparameter aus UI/HTTP/Bindings. Eine Rust-DSL garantiert keine atomare DDL in MySQL; Sicherung, Wiederanlauf und Restore müssen backendgerecht nachgewiesen werden.
 
-## Quellen und Lizenz
+Jeder Schemawechsel ist nummeriert, registriert und gesichert; Öffnen synchronisiert kein Schema automatisch. IndexedDB→SQLite nutzt konsistenten Ausgangssnapshot, dauerhaft bestätigte verschlüsselte Sicherung, separates Ziel und vollständigen logischen Vergleich. Alle IDs/Revisionen/Tombstones/Bestätigungen/Pending/Originalentwürfe/Epochen/Cursor bleiben erhalten. Quellwrites werden ausgeschlossen oder vor Aktivierung vollständig erkannt. Absturzsichere Aktivierung lässt genau einen Writer zurück. Kein Dual-Write und kein automatischer Rückfall auf veraltete IndexedDB-Daten nach neuen SQLite-Writes. Quelle nicht beim ersten erfolgreichen Start löschen.
 
-Projektlizenz: AGPL-3.0-or-later. Fremdcode wird mit Herkunftscommit und ursprünglichem Hinweis dokumentiert. Fundamentale Architekturgrundlagen: [SQLite-Transaktionen](https://www.sqlite.org/lang_transaction.html), [Dexie](https://dexie.org/docs/Dexie/Dexie), [Tauri](https://v2.tauri.app/security/capabilities/), [Fastify-Validierung](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/).
+Server-SQL-Wechsel ist ein separates Betreiberverfahren für Chiffrate und öffentliche Daten, einschließlich aller sechs gerichteten Wechsel. Betreiberrestore stellt keine neuen autorisierten Finanzepochen her: Sitzungen widerrufen, Wiederanlauf sperren und clientbestätigte neue signierte Snapshots verlangen.
 
-Der [registrierte lokale Indexschritt](handoffs/storage-index-migration-2026-10-09.md) konkretisiert ADR-048: Anwendung und Cryptoadapter bereiten den bestätigten verschlüsselten Originalsnapshot vor, die Speicheradapter prüfen unmittelbar vor dem atomaren Versions-/Journal-/Indexcommit denselben vollständigen Stand. Bekannte V1-/V2-Speicher öffnen ohne automatischen Upgrade. Fachschema und Epoche bleiben getrennt; die Produktstartkoordination folgt mit K05.
+## PWA-Runtime und Updates
+
+Diesel-WASM-Build allein genügt nicht. Die konkret verwendete SQLite-Instanz muss über einen persistenten Browser-VFS, vorzugsweise OPFS, arbeiten. Worker-/Verbindungsbesitz, Web-Lock-Führung, Mehrtabbetrieb, Führungsverlust und Wiederanlauf werden zusammen nachgewiesen. Ein begrenzter Besitzer führt DB-Zugriffe; wartende Tabs zeigen einen verständlichen Status. Keine konkurrierenden unkoordinierten Writer, keine unbemerkte Memory-/IndexedDB-Ersatzpersistenz.
+
+COOP/COEP-/SharedArrayBuffer-Anforderungen sind VFS-abhängig und Teil des Hosting-/OIDC-Nachweises. Browser-/iOS-Eignung, Quota, Persistenzablehnung und Ressourcenfehler bleiben eigene reale Kriterien. Bei fehlender Unterstützung keine Migration aktivieren; vorhandene Daten bleiben sicher erreichbar/exportierbar.
+
+Buildgebundene Assetmanifeste umfassen HTML/JS/CSS, Rust-WASM, Worker und Cryptoassets. Update nur nach Zustimmung und bei gesicherten Entwürfen; alte Tabs dürfen nach inkompatibler Migration nicht weiter schreiben. Binding-/Fach-/Storage-/Crypto-/Transportkompatibilität wird vor Aktivierung geprüft. Service Worker cached ausschließlich Appassets, keine API-Antworten. Offline-Neustart muss einen vollständigen kompatiblen Build laden.
+
+## Server, Sicherheit und Betrieb
+
+Axum/Tokio ersetzt Fastify erst nach Parität der vorhandenen Routen/Startverträge. Öffentliche Verwaltung, signierte Rollen-/Gerätemanifeste, Chiffrate, Receipts und Cursor teilen die erforderliche Servertransaktion. Identität kommt aus der Sitzung; Finanzfachprüfung ausschließlich auf entschlüsselnden Clients. Externes OIDC, Device-Kopplung, CSRF/Origin, Limits und konfigurierte TLS-Origins folgen [Sicherheit](security.md) und [API](api.md). Kein lokaler Zusatz-HTTP-Dienst für Desktop/PWA.
+
+Blockierende Dieselarbeit läuft begrenzt außerhalb des HTTP-Executors. Zeitlimit/Abbruch beendet nicht automatisch einen bereits laufenden Write; Receiptprüfung und Commitstatus entscheiden. Readiness bleibt während Migration/Restore falsch; Shutdown stoppt neue Arbeit und beendet laufende Transaktionen kontrolliert. SQLite bleibt Standard für eine Serverinstanz mit lokalem dauerhaftem Volume; kein Cluster/NFS durch diese Entscheidung. [Betrieb](operations.md).
+
+E2EE, lokale Vertrauensannahmen, freiwillige private Veröffentlichung, etablierte libsodium-Primitive und AGPL-3.0-or-later bleiben verbindlich. Lokale Klartextdaten werden nicht automatisch appverschlüsselt; OS-/Browserprofil bleibt lokale Schutzgrenze. Eigene Rust-Crates, Bindings, Werkzeuge und Buildscripts setzen `#![forbid(unsafe_code)]` und erben die globale Cargo-Sperre; keine Abschwächung für FFI.
+
+## Umstellung und Abnahme
+
+Verträge/Typisierung → sichere Krypto-/DAL-Machbarkeit → lokale Commit-/Rust-Anwendung → begrenzte Ansichten und Produktintegration → gesicherte Speicheraktivierung/Updates → reale Plattformkonformität. Serververträge/Rust-HTTP/SQL-Adapter bilden einen separaten Strang; kein unnötiges Blockieren lokaler Arbeit durch Serverfeatures. Konkrete Abhängigkeiten stehen ausschließlich in den [Issues](https://github.com/mpwg/WiMM/issues/114).
+
+Native Rust-Assertions, tatsächliche WASM-/Swift-/Kotlin-Bindings, echte lokale SQLite/Browser-SQLite und getrennte echte SQLite/PostgreSQL/MySQL-Servercontracts sind Pflicht. Memory/Mock und Desktopfrontend-IndexedDB sind keine native Abnahme. 50.000-Buchungen-Grenzen: Kaltöffnen unter 2.000 ms, Filter-/Scroll-p95 unter 100 ms. Fehlende OS-/Screenreader-/physische iOS-Belege bleiben offen. [Prüfstrategie](testing.md).

@@ -34,8 +34,12 @@ Ursprüngliche Hinweise sind vollständig unter [licenses](licenses/papaparse.tx
 
 `pnpm test:importers` prüft Parserfixtures, echte Byte-/Datensatzgrenzen, Syntax-/Entitätsfehler, Abbruch und sichere Centnormalisierung. `pnpm test:importers:worker` verwendet einen echten Chromium-Worker: lokale Bytes, Startmeldung mit anschließendem Abbruch, strukturierter Fehler und erfolgreicher neuer Auftrag; keine XHR-/Fetch-/Uploadanfrage. Beide Prüfungen gehören zur zentralen Prüfserie. Testdaten sind synthetisch.
 
-Parserauswahl und Herkunft stehen in der [P5.1-Übergabe](../../docs/handoffs/p5-1.md); aktuelle Gesamtbelege und Plattformgrenzen in der [P5-Kriterienmatrix](../../docs/handoffs/p5.md). Windows-/Linux-Ausführung folgt gemäß Nutzerauftrag später; dieser Stand behauptet keine neue native Plattformabnahme von P4.
+Parserauswahl und Herkunft stehen in der [P5.1-Übergabe](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/p5-1.md); aktuelle Gesamtbelege und Plattformgrenzen in der [P5-Kriterienmatrix](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/p5.md). Windows-/Linux-Ausführung folgt gemäß Nutzerauftrag später; dieser Stand behauptet keine neue native Plattformabnahme von P4.
 
 ## P5-Nachprüfung vom 8. Oktober 2026
 
-Die [aktuelle Kriterienmatrix](../../docs/handoffs/p5-review-2026-10-08.md) bestätigt Parser-/Fach-/Browser-/Speicher-/Offline-Kernabläufe, belegt aber zusätzliche Funktions- und Abnahmelücken. [Gesamtabnahme #71](https://github.com/mpwg/WiMM/issues/71) verknüpft alle Einzelissues. P5 ist weder vollständig umgesetzt noch vollständig abgenommen; frühere native Belege bleiben historisch.
+Die [aktuelle Kriterienmatrix](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/p5-review-2026-10-08.md) bestätigt Parser-/Fach-/Browser-/Speicher-/Offline-Kernabläufe, belegt aber zusätzliche Funktions- und Abnahmelücken. [Gesamtabnahme #71](https://github.com/mpwg/WiMM/issues/71) verknüpft alle Einzelissues. P5 ist weder vollständig umgesetzt noch vollständig abgenommen; frühere native Belege bleiben historisch.
+
+## Architekturstand vom 9. Oktober 2026
+
+Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.

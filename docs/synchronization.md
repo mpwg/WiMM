@@ -1,5 +1,7 @@
 # Synchronisierung und Konflikte
 
+Architekturstand 9. Oktober 2026: [gemeinsames Rust-Ziel](architecture.md), [Review](architecture-review.md), [Freigaben](tasks.md). Diese funktionalen Verträge bleiben verbindlich; neue Zielkomponenten sind noch nicht implementiert.
+
 ## Grundprinzip
 
 Lokale Speicherung ist der erste dauerhafte Schreibpunkt. Clients berechnen und prüfen Fachbefehle, verschlüsseln Ergebnisse und signieren Nachrichten. Der Server prüft Anmeldung, öffentliche Rechte/Signaturen und opake Revisionen, niemals Finanzinhalte. Optimistische Entwürfe bleiben getrennt. Sichtbarer Zustand = clientvalidierter bestätigter Stand plus anwendbare lokale Entwürfe. [E2EE ist verpflichtend](encryption.md).

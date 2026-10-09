@@ -1,5 +1,7 @@
 # API-Vertrag v1
 
+Architekturstand 9. Oktober 2026: [gemeinsames Rust-Ziel](architecture.md), [Review](architecture-review.md), [Freigaben](tasks.md). Diese funktionalen Verträge bleiben verbindlich; neue Zielkomponenten sind noch nicht implementiert.
+
 ## Allgemeine Regeln
 
 Basis `/api/v1`, UTF-8 JSON, camelCase, keine stillschweigende Typkonvertierung. IDs sind UUIDs. Finanzpayloads einschließlich Geld/Datum ausschließlich Ende-zu-Ende-verschlüsselt; ihre fachlichen Typen gelten auf Clients, nicht als Klartext-HTTP-Body. Listen: `items`, `nextCursor`, `hasMore`, Standardgröße 50/maximal 200 außer Sync-Pull. Verwaltungsänderungen verlangen erwartete Revision bzw. signierte Rosterfolgeversion. [E2EE-Vertrag](encryption.md) ist verbindlich.

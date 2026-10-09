@@ -6,7 +6,7 @@ body:
     id: package
     attributes:
       label: "Paket-ID und Voraussetzungen"
-      description: "P1–P11 bzw. Teilaufgabe; ein Issue allein erteilt keinen Implementierungsauftrag."
+      description: "P1–P11, K-/DAL-/AR-Paket bzw. Teilaufgabe; ein Issue allein erteilt keinen Implementierungsauftrag."
     validations:
       required: true
   - type: textarea

@@ -1,5 +1,7 @@
 # Import- und Exportformate
 
+Architekturstand 9. Oktober 2026: [gemeinsames Rust-Ziel](architecture.md), [Review](architecture-review.md), [Freigaben](tasks.md). Diese funktionalen Verträge bleiben verbindlich; neue Zielkomponenten sind noch nicht implementiert.
+
 ## Importablauf
 
 Dateiauswahl → lokales Parsing → Kontoauswahl/Mapping → normalisierte Vorschau → Dublettenentscheidung → bestätigte Übernahme in Batches. Parser laufen ohne Netzwerkzugriff im Worker; Desktop darf die Datei über nativen Dialog lesen. Die Originaldatei wird nicht automatisch an den Server übertragen.

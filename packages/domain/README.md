@@ -28,4 +28,8 @@ Regeln unterstützen Datum/Betrag mit equals/gte/lte sowie Empfänger/Verwendung
 
 `dueDates` erzeugt reine Vorschläge für weekly/monthly/yearly mit positivem Intervall und optionalem Enddatum. Monats-/Jahresrhythmen behalten den ursprünglichen Fälligkeitstag (F14). `resolveOccurrence` bestätigt oder überspringt atomar und idempotent. Eine ausdrücklich zugeordnete importierte Buchung wird verknüpft, ohne eine weitere Zahlung anzulegen. Konto-/Schedulerevisionen verhindern konkurrierende Doppelübernahmen. Eigener Code bleibt AGPL-3.0-or-later.
 
-Prüfung: `pnpm test:domain`; synthetische F14-, Regel-, Dubletten-, Referenz-, Überlauf- und Wiederaufnahmefälle in `automation.test.ts`. Importierte Empfänger werden anhand eindeutiger Namen/Aliasse wiederverwendet oder atomar mit der Gruppe angelegt; Quellfingerprints bleiben vor Regelanwendung festgehalten. Neue Dauerzahlungsbuchungen prüfen zusätzlich die sichere Kontosumme. UI-/Speicherintegration und Plattformgrenzen stehen in der [P5-Übergabe](../../docs/handoffs/p5.md).
+Prüfung: `pnpm test:domain`; synthetische F14-, Regel-, Dubletten-, Referenz-, Überlauf- und Wiederaufnahmefälle in `automation.test.ts`. Importierte Empfänger werden anhand eindeutiger Namen/Aliasse wiederverwendet oder atomar mit der Gruppe angelegt; Quellfingerprints bleiben vor Regelanwendung festgehalten. Neue Dauerzahlungsbuchungen prüfen zusätzlich die sichere Kontosumme. UI-/Speicherintegration und Plattformgrenzen stehen in der [P5-Übergabe](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/p5.md).
+
+## Architekturstand vom 9. Oktober 2026
+
+Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.

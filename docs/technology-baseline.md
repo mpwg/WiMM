@@ -1,103 +1,73 @@
 # Versions- und Lizenzbasis
 
-Stand: 8. Oktober 2026. Dieses Dokument hält den Auswahlstand aus P1.1 und die aktuellen Abweichungen der tatsächlichen Manifeste fest. Paketmanifeste und Lockfiles sperren die installierten Versionen; vollständige Fremdhinweise bleiben vor einer Distribution erforderlich. Die Auswahlübersichten nach dem T1-Abschnitt sind historische P1.1-Belege.
+Stand: 9. Oktober 2026, aus tatsächlichen Manifesten dieses Checkouts. Exakte aufgelöste Versionen/Integrität sind in pnpm-lock.yaml und den Cargo-Lockfiles verbindlich; historische Auswahlversionen werden nicht parallel gepflegt. Dieser Abgleich installiert oder aktualisiert nichts. [Herkunftsregister #72](https://github.com/mpwg/WiMM/issues/72) bleibt offen, vollständige Fremdhinweise sind vor Distribution Pflicht.
 
-## Tatsächlicher Manifeststand und Toolmodernisierung T1
+## Toolchain und Auswahlregeln
 
-Die Auswahlübersichten unten dokumentieren P1.1; die tatsächlichen Installationen werden durch Paketmanifeste und Lockfiles festgelegt. Folgende Abweichungen wurden bei T1 festgestellt und mit Ausnahme der notwendigen CLI-Kompatibilitätskorrektur dokumentiert:
+- packageManager: `pnpm@12.8.1`; Nodeengine `>=26.10.0 <28`, pnpmengine `>=12.8.1 <14`.
+- Rusttoolchain gemäß rust-toolchain.toml; eigene Crates/Bindings/Buildscripts forbid(unsafe_code), globale Cargo-Lints und direkte Rust-Assertions.
+- Stabile kompatible Releases, exakte Sperren, Reifezeit gemäß pnpm-workspace.yaml; keine automatisch gewählte Beta/Alpha oder Lizenzumstellung.
+- AGPL-3.0-or-later für eigene Inhalte; Fremdhinweise/Herkunft unverändert erhalten. Neue ORM/VFS/Generator/Axum-/Crypto-Bindings erst nach praktischer Eignungs-/Lizenz-/Toolchainprüfung aufnehmen.
 
-| Bestandteil | Auswahlübersicht P1.1 | Tatsächlich gesperrt |
+## Manifestabhängigkeiten
+
+| Manifest | Abhängigkeit | Deklarierte Version |
 | --- | --- | --- |
-| Tauri-CLI | 2.11.5 | 2.12.0; notwendige Korrektur der veralteten STATIC_VCRUNTIME-Übergabe |
-| tauri-build | 2.6.3 | 2.7.1 |
-| Tauri-Core / JS-API | 2.11.6 / 2.11.1 | 2.12.1 / 2.12.0 |
-| Dexie | 4.4.6 | 4.4.6 |
-| rusqlite | 0.40.2 | 0.40.2 |
-| better-sqlite3 | 13.0.3 für den späteren Server | Noch keine Abhängigkeit des aktuellen Servers |
+| `package.json` | `@babel/parser` | `8.0.6` |
+| `package.json` | `@playwright/test` | `1.63.0` |
+| `package.json` | `@types/node` | `26.6.3` |
+| `package.json` | `@types/react` | `19.3.0` |
+| `package.json` | `@types/react-dom` | `19.3.0` |
+| `package.json` | `markdown-it` | `15.0.2` |
+| `package.json` | `oxlint` | `1.86.0` |
+| `package.json` | `oxlint-tsgolint` | `7.0.2003` |
+| `package.json` | `tsx` | `4.23.15` |
+| `package.json` | `typescript` | `7.0.2` |
+| `package.json` | `vitest` | `5.0.3` |
+| `package.json` | `yaml` | `2.9.1` |
+| `packages/contracts/package.json` | `zod` | `4.6.5` |
+| `packages/crypto/package.json` | `canonicalize` | `5.1.0` |
+| `packages/crypto/package.json` | `libsodium-wrappers-sumo` | `0.8.4` |
+| `packages/importers/package.json` | `ofx-js` | `1.1.2` |
+| `packages/importers/package.json` | `papaparse` | `5.7.0` |
+| `packages/importers/package.json` | `saxes` | `6.0.0` |
+| `packages/importers/package.json` | `@types/papaparse` | `5.5.2` |
+| `packages/storage/package.json` | `dexie` | `4.4.6` |
+| `packages/storage/package.json` | `fake-indexeddb` | `6.2.5` |
+| `packages/ui/package.json` | `lucide-react` | `1.49.0` |
+| `packages/ui/package.json` | `react` | `19.3.0` |
+| `packages/ui/package.json` | `vitest` | `5.0.3` |
+| `apps/desktop/package.json` | `@tauri-apps/api` | `2.12.0` |
+| `apps/desktop/package.json` | `react` | `19.3.0` |
+| `apps/desktop/package.json` | `react-dom` | `19.3.0` |
+| `apps/desktop/package.json` | `@tauri-apps/cli` | `2.12.0` |
+| `apps/desktop/package.json` | `@vitejs/plugin-react` | `6.1.1` |
+| `apps/desktop/package.json` | `vite` | `8.3.1` |
+| `apps/server/package.json` | `fastify` | `5.12.5` |
+| `apps/web/package.json` | `react` | `19.3.0` |
+| `apps/web/package.json` | `react-dom` | `19.3.0` |
+| `apps/web/package.json` | `@vitejs/plugin-react` | `6.1.1` |
+| `apps/web/package.json` | `vite` | `8.3.1` |
+| `Cargo.toml workspace` | `serde` | `=1.0.229` |
+| `Cargo.toml workspace` | `serde_json` | `=1.0.151` |
+| `Cargo.toml workspace` | `uuid` | `=1.27.0` |
+| `Cargo.toml workspace` | `uniffi` | `=0.32.2` |
+| `Cargo.toml workspace` | `wasm-bindgen` | `=0.2.129` |
+| `Tauri Cargo.toml` | `tauri` | `=2.12.1` |
+| `Tauri Cargo.toml` | `rusqlite` | `=0.40.2` |
+| `Tauri Cargo.toml` | `serde` | `=1.0.229` |
+| `Tauri Cargo.toml` | `serde_json` | `=1.0.151` |
+| `Tauri Cargo.toml` | `sha2` | `=0.10.9` |
+| `Tauri Cargo.toml` | `base64` | `=0.22.1` |
+| `Tauri Cargo.toml` | `tauri-plugin-dialog` | `=2.7.3` |
+| `Tauri Cargo.toml` | `tauri-plugin-opener` | `=2.5.5` |
+| `Tauri Cargo.toml` | `url` | `=2.5.8` |
+| `Tauri Cargo.toml` | `tempfile` | `=3.27.0` |
+| `Tauri Cargo.toml` | `wimm-finance-core` | `../../../crates/finance-core` |
+| `Tauri build` | `tauri-build` | `=2.7.1` |
 
-T1 ergänzt [Oxlint 1.85.0](https://registry.npmjs.org/oxlint/1.85.0) und [oxlint-tsgolint 7.0.2003](https://registry.npmjs.org/oxlint-tsgolint/7.0.2003), beide MIT. Registry-Veröffentlichungen: 21. beziehungsweise 24. September 2026; beide erfüllen am 4. Oktober die sieben Tage Reifezeit. Oxlint verlangt Node `^20.19.0 || >=22.12.0` und oxlint-tsgolint mindestens 7.0.2001; die gewählten Versionen erfüllen dies. Tauri-CLI [2.12.0](https://registry.npmjs.org/@tauri-apps%2fcli/2.12.0) erschien am 26. September 2026 und erfüllt ebenfalls die Reifezeit; Rust-Core und JS-API bleiben unverändert. Neue plattformspezifische Pakete sind einschließlich Integrität im pnpm-Lockfile gesperrt. TypeScript bleibt 7.0.2, das Sprachziel wird ES2025. Rust bleibt 1.99.0 und ist nun einschließlich Clippy/rustfmt versioniert festgelegt.
+## Zielbibliotheken und offene Nachweise
 
-`skipLibCheck` bleibt in der Nachprüfung vom 8. Oktober wegen TS2344/TS2430 in saxes 6.0.0 und TS2694 in thread-stream 4.2.0 nötig. Der frühere Dexie-4.2.1-Befund ist mit Dexie 4.4.6 in dieser Nachprüfung nicht mehr vorhanden. Das ist eine dokumentierte Fremddeklarationsgrenze, keine Abschaltung eigener Typprüfungen. Die [Entwicklungsanleitung](development.md#aktuelle-toolprüfungen) beschreibt die verbindlichen Warnungsregeln. Die vorhandenen pnpm-Regeln für Installationsskripte, exakte Versionen, Peers und Reifezeit bleiben erhalten.
+Diesel ist bevorzugter ORM-Kandidat, SeaQuery zuerst zu prüfende Schema-DSL, Axum/Tokio bestätigtes Serverziel. Sie sind noch keine Produktabhängigkeiten dieses Auftrags. Dokumentation zu SQLite/WASM belegt kein konkretes dauerhaftes WiMM-VFS. Generatoren und native/WASM-libsodium-Bindings benötigen Safe-Code-/Interop-/Herkunftsprüfung. Der Serverstub enthält noch Fastify; der lokale Bestand Dexie/rusqlite. [Review](architecture-review.md), [Architektur](architecture.md), [Freigaben](tasks.md).
 
-## Auswahlregeln
-
-- Es werden ausschließlich stabile Releases verwendet; Vorabversionen, insbesondere Tauri 3-Alpha, sind ausgeschlossen.
-- Node 26 ist die aktuelle stabile Laufzeitlinie. Das Projekt verlangt mindestens Node 26.10.0 und akzeptiert bis vor Node 28 auch die nächste Hauptlinie; so bleiben zeitnahe Sicherheits- und Patchupdates ohne Konfigurationsänderung nutzbar.
-- Alle hier gewählten Laufzeiten erfüllen ihre dokumentierten Mindestversionen mit Node 26.10.0. Tatsächliche Installation, Typprüfung und Builds sind ausdrücklich erst P1.2 beziehungsweise P1.5. Tauri 2.12.1 wurde nicht übernommen, weil die Veröffentlichung am 30. September 2026 die festgelegte Reifezeit von sieben Tagen noch nicht erfüllt; die neueste reife kompatible 2.11-Kombination ist festgelegt.
-- MIT, ISC und Apache-2.0 sind mit der Projektlizenz AGPL-3.0-or-later vereinbar. Vollständige Lizenztexte und Copyright-Hinweise der tatsächlich aufgelösten transitiven Abhängigkeiten werden vor einer Distribution aus dem Lockfile in Fremdhinweise übernommen.
-
-## Toolchain
-
-| Bestandteil | Gewählte Version | Offizielle Quelle und Lizenz | Kompatibilitätsgrund |
-| --- | --- | --- | --- |
-| Node.js | 26.10.0, Engine `>=26.10.0 <28` | [Node-Release](https://nodejs.org/en/download/current), [Releaseplan](https://github.com/nodejs/Release); MIT | Aktuelle stabile Linie; der Bereich lässt die nächste Hauptlinie zu, ohne beliebig unbekannte Hauptversionen freizugeben. |
-| pnpm | 12.8.1, Engine `>=12.8.1 <14` | [npm-Metadaten](https://registry.npmjs.org/pnpm/12.8.1); MIT | Aktuelle stabile Version; `packageManager` bleibt für reproduzierbare Installationen bei 12.8.1, während der Engine-Bereich kompatible neuere Versionen bis vor 14 zulässt. |
-| Rust | 1.99.0 | [Rust-Releaseankündigungen](https://blog.rust-lang.org/releases/); Apache-2.0 oder MIT | Aktuelle stabile Toolchain; über der Mindestversion Rust 1.90 von Tauri 2.12.1. |
-| Tauri | CLI 2.11.5; JS-API 2.11.1; Rust-Core 2.11.6; Rust-Build 2.6.3 | [CLI-Metadaten](https://registry.npmjs.org/@tauri-apps%2fcli/2.11.5), [API-Metadaten](https://registry.npmjs.org/@tauri-apps%2fapi/2.11.1), [Rust-Core](https://crates.io/api/v1/crates/tauri/2.11.6), [Rust-Build](https://crates.io/api/v1/crates/tauri-build/2.6.3); Apache-2.0 oder MIT | Neueste reife stabile Tauri-2-Kombination gemäß sieben Tagen Reifezeit, passend zur Architektur. Rust-Core und Rust-Build folgen eigenständigen Versionslinien; keine 3.x-Alpha. |
-
-## JavaScript- und Laufzeitbibliotheken
-
-| Bereich | Gewählte Versionen | Offizielle Quelle und Lizenz | Kompatibilitätsgrund |
-| --- | --- | --- | --- |
-| Sprache | TypeScript 7.0.2 | [npm-Metadaten](https://registry.npmjs.org/typescript/7.0.2); Apache-2.0 | TypeScript strict/ESM gemäß Architektur; Node-Mindestversion 16.20.0. Die Projektquellen bleiben strikt; `skipLibCheck` übergeht ausschließlich die oben dokumentierten inkompatiblen Fremddeklarationen von Dexie und `thread-stream`. |
-| Weboberfläche | React und React DOM 19.3.0, Vite 8.3.1, `@vitejs/plugin-react` 6.1.1 | [React](https://registry.npmjs.org/react/19.3.0), [Vite](https://registry.npmjs.org/vite/8.3.1), [Plugin](https://registry.npmjs.org/@vitejs/plugin-react/6.1.1); jeweils MIT | Vite und Plugin verlangen Node 20.19.0 oder mindestens 22.12.0; Node 26 erfüllt beides. Vite 8.3.1 erfüllt zusätzlich die gewählte Reifezeitpolicy. |
-| Server | Fastify 5.12.5 | [npm-Metadaten](https://registry.npmjs.org/fastify/5.12.5); MIT | Stabile Fastify-Hauptlinie für die später isolierte öffentliche Serverhülle. |
-| Browserdatenbank | Dexie 4.4.6 | [npm-Metadaten](https://registry.npmjs.org/dexie/4.4.6); Apache-2.0 | Entspricht dem vorgesehenen IndexedDB-Adapter; Browserintegration erst ab P3. |
-| Verträge | Zod 4.6.5 | [npm-Metadaten](https://registry.npmjs.org/zod/4.6.5); MIT | Plattformfreie Schema-Bibliothek für `packages/contracts`. |
-| Server-SQLite | better-sqlite3 13.0.3 | [npm-Metadaten](https://registry.npmjs.org/better-sqlite3/13.0.3), [Release](https://github.com/WiseLibs/better-sqlite3/releases/tag/v13.0.3); MIT | Dokumentierte Node-Mindestversion 22; Version 13 verwendet N-API und entfernt den Installations-Compile-Schritt. |
-| Desktop-SQLite | rusqlite 0.40.2 mit gebündeltem SQLite | [Crate-Metadaten](https://crates.io/api/v1/crates/rusqlite/0.40.2); MIT, SQLite Public Domain | Rust-Brücke gemäß Architektur; konkrete Features und Lizenzkette werden bei der Cargo-Auflösung in P1.2 festgeschrieben. |
-| Tests | Vitest 5.0.2, Playwright 1.63.0 | [Vitest](https://registry.npmjs.org/vitest/5.0.2); MIT, [Playwright](https://registry.npmjs.org/playwright/1.63.0); Apache-2.0 | Vitest unterstützt Node 26, Playwright verlangt mindestens Node 20. Vitest 5.0.2 erfüllt zusätzlich die gewählte Reifezeitpolicy. |
-| Dokumentationsprüfung | markdown-it 15.0.2, yaml 2.9.1 | [markdown-it](https://registry.npmjs.org/markdown-it/15.0.2); MIT, [yaml](https://registry.npmjs.org/yaml/2.9.1); ISC | Etablierte Markdown- und YAML-Parser für `check:docs`; relative Links und Anker werden gegen die gemeinsam geparsten Dokumente geprüft. |
-
-## Kryptografie und Kanonisierung
-
-| Bestandteil | Gewählte Version | Offizielle Quelle und Lizenz | Kompatibilitätsgrund |
-| --- | --- | --- | --- |
-| libsodium-WASM | libsodium-wrappers-sumo 0.8.4 | [npm-Metadaten](https://registry.npmjs.org/libsodium-wrappers-sumo/0.8.4), [Upstream](https://github.com/jedisct1/libsodium.js); ISC | Sumo stellt die in der E2EE-Spezifikation benötigten XChaCha20-Poly1305-, Ed25519-, sealed-box- und Argon2id-Primitive bereit. Die Kapselung und Vektoren folgen erst in P1.4. |
-| RFC-8785-Kanonisierung | canonicalize 5.1.0 | [npm-Metadaten](https://registry.npmjs.org/canonicalize/5.1.0), [Upstream](https://github.com/erdtman/canonicalize); Apache-2.0 | Etablierte JCS-Kanonisierung, Node-Mindestversion 22. Der konkrete API-Einsatz wird in P1.4 gegen RFC 8785 und feste Vektoren geprüft. |
-
-`json-canonicalize` wird nicht ausgewählt: Sein Upstream dokumentiert für die Standardfunktion eine von RFC 8785 abweichende Behandlung von `undefined` in Arrays. Dadurch wäre der beabsichtigte Standard nur über eine fehleranfällige Optionsvorgabe erreichbar.
-
-Vite und `tsx` verwenden transitiv `esbuild` für ihre Build- beziehungsweise TypeScript-Transformation. Das versionierte `allowBuilds` erlaubt ausschließlich dessen Installationsskript; andere Installationsskripte bleiben gesperrt. `esbuild` ist MIT-lizenziert und wird nur als Entwicklungswerkzeug eingesetzt.
-
-## Paketmanagerentscheidung
-
-pnpm 12.8.1 bleibt der einzige Paketmanager dieses Repositories. `packageManager` sperrt diese aktuelle stabile Version für reproduzierbare Installationen; die Engine akzeptiert kompatible pnpm-Versionen bis vor 14. Seine [Workspaceunterstützung](https://pnpm.io/workspaces) verbindet interne Pakete ausschließlich über `workspace:`; fehlende lokale Ziele werden dadurch nicht unbemerkt aus einer Registry geladen. Ein gemeinsames `pnpm-lock.yaml` und der isolierte Linker verhindern undeclared beziehungsweise zufällig erreichbare Abhängigkeiten. Die versionierte [`allowBuilds`-Policy](https://pnpm.io/cli/approve-builds) verlangt für Installationsskripte eine explizite Entscheidung. `minimumReleaseAge: 10080` hält neue Registry-Releases für sieben Tage zurück.
-
-npm erfüllt Workspace-Grundfunktionen, liefert aber diese projektweit versionierte Freigabepolicy nicht. Bun ist für Installationen schnell und unterstützt Workspaces, bleibt hier jedoch nur eine mögliche spätere Laufzeitprüfung: Node 26, pnpm und der pnpm-Lockfile sind die verbindliche Entwicklungsbasis. Yarn wird nicht zusätzlich eingeführt, weil sein PnP-/Linkermodell für die gewählte Tauri-/Native-Binding-Toolchain keinen zusätzlichen Nutzen bietet.
-
-## Plattformstatus
-
-| Zielsystem | Voraussetzung laut Quelle | Stand dieses Pakets |
-| --- | --- | --- |
-| macOS arm64 | Xcode oder Command Line Tools, Rust und Node; [Tauri-Voraussetzungen](https://v2.tauri.app/start/prerequisites/) | Entwicklungsrechner: macOS 27.0.1 arm64, Xcode vorhanden, Node 26.10.0 und pnpm 12.8.1 vorhanden; Rust 1.99.0 über Homebrew installiert. P1.5 hat Tauri-Build und -Start ausgeführt. |
-| macOS x64 | Xcode oder Command Line Tools, Rust und Node | Nicht geprüft. |
-| Windows x64 | Rust MSVC-Toolchain, Microsoft C++ Build Tools, WebView2 und Node | Nicht geprüft. |
-| Linux x64 | distributionsabhängige WebKitGTK-/Build-Abhängigkeiten, Rust und Node | Nicht geprüft. |
-| Browser-PWA | Aktueller Chromium, Firefox und WebKit | Nicht geprüft; Playwright-Browser werden erst mit P1.2 installiert und ab P4 für Verhalten verwendet. |
-
-Die Tauri-Dokumentation nennt zielsystemabhängige Voraussetzungen und keinen Ersatz durch Cross-Compilation. P1.5 führt deshalb tatsächliche Start-/Build-Smokechecks getrennt für verfügbare Zielsysteme aus.
-
-## Herkunftsregister ab P1.2
-
-Für jede aufgelöste direkte oder transitive Abhängigkeit werden mindestens Name, exakte Version, Registry-Integrität aus dem Lockfile, SPDX-Lizenz, Upstream-URL, Copyright-/NOTICE-Datei und erforderliche Weitergabe in einer maschinenlesbar auswertbaren Liste festgehalten. Übernommener Quellcode erhält zusätzlich Herkunftscommit, lokale Änderungen und ursprüngliche Hinweise. Diese Grundlage ersetzt weder die Lizenzprüfung des Lockfiles noch eine Sicherheitsprüfung der Pakete.
-
-## P4.5 — Native Systemports
-
-Zusätzlich exakt gesperrt: `tauri-plugin-dialog` 2.7.3 und `tauri-plugin-opener` 2.5.5, jeweils Apache-2.0 oder MIT; `url` 2.5.8 (MIT oder Apache-2.0) und `tempfile` 3.27.0 (MIT oder Apache-2.0). Die offiziellen [Dialog-](https://v2.tauri.app/plugin/dialog/) und [Opener-APIs](https://v2.tauri.app/plugin/opener/) werden ausschließlich innerhalb der begrenzten Rust-Appcommands verwendet. Diese tatsächlich gesperrte Kombination ist mit Core 2.11.6 gebaut und geprüft; die frühere Versionsbehauptung wird nicht als aktueller Kompatibilitätsbeleg weitergeführt. Es wurde kein Upstreamquellcode kopiert. Checksummen und transitive Auflösung stehen in `apps/desktop/src-tauri/Cargo.lock`; vollständige Distributionhinweise bleiben P11.
-
-## Auditbehebung: AST-Paketgraphprüfung
-
-Für die Entwicklungsprüfung wird `@babel/parser` exakt auf 8.0.6 gesperrt (MIT, Veröffentlichung 18. September 2026; sieben Tage Reifezeit erfüllt). [Offizielle Parserdokumentation](https://babeljs.io/docs/babel-parser) beschreibt TS/JSX und dynamische Imports. Die vorhandene TypeScript-7-Installation stellt keine `createSourceFile`-JavaScript-API bereit. Der Parser ergänzt ausschließlich das Entwicklungswerkzeug; keine neue Produktabhängigkeit oder Änderung erlaubter Paketrichtungen.
-
-## Auditbehebung: Entwicklungsabhängigkeiten
-
-`source-map-js` wird bei Versionen unter 1.2.2 durch einen eng begrenzten Override auf 1.2.2 korrigiert (BSD-3-Clause, Veröffentlichung 30. September 2026). [GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q) nennt 1.2.2 als korrigierte Version. `pnpm audit` meldet am 7. Oktober nach Aktualisierung keinen Treffer; Typecheck, Toolchainnegativtests, Vite- und Tauri-Build bestehen.
-
-## Abhängigkeitsstand vom 8. Oktober 2026
-
-Die Nutzercommits `81bf325` und `6258f71` verschärfen die pnpm-Reifezeitprüfung (`minimumReleaseAgeStrict: true`) und aktualisieren JS-API 2.12.0, Dexie 4.4.6, ofx-js 1.1.2, Lucide React 1.49.0, Oxlint 1.86.0 sowie Vitest 5.0.3. Diese Änderungen bleiben erhalten; historische T1-/P1-Auswahlbelege oben bleiben historisch.
-
-Der bisherige Rust-Core 2.11.6 wurde durch den tatsächlichen CLI-Build als unpassend zur JS-API 2.12.0 abgewiesen. Core ist nun exakt auf 2.12.1 gesperrt; Build 2.7.1 und CLI/JS-API 2.12.0 bleiben passend. [Core 2.12.1](https://github.com/tauri-apps/tauri/releases/tag/tauri-v2.12.1) und die gesperrten [Runtime-](https://github.com/tauri-apps/tauri/releases/tag/tauri-runtime-v2.12.1)/[Wry-Runtime-Patches](https://github.com/tauri-apps/tauri/releases/tag/tauri-runtime-wry-v2.12.1) erschienen am 30. September und erfüllen die Reifezeit. Rust 1.99 erfüllt die Core-Mindestversion 1.90. Kein Tauri-3-Prerelease und kein kopierter Upstreamcode; Apache-2.0/MIT-Fremdlizenzen bleiben erhalten.
-
-Die aktuelle Rust-Auflösung verwendet tao 0.37.1, wry 0.57.0 und muda 0.20.0. Der Linuxbaum enthält weiterhin GTK 0.18.2/glib 0.18.5 und proc-macro-error 1.0.4. Das kompatible SDK-Update löst D02 nicht; der Nutzer hat #41 ausdrücklich für eine spätere native Linuxabnahme offen gelassen.
+Vollständiges maschinenlesbares Herkunftsregister muss direkte/transitive Auflösung, SPDX/Lizenztexte, NOTICE, Upstream/Commit und lokale Fremdcodeänderungen erfassen. Keine unbewiesene vollständige Lizenz- oder Sicherheitsabnahme aus dieser Manifesttabelle ableiten.

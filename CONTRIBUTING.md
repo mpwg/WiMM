@@ -1,23 +1,15 @@
-# Beiträge zu WhereIsMyMoney
+# Beiträge zu WiMM
 
-Das Projekt befindet sich in der Dokumentationsphase. Der aktuelle Auftrag umfasst Spezifikation, Agentenhilfen und Editor-/GitHubvorlagen; Anwendungscode folgt nach ausdrücklicher Implementierungsfreigabe.
+Das Projekt besitzt bereits Produktcode und eine bestätigte gemeinsame Rust-Zielarchitektur. Aktueller Auftrag und Implementierungsfreigaben ausschließlich in [Aufgaben](docs/tasks.md); dieses Architekturreview implementiert keine neuen Produktpakete. Vor Beiträgen [AGENTS.md](AGENTS.md), [Agentenleitfaden](docs/agent-guide.md), [Review](docs/architecture-review.md), [Architektur](docs/architecture.md) und [Entscheidungen](docs/decisions.md) lesen.
 
-Vor Beiträgen [AGENTS.md](AGENTS.md), [Agentenleitfaden](docs/agent-guide.md), [Entscheidungen](docs/decisions.md) und relevantes [Arbeitspaket](docs/tasks.md) lesen. Eigene Beiträge stehen unter AGPL-3.0-or-later; Fremdherkunft und kompatible Lizenzhinweise erhalten. Keine zusätzlichen CLA-/Sign-off-Pflichten wurden vereinbart.
+Eigene Inhalte AGPL-3.0-or-later; fremde Herkunft/Lizenzen erhalten. Keine zusätzliche CLA-/Sign-off-Pflicht. Keine realen Finanzdaten, Schlüssel oder Rettungscodes in Beispielen/Logs/Issues. Sicherheitsmeldungen über einen vorhandenen privaten Meldeweg; falls keiner besteht erst privaten Kontaktweg klären.
 
-Zum Einstieg: [Kurzleitfaden](docs/getting-started.md), [Lesematrix](docs/agent-guide.md#lesematrix-nach-aufgabe), [P1-Teilaufgaben](docs/p1-foundation.md) und [Referenzhaushalt](docs/reference-household.md). Das [Hook-Konzept](docs/development.md#hooks-und-automatisierte-prüfungen-ab-p1) wird erst in P1 umgesetzt.
+## Arbeitsablauf
 
-Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen. Dieser Dokumentationsauftrag autorisiert keine Commits, Pushes oder Veröffentlichungen.
+1. Aktive Arbeitskopie, Branch, Gitstatus, konkrete Issues und Voraussetzungen prüfen; fremde Änderungen bewahren.
+2. Verbindliche Fach-/Crypto-/Speicher-/APIverträge lesen. Bei Widerspruch gemeinsam korrigieren, bei offener Produkt-/Ersatzarchitekturentscheidung rückfragen.
+3. Im ausdrücklich freigegebenen Umfang arbeiten; passende Skills und risikogerechte [Prüfungen](docs/testing.md) nutzen.
+4. Aktuelle Ergebnisse/Blockaden im Issue, zusammengefassten Status in tasks.md und betroffene Spezifikation/README aktualisieren.
+5. Eigene abgeschlossene Abschnitte mit deutschen Conventional Commits festhalten; Gitfreigabe aus AGENTS.md, bestehender Schutz und kein Force-Push. Neue optionale Branches heißen codex/<paket>-<thema>. Pull Requests verwenden die vorhandene Vorlage; Release/Deployment braucht eigenen Auftrag.
 
-## Einheitlicher Ablauf
-
-1. Konkretes Paket/Problem nennen und betroffene Spezifikation lesen; vorhandene Änderungen bewahren.
-2. Arbeit auf passendem Branch bzw. vorhandenem Arbeitsstand durchführen. Neue Branches standardmäßig `codex/<paket>-<thema>`.
-3. Relevante Prüfungen aus [testing.md](docs/testing.md) durchführen und echte Ergebnisse dokumentieren.
-4. Zusammenhängende Zwischencommits nur bei bestehender ausdrücklicher Autorisierung erstellen; neue Nachrichten mit Conventional-Commit-Typ und deutschem Inhalt.
-5. Paketstatus/Docs aktualisieren und PR mit vorhandener Vorlage vorbereiten. Push/Merge/Release benötigt entsprechenden Auftrag.
-
-GitHub-Issues verwenden [Aufgaben](.github/ISSUE_TEMPLATE/task.yml) oder [Fehler](.github/ISSUE_TEMPLATE/bug.yml). Nur synthetische Daten, keine Finanzdateien, Rettungscodes oder Schlüssel. Sicherheitslücken nicht in öffentliche Fehlerberichte einfügen; privaten GitHub-Meldeweg verwenden, sofern aktiviert, andernfalls erst einen privaten Kontaktweg klären.
-
-## Entwicklung
-
-Editor-/GitHubkonventionen stehen in [development.md](docs/development.md). PWA und Desktop werden gleichwertig berücksichtigt. Finanzlogik ist plattformfrei und clientseitig; der E2EE-Server enthält keine Finanzklartexte. Authentifizierte Clients benötigen keine Appsignatur oder Attestierung für Zugang.
+[Einstieg](docs/getting-started.md), [Entwicklung](docs/development.md), [Abnahmekatalog](docs/acceptance-catalog.md), [historische Belege](docs/review-evidence.md). Vorhandener optionaler Dokumentationshook ersetzt weder Fachabnahme noch CI. Gemeinsame Regeln statt Kopien pro Agent pflegen.

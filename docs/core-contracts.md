@@ -1,6 +1,6 @@
-# K01 — Plattformfreie Fach- und Anwendungsverträge
+# Gemeinsame Fach- und Anwendungsverträge
 
-Stand: 8. Oktober 2026. Implementierungsauftrag #91; kriteriumsgerechte Vertragsabnahme in [#92](https://github.com/mpwg/WiMM/issues/92). Die Typen und strikten Formschemas liegen in `packages/contracts/src/finance-engine.ts` und `application-ports.ts`. Fachregeln bleiben im Fachkern; konkrete Speicherung und Ausführung bleiben in Adaptern. Die vorhandene TypeScript-Engine bleibt bis K05 aktiv.
+Stand: 9. Oktober 2026. Der bestehende K01-Vertrag ist die kompatible Ausgangsbasis, historisch in [#92](https://github.com/mpwg/WiMM/issues/92) abgenommen. Das bestätigte [Rust-Ziel](architecture.md) erweitert ihn durch typisierte gemeinsame Fach-/Anwendungsports, lokale Commitreceipts und begrenzte Ansichten. [Gesamtübersicht #114](https://github.com/mpwg/WiMM/issues/114), [Freigaben](tasks.md). Die derzeitigen TS-Formschemas und Stringbindings bleiben bis geprüfter Umstellung Bestand; neue Schnittstellen hier sind Zielverträge, noch kein implementierter APIumfang.
 
 ## Versionen und Darstellung
 
@@ -35,7 +35,7 @@ Formprüfung ist keine Fachabnahme: Der Kern prüft zusätzlich Bereichszugehör
 
 ## Anwendung und lokaler Speicher
 
-Die Anwendung lebt ab K02 außerhalb React. Sie injiziert Engine, Profil-/Finanzspeicher, IDs/Uhr, Profilkoordination, Hintergrundausführung, Abbruch und Plattformdienste. Die Ports enthalten keine DOM-/React-/Worker-/Web-Lock-/Tauri-/SQL-Typen. Der Historienstapel ist Anwendungssitzungszustand; seine Gegenbefehle kommen aus der Engine. Etablierte Datei-/XML-/CSV-Parser bleiben hinter Adaptergrenzen.
+Im Bestand hat K02 die TypeScript-Anwendung aus React herausgelöst. Im Ziel lebt derselbe Ablauf in der gemeinsamen Rust-Anwendung. Sie injiziert Engine, Profil-/Finanzspeicher, IDs/Uhr, Profilkoordination, Hintergrundausführung, Abbruch und Plattformdienste. Die Ports enthalten keine DOM-/React-/Worker-/Web-Lock-/Tauri-/SQL-Typen. Der Historienstapel ist Anwendungssitzungszustand; seine Gegenbefehle kommen aus der Engine. Etablierte Datei-/XML-/CSV-Parser bleiben hinter Adaptergrenzen.
 
 Ein Finanzwrite hat folgenden Ablauf:
 
@@ -45,7 +45,7 @@ Ein Finanzwrite hat folgenden Ablauf:
 4. Änderung und fachlich berechnete Projektionen mit allen erwarteten Revisionen atomar speichern. Lokaler Standalonebetrieb erzeugt keine Outbox; verbundene Bereiche speichern die zugehörige Operation mit Originalentwurf im selben Batch.
 5. Erst der dauerhaft bestätigte Commit ergibt lokalen Erfolg. Ein nachfolgender Lese-/Renderfehler darf den bereits gespeicherten Befehl nicht erneut schreiben. Bei unklarem Commitausgang Originaloperation prüfen, keine neue Operations-ID erzeugen.
 
-`ProfileStorePort` bewahrt die bisherigen Loadzustände und den unter Koordination/CAS ausgeführten Änderungscallback. Profilrevision, Finanzrevision und Sitzungsgeneration bleiben getrennt. `LocalFinancialStoragePort` bewahrt sämtliche vorhandenen atomaren Speicherports einschließlich lokaler Epochengrundlage, Syncseiten/Cursor, Snapshot und Projektionsneuaufbau. Speicherfehler unterscheiden Revisionskonflikt, Quota, Schreibfehler, unbekannte Version und Epoche. Rust-Brücke und IndexedDB erfüllen dieselbe aktuelle gemeinsame Suite; Browserfallback ist kein SQLite-Beleg.
+`ProfileStorePort` bewahrt die bisherigen Loadzustände und den unter Koordination/CAS ausgeführten Änderungscallback. Profilrevision, Finanzrevision und Sitzungsgeneration bleiben getrennt. `LocalFinancialStoragePort` bewahrt sämtliche vorhandenen atomaren Speicherports einschließlich lokaler Epochengrundlage, Syncseiten/Cursor, Snapshot und Projektionsneuaufbau. Speicherfehler unterscheiden Revisionskonflikt, Quota, Schreibfehler, unbekannte Version und Epoche. Rust-Brücke und IndexedDB müssen dieselbe Bestandskonformität erfüllen; die vollständige Restabnahme führen #77/#85; Browserfallback ist kein SQLite-Beleg.
 
 `CancellationPort` enthält ausschließlich Beobachtung/Abonnement. Abbruch vor Commit verhindert neue Writes und erhält den Entwurf. Nach bestätigt abgeschlossenem Commit muss das Ergebnis als committed behandelt werden; spätes Abbruchsignal oder Workerantwort erzeugt weder zweiten Write noch vermeintlichen Rollback. Hintergrundausführung und Zeitlimit werden injiziert, statt einen Browser-Worker in der Anwendung vorauszusetzen.
 
@@ -67,4 +67,22 @@ K06 konkretisiert diese Portgrundlage für die vollständige öffentliche Verwal
 
 ## Abnahmegrenzen
 
-K01 wird durch strikte Vertrags-/Serialisierungs-/Negativtests, Paketgraph, Typecheck und die weiterhin bestehenden Finanz-/Speicher-/Profiltests geprüft. Diese Vertragsabnahme ist weder eine Rust-/WASM-/Swift-/Kotlin-Ausführung noch eine Clientumschaltung oder Serverdatenbankabnahme. K03–K05 sowie K06–K11 verlangen ihre eigenen tatsächlichen Belege. [#91](https://github.com/mpwg/WiMM/issues/91) bleibt bis zu allen K-Kriterien offen.
+#92/K01 ist ein historischer Vertragsbeleg; die tatsächlich ausgeführte K03/K04-Finanzbindinggrundlage ist zusätzlich vorhanden. Neue typisierte Verträge, Rust-Anwendung, DAL und Server benötigen eigene aktuelle native/Binding-/Datenbankbelege. [Gesamtübersicht #114](https://github.com/mpwg/WiMM/issues/114) bleibt bis zur vollständigen Zielabnahme offen.
+
+## Gemeinsame Vertragsquelle und Zustandsports
+
+Typisierte Rust-Newtypes/tagged unions sind Quelle für Fach-, Anwendungs- und generierte Sprachtypen/Formschemas. Private Fachverträge, öffentliche Serverhüllen und ORMmodels bleiben getrennt. Die etablierte Generierung muss safe nutzbar, reproduzierbar und auf Drift prüfbar sein. Unbekannte Version/Format scheitert vor Mutation; der vorhandene V1-Vertrag wird nicht still erweitert.
+
+Die Rust-Anwendung besitzt Profil-/Bereichskontext, Historie und Commitpipeline; Bindings rufen Anwendungsaktionen auf und abonnieren versionierte Zustandsereignisse. Native Runtime bzw. Browserworker hält den vollständigen aktuellen Mutationsbestand. Ansichtsports liefern begrenzte stabile Seiten und fachlich berechnete Summen; keine UI-/SQL-Fachberechnung. Projektionscache bindet Ausgangsrevision und Projektionsversion; stale Cache wird kontrolliert neu aufgebaut.
+
+## Lokale Commitidentität und strukturierte Ergebnisse
+
+Der neue lokale Commitvertrag bindet Profil, Bereich, Epoche, Operations-ID und unveränderten Inhalt. Er ergänzt den bisherigen void-AtomicBatch-Port durch dauerhaftes Receipt und Ergebnisabfrage. Aggregate, Finanzrevision, Outbox/Originalentwurf, Projektionen und Receipt werden gemeinsam committed. Standalone erzeugt keine Serveroutbox; lokales Receipt bestätigt nur lokalen Erfolg.
+
+`committed`, sicher `notCommitted` und `unknown` sind unterscheidbar. Bei verlorener Antwort zuerst dieselbe ursprüngliche Operation abfragen; gleiche ID/Inhalt idempotent, anderer Inhalt abweisen. Kein neuer Write mit neuer ID als Antwort auf unklaren Ausgang. Abbruch nach Commit bleibt committed. Codes sind stabil und unabhängig von deutschen Meldungen; Fehler enthalten keine Finanzpayloads oder Schlüssel. Aufbewahrung, Restore und Epochenbindung lokaler Receipts sind Bestandteil AR04 und einer registrierten gesicherten Storageversion.
+
+## Kryptografie-, Laufzeit- und Backendgrenzen
+
+Clientcryptoports kapseln etablierte libsodium-Primitive nativ/WASM und bewahren Suite/KDF/AAD/Domain-Separatoren/Legacy/Recovery/Export. Private Schlüssel bleiben clientseitig; öffentliche Server-Signaturprüfung unabhängig. Kein eigener unsafe-FFI-Wrapper. ORM-/VFS-/DSL-/Bindingeignung muss praktisch nachgewiesen sein; bei fehlendem Nachweis Rückfrage vor Ersatzwahl.
+
+Lokale und öffentliche Servermigrationen verwenden getrennte Modelle/Journale auf gemeinsamem technischem Unterbau. API und Serverports sind unabhängig von Axum/SQL. Blockierende ORM-Arbeit wird begrenzt ausgeführt; Worker-/Tab-/HTTP-Abbruch darf kein tatsächliches Commitresultat erfinden. Build-/Binding-/Fach-/Storage-/Crypto-/Protokollkompatibilität wird vor Assetupdates/Migration geprüft, Epoche bleibt separate Dimension.

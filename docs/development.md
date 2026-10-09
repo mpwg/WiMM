@@ -1,119 +1,71 @@
-# GitHub und VS Code
+# Entwicklung und tatsächliche Prüfwerkzeuge
 
 ## Stand
 
-Dieses Repository enthält die vorhandenen Grundlagen P1–P3 mit [erneut offenen Abnahmekriterien](handoffs/p1-p3-review-2026-10-08.md), den plattformunabhängigen Fachkern, verschlüsselte lokale Speicheradapter und bereits implementierte P4-Oberflächen. Die Serverhülle besitzt öffentliche Health-/Metadatenendpunkte; vollständige Synchronisierung folgt in P9. T1 modernisiert die Toolkonfigurationen und verbindlichen Prüfungen.
+Alle Arbeiten in der aktiven Arbeitskopie, kein DevContainer. Node/pnpm/Rust und Bibliotheken gemäß [Versionsbasis](technology-baseline.md) und gesperrten Manifesten. [AGENTS.md](../AGENTS.md), [Aufgaben](tasks.md), [Architektur](architecture.md) und [Prüfstrategie](testing.md) vor Änderungen lesen. Neue Rust-Anwendungs-/ORM-/Axum-Befehle existieren noch nicht; geplante Kommandos nicht als vorhandene Anleitung angeben.
 
-Die installierte lokale Toolchain benötigt Node `>=26.10.0 <28`, pnpm `>=12.8.1 <14` sowie für die Desktop-Hülle Rust und Xcode. Der entwickelte macOS-arm64-Rechner verwendet Node 26.10.0, pnpm 12.8.1 und Rust 1.99.0; die versionierte rustup-Toolchain enthält Clippy und rustfmt. Für reproduzierbare Installationen bleibt pnpm 12.8.1 in `packageManager` festgelegt. Vor der ersten Installation `pnpm install --frozen-lockfile` ausführen. Verfügbare Befehle:
+Einrichtung bei freigegebener Implementierung: `pnpm install --frozen-lockfile`. Rust-Toolchain in rust-toolchain.toml; native Desktopbuilds benötigen plattformspezifische Tauri-Abhängigkeiten. `dev:server` startet den bestehenden Fastify-Health-/Metadatenstub bis zur geprüften Rustparität.
 
-| Zweck | Befehl |
+## Vorhandene Befehle
+
+Die folgenden Einträge wurden mit package.json abgeglichen; Tabelle ist kein neuer Testlauf.
+
+| Befehl | Tatsächlicher Skriptinhalt |
 | --- | --- |
-| Webhülle starten | `pnpm dev:web` |
-| Serverhülle starten | `pnpm dev:server` |
-| Tauri-Entwicklung starten | `pnpm dev:desktop` |
-| Alle vorhandenen Pakete bauen | `pnpm build` |
-| Typen und Paketgrenzen prüfen | `pnpm typecheck` / `pnpm check:package-graph` |
-| Alle vorhandenen Pakettests einschließlich Fachkern, Speicher und UI | `pnpm test` |
-| JavaScript-/TypeScript-Linting | `pnpm lint` |
-| Rust-Format, Clippy und Rust-Tests | `pnpm check:rust` |
-| Toolchain-Fehlerproben | `pnpm test:toolchain` |
-| Oberflächen im Entwicklungsmodus | `pnpm test:ui` |
-| Gebaute Oberflächen nach Frontendbuilds | `pnpm test:ui:build` |
-| Dokumentation prüfen | `pnpm check:docs` |
-| Validator mit fehlerhaften Testdaten prüfen | `pnpm test:docs` |
-| Lokale CI-Prüfserie | `pnpm check:ci` |
-
-Der Server bindet für die lokale Entwicklung nur an `127.0.0.1:3000`. Er stellt ausschließlich `/api/v1/health/live`, `/api/v1/health/ready` und `/api/v1/meta` bereit. Finanz-HTTP-Endpunkte und `test:e2e` entstehen erst in späteren Paketen.
-
-## VS-Code-Arbeitsbereich
-
-Projektordner direkt in VS Code oder einem anderen Editor öffnen. Die benötigten Laufzeitversionen sind in der [Versions- und Lizenzbasis](technology-baseline.md) festgehalten; Einrichtung und Prüfungen erfolgen in der lokalen Entwicklungsumgebung. Keine Projektsecrets, Bankdateien, Rettungscodes oder persönlichen Beispiele einchecken.
-
-Die versionierten `.vscode/settings.json`-Einstellungen verwenden UTF-8, LF, zwei Leerzeichen und Markdown-Softwrap; Rust verwendet vier Leerzeichen. `.editorconfig` hält dieselben Formatregeln für andere Editoren fest. Autoformat beim Speichern bleibt zunächst aus, damit bestehende Absätze nicht ungefragt umgeschrieben werden; explizite Formatierung wird später über die Projekttoolchain vereinheitlicht.
-
-Unter **Terminal → Task ausführen** stehen die Tasks **WiMM: Web starten**, **WiMM: Server starten** und **WiMM: Desktop starten** bereit. Sie rufen die gleichnamigen `dev:*`-Skripte aus `package.json` auf und lassen den jeweiligen Entwicklungsprozess in einem eigenen Terminal weiterlaufen. Voraussetzung ist die installierte Projekttoolchain; für Tauri gelten zusätzlich die Desktopvoraussetzungen oben.
-
-[Erweiterungsempfehlungen](../.vscode/extensions.json): EditorConfig, markdownlint, YAML, GitHub Pull Requests, Tauri, Oxlint, Rust Analyzer und TypeScript 7. Sie sind Empfehlungen im Workspace und werden nicht global installiert. GitHubintegration verwendet das echte Repositorykonto. Die Projektkonfiguration aktiviert die lokale TypeScript-7-Sprachunterstützung, typgestütztes Oxlint und Clippy mit Warnungen als Fehlern; die verbindliche vollständige Prüfung bleibt `pnpm check:ci`.
-
-Die Starttasks sind in [`.vscode/tasks.json`](../.vscode/tasks.json) versioniert und verwenden ausschließlich vorhandene Appbefehle. Es gibt keine Debugkonfiguration; keine globale Änderung von Benutzerprefs, Authkonten oder Workspace-Trust. [Workspace-Einstellungen](https://code.visualstudio.com/docs/configure/settings), [Tasks](https://code.visualstudio.com/docs/debugtest/tasks), [Erweiterungsempfehlungen](https://code.visualstudio.com/docs/configure/extensions/extension-marketplace).
-
-## Agenten im Editor
-
-Die [Agentenregeln](../AGENTS.md) gelten für Codex und andere beteiligte Agenten. Repository-Skills liegen in `.agents/skills`, Copilot liest zusätzlich den knappen Verweis in `.github/copilot-instructions.md`. [Agentenleitfaden](agent-guide.md) beschreibt Auswahl und Formate. Falls eine Umgebung Discovery nicht unterstützt, die passende SKILL.md ausdrücklich mitgeben; kein weiterer globaler Installationsschritt ist nötig.
-
-## GitHubvorlagen
-
-Bereits angelegt: [PR-Vorlage](../.github/pull_request_template.md), [Aufgabenformular](../.github/ISSUE_TEMPLATE/task.yml) und [Fehlerformular](../.github/ISSUE_TEMPLATE/bug.yml). Keine Labels/Assignees/Owners voraussetzen, die erst auf GitHub existieren müssten. Die Formulare nutzen deutsche Inhalte und dieselben Paket-/Vertrags-/Prüfbelegfelder wie die lokale Dokumentation.
-
-Ein GitHub-Remote ist konfiguriert. Die tatsächliche Remoteadresse vor Push prüfen; der Integrationsweg folgt der aktuellen Nutzerfreigabe und [AGENTS.md](../AGENTS.md). Die Dokumentation ändert keine GitHub-Einstellungen. Checks und Repositoryschutz berücksichtigen. [GitHub-Templates](https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/about-issue-and-pull-request-templates).
-
-## Nächster Implementierungsschritt
-
-P1.1 hat die stabilen Bibliotheks-/SDKversionen aus offiziellen Quellen geprüft; Details stehen in der [Versions- und Lizenzbasis](technology-baseline.md). P1.2 bis P1.6 legen darauf aufbauend Workspace, exakte Lockfiles, öffentliche Hüllen, Crypto-Binding und lokale Prüfungen an. Lokal `pnpm install --frozen-lockfile` und danach `pnpm check:ci` verwenden. Die CI-Prüfserie umfasst Dokumentation, Paketgraph, TypeScript, die vorhandenen Tests und alle Builds. Finanzen bleiben clientseitig; Backend transportiert später Chiffrate. E2EE benötigt keine Appattestierung. Deploymentsecrets, Bankdateien, Rettungscodes und persönliche Beispiele niemals einchecken.
-
-Die abgeschlossenen [P1-Teilaufgaben](p1-foundation.md), [P2-Teilaufgaben](p2-domain.md), [P3-Teilaufgaben](p3-storage.md), [P4.1](p4-ui.md#p41--composition-root-und-lokaler-einstieg) und [P4.2](p4-ui.md#p42--navigation-übersicht-und-stammdaten) dokumentieren die Grundlage. Die [Teilaufgabenübersicht P4–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) legt die nächsten Schritte und aktuellen Freigaben fest; maßgeblich ist der erste offene freigegebene Punkt mit erfüllten Voraussetzungen. Für den ersten Einstieg den [Kurzleitfaden](getting-started.md) nutzen; [Referenzhaushalt](reference-household.md) und [Lesematrix](agent-guide.md#lesematrix-nach-aufgabe) helfen bei konkreten Aufgaben.
-
-## Workspace aufräumen
-
-Alle Befehle im Repositoryhauptverzeichnis ausführen. Laufende Entwicklungsserver, Builds, Tests und die Desktop-App vorher beenden. Die Aufräumbefehle benötigen nur Node und Git; sie installieren oder starten keine Anwendung.
-
-| Befehl | Wirkung |
-| --- | --- |
-| `pnpm clean:preview` | Zeigt alle vorhandenen Löschziele, ohne etwas zu entfernen |
-| `pnpm clean` | Entfernt Desktop-Rust-Builds (`apps/desktop/src-tauri/target`), generierte Tauri-Dateien (`gen`), Workspace-`dist`-Ordner und lokale `*.tsbuildinfo` |
-| `pnpm clean:tests` | Entfernt `test-results` und `.toolchain-checks`, einschließlich lokaler Screenshots, Traces und temporärer Browserprofile |
-| `pnpm clean:deps` | Entfernt `node_modules` im Root und in den vorhandenen Workspacepaketen |
-| `pnpm clean:all` | Kombiniert Builds, Testergebnisse und Abhängigkeiten |
-
-Eine einzelne Stufe lässt sich vorab ansehen, zum Beispiel mit `pnpm clean --dry-run` oder `pnpm clean:tests --dry-run`. Nach `clean:deps` oder `clean:all` zuerst `pnpm install --frozen-lockfile` ausführen. Auch ohne installierte Abhängigkeiten funktioniert `node scripts/clean.mjs --all --dry-run`; ohne `--dry-run` wird tatsächlich gelöscht. Der nächste Desktopbuild erzeugt den Rust-Buildordner erneut und benötigt entsprechend mehr Zeit.
-
-Quellcode, Lockfiles, `.git`, lokale Finanzdaten und globale pnpm-/Cargo-/Browsercaches gehören nicht zu den Löschzielen. Das Skript prüft alle Ziele vor dem Löschen und bricht bei versionierten Dateien oder verlinkten Elternverzeichnissen ab. Einzelne verlinkte Löschziele werden nur als Link entfernt. Vor `clean:tests` benötigte Abnahmebelege außerhalb der beiden Ergebnisordner sichern.
-
-Am 5. Oktober 2026 belegte die Arbeitskopie rund 17 GB: rund 15 GB Desktop-Rust-Builds, 721 MB temporäre Prüfdateien, 178 MB Testergebnisse und 405 MB Root-Abhängigkeiten. `pnpm clean` adressiert damit den größten Speicherverbrauch; tatsächliche Größen hängen von den bisherigen Builds ab.
+| `pnpm dev:web` | `pnpm --filter @wimm/web dev` |
+| `pnpm dev:desktop` | `pnpm --filter @wimm/desktop dev` |
+| `pnpm dev:server` | `pnpm --filter @wimm/server dev` |
+| `pnpm check:docs` | `node scripts/check-documentation.mjs` |
+| `pnpm test:docs` | `node --test scripts/check-documentation.test.mjs` |
+| `pnpm check:package-graph` | `node scripts/check-package-graph.mjs` |
+| `pnpm check:application` | `node scripts/check-application.mjs` |
+| `pnpm check:core:architecture` | `node scripts/check-core-architecture.mjs` |
+| `pnpm typecheck` | `tsc --project tsconfig.json --noEmit` |
+| `pnpm lint` | `oxlint --type-aware --deny-warnings` |
+| `pnpm check:rust` | `pnpm check:rust-toolchain && pnpm check:rust-format && pnpm lint:rust && pnpm test:rust` |
+| `pnpm check:core` | `pnpm check:core:architecture && node scripts/check-core.mjs` |
+| `pnpm test:application` | `pnpm --filter @wimm/application test` |
+| `pnpm test:storage:native` | `node scripts/test-storage-native.mjs` |
+| `pnpm test:storage:migrations` | `pnpm exec playwright test --config tests/storage/backups.config.ts && pnpm exec playwright test --config tests/storage/migrations.config.ts` |
+| `pnpm test:core:bindings` | `node scripts/test-core-bindings.mjs` |
+| `pnpm test:core:wasm` | `node scripts/test-core-bindings.mjs --wasm-only` |
+| `pnpm test:ui` | `node scripts/test-ui.mjs` |
+| `pnpm test:ui:integration` | `pnpm exec playwright test --config tests/workspace/config.ts` |
+| `pnpm test:ui:matrix` | `node scripts/test-ui-acceptance.mjs --matrix` |
+| `pnpm test:ui:acceptance` | `node scripts/test-ui-acceptance.mjs` |
+| `pnpm test:ui:zoom` | `node scripts/test-ui-acceptance.mjs --zoom` |
+| `pnpm test:ux` | `pnpm exec playwright test --config tests/ux/config.ts` |
+| `pnpm test:importers:worker` | `pnpm exec playwright test --config tests/importers/config.ts` |
+| `pnpm test:ui:offline` | `node scripts/test-ui-offline.mjs` |
+| `pnpm build` | `pnpm check:rust-toolchain && pnpm -r --if-present build` |
+| `pnpm check:ci` | `node scripts/check-ci.mjs` |
 
 ## Aktuelle Toolprüfungen
 
-`pnpm check:ci` startet dieselbe vollständige Prüfserie lokal und in CI: Dokumentation und Validator-Tests, Paketgraph, TypeScript, Oxlint, Rust-Format/Clippy/Tests, Toolchain-Fehlerproben, alle vorhandenen Pakettests einschließlich `@wimm/ui`, UI-Tests und Builds. Node-Warnungen brechen die zentrale Serie ab; `NO_COLOR` wird für Kindprozesse in `FORCE_COLOR=0` übersetzt, um widersprüchliche Farbvariablen zu vermeiden. Die einzelnen Befehle bleiben für gezielte Prüfungen verfügbar.
+check:ci führt die zentrale check:all-Serie aus. Dokumentations-/Graph-/Generator-/Typ-/Lint-/Rust-/Paket-/Binding-/Speicher-/Browser-/Buildprüfungen bleiben streng. Node/Cargo-/Build-/Lintwarnungen sind Fehler; keine Lockerung von Finanz-/Performancegrenzen. Zusätzliche Zielprüfungen entstehen erst mit den neuen Komponenten und dürfen nicht als bereits implementiert beschrieben werden.
 
-TypeScript verwendet `ES2025`, die neueste feste Zielversion der installierten Version 7.0.2, und prüft explizit React-Dateien, Toolkonfigurationen und UI-Tests. Strict-, Index-, Unused-, Return-, Override-, Switch- und Side-Effect-Prüfungen sind verbindlich. Vite verwendet unabhängig davon `baseline-widely-available`; neue JavaScript-APIs benötigen weiterhin tatsächliche Unterstützung in den Zielbrowsern. `skipLibCheck` bleibt wegen zweier nachgewiesener Fremdfehler aktiv: Dexie 4.2.1 deklariert einen Namespace mit `module` (TS1540), und thread-stream 4.2.0 referenziert den entfernten Node-Typ `TransferListItem` (TS2694). Eigene Quellen werden weiterhin vollständig geprüft; keine Fremddeklarationen werden gepatcht.
+TypeScript strict, ES2025; Vite baseline-widely-available. skipLibCheck bleibt eine explizite Fremddeklarationsgrenze für saxes/thread-stream gemäß letzter Nachprüfung, keine Aussetzung eigener Typprüfung. Vitest/Playwright erlauben keine exklusiven Tests. Vitechunks behalten die 500-kB-Grenze. Rust fmt prüft ohne Umschreiben; Clippy mit -D warnings, gesperrte native Tests und direkte Rust-Assertions. Eigene Crates/Bindings/Buildscripts bleiben global unsafe-frei.
 
-`pnpm lint` prüft JavaScript mit den empfohlenen Korrektheitsregeln und TypeScript zusätzlich mit React-/Testregeln und Typinformationen für Promises und unsichere Typverwendungen. JavaScript erhält keine typgestützten Regeln, weil diese Dateien kein geprüftes TypeScriptprojekt bilden. Alle Lintwarnungen führen durch `--deny-warnings` zum Abbruch. Der Assertion-Helfer `expectDomainError` ist als solcher registriert. Die einzige lokale React-Ausnahme steht direkt am Speicherladeeffekt: Dieser synchronisiert den ausgewählten Bereich mit externem Speicher und benötigt den Ladezustand. Unbenutzte Ausnahmekommentare werden als Fehler gemeldet.
+## Native und Browsernachweise
 
-Beide Frontendbuilds verwenden den Vite-Logger und `build.rolldownOptions.onLog` zur Warnungsablehnung. Der Buildstarter weist außerdem Diagnoseausgaben auf stderr ab, weil Vites nativer Reporter diese Callbacks teilweise umgeht; Ausgaben werden nicht unterdrückt. libsodium-WASM und seine Bindings werden getrennt gebündelt; die unveränderte 500-kB-Grenze gilt für jeden Chunk. Exklusive Vitest-/Playwright-Tests sind auch lokal verboten, unbehandelte Vitest-Fehler werden nicht ignoriert.
+test:storage:native führt echten Rust/SQLite-Testtransport gegen Datei und vollständigen Prozessneustart aus. test:storage:migrations prüft Browser-Chiffratspeicher/IndexedDB-Migration. Frontendfälle ohne Tauri nutzen einen ausdrücklich gekennzeichneten IndexedDB-Testadapter; keine native Abnahme daraus ableiten. Native WASM/Swift/Kotlin-Finanzbindings werden im Bindingkatalog geprüft, neue Anwendungs-/Crypto-/ORMbindings noch nicht.
 
-Rust ist in `rust-toolchain.toml` auf 1.99.0 mit Clippy und rustfmt festgelegt. rustup richtet diese Toolchain automatisch ein; bei anderen Installationswegen prüft `pnpm check:rust-toolchain` die tatsächliche Version. `pnpm check:rust` führt Formatprüfung ohne Umschreiben, Clippy für alle Targets mit `-D warnings` und Rust-Tests mit gesperrtem Lockfile aus. `.cargo/config.toml` macht Compilerwarnungen auch beim Tauri-Build zu Fehlern. Die Rust-/Desktopstarter weisen zusätzlich Cargo-Buildskriptwarnungen ab. Die einzige notwendige Toolversionskorrektur ist Tauri-CLI 2.12.0: CLI 2.11.5 setzte die bei tauri-build 2.7.0 veraltete Variable `STATIC_VCRUNTIME`. Stattdessen ist nun `build.windows.staticVCRuntime: true` in der Tauri-Konfiguration explizit festgelegt; die bestehende Windows-Standardwahl bleibt erhalten.
+Die Ubuntu-CI installiert Chromium, Firefox und WebKit sowie Tauri-Systempakete und führt check:ci aus; aktueller Umfang in .github/workflows/ci.yml. Rust/Cargo/pnpm-Artefakte werden gecacht. Echte Systemzoom-/Screenreader-/Geräte-/native Plattformabnahmen bleiben getrennte Kriterien. Historische Laufbelege in [Belegindex](review-evidence.md), aktueller Fortschritt in GitHub.
 
-`pnpm test:toolchain` prüft mit temporären synthetischen Dateien innerhalb der Arbeitskopie die vollständigen TypeScript-Prüfeingaben und echte Fehlerstatus bei Compiler-, JavaScript-/TypeScript-Lint-, Promise-/Unsafe-, Vite-Logger-/Rolldown-/Reporter-, Rust-, Cargo-Buildskript- und Node-Warnungen sowie exklusiven Tests. Die Dateien werden anschließend entfernt. `pnpm test:ui:build` prüft nach den Frontendbuilds die gebündelten Oberflächen über Vite Preview. Beide UI-Serien starten über einen portablen Node-Starter; der PWA-Offline-Test läuft ausschließlich im Webclient. Chromium-Desktop-Frontendtests ersetzen keine native Tauri-Abnahme.
+## VS-Code-Arbeitsbereich
 
-VS Code empfiehlt Oxlint und Rust Analyzer. Oxlint verwendet die Projektkonfiguration mit Typinformationen, Rust Analyzer Clippy mit denselben Warnungsregeln und einem explizit verknüpften Cargo-Projekt. Die offizielle [TypeScript-7-Erweiterung](https://marketplace.visualstudio.com/items?itemName=TypeScriptTeam.native-preview) verwendet die lokale TypeScriptinstallation. Es werden keine globalen Editor- oder Git-Einstellungen geändert.
+Versionierte Tasks unter .vscode/tasks.json starten Web, Server und Desktop; launch.json ergänzt Browser-/Serverdebugging. Rust Analyzer/Oxlint und die lokale TypeScriptinstallation verwenden die Projektkonfiguration. Keine globalen Editor-/Gitänderungen. Projektagenten lesen die gemeinsamen Skills; [Leitfaden](agent-guide.md).
 
 ## Hooks und automatisierte Prüfungen ab P1
 
-P1.6 stellt `pnpm check:docs` und den optionalen Hook in `.githooks/pre-commit` bereit. Beide verwenden `markdown-it` für Markdown-Links und `yaml` für YAML; JSON verarbeitet die Node-Standardbibliothek. Sie prüfen gültiges UTF-8 mit LF, Abschlusszeile und fehlenden Zeilenendleerraum sowie JSON, YAML und relative Markdown-Links mit lokalen Ankern. Externe URLs werden dabei nicht über das Netz aufgerufen.
+Der optionale .githooks/pre-commit prüft vorgemerkte Dokumentations-/JSON-/YAML-/Linkänderungen aus dem Git-Index, auch entfernte Ziele. Er schreibt nichts um und erzeugt weder Commit noch Push. Erst `git config --local --get core.hooksPath` lesen; einen bestehenden anderen Hook nicht überschreiben. Nur bei fehlendem Wert und gewünschter Aktivierung `git config --local core.hooksPath .githooks`; Deaktivierung nur dieses Werts mit `git config --local --unset core.hooksPath`. Keine globale Änderung.
 
-### Gemeinsame Prüfwerkzeuge
+Validator und Negativtests laufen ebenfalls manuell/CI; Hookerfolg ersetzt keine Fachabnahme. Dateien mit Leerzeichen/Unicode bleiben unterstützt. Zusammengehörige eigene Zwischencommits gemäß AGENTS.md, aktuelle Repo-/PRschutzregeln erhalten und kein Force-Push.
 
-`pnpm check:docs` prüft den Checkout. `pnpm test:docs` enthält absichtlich ungültige Link-, JSON- und YAML-Fixtures, um Fehlerpfade des Validators zu prüfen. Derselbe Validator läuft im Hook gegen den Git-Index und in CI gegen den Checkout. Platzhalter in Vorlagen werden als solche berücksichtigt.
+## Workspace aufräumen
 
-### Optionaler pre-commit-Hook
+Vor Bereinigung laufende Prozesse beenden und benötigte test-results außerhalb sichern. `pnpm clean:preview` oder `pnpm clean --dry-run` zeigt Ziele ohne Löschung. `pnpm clean` entfernt Buildartefakte, `clean:tests` Testberichte, `clean:deps` lokale node_modules, `clean:all` alle diese Gruppen. Quellcode/Lockfiles/Git/Finanzdaten sind keine Löschziele. Der Starter verweigert versionierte Ziele/verlinkte Eltern. Nach Dependencybereinigung erneut gesperrt installieren.
 
-Der Hook prüft kurze Format-/JSON-/YAML-/Linkprüfungen für vorgemerkte Änderungen einschließlich Löschungen und Umbenennungen. Bei entfernten Zielen auch unveränderte Dokumente auf eingehende Verweise prüfen. Inhalte und Linkziele stammen aus dem Git-Index; eine teilweise vorgemerkte Datei darf nicht über die abweichende Arbeitskopie geprüft werden. Dateinamen mit Leerzeichen und Unicode sicher behandeln. Der Hook schreibt keine Dateien um und übernimmt keine Änderungen automatisch.
+## GitHubvorlagen
 
-Aktivierung ist eine bewusste, checkoutlokale Entscheidung. Zuerst `git config --local --get core.hooksPath` ausführen. Gibt der Befehl keinen Wert aus, aktiviert `git config --local core.hooksPath .githooks` den Hook. Zeigt er einen anderen Wert, diesen nicht überschreiben. Zur Deaktivierung ausschließlich bei dem Wert `.githooks` `git config --local --unset core.hooksPath` ausführen. Keine globalen Git-/Editoränderungen. Ohne Aktivierung bleiben die gemeinsamen Prüfungen manuell und in CI verfügbar. Lokale Hooks können umgangen werden und ersetzen weder Review noch CI. Fehlende Werkzeuge erzeugen eine verständliche Meldung mit dem dokumentierten Einrichtungsschritt, keine automatische Installation.
-
-### CI und Umfang
-
-| Zeitpunkt | Prüfung |
-| --- | --- |
-| Vor Commit, optional | Kurze Dokumentations-/Formatprüfungen auf den vorgemerkten Inhalten |
-| Lokal vor Paketabschluss | Risikogerechte Prüfungen nach testing.md, einschließlich betroffener Fach-/Crypto-/Adapterfälle |
-| CI ab P1.6 | Dokumentation, Paketgraph, Typprüfung, vorhandene Tests und Build mit gesperrten Abhängigkeiten auf `ubuntu-latest` |
-| CI ab späteren Paketen | Tatsächlich implementierte Fach-, Adapter-, Zugriffs- und E2E-Suites passend zum betroffenen Verhalten |
-
-Der Workflow `.github/workflows/ci.yml` installiert auf `ubuntu-latest` die offiziellen Tauri-Systempakete für WebKitGTK und baut dort auch die Tauri-Hülle. pnpm-Store und Rust/Cargo-Buildartefakte werden gecacht; Playwright richtet beim Lauf nur den tatsächlich benötigten Chromium-Headless-Shell samt Systemabhängigkeiten ein. Der Browser wird nicht gecacht, da Playwright das Wiederherstellen der Browserarchive unter Linux nicht als Zeitgewinn empfiehlt. Rust-Artefakte werden durch `Swatinem/rust-cache` gecacht. Umfangreiche E2E-Tests und Plattformsmokechecks werden nicht bei jedem Commit erzwungen. Die vorhandenen Playwright-Suites prüfen Web und Desktopfrontend in Chromium; native Plattformprüfungen bleiben separat erforderlich. Änderungen am Workflow sind lokal durch `pnpm check:ci` geprüft; Laufzeitersparnis muss anhand eines Remote-Laufs gemessen werden. Erforderliche GitHubchecks erst festlegen, wenn sie existieren, funktionieren und Änderungen der Repositoryeinstellungen autorisiert sind.
-
-### Agentenspezifische Automatik
-
-Agenten verwenden dieselben Projektprüfungen wie menschliche Mitwirkende. Laufzeitspezifische Hooks erst bei einem konkreten Bedarf und nach Prüfung der unterstützten Umgebung ergänzen. Hooks erstellen keine Commits, Pushes, Veröffentlichungen oder Taskabschlüsse automatisch; nach jedem abgeschlossenen Abschnitt ist der verpflichtende Zwischencommit gemäß [AGENTS.md](../AGENTS.md) manuell zu erstellen. Hookerfolg entscheidet nicht über fachliche Abnahme. Auch spätere Automatik erhält die zentrale Spezifikation und ersetzt sie nicht durch pro Agent kopierte Regeln.
-
-Die gemeinsame reale Migrations-/Indexsuite läuft mit `pnpm test:storage:migrations` nacheinander für Browser-Chiffratspeicher und IndexedDB-Upgrade. `pnpm test:storage:native` verwendet denselben Katalog gegen echte Rust-/SQLite-Prozesse. Die zentrale CI-Serie enthält beide Befehle einschließlich der 50.000-Buchungen-Indexbasis; Logs und Messwerte liegen unter test-results.
+Issue-/PR-/Task-/ADR-/Übergabevorlagen sind verbindlich. Issues führen aktuelle Deltas; eine neue Datei oder Issueanlage ist kein Implementierungs-/Releaseauftrag. Fach-/Crypto-/APIänderungen aktualisieren die betroffenen Verträge gemeinsam. Für aktuelle Voraussetzungen ausschließlich tasks.md und GitHub verwenden.

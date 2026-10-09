@@ -6,7 +6,7 @@
 
 Aktueller Auftrag, Implementierungsfreigaben und Paketstatus stehen in [Aufgaben](tasks.md); Arbeits- und Gitregeln ausschließlich in [AGENTS.md](../AGENTS.md). Nach jedem abgeschlossenen Abschnitt zusammengehörige eigene Änderungen als Zwischencommit festhalten. Kriterienmatrizen halten Abnahmesnapshots und Issueverweise fest; aktuelle Fortschritte, Blockaden und Prüfbelege direkt im jeweiligen Deltaissue pflegen. P4-Einstieg: [Gesamtabnahme #57](https://github.com/mpwg/WiMM/issues/57).
 
-Für neue Mitwirkende: [kompakter Einstieg](getting-started.md), [Teilaufgabenübersicht P1–P11](tasks.md#teilaufgaben-und-bearbeitungsfolge) und [Referenzhaushalt mit durchgängigem Ablauf](reference-household.md). Die erneuten Einzelabnahmen [P4.1.1–P4.1.8](p4-ui.md#p411--gemeinsame-dienste-und-plattformports-prüfen) sowie [P4.2.1–P4.2.7](p4-ui.md#p421--navigation-und-bereichstrennung-prüfen) sind abgeschlossen; ebenso [P4.3.1–P4.3.8](handoffs/p4-3.md) und [P4.4.1–P4.4.7](handoffs/p4-4.md) sowie [P4.5.1–P4.5.6](handoffs/p4-5.md). [P4.5.7](p4-ui.md#p457--native-systemintegration-je-zielsystem-prüfen) benötigt noch Windows-/Linux-/macOS-x86_64-Nachweise; P4.6 ist ausdrücklich freigegeben und teilweise geprüft; verbleibende Browser-, Screenreader- und Plattformnachweise stehen in der [Kriterienmatrix](handoffs/p4-6.md). Vorhandene Implementierungen nur bei festgestellter Lücke ändern. Die [Klärungsmatrix](getting-started.md#entscheidung-oder-rückfrage) unterscheidet verbindliche Festlegungen, technische Ermittlungen und Nutzerentscheidungen. Bei Widersprüchen zwischen verbindlichen Quellen den Widerspruch benennen und betroffene Quellen vor abhängiger Implementierung gemeinsam korrigieren; bei unklarer Produktabsicht rückfragen.
+Für neue Mitwirkende: [Einstieg](getting-started.md), [Review](architecture-review.md), [Architektur](architecture.md), [Abnahmekatalog](acceptance-catalog.md) und [Belegindex](review-evidence.md). Aktuelle Voraussetzungen/Freigaben nur aus tasks.md und GitHub. Historische Snapshotaufträge sind kein aktiver Fortsetzungsauftrag. Bei offener Produkt-/Ersatzarchitekturentscheidung rückfragen.
 
 ## Arbeitsumgebung
 
@@ -39,7 +39,7 @@ Die folgenden Skills liegen versioniert in `.agents/skills`. Sie sind für alle 
 
 Codex unterstützt Repository-Skills unter `.agents/skills` und lädt deren ausführlichen Inhalt nach Bedarf. [Offizielle Skill-Dokumentation](https://learn.chatgpt.com/docs/build-skills). Andere Agenten öffnen SKILL.md direkt, falls automatische Discovery fehlt. `.github/copilot-instructions.md` verweist VS-Code-/GitHub-Copilot auf dieselben Quellen. Keine parallelen Regelkopien pro Modell erstellen.
 
-Die CI-Konfiguration und das Crypto-Binding sind seit P1 vorhanden. Der [Ubuntu-CI-Lauf vom 7. Oktober 2026](https://github.com/mpwg/WiMM/actions/runs/37655652042) auf `4e6d714` ist erfolgreich; aktuelle Änderungen benötigen eigene Nachweise. Figma-Design, Bankintegration und Clouddeployment sind nicht eingerichtet. Skills nach konkretem Bedarf wählen; Kryptobibliotheken ersetzen sie nicht.
+Die Bestands-CI-/Crypto-/Bindinggrundlage ist vorhanden; zusätzliche Rust-Anwendungs-/DAL-/Axum- und negative Zielgrenzen folgen in eigenen Issues. [Entwicklung](development.md) nennt tatsächlich vorhandene Befehle, [Belegindex](review-evidence.md) historische Nachweise. Keine aktuelle Abnahme aus alten Läufen ableiten.
 
 ## Konsistente Formate
 

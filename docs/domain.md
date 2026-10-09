@@ -1,5 +1,7 @@
 # Fachliche Architektur
 
+Architekturstand 9. Oktober 2026: [gemeinsames Rust-Ziel](architecture.md), [Review](architecture-review.md), [Freigaben](tasks.md). Diese funktionalen Verträge bleiben verbindlich; neue Zielkomponenten sind noch nicht implementiert.
+
 ## Begriffe und Invarianten
 
 Ein Finanzbereich (`Space`) ist die Einheit für Konten, Kategorien, Budgets, Berechtigungen und Synchronisierung. Private Bereiche gehören einer Person, gemeinsame Bereiche einem Haushalt. Ein Haushalt besitzt genau einen gemeinsamen Bereich. Eine externe Serveridentität kann Mitglied mehrerer Haushalte sein; lokale fachliche Teilnehmer benötigen keine Anmeldung und sind keine Benutzerkonten.
@@ -19,7 +21,7 @@ Verbindliche Invarianten:
 
 ## Geld, Datum und Konten
 
-`Money` ist ein vorzeichenbehafteter ganzzahliger Centbetrag. Dezimaltexte werden über Vorzeichen, Ganzzahl und höchstens zwei Nachkommastellen eingelesen, nicht über Multiplikation einer Gleitkommazahl. API-Zahlen werden mit `Number.isSafeInteger` geprüft; gewichtete Multiplikation verwendet intern BigInt und prüft vor Rückgabe die Grenzen.
+`Money` ist ein vorzeichenbehafteter ganzzahliger Centbetrag. Dezimaltexte werden über Vorzeichen, Ganzzahl und höchstens zwei Nachkommastellen eingelesen, nicht über Multiplikation einer Gleitkommazahl. API-Zahlen werden mit `Number.isSafeInteger` geprüft; gewichtete Multiplikation verwendet intern hinreichend breite exakte Ganzzahlen (im TS-Bestand BigInt) und prüft vor Rückgabe die Grenzen.
 
 EUR ist v1-Rechenwährung. Kontenarten: `checking`, `cash`, `savings`, `credit`, `other`. Kreditkonten sind außerhalb des Umschlagbudgets; ein Wechsel zu budgetrelevant ist unzulässig. Andere Konten besitzen explizit `onBudget`. Negative Guthaben sind erlaubt und sichtbar, nicht automatisch auf null begrenzt.
 

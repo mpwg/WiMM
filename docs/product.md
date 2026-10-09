@@ -1,5 +1,7 @@
 # Produkt und Nutzung
 
+Architekturstand 9. Oktober 2026: [gemeinsames Rust-Ziel](architecture.md), [Review](architecture-review.md), [Freigaben](tasks.md). Diese funktionalen Verträge bleiben verbindlich; neue Zielkomponenten sind noch nicht implementiert.
+
 ## Ziel und Erfolg
 
 Familien sollen wissen, welches Geld verfügbar ist, welche Zahlungen bevorstehen und wie gemeinsame Kosten verteilt sind. Private Finanzen bleiben persönlich. Die erste Veröffentlichung ist ein öffentliches Open-Source-Produkt für erwachsene Nutzer im DACH-Raum, ohne Pflichtkonto für eigenständige Apps, externe Finanzdienste oder Telemetrie. Serveridentitäten werden ausschließlich über einen externen Identitätsanbieter eingerichtet.
