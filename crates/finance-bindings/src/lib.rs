@@ -6,6 +6,11 @@ uniffi::setup_scaffolding!();
 pub mod v2;
 pub use v2::{MoneyRequestV2, MoneyResultV2, MoneyStatusV2, calculate_money_v2};
 
+#[cfg(feature = "native")]
+mod command_v2;
+#[cfg(feature = "native")]
+pub use command_v2::{CommandOutcomeV2, execute_v2};
+
 /// K01-JSON-Vertrag; alle Facharbeit verbleibt in der unabhängigen Kernbibliothek.
 #[cfg_attr(feature = "native", uniffi::export)]
 #[cfg_attr(feature = "wasm", wasm_bindgen::prelude::wasm_bindgen)]

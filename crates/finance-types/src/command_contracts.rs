@@ -12,6 +12,7 @@ pub const COMMAND_ERROR: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist 
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Expectation {
     pub id: EntityId,
     pub expected_revision: Revision,
@@ -19,6 +20,7 @@ pub struct Expectation {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Context {
     pub operation_id: EntityId,
     pub occurred_at: UtcTimestamp,
@@ -27,9 +29,12 @@ pub struct Context {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Request {
-    pub contract_version: u32,
-    pub domain_schema_version: u32,
+    #[cfg_attr(feature = "contract-schema", schemars(with = "u32"))]
+    pub contract_version: crate::versions::EngineBindingVersion,
+    #[cfg_attr(feature = "contract-schema", schemars(with = "u32"))]
+    pub domain_schema_version: crate::versions::DomainSchemaVersion,
     pub space_id: EntityId,
     pub aggregates: Vec<Aggregate>,
     pub command: Command,
@@ -39,6 +44,7 @@ pub struct Request {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ChangeSet {
     pub space_id: EntityId,
     pub command_type: String,
@@ -100,6 +106,7 @@ pub fn to_wire(changes: ChangeSet) -> CoreResult<serde_json::Value> {
 
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum CommandResult {
     Changed(ChangeSet),
     Unchanged,

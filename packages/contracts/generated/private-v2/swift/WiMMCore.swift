@@ -673,6 +673,79 @@ public func FfiConverterTypeMoneyResultV2_lower(_ value: MoneyResultV2) -> RustB
 
 
 
+public enum CommandOutcomeV2: Equatable, Hashable {
+
+    case changed(contractVersion: UInt32, changeSet: ChangeSet
+    )
+    case unchanged(contractVersion: UInt32
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension CommandOutcomeV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCommandOutcomeV2: FfiConverterRustBuffer {
+    typealias SwiftType = CommandOutcomeV2
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CommandOutcomeV2 {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .changed(contractVersion: try FfiConverterUInt32.read(from: &buf), changeSet: try FfiConverterTypeChangeSet.read(from: &buf)
+        )
+
+        case 2: return .unchanged(contractVersion: try FfiConverterUInt32.read(from: &buf)
+        )
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: CommandOutcomeV2, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case let .changed(contractVersion,changeSet):
+            writeInt(&buf, Int32(1))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+            FfiConverterTypeChangeSet.write(changeSet, into: &buf)
+
+
+        case let .unchanged(contractVersion):
+            writeInt(&buf, Int32(2))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommandOutcomeV2_lift(_ buf: RustBuffer) throws -> CommandOutcomeV2 {
+    return try FfiConverterTypeCommandOutcomeV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommandOutcomeV2_lower(_ value: CommandOutcomeV2) -> RustBuffer {
+    return FfiConverterTypeCommandOutcomeV2.lower(value)
+}
+
+
+
+
 public enum MoneyStatusV2: Equatable, Hashable {
 
     case money
@@ -827,6 +900,14 @@ public func validateJson(request: String) -> String  {
     )
 })
 }
+public func executeV2(request: Request)throws  -> CommandOutcomeV2  {
+    return try  FfiConverterTypeCommandOutcomeV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_execute_v2(
+        FfiConverterTypeRequest_lower(request),uniffiCallStatus
+    )
+})
+}
 public func calculateMoneyV2(request: MoneyRequestV2) -> MoneyResultV2  {
     return try!  FfiConverterTypeMoneyResultV2_lift(try! rustCall() {
         uniffiCallStatus in
@@ -866,10 +947,14 @@ private let initializationResult: InitializationResult = {
     if (uniffi_wimm_core_bindings_checksum_func_validate_json() != 63399) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_wimm_core_bindings_checksum_func_execute_v2() != 24569) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_wimm_core_bindings_checksum_func_calculate_money_v2() != 822) {
         return InitializationResult.apiChecksumMismatch
     }
 
+    uniffiEnsureWimmFinanceTypesInitialized()
     return InitializationResult.ok
 }()
 

@@ -6,3 +6,6 @@ generate_module_map = true
 [bindings.kotlin]
 package_name = "org.wimm.core"
 cdylib_name = "wimm_core_bindings"
+
+[bindings.kotlin.external_packages]
+wimm_finance_types = "org.wimm.privatecontracts"

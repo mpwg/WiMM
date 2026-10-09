@@ -192,6 +192,11 @@ pub fn execute_json(input: &str) -> String {
     })())
 }
 
+/// V1-Formadapter; gleiche Zahl-/Versionsprüfung, keine Finanzberechnung.
+pub fn decode_command_request_v1(input: &str) -> CoreResult<command_contracts::Request> {
+    serde_json::from_value(decode(input)?).map_err(|_| command_contracts::COMMAND_ERROR)
+}
+
 /// Gemeinsamer typisierter Einstieg für Sprachbindings; keine JSON-Rekonstruktion.
 pub fn execute(
     request: command_contracts::Request,

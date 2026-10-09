@@ -26,8 +26,8 @@ pub(crate) fn execute(decoded: Value) -> CoreResult<Value> {
 }
 pub(crate) fn execute_typed(request: crate::command_contracts::Request) -> CoreResult<ChangeSet> {
     execute_boundary(Boundary {
-        contract_version: request.contract_version,
-        domain_schema_version: request.domain_schema_version,
+        contract_version: request.contract_version.value(),
+        domain_schema_version: request.domain_schema_version.value(),
         space_id: request.space_id.as_str().to_owned(),
         aggregates: request.aggregates,
         command: request.command,

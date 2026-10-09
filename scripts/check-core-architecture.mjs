@@ -7,7 +7,15 @@ if (!core) throw new Error('Der eigenständige Rust-Fachkern fehlt.');
 const pureDependencies = new Set(['serde', 'serde_json', 'uuid', 'chrono', 'time', 'unicode-normalization', 'num-bigint', 'num-traits', 'schemars', 'wimm-finance-types']);
 const types = metadata.packages.find((entry) => entry.name === 'wimm-finance-types');
 if (!types) throw new Error('Die gemeinsame plattformfreie Rust-Typquelle fehlt.');
-for (const dependency of [...core.dependencies, ...types.dependencies]) if (!pureDependencies.has(dependency.name)) throw new Error(`Der Fachkern darf ${dependency.name} nicht importieren.`);
+for (const component of [core, types]) {
+  for (const dependency of component.dependencies) {
+    const nativeGenerator = component === types && dependency.name === 'uniffi' && dependency.optional
+      && JSON.stringify(types.features['native-bindings']) === JSON.stringify(['dep:uniffi']);
+    if (!pureDependencies.has(dependency.name) && !nativeGenerator) throw new Error(`Der Fachkern darf ${dependency.name} nicht importieren.`);
+  }
+}
+const defaultCoreTree = execFileSync('cargo', ['tree', '--locked', '-p', 'wimm-finance-core', '--no-default-features', '--edges', 'normal', '--prefix', 'none', '--format', '{p}'], { encoding: 'utf8' });
+if (/^uniffi(?:[_ ]|$)/m.test(defaultCoreTree)) throw new Error('Die plattformfreie Kernkonfiguration darf keine native Bindingruntime importieren.');
 console.log('Rust-Fachkern ohne UI-/Tauri-/Datenbank-/HTTP-Abhängigkeit geprüft.');
 
 const ownTargets = metadata.packages.filter((entry) => metadata.workspace_members.includes(entry.id)).flatMap((entry) => entry.targets.map((target) => target.src_path));

@@ -43,10 +43,10 @@ if (nativeLanguages.includes('kotlin')) {
   }
   if (createHash('sha256').update(bytes).digest('hex') !== 'fe27c1e5e34a6aca84cb44da5f15271cd69069b1cf701ab5ba7320c57c55c439') throw new Error('Die JNA-Testabhängigkeit entspricht nicht dem geprüften Herkunftsstand.');
   await writeFile(jna, bytes);
-  await run(process.env.WIMM_KOTLINC ?? 'kotlinc', [resolve(staging, 'kotlin/org/wimm/core/wimm_core_bindings.kt'), 'tests/contract-bindings/Main.kt', '-classpath', jna, '-include-runtime', '-jvm-target', '21', '-Werror', '-d', kotlinJar]);
+  await run(process.env.WIMM_KOTLINC ?? 'kotlinc', [resolve(staging, 'kotlin/org/wimm/core/wimm_core_bindings.kt'), resolve(staging, 'kotlin/org/wimm/privatecontracts/wimm_finance_types.kt'), 'tests/contract-bindings/Main.kt', '-classpath', jna, '-include-runtime', '-jvm-target', '21', '-Werror', '-d', kotlinJar]);
 }
 if (nativeLanguages.includes('swift')) {
-  await run(process.env.WIMM_SWIFTC ?? 'swiftc', ['-warnings-as-errors', '-swift-version', '6', '-I', resolve(staging, 'swift'), '-Xcc', `-fmodule-map-file=${resolve(staging, 'swift/WiMMCoreFFI.modulemap')}`, resolve(staging, 'swift/WiMMCore.swift'), 'tests/contract-bindings/main.swift', '-L', resolve('target/debug'), '-lwimm_core_bindings', '-Xlinker', '-rpath', '-Xlinker', resolve('target/debug'), '-o', resolve(staging, 'swift-probe')]);
+  await run(process.env.WIMM_SWIFTC ?? 'swiftc', ['-warnings-as-errors', '-swift-version', '6', '-I', resolve(staging, 'swift'), '-Xcc', `-fmodule-map-file=${resolve(staging, 'swift/WiMMCoreFFI.modulemap')}`, '-Xcc', `-fmodule-map-file=${resolve(staging, 'swift/WiMMPrivateTypesFFI.modulemap')}`, resolve(staging, 'swift/WiMMCore.swift'), resolve(staging, 'swift/WiMMPrivateTypes.swift'), 'tests/contract-bindings/main.swift', '-L', resolve('target/debug'), '-lwimm_core_bindings', '-Xlinker', '-rpath', '-Xlinker', resolve('target/debug'), '-o', resolve(staging, 'swift-probe')]);
 }
 const encode = (text) => Buffer.from(text, 'utf8').toString('base64');
 const input = cases.map(({ request }) => [request.contractVersion, request.domainSchemaVersion, encode(request.spaceId), encode(request.text)].join('\t')).join('\n') + '\n';

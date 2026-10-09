@@ -1952,6 +1952,7 @@ dependencies = [
  "uniffi",
  "wasm-bindgen",
  "wimm-finance-core",
+ "wimm-finance-types",
 ]
 
 [[package]]
@@ -2002,6 +2003,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
+ "uniffi",
  "uuid",
 ]
 

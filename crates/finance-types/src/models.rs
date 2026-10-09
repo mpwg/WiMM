@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum AccountType {
     Checking,
     Cash,
@@ -16,6 +17,7 @@ pub enum AccountType {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum GroupKind {
     Income,
     Expense,
@@ -23,12 +25,14 @@ pub enum GroupKind {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum CategorySystem {
     Uncategorized,
 }
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum TransactionKind {
     Normal,
     Opening,
@@ -39,6 +43,7 @@ pub enum TransactionKind {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum Clearance {
     Uncleared,
     Cleared,
@@ -47,6 +52,7 @@ pub enum Clearance {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum ImportClearance {
     Uncleared,
     Cleared,
@@ -54,6 +60,7 @@ pub enum ImportClearance {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum ParserSource {
     Csv,
     Camt053,
@@ -63,6 +70,7 @@ pub enum ParserSource {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum ImportDecision {
     Import,
     Exclude,
@@ -71,6 +79,7 @@ pub enum ImportDecision {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum ImportState {
     Ready,
     Partial,
@@ -79,6 +88,7 @@ pub enum ImportState {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum ConditionField {
     Date,
     Amount,
@@ -88,6 +98,7 @@ pub enum ConditionField {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum ConditionOperator {
     Equals,
     Contains,
@@ -97,6 +108,7 @@ pub enum ConditionOperator {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum Frequency {
     Weekly,
     Monthly,
@@ -105,6 +117,7 @@ pub enum Frequency {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum OccurrenceState {
     Confirmed,
     Skipped,
@@ -112,6 +125,7 @@ pub enum OccurrenceState {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum ConditionValue {
     Text(String),
     Money(MoneyCents),
@@ -124,6 +138,7 @@ pub enum ConditionValue {
     rename_all = "camelCase",
     deny_unknown_fields
 )]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum RuleAction {
     CategoryId(EntityId),
     PayeeId(EntityId),
@@ -132,6 +147,7 @@ pub enum RuleAction {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Split {
     pub id: EntityId,
     pub category_id: EntityId,
@@ -140,6 +156,7 @@ pub struct Split {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ImportCandidate {
     pub source_row: PositiveOrdinal,
     pub date: FinanceDate,
@@ -204,6 +221,7 @@ pub struct ImportCandidate {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ImportRow {
     pub source_row: PositiveOrdinal,
     #[serde(deserialize_with = "nullable")]
@@ -218,6 +236,7 @@ pub struct ImportRow {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct RuleCondition {
     pub field: ConditionField,
     pub operator: ConditionOperator,
@@ -226,6 +245,7 @@ pub struct RuleCondition {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct TransactionTemplate {
     pub account_id: EntityId,
     pub amount: MoneyCents,
@@ -257,6 +277,7 @@ pub struct TransactionTemplate {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Account {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -279,6 +300,7 @@ pub struct Account {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct FinancialRevision {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -296,6 +318,7 @@ pub struct FinancialRevision {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct CategoryGroup {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -317,6 +340,7 @@ pub struct CategoryGroup {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Category {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -345,6 +369,7 @@ pub struct Category {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Payee {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -365,6 +390,7 @@ pub struct Payee {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Transaction {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -423,6 +449,7 @@ pub struct Transaction {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Transfer {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -460,6 +487,7 @@ pub struct Transfer {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Reconciliation {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -481,6 +509,7 @@ pub struct Reconciliation {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ImportMapping {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -500,6 +529,7 @@ pub struct ImportMapping {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ImportBatch {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -522,6 +552,7 @@ pub struct ImportBatch {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ImportFingerprint {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -552,6 +583,7 @@ pub struct ImportFingerprint {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Rule {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -574,6 +606,7 @@ pub struct Rule {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct Schedule {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -603,6 +636,7 @@ pub struct Schedule {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ScheduleOccurrence {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -630,6 +664,7 @@ pub struct ScheduleOccurrence {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "aggregateType", rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum Aggregate {
     Account(Account),
     FinancialRevision(FinancialRevision),
@@ -648,6 +683,7 @@ pub enum Aggregate {
 }
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum AggregateKind {
     Account,
     FinancialRevision,
@@ -875,18 +911,21 @@ impl Aggregate {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct SaveCommand {
     pub aggregates: NonEmptyVec<Aggregate>,
 }
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct AggregateCommand {
     pub aggregate_id: EntityId,
 }
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct PayeeMerge {
     pub target_id: EntityId,
     pub source_ids: NonEmptyVec<EntityId>,
@@ -895,6 +934,7 @@ pub struct PayeeMerge {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ReconciliationConfirm {
     pub account_id: EntityId,
     pub statement_date: FinanceDate,
@@ -904,24 +944,28 @@ pub struct ReconciliationConfirm {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ReconciliationUnlock {
     pub reconciliation_id: EntityId,
 }
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct RuleReorder {
     pub rule_ids: Vec<EntityId>,
 }
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ImportCommit {
     pub import_id: EntityId,
 }
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ScheduleConfirm {
     pub schedule_id: EntityId,
     pub due_date: FinanceDate,
@@ -936,6 +980,7 @@ pub struct ScheduleConfirm {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 pub struct ScheduleSkip {
     pub schedule_id: EntityId,
     pub due_date: FinanceDate,
@@ -943,6 +988,7 @@ pub struct ScheduleSkip {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "commandType")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
 pub enum Command {
     #[serde(rename = "account.save")]
     AccountSave(SaveCommand),

@@ -1,0 +1,8 @@
+[bindings.swift]
+module_name = "WiMMPrivateTypes"
+ffi_module_name = "WiMMPrivateTypesFFI"
+generate_module_map = true
+
+[bindings.kotlin]
+package_name = "org.wimm.privatecontracts"
+cdylib_name = "wimm_core_bindings"

@@ -30,6 +30,15 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
+import org.wimm.privatecontracts.ChangeSet
+import org.wimm.privatecontracts.ContractException
+import org.wimm.privatecontracts.FfiConverterTypeChangeSet
+import org.wimm.privatecontracts.FfiConverterTypeContractError
+import org.wimm.privatecontracts.FfiConverterTypeRequest
+import org.wimm.privatecontracts.Request
+import org.wimm.privatecontracts.RustBuffer as RustBufferChangeSet
+import org.wimm.privatecontracts.RustBuffer as RustBufferContractError
+import org.wimm.privatecontracts.RustBuffer as RustBufferRequest
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
 // A rust-owned buffer is represented by its capacity, its current length, and a
@@ -684,6 +693,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_validate_json(
     ): Int
+    external fun uniffi_wimm_core_bindings_checksum_func_execute_v2(
+    ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_calculate_money_v2(
     ): Int
     external fun ffi_wimm_core_bindings_uniffi_contract_version(
@@ -697,6 +708,7 @@ internal object UniffiLib {
 
     init {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "wimm_core_bindings"))
+        org.wimm.privatecontracts.uniffiEnsureInitialized()
 
     }
 
@@ -710,6 +722,8 @@ internal object UniffiLib {
     external fun uniffi_wimm_core_bindings_fn_func_reverse_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_validate_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBuffer.ByValue
+    external fun uniffi_wimm_core_bindings_fn_func_execute_v2(`request`: RustBufferRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_calculate_money_v2(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
@@ -845,6 +859,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_json() and 0xFFFF) != 63399) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_func_execute_v2() and 0xFFFF) != 24569) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_calculate_money_v2() and 0xFFFF) != 822) {
@@ -1152,6 +1169,93 @@ public object FfiConverterTypeMoneyResultV2: FfiConverterRustBuffer<MoneyResultV
 
 
 
+sealed class CommandOutcomeV2 {
+
+    data class Changed(
+        val `contractVersion`: kotlin.UInt,
+        val `changeSet`: org.wimm.privatecontracts.ChangeSet) : CommandOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Unchanged(
+        val `contractVersion`: kotlin.UInt) : CommandOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCommandOutcomeV2 : FfiConverterRustBuffer<CommandOutcomeV2>{
+    override fun read(buf: ByteBuffer): CommandOutcomeV2 {
+        return when(buf.getInt()) {
+            1 -> CommandOutcomeV2.Changed(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypeChangeSet.read(buf),
+                )
+            2 -> CommandOutcomeV2.Unchanged(
+                FfiConverterUInt.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: CommandOutcomeV2): ULong = when(value) {
+        is CommandOutcomeV2.Changed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypeChangeSet.allocationSize(value.`changeSet`)
+            )
+        }
+        is CommandOutcomeV2.Unchanged -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+            )
+        }
+    }
+
+    override fun write(value: CommandOutcomeV2, buf: ByteBuffer) {
+        when(value) {
+            is CommandOutcomeV2.Changed -> {
+                buf.putInt(1)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypeChangeSet.write(value.`changeSet`, buf)
+                Unit
+            }
+            is CommandOutcomeV2.Unchanged -> {
+                buf.putInt(2)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
 
 enum class MoneyStatusV2 {
 
@@ -1246,6 +1350,23 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
             FfiConverterString.write(value, buf)
         }
     }
+}
+
+
+
+
+
+
+
+object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<ContractException> {
+    override fun lift(error_buf: RustBuffer.ByValue): ContractException =
+        org.wimm.privatecontracts.ContractException.ErrorHandler.lift(
+            RustBufferContractError.ByValue().apply {
+                capacity = error_buf.capacity
+                len = error_buf.len
+                data = error_buf.data
+            }
+        )
 } fun `calculateJson`(`request`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
@@ -1300,6 +1421,18 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 
 
         FfiConverterString.lower(`request`),_status)
+}
+    )
+    }
+
+
+    @Throws(ContractException::class) fun `executeV2`(`request`: Request): CommandOutcomeV2 {
+            return FfiConverterTypeCommandOutcomeV2.lift(
+    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_func_execute_v2(
+
+
+        FfiConverterTypeRequest.lower(`request`),_status)
 }
     )
     }

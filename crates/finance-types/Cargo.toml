@@ -10,10 +10,12 @@ publish = false
 serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
+uniffi = { workspace = true, optional = true }
 schemars = { version = "=1.2.2", optional = true }
 
 [features]
 contract-schema = ["dep:schemars"]
+native-bindings = ["dep:uniffi"]
 
 [lints]
 workspace = true

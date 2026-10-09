@@ -68,7 +68,8 @@
     "check:contracts:generated": "node scripts/generate-contract-bindings.mjs --check",
     "generate:contracts:bindings": "node scripts/generate-contract-bindings.mjs --write",
     "test:contracts:bindings:v2": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-contract-bindings-v2.mjs",
-    "test:contracts:bindings:v2:all": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-contract-bindings-v2.mjs --native-languages swift,kotlin"
+    "test:contracts:bindings:v2:all": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-contract-bindings-v2.mjs --native-languages swift,kotlin",
+    "test:contracts:commands:native": "node scripts/test-typed-command-bindings.mjs"
   },
   "devDependencies": {
     "@babel/parser": "8.0.6",

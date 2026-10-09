@@ -9,12 +9,13 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 
 [features]
 default = ["native"]
-native = ["dep:uniffi"]
+native = ["dep:uniffi", "wimm-finance-types/native-bindings"]
 wasm = ["dep:wasm-bindgen"]
 contract-probe = ["wimm-finance-core/contract-probe"]
 
 [dependencies]
 wimm-finance-core = { path = "../finance-core" }
+wimm-finance-types = { path = "../finance-types" }
 uniffi = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 serde_json.workspace = true

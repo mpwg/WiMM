@@ -37,8 +37,8 @@ impl ReverseRequest {
     }
     fn child(&self, command: Command, expected_revisions: Vec<Expectation>) -> Request {
         Request {
-            contract_version: 1,
-            domain_schema_version: 1,
+            contract_version: 1.into(),
+            domain_schema_version: 1.into(),
             space_id: self.space_id.clone(),
             aggregates: self.aggregates.clone(),
             command,
