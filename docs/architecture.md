@@ -77,7 +77,7 @@ Diesel-WASM-Build allein genügt nicht. Die konkret verwendete SQLite-Instanz mu
 
 COOP/COEP-/SharedArrayBuffer-Anforderungen sind VFS-abhängig und Teil des Hosting-/OIDC-Nachweises. Browser-/iOS-Eignung, Quota, Persistenzablehnung und Ressourcenfehler bleiben eigene reale Kriterien. Bei fehlender Unterstützung keine Migration aktivieren; vorhandene Daten bleiben sicher erreichbar/exportierbar.
 
-Buildgebundene Assetmanifeste umfassen HTML/JS/CSS, Rust-WASM, Worker und Cryptoassets. Update nur nach Zustimmung und bei gesicherten Entwürfen; alte Tabs dürfen nach inkompatibler Migration nicht weiter schreiben. Binding-/Fach-/Storage-/Crypto-/Transportkompatibilität wird vor Aktivierung geprüft. Service Worker cached ausschließlich Appassets, keine API-Antworten. Offline-Neustart muss einen vollständigen kompatiblen Build laden.
+Der bestehende Webbuild erzeugt bereits einen Assetlistenhash und ein appShell-Manifest; updatefound wird signalisiert. Im Ziel umfassen buildgebundene Manifeste zusätzlich die zusammen geprüfte Rust-Runtime-/Worker-/DB-Kompatibilität. Update nur nach Zustimmung und bei gesicherten Entwürfen; alte Tabs dürfen nach inkompatibler Migration nicht weiter schreiben. Binding-/Fach-/Storage-/Crypto-/Transportkompatibilität wird vor Aktivierung geprüft. Service Worker cached ausschließlich Appassets, keine API-Antworten. Offline-Neustart muss einen vollständigen kompatiblen Build laden.
 
 ## Server, Sicherheit und Betrieb
 

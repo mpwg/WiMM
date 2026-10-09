@@ -14,7 +14,15 @@ Stand: 9. Oktober 2026. Aktueller Auftrag, Implementierungsfreigaben und zusamme
 
 ## Architekturpakete und Übergang
 
-Die bisher getrennten Übersichten #91/#105 sind durch [#114](https://github.com/mpwg/WiMM/issues/114) ersetzt; die Node–Rust-DAL-Bindung #111 durch [Rust-Server #124](https://github.com/mpwg/WiMM/issues/124). Neue AR01–AR11 und DAL01–DAL07-Zielarbeit einschließlich Machbarkeit brauchen einen gesonderten Implementierungsauftrag. K05–K11 behalten ihre Zielanforderungen in aktualisierten Issues; wesentlich geänderte Rust-Anwendungs-/ORM-/HTTP-Umsetzung ist ebenfalls erst gesondert freizugeben. Keine neue Freigabe allein aus alten K-/P3-Aufträgen ableiten.
+Die bisher getrennten Übersichten #91/#105 sind durch [#114](https://github.com/mpwg/WiMM/issues/114) ersetzt; die Node–Rust-DAL-Bindung #111 durch [Rust-Server #124](https://github.com/mpwg/WiMM/issues/124). **Implementierungsauftrag vom 9. Oktober 2026:** „ok, jetzt überlege dir eine richtige reihenfolge der umsetzungen. und setze die der reihe nach um“. Damit sind die Architekturpakete aus #114 einschließlich AR01–AR11, DAL-Machbarkeit/-Umstellung und weitergeführter K05–K11 zur schrittweisen Umsetzung freigegeben. Nutzerklärung: zunächst ausschließlich Architektur und Bestandskorrekturen. Neue Produktfunktionen P6–P11 und Releases sind nicht beauftragt.
+
+## Laufende Architekturumsetzung
+
+- Status: in Arbeit. Erster Abschnitt ist [DAL01 #106](https://github.com/mpwg/WiMM/issues/106).
+- Reihenfolge: zuerst das unabhängige Diesel-/VFS-/DSL-Machbarkeitstor; danach Fachtypisierung → gemeinsame Verträge → Fehler-/Architekturgrenzen → Kryptografie und DAL-Ports → lokale Receipts/Commitdienst → native Persistenz und Rust-Anwendung → Browser-DAL/Ansichten → Export-/Bestandskonformität → sichere Updates/Speicheraktivierung/Produktumschaltung → öffentlicher Rust-Server/SQL-Adapter/Wechsel → Gesamtabnahme. Die konkrete nummerierte Issuefolge und Voraussetzungen stehen ausschließlich in #114.
+- Begründung: Ein früher echter Browser-DAL-Nachweis verhindert umfangreiche abhängige Umsetzung auf einer ungeprüften technischen Basis. Er benötigt weder neue Finanzfunktionen noch Serveranmeldung. Bestehende Daten und Produktpfade bleiben bis zur geprüften Umschaltung maßgeblich.
+- Abnahme: pro Paket aktuelle Kriterienmatrix, README, direkte Rust-Assertions und tatsächliche verlangte Laufzeiten; Zwischencommits nur abgeschlossener eigener Abschnitte. Kein pauschaler Gesamtabschluss aus Teilbelegen.
+- Entscheidungstore: bei fehlender ORM-/VFS-/Bindingeignung vor Ersatzwahl rückfragen. Keine Abschwächung von unsafe-, Finanz-, E2EE-, Migrations- oder Leistungsgrenzen. Fehlende Systeme blockieren nur die betroffenen Nachweise, keine fingierte Abnahme.
 
 Unveränderte frühere Fach-/Speicher-/Abnahmekorrekturen aus dem Auftrag vom 7./8. Oktober bleiben freigegeben, soweit sie dem neuen Ziel nicht widersprechen. Bereits sichere K01–K04-, Schema-/Index- und Fachgrundlagen bleiben erhalten. Keine zusätzlichen Alt-TS-/Node-Implementierungen bauen, die das bestätigte Ziel unmittelbar ersetzt. Bei widersprüchlichem Umfang rückfragen, vor Ersatztechnologien ebenfalls.
 
@@ -64,6 +72,6 @@ Spezifiziert, nicht implementierungsfreigegeben. [P11-Spezifikation](p11-release
 
 ## Fortsetzung und Abschlussregeln
 
-Der frühere Implementierungsauftrag wurde am 9. Oktober an einem gesicherten Haltepunkt angehalten; dieser Reviewauftrag setzt ihn nicht automatisch fort. Ein nächster Implementierungsauftrag benennt Paket und Umfang anhand der neuen Übersicht. Fehlende Windows-/Linux-/Intel-Mac-/physische iOS-Nachweise bleiben offen; verfügbare unabhängige Arbeit kann nach Freigabe weitergehen.
+Der frühere Haltepunkt ist durch den jetzigen ausdrücklichen Architektur-Implementierungsauftrag überwunden. Die neuen Pakete werden nach #114 geordnet bearbeitet. Fehlende Windows-/Linux-/Intel-Mac-/physische iOS-Nachweise bleiben offen; verfügbare unabhängige Arbeit wird innerhalb des freigegebenen Umfangs fortgesetzt.
 
 Jede Abnahme nennt Commit, Befehl, synthetische Daten, Plattform und tatsächlichen Client/Adapter. Ein offenes/nicht prüfbares Kriterium verhindert Gesamtabschluss. Native Rust-Assertions sind Pflicht. READMEs/Spezifikation und Issuebelege gleichzeitig aktualisieren; keine zweite Deltaliste im Repository pflegen. [Belegindex](review-evidence.md).

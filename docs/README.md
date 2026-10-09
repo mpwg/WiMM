@@ -4,7 +4,7 @@ Stand: 9. Oktober 2026. Das bestätigte Ziel ist die [gemeinsame Rust-Architektu
 
 ## Auftrag und tatsächlicher Stand
 
-[Aufgaben](tasks.md) ist die einzige Quelle für Implementierungsfreigaben und zusammengefassten Paketstatus. Jetzt beauftragt sind Review, Dokumentations-/Issuebereinigung und Architekturentscheidungen. Neue Produktdeltas/Prototypen/DBmigrationen sind nicht automatisch freigegeben. Der Bestand verwendet noch TypeScript-Controller, IndexedDB/rusqlite und einen Fastify-Stub; das Ziel ist nicht als bereits umgesetzt zu lesen.
+[Aufgaben](tasks.md) ist die einzige Quelle für Implementierungsfreigaben und zusammengefassten Paketstatus. Review/Bereinigung sind abgeschlossen; anschließend ist die geordnete Architekturumsetzung aus #114 einschließlich Machbarkeitsprototypen ausdrücklich beauftragt. Erster Abschnitt ist DAL01/#106. Neue P6–P11-Produktfunktionen und Releases bleiben getrennt. Der Bestand verwendet noch TypeScript-Controller, IndexedDB/rusqlite und einen Fastify-Stub; das Ziel ist nicht als bereits umgesetzt zu lesen.
 
 ## Lesereihenfolge
 

@@ -27,7 +27,7 @@ Empfohlen und als Ziel angenommen wird ein modularer Rust-Aufbau für Fachkern, 
 | Sync | Spezifikation, Entwürfe/Speicherbasis; kein produktives Syncpaket | Gemeinsame Clientzustandsautomaten; P9 bleibt eigener Auftrag |
 | Server | Health-/Metadatenstub in Fastify; keine produktive DB | Axum/Tokio und öffentlicher Server-DAL |
 | Betrieb | Single-Instance-/Backup-/Restoreverträge spezifiziert | Backendgerechte Migration, Receiptprüfung, Readiness/Shutdown |
-| PWA | Fester Cache-first-Name, Browserprofile/Locks | Buildgebundene kompatible Asset-/DB-Aktivierung |
+| PWA | Buildgebundener Assetcache, Browserprofile/Locks | Buildgebundene kompatible Asset-/DB-Aktivierung |
 | Prüfung | Strenge Bestandsgraph-/Rustprüfungen; Plattformlücken | Negative Zielgrenzen, Generator-/Binding-/DB-Konformität |
 | Dokumentation | Parallele K-/DAL-Konzepte und zahlreiche überholte Snapshots | Ein Zielbild, Issuefortschritt, unveränderliche historische Quellen |
 
@@ -94,7 +94,7 @@ Alternative: JS-Crypto als dauerhafter Universaladapter würde native Oberfläch
 
 ## F09/F12 — PWA-DAL, Writer und Updates
 
-Beleg: [Service Worker](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/apps/web/public/service-worker.js#L3) verwendet festen Cache-first-Namen. Neue WASM-/DB-Komponenten würden zusätzliche Kompatibilitätsdimensionen einführen. Diesel dokumentiert WASM-Unterstützung, aber einen VFSbedarf für Browserspeicherung; SQLite dokumentiert unterschiedliche VFS-Nebenläufigkeits-/Headerbedingungen. Das belegt die notwendigen Auswahlkriterien, nicht die konkrete WiMM-Integration. [Diesel](https://diesel.rs/news/2_3_0_release), [SQLite-Persistenz](https://www.sqlite.org/wasm/doc/trunk/persistence.md).
+Beleg: [Service Worker](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/apps/web/public/service-worker.js#L3) verwendet im Quelltext einen Cache-first-Platzhalter. Der bestehende Vite-Buildplugin ersetzt ihn bereits durch einen Assetlistenhash und erzeugt das vollständige appShell-Manifest; main.tsx meldet updatefound. Der Review hatte diese vorhandene Buildfunktion zunächst übersehen. Offen ist die explizite Aktivierungs-/Entwurfs-/Mehrtab-/Rust-/DB-Kompatibilitätskoordination. Neue WASM-/DB-Komponenten führen zusätzliche Kompatibilitätsdimensionen ein. Diesel dokumentiert WASM-Unterstützung, aber einen VFSbedarf für Browserspeicherung; SQLite dokumentiert unterschiedliche VFS-Nebenläufigkeits-/Headerbedingungen. Das belegt die notwendigen Auswahlkriterien, nicht die konkrete WiMM-Integration. [Diesel](https://diesel.rs/news/2_3_0_release), [SQLite-Persistenz](https://www.sqlite.org/wasm/doc/trunk/persistence.md).
 
 Empfehlung: expliziter Runtime-/DBbesitz und tabübergreifende Writerführung, begrenzte Workerports und buildgebundene vollständige Offlineassets. Die konkrete VFSauswahl muss mit derselben Diesel-SQLite-Instanz funktionieren; allgemeine sqlite3.js-Dokumentation allein genügt nicht. Hostingheader, OIDC-Rückkehr, Tab-/Workerwechsel, Quota und physische iOS-PWA werden tatsächlich geprüft. Assetaktivierung und Schemawechsel beachten aktive Entwürfe sowie alte Tabs.
 
