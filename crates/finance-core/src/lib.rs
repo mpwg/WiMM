@@ -4,11 +4,11 @@
 #![forbid(unsafe_code)]
 use serde::Deserialize;
 use serde_json::{Value, json};
-use std::collections::{BTreeMap, BTreeSet};
 use uuid::Uuid;
 mod aggregate_schema;
 mod automation;
 mod automation_commands;
+pub mod command_contracts;
 mod inverse;
 #[cfg(test)]
 #[path = "../tests/support/v1_shape_reference.rs"]
@@ -22,9 +22,11 @@ pub mod projection_cache;
 mod projections;
 mod reconciliation_commands;
 mod references;
+mod rule_reorder;
 mod schedule_dates;
 mod state_validation;
 mod transfer_commands;
+mod typed_financial;
 pub use state_validation::{project_json, validate_json};
 pub mod models;
 pub mod money;
@@ -181,37 +183,6 @@ pub fn calculate_json(input: &str) -> String {
     })())
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Expectation {
-    id: String,
-    expected_revision: i64,
-}
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Context {
-    operation_id: String,
-    occurred_at: String,
-    generated_ids: Vec<String>,
-}
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct ReorderCommand {
-    command_type: String,
-    rule_ids: Vec<String>,
-}
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Request {
-    contract_version: u32,
-    domain_schema_version: u32,
-    space_id: String,
-    aggregates: Vec<Value>,
-    command: ReorderCommand,
-    expected_revisions: Vec<Expectation>,
-    context: Context,
-}
-
 /// Schrittweise portierte Fachhandler über K01; keine Persistenz oder Produktumschaltung.
 pub fn execute_json(input: &str) -> String {
     output((|| {
@@ -275,123 +246,7 @@ pub fn execute_json(input: &str) -> String {
         {
             return master_commands::execute(decoded);
         }
-        let request: Request = serde_json::from_value(decoded)
-            .map_err(|_| ("INVALID_COMMAND", "Der Fachbefehl ist ungültig."))?;
-        if request.contract_version != 1
-            || request.domain_schema_version != 1
-            || request.command.command_type != "rule.reorder"
-            || !valid_id(&request.space_id)
-        {
-            return Err(("INVALID_COMMAND", "Der Fachbefehl ist ungültig."));
-        }
-        if !valid_id(&request.context.operation_id)
-            || request.context.generated_ids.iter().any(|id| !valid_id(id))
-            || !request.context.occurred_at.ends_with('Z')
-            || !request.context.occurred_at.contains('T')
-        {
-            return Err(("INVALID_GENERATOR", "Der erzeugte Kontext ist ungültig."));
-        }
-        let mut current = BTreeMap::new();
-        for aggregate in &request.aggregates {
-            let id = aggregate["id"]
-                .as_str()
-                .ok_or(("INVALID_AGGREGATE", "Der Finanzbestand ist ungültig."))?;
-            if aggregate["spaceId"] != request.space_id
-                || !valid_id(id)
-                || aggregate.get("handle").is_some()
-                || current.insert(id, aggregate).is_some()
-            {
-                return Err(("INVALID_AGGREGATE", "Der Finanzbestand ist ungültig."));
-            }
-        }
-        let rules: BTreeMap<&str, &Value> = current
-            .iter()
-            .filter(|(_, value)| {
-                value["aggregateType"] == "rule" && value.get("deletedAt").is_none()
-            })
-            .map(|(id, value)| (*id, *value))
-            .collect();
-        let ids: BTreeSet<&str> = request
-            .command
-            .rule_ids
-            .iter()
-            .map(String::as_str)
-            .collect();
-        if ids.len() != request.command.rule_ids.len()
-            || ids.len() != rules.len()
-            || rules.keys().any(|id| !ids.contains(id))
-        {
-            return Err((
-                "INVALID_COMMAND",
-                "Die neue Reihenfolge muss alle Regeln genau einmal enthalten.",
-            ));
-        }
-        if rules.is_empty() {
-            return Err(("INVALID_COMMAND", "Die Änderung ist leer."));
-        }
-        let mut expected = BTreeMap::new();
-        for expectation in &request.expected_revisions {
-            if !valid_id(&expectation.id)
-                || !(0..=MAX_SAFE).contains(&expectation.expected_revision)
-            {
-                return Err(("INVALID_COMMAND", "Eine erwartete Revision ist ungültig."));
-            }
-            if expected
-                .insert(expectation.id.as_str(), expectation.expected_revision)
-                .is_some()
-            {
-                return Err((
-                    "DUPLICATE_REFERENCE",
-                    "Jede Aggregatrevision darf in einem Befehl nur einmal erwartet werden.",
-                ));
-            }
-            let revision = current
-                .get(expectation.id.as_str())
-                .and_then(|value| value["revision"].as_i64())
-                .unwrap_or(0);
-            if expectation.expected_revision != revision {
-                return Err((
-                    "REVISION_CONFLICT",
-                    "Eine erwartete Aggregatrevision ist nicht mehr aktuell.",
-                ));
-            }
-        }
-        let mut aggregates = vec![];
-        let mut expectations = vec![];
-        for (order, id) in request.command.rule_ids.iter().enumerate() {
-            let rule = rules[id.as_str()];
-            let revision = rule["revision"]
-                .as_i64()
-                .filter(|value| (1..=MAX_SAFE).contains(value))
-                .ok_or(("INVALID_AGGREGATE", "Die Aggregatrevision ist ungültig."))?;
-            if expected.get(id.as_str()) != Some(&revision) {
-                return Err(("REVISION_MISSING", "Die erwartete Revision fehlt."));
-            }
-            if revision == MAX_SAFE {
-                return Err((
-                    "REVISION_OVERFLOW",
-                    "Die Aggregatrevision kann nicht mehr sicher erhöht werden.",
-                ));
-            }
-            let created = rule["createdAt"]
-                .as_str()
-                .ok_or(("INVALID_AGGREGATE", "Der Erstellungszeitpunkt fehlt."))?;
-            if request.context.occurred_at.as_str() < created {
-                return Err((
-                    "INVALID_GENERATOR",
-                    "Der erzeugte Änderungszeitpunkt liegt vor dem Erstellungszeitpunkt.",
-                ));
-            }
-            let mut next = rule.clone();
-            next["revision"] = json!(revision + 1);
-            next["updatedAt"] = json!(request.context.occurred_at);
-            next["order"] = json!(order);
-            aggregates.push(next);
-            expectations.push(json!({"id":id,"expectedRevision":revision}));
-        }
-        Ok(
-            json!({"contractVersion":1,"status":"changed","changeSet":{"spaceId":request.space_id,"commandType":"rule.reorder","operationId":request.context.operation_id,"occurredAt":request.context.occurred_at,"expectedRevisions":expectations,"aggregates":aggregates}}),
-        )
+        rule_reorder::execute(decoded)
     })())
 }
 

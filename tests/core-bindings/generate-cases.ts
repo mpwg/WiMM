@@ -76,9 +76,15 @@ for (const text of ['12', '+12,3', '00012,34', ' 12', '12 ', '1.2.3', '1e2', '12
   cases.push({ name: `K04 Centtext ${JSON.stringify(text)}`, method: 'calculate', request: { ...base, calculationType: 'money.parse', text }, expected });
 }
 cases.push(...stateCases(),...masterCases(),...transactionCases(),...openingCases(),...transferCases(),...reconciliationCases(),...mergeCases(),...scheduleDateCases(),...automationCases(),...inverseCases(),...cacheCases());
-await writeFile('test-results/core-bindings/cases.json' , `${JSON.stringify(cases, null, 2)}\n`);
 
 const serializableCases=JSON.parse(JSON.stringify(cases)) as typeof cases;
 const rustFixture = 'crates/finance-core/tests/fixtures/contract-catalog.json';
 if (process.argv.includes('--update-rust-fixtures')) await writeFile(rustFixture, `${JSON.stringify(serializableCases)}\n`);
 else if (!isDeepStrictEqual(JSON.parse(await readFile(rustFixture,'utf8')), serializableCases)) throw new Error('Der gesperrte Rust-Fachkatalog stimmt nicht mit der TypeScript-Referenz überein. Golden-Diff ausdrücklich prüfen und Rustabnahme wiederholen.');
+
+// Eigener Bestandsdefektkatalog #128 ergänzt alle tatsächlichen Bindings. Der
+// gesperrte historische K04-Vergleich oben bleibt unverändert und unabhängig.
+const regressions = JSON.parse(await readFile('crates/finance-core/tests/fixtures/generator-context-regression.json', 'utf8')) as typeof cases;
+for (const regression of regressions) coreCommandResultSchema.parse(regression.expected);
+cases.push(...regressions);
+await writeFile('test-results/core-bindings/cases.json', `${JSON.stringify(cases, null, 2)}\n`);

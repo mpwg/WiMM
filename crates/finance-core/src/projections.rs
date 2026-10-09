@@ -166,15 +166,6 @@ fn to_wire<T: Serialize>(value: T) -> CoreResult<Value> {
     serde_json::to_value(value).map_err(|_| INVALID)
 }
 // Übergangsadapter für die noch dynamischen Handler; Berechnung nur typisiert.
-pub fn consumption(all: &[Value]) -> CoreResult<Value> {
-    to_wire(typed_consumption(&from_wire(all)?)?)
-}
-pub fn balances(all: &[Value]) -> CoreResult<Vec<Value>> {
-    typed_balances(&from_wire(all)?)?
-        .into_iter()
-        .map(to_wire)
-        .collect()
-}
 pub fn rebuild(all: &[Value]) -> CoreResult<Value> {
     let all = from_wire(all)?;
     to_wire(ProjectionSet {

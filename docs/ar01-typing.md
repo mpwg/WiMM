@@ -12,18 +12,20 @@ Konto- und Verbrauchsprojektionen verwenden intern ausschließlich typisierte Ag
 
 Ein weiterer geprüfter Abschnitt stellt die vollständige historische Bestandsvalidierung und Cacheprüfung um. Nach der Grenzdeserialisierung verwenden Bereich/Chronologie, Referenzarten, Transferpaare, Abgleiche, Importfingerprints, Regeln und Dauerzahlungsverknüpfungen direkt Rust-Felder. Konto-, Verbrauchs- und Monatssummen verwenden dieselben typisierten Projektionen und sicheren Centtypen. Die Cacheprüfung deserialisiert bestehende Payloads in typisierte Werte; sie erhält die optionalen Konto-IDs und die von der Reihenfolge unabhängige Kategorieprüfung.
 
+Der Befehlsabschnitt ergänzt typisierte Request-/Kontext-/Erwartungs-/Änderungsmengenverträge. Stammdatenanlage/-archivierung, Kontoeinstieg, Buchungsanlage/-änderung/-löschung, Transferanlage/-löschung und Regelreihenfolge verwenden sie direkt. Revisionsübergänge, Finanzvorbereitung mit CAS-Ankern und Mutationsreferenzprüfungen laufen auf denselben typisierten Modellen. Die frühere dynamische Finanzvorbereitungslogik ist entfernt; verbleibende Aufrufer verwenden Übergangsadapter.
+
 ## Kompatibilität und Grenzen
 
 Binding- und Fachschemaversion bleiben eins. UUID-Schreibweise, Zeitstempelpräzision, Tombstones sowie Unterschied zwischen fehlenden Feldern und vorhandenem `null` bleiben erhalten. Nur das erforderliche Kandidatenfeld der Importzeile darf ausdrücklich `null` sein. Importmappings bleiben gemäß bestehendem Vertrag opake JSON-Payloads; ihre Struktur wird hier nicht verschärft. Äquivalente JSON-Zahlformen werden an der Grenze in sichere Ganzzahlen umgewandelt; Geldberechnungen verwenden ausschließlich Integer.
 
-Die verbleibenden Befehlsabläufe, Gegenbefehle, Mutationsreferenz-/Revisionsprüfungen und Teile der Automatisierung verwenden noch dynamische Daten. Ihre Übergangsadapter deserialisieren Modelle und serialisieren Ergebnisse; JSON ist dadurch noch nicht ausschließlich die äußere Bindinggrenze. Insbesondere ist noch kein begrenzter Ansichtsport oder optimierter Bereichslesevorgang aus AR07 umgesetzt. Neue Funktionalität und Datenmigrationen sind nicht Bestandteil dieses Abschnitts.
+Abgleich, Empfängermerge, Automatisierungsabläufe und Gegenbefehle verwenden teilweise noch dynamische Daten. Ihre Übergangsadapter deserialisieren Modelle und serialisieren Ergebnisse; JSON ist dadurch noch nicht ausschließlich die äußere Bindinggrenze. Insbesondere ist noch kein begrenzter Ansichtsport oder optimierter Bereichslesevorgang aus AR07 umgesetzt. Neue Funktionalität und Datenmigrationen sind nicht Bestandteil dieses Abschnitts.
 
 ## Kriterienmatrix
 
 | Kriterium aus #115 | Status | Aktueller Beleg |
 | --- | --- | --- |
 | Alle Handler arbeiten typisiert; unmögliche Feldkombinationen nicht frei konstruierbar | offen | Formmodelle, skalare Konstruktoren, Basisprojektionen, Cacheprüfung und historische Bestandsvalidierung vorhanden; verbleibende dynamische Abläufe siehe Abschnittsgrenze |
-| Bestehender positiver/negativer K04-Katalog nativ, WASM, Swift und Kotlin unverändert | erfüllt | `pnpm test:core:bindings`: je 479 Fälle in Rust nativ, Swift/UniFFI, Kotlin/UniFFI, WASM/Node und tatsächlichem Chromium/WASM |
+| Bestehender positiver/negativer K04-Katalog nativ, WASM, Swift und Kotlin unverändert | erfüllt | `pnpm test:core:bindings`: je 479 unveränderte K04-Fälle plus zehn UTC-Generatorregressionen in Rust nativ, Swift/UniFFI, Kotlin/UniFFI, WASM/Node und tatsächlichem Chromium/WASM |
 | Kein ORM/UI/HTTP/Storage im Kern; unsafe-Verbot unverändert | erfüllt | `pnpm check:core`: Paket-/Root-/Workspace-Grenzen, Rustfmt, Clippy mit Warnungen als Fehler, native Workspace-Assertions |
 | README des Abschnitts aktuell | erfüllt | [Rust-Fachkern-README](../crates/finance-core/README.md): neue Modelle, native Prüfungen und verbleibende Übergangsgrenze beschrieben |
 
@@ -34,3 +36,18 @@ Lokale Abschnittslogs: `test-results/architecture-implementation/ar01-model-core
 ## Fortsetzung
 
 Das erste offene freigegebene Paket bleibt AR01. Als Nächstes werden verbleibende Handler und Querreferenzprüfungen auf dieselben Modelle umgestellt. Erst danach folgt die vollständige erneute Paketabnahme und die gemeinsame Vertragsgenerierung aus AR02; die bestehende JSON-Kompatibilitätsgrenze bleibt bis dahin verbindlich.
+
+## #128 — UTC-Generatorprüfung der Regelreihenfolge
+
+Die tatsächliche native Vorherreproduktion liefert mit `2026-10-09T25:00:00Z` eine erfolgreiche Änderungsmenge mit ungültigen `updatedAt`-Werten. Der Kontext des Reorderhandlers wurde zuvor nur auf `T` und abschließendes `Z` geprüft. Das verletzt den bestehenden UTC-/Aggregatvertrag und ist als eigenständiger Bestandsdefekt erfasst. Die vollständige UTC-Prüfung weist diese Eingabe nun mit `INVALID_GENERATOR` ohne Änderungsmenge ab; gültige Zeitpunkte bleiben exakt erhalten. Finanz- und Bindingversion bleiben eins.
+
+| Kriterium aus #128 | Status | Beleg |
+| --- | --- | --- |
+| Ungültige Stunden/Minuten/Sekunden, Datum, Sekundenformat und UTC-Kennung abweisen | erfüllt | Acht negative Fälle im eigenen nativen Integrationstest und demselben tatsächlichen Bindingkatalog; jeweils kein ChangeSet |
+| Gültige UTC-Zeitpunkte und Sekundenbruchteile unverändert | erfüllt | Zwei positive Fälle; native Assertion des zurückgegebenen typisierten Aggregatzeitpunkts |
+| Fünf tatsächliche Laufzeiten und unveränderter K04-Katalog | erfüllt | Je 489 Fälle: 479 historische plus zehn neue Regressionen; Golden unverändert |
+| Kern-/Architektur-/unsafe-/Clippy-Prüfung, README und Matrix | erfüllt | `pnpm check:core`, Paket- und Fixture-README, diese datierte Matrix; zusätzliche TS-Typecheck-/Lint- und Dokumentationsprüfungen |
+
+Aktuelle lokale Logs: `test-results/architecture-implementation/ar01-command-core.log` und `ar01-command-bindings.log`. Vorherreproduktion in `reorder-invalid-time-before-result.jsonl`. Veröffentlichung, rückgelesene Belege und Schließungsgrund stehen in #128. Der Abschluss dieses begrenzten Defekts schließt AR01 nicht.
+
+Die acht negativen Browserfälle rufen das echte Rust-WASM-Binding mit rohem JSON direkt auf; sie werden dadurch nicht vor dem Rustaufruf von Zod abgefangen. Die zwei gültigen Browserfälle laufen über den unveränderten TypeScript-Bindingadapter. Dessen Eingabeprüfung wurde nicht abgeschwächt.

@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Erste Stammdatenhandler mit vollständigen Revisionsübergängen; keine Persistenz.
-use crate::{
-    CoreResult, MAX_SAFE,
-    aggregate_schema::{self, array, integer, string},
-    state_validation,
-};
+use crate::{CoreResult, aggregate_schema, state_validation};
 use serde::Deserialize;
-use serde_json::{Value, json};
+use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 const INVALID: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
 #[derive(Clone, Deserialize)]
@@ -33,11 +29,21 @@ pub(crate) struct Request {
     pub(crate) expected_revisions: Vec<Expectation>,
     pub(crate) context: Context,
 }
-fn fail(code: &'static str, message: &'static str) -> CoreResult<Value> {
+fn fail<T>(code: &'static str, message: &'static str) -> CoreResult<T> {
     Err((code, message))
 }
 pub(crate) fn normalize(a: Value, ty: &str) -> CoreResult<Value> {
-    if aggregate_schema::kind(&a) != ty {
+    serde_json::to_value(normalize_typed(
+        crate::models::Aggregate::from_wire(&a)?,
+        ty,
+    )?)
+    .map_err(|_| aggregate_schema::INVALID)
+}
+pub(crate) fn normalize_typed(
+    a: crate::models::Aggregate,
+    ty: &str,
+) -> CoreResult<crate::models::Aggregate> {
+    if a.kind().as_str() != ty {
         return fail(
             "INVALID_AGGREGATE",
             match ty {
@@ -52,7 +58,7 @@ pub(crate) fn normalize(a: Value, ty: &str) -> CoreResult<Value> {
         models::{AccountType, Aggregate},
         scalars::NonEmptyText,
     };
-    let mut a = Aggregate::from_wire(&a)?;
+    let mut a = a;
     match &mut a {
         Aggregate::Account(a) => {
             a.name = NonEmptyText::new(state_validation::normal_text(a.name.as_str()))?;
@@ -87,238 +93,174 @@ pub(crate) fn normalize(a: Value, ty: &str) -> CoreResult<Value> {
         }
         _ => return Err(aggregate_schema::INVALID),
     }
-    serde_json::to_value(a).map_err(|_| aggregate_schema::INVALID)
+    Ok(a)
 }
 pub(crate) fn expected(
     request: &Request,
     current: &BTreeMap<&str, &Value>,
 ) -> CoreResult<BTreeMap<String, i64>> {
-    let mut expected = BTreeMap::new();
-    for e in &request.expected_revisions {
-        if !crate::valid_id(&e.id) || !(0..=MAX_SAFE).contains(&e.expected_revision) {
-            return Err(INVALID);
-        }
-        if expected.contains_key(&e.id) {
-            return Err((
-                "DUPLICATE_REFERENCE",
-                "Jede Aggregatrevision darf in einem Befehl nur einmal erwartet werden.",
-            ));
-        }
-        if let Some(a) = current.get(e.id.as_str()) {
-            if a["spaceId"] != request.space_id {
-                return Err((
-                    "CROSS_SPACE_REFERENCE",
-                    "Eine erwartete Aggregatrevision verweist auf einen anderen Bereich.",
-                ));
-            }
-            if integer(&a["revision"])? != e.expected_revision {
-                return Err((
-                    "REVISION_CONFLICT",
-                    "Eine erwartete Aggregatrevision ist nicht mehr aktuell.",
-                ));
-            }
-        } else if e.expected_revision != 0 {
-            return Err((
-                "REVISION_CONFLICT",
-                "Eine erwartete Aggregatrevision verweist auf kein vorhandenes Aggregat.",
-            ));
-        }
-        expected.insert(e.id.clone(), e.expected_revision);
-    }
-    Ok(expected)
-}
-pub(crate) fn transition(
-    a: &Value,
-    space: &str,
-    expected: &BTreeMap<String, i64>,
-    current: &BTreeMap<&str, &Value>,
-) -> CoreResult<()> {
-    let id = string(&a["id"])?;
-    if (id == space) != (aggregate_schema::kind(a) == "financialRevision") {
-        return Err((
-            "INVALID_AGGREGATE",
-            "Die Bereichs-ID ist ausschließlich für die lokale Finanzrevision reserviert.",
-        ));
-    }
-    if a["spaceId"] != space {
-        return Err((
-            "CROSS_SPACE_REFERENCE",
-            "Ein vollständiges Aggregat verweist auf einen anderen Bereich.",
-        ));
-    }
-    let previous = *expected.get(id).ok_or((
-        "REVISION_MISSING",
-        "Für jedes geänderte Aggregat muss eine erwartete Revision angegeben sein.",
-    ))?;
-    let revision = integer(&a["revision"])?;
-    let old = current.get(id);
-    if previous == 0 {
-        if old.is_some() {
-            return Err((
-                "REVISION_CONFLICT",
-                "Ein bereits vorhandenes Aggregat kann nicht mit Revision null angelegt werden.",
-            ));
-        }
-        if revision != 1 {
-            return Err((
-                "REVISION_CONFLICT",
-                "Ein neues Aggregat muss mit Revision eins beginnen.",
-            ));
-        }
-    } else {
-        let old = old.ok_or((
-            "REVISION_CONFLICT",
-            "Die erwartete Aggregatrevision ist nicht mehr aktuell.",
-        ))?;
-        if old["spaceId"] != a["spaceId"] || old["aggregateType"] != a["aggregateType"] {
-            return Err((
-                "CROSS_SPACE_REFERENCE",
-                "Die Aggregatrevision passt nicht zum Bereich oder Aggregattyp des Befehls.",
-            ));
-        }
-        if previous == MAX_SAFE {
-            return Err((
-                "REVISION_OVERFLOW",
-                "Die Aggregatrevision kann nicht mehr sicher erhöht werden.",
-            ));
-        }
-        if revision != previous + 1 {
-            return Err((
-                "REVISION_CONFLICT",
-                "Die neue Aggregatrevision muss genau um eins steigen.",
-            ));
-        }
-    }
-    Ok(())
+    let all = current
+        .values()
+        .map(|a| crate::models::Aggregate::from_wire(a))
+        .collect::<CoreResult<Vec<_>>>()?;
+    let space = crate::scalars::EntityId::new(request.space_id.clone()).map_err(|_| INVALID)?;
+    let context = crate::financial_commands::context(request)?;
+    let scope = crate::command_contracts::Scope {
+        space_id: &space,
+        aggregates: &all,
+        context: &context,
+    };
+    let heads = scope.current();
+    let values = crate::command_contracts::expected(
+        &scope,
+        &crate::financial_commands::typed_expected(&request.expected_revisions)?,
+        &heads,
+    )?;
+    Ok(values
+        .into_iter()
+        .map(|(id, revision)| (id.as_str().to_owned(), revision.value()))
+        .collect())
 }
 pub fn execute(decoded: Value) -> CoreResult<Value> {
-    let request: Request = serde_json::from_value(decoded).map_err(|_| INVALID)?;
-    if request.contract_version != 1
-        || request.domain_schema_version != 1
-        || !crate::valid_id(&request.space_id)
-        || !crate::valid_id(&request.context.operation_id)
-        || !aggregate_schema::timestamp(&request.context.occurred_at)
-        || request
-            .context
-            .generated_ids
-            .iter()
-            .any(|id| !crate::valid_id(id))
-    {
-        return Err(INVALID);
-    }
-    for a in &request.aggregates {
-        aggregate_schema::aggregate(a).map_err(|_| INVALID)?;
-    }
-    let current: BTreeMap<&str, &Value> = request
-        .aggregates
-        .iter()
-        .map(|a| Ok((string(&a["id"])?, a)))
-        .collect::<CoreResult<_>>()?;
+    use crate::{
+        command_contracts::{self, COMMAND_ERROR, Request},
+        models::{Aggregate, AggregateKind, CategorySystem, Command},
+    };
+    let request: Request = serde_json::from_value(decoded).map_err(|_| COMMAND_ERROR)?;
+    request.check_versions()?;
+    let current = request.current();
     if current.len() != request.aggregates.len() {
         return Err(aggregate_schema::INVALID);
     }
-    let command_type = string(&request.command["commandType"])?;
-    let (ty, archiving) = match command_type {
-        "account.save" => ("account", false),
-        "categoryGroup.save" => ("categoryGroup", false),
-        "category.save" => ("category", false),
-        "payee.save" => ("payee", false),
-        "account.archive" => ("account", true),
-        "category.archive" => ("category", true),
-        _ => return Err(INVALID),
+    let (ty, command_type, archiving, entries, id) = match &request.command {
+        Command::AccountSave(c) => (
+            "account",
+            "account.save",
+            false,
+            Some(c.aggregates.as_slice()),
+            None,
+        ),
+        Command::CategoryGroupSave(c) => (
+            "categoryGroup",
+            "categoryGroup.save",
+            false,
+            Some(c.aggregates.as_slice()),
+            None,
+        ),
+        Command::CategorySave(c) => (
+            "category",
+            "category.save",
+            false,
+            Some(c.aggregates.as_slice()),
+            None,
+        ),
+        Command::PayeeSave(c) => (
+            "payee",
+            "payee.save",
+            false,
+            Some(c.aggregates.as_slice()),
+            None,
+        ),
+        Command::AccountArchive(c) => (
+            "account",
+            "account.archive",
+            true,
+            None,
+            Some(&c.aggregate_id),
+        ),
+        Command::CategoryArchive(c) => (
+            "category",
+            "category.archive",
+            true,
+            None,
+            Some(&c.aggregate_id),
+        ),
+        _ => return Err(COMMAND_ERROR),
     };
-    let obj = request.command.as_object().ok_or(INVALID)?;
-    if obj.len() != 2 {
-        return Err(INVALID);
-    }
-    let a = if archiving {
-        let id = string(&request.command["aggregateId"]).map_err(|_| INVALID)?;
-        if !crate::valid_id(id) {
-            return Err(INVALID);
+    let a = if let Some(id) = id {
+        let mut a = command_contracts::revise(
+            (*current.get(id).ok_or(aggregate_schema::INVALID)?).clone(),
+            &request.context.occurred_at,
+        )?;
+        match &mut a {
+            Aggregate::Account(a) => a.archived = true,
+            Aggregate::Category(a) => a.archived = true,
+            _ => return normalize_typed(a, ty).and(Err(aggregate_schema::INVALID)),
         }
-        let mut a = (*current.get(id).ok_or(aggregate_schema::INVALID)?).clone();
-        let revision = integer(&a["revision"])?;
-        if revision == MAX_SAFE {
-            return fail(
-                "REVISION_OVERFLOW",
-                "Die Aggregatrevision kann nicht mehr sicher erhöht werden.",
-            );
-        }
-        if request.context.occurred_at.as_str() < string(&a["createdAt"])? {
-            return fail(
-                "INVALID_GENERATOR",
-                "Der erzeugte Änderungszeitpunkt liegt vor dem Erstellungszeitpunkt.",
-            );
-        }
-        a["revision"] = json!(revision + 1);
-        a["updatedAt"] = json!(request.context.occurred_at);
-        a["archived"] = json!(true);
-        normalize(a, ty)?
+        normalize_typed(a, ty)?
     } else {
-        let entries = array(&request.command["aggregates"]).map_err(|_| INVALID)?;
+        let entries = entries.ok_or(COMMAND_ERROR)?;
         if entries.len() != 1 {
-            return fail(
+            return Err((
                 "INVALID_COMMAND",
                 "Der Stammdatenbefehl benötigt genau ein vollständiges Aggregat des passenden Typs.",
-            );
+            ));
         }
-        aggregate_schema::aggregate(&entries[0]).map_err(|_| INVALID)?;
-        normalize(entries[0].clone(), ty)?
+        normalize_typed(entries[0].clone(), ty)?
     };
-    if ty == "category" {
-        let group_id = string(&a["groupId"])?;
-        if !request.expected_revisions.iter().any(|e| e.id == group_id) {
-            return fail(
+    if let Aggregate::Category(category) = &a {
+        if !request
+            .expected_revisions
+            .iter()
+            .any(|e| e.id == category.group_id)
+        {
+            return Err((
                 "REVISION_MISSING",
                 "Die referenzierte Kategoriegruppe benötigt eine erwartete Revision.",
-            );
+            ));
         }
         if current
-            .get(group_id)
-            .is_none_or(|g| aggregate_schema::kind(g) != "categoryGroup")
+            .get(&category.group_id)
+            .is_none_or(|g| g.kind() != AggregateKind::CategoryGroup)
         {
-            return fail(
+            return Err((
                 "INVALID_AGGREGATE",
                 "Die referenzierte Kategoriegruppe existiert nicht im selben Fachbestand.",
-            );
+            ));
         }
-        crate::references::validate(std::slice::from_ref(&a), &request.aggregates)?;
-        if let Some(old) = current.get(string(&a["id"])?) {
-            if old["system"] == "uncategorized"
-                && (a["system"] != "uncategorized"
-                    || a["archived"] == true
-                    || !aggregate_schema::live(&a))
+        crate::references::typed_validate(std::slice::from_ref(&a), &request.aggregates)?;
+        if let Some(old) = current.get(a.id()) {
+            let old_system = if let Aggregate::Category(old) = old {
+                old.system
+            } else {
+                None
+            };
+            if old_system == Some(CategorySystem::Uncategorized)
+                && (category.system != Some(CategorySystem::Uncategorized)
+                    || category.archived
+                    || !a.is_live())
             {
-                return fail(
+                return Err((
                     "INVALID_COMMAND",
                     "Die Systemkategorie „Nicht zugeordnet“ darf weder umgewidmet noch archiviert oder gelöscht werden.",
-                );
+                ));
             }
-            if old["system"] != "uncategorized" && old.get("system") != a.get("system") {
-                return fail(
+            if old_system != Some(CategorySystem::Uncategorized) && old_system != category.system {
+                return Err((
                     "INVALID_COMMAND",
                     "Der Systemstatus einer gespeicherten Kategorie darf nicht geändert werden.",
-                );
+                ));
             }
         }
-        if archiving && a["system"] == "uncategorized" {
-            return fail(
+        if archiving && category.system == Some(CategorySystem::Uncategorized) {
+            return Err((
                 "INVALID_COMMAND",
                 "Die Systemkategorie „Nicht zugeordnet“ darf nicht archiviert werden.",
-            );
+            ));
         }
     }
-    let expected = expected(&request, &current)?;
-    // Metadatenzeitprüfung folgt dem bisherigen generischen Revisionsvertrag.
-    if string(&a["updatedAt"])? < string(&a["createdAt"])? {
-        return fail(
+    let scope = request.scope();
+    let expected = command_contracts::expected(&scope, &request.expected_revisions, &current)?;
+    if a.updated_at() < a.created_at() {
+        return Err((
             "INVALID_AGGREGATE",
             "Der Änderungszeitpunkt darf nicht vor dem Erstellungszeitpunkt liegen.",
-        );
+        ));
     }
-    transition(&a, &request.space_id, &expected, &current)?;
-    // Nur bereinigte Darstellungsfelder werden ausgegeben, kein zusätzlicher Systemzeitbezug.
-    Ok(
-        json!({"contractVersion":1,"status":"changed","changeSet":{"spaceId":request.space_id,"commandType":command_type,"operationId":request.context.operation_id,"occurredAt":request.context.occurred_at,"expectedRevisions":request.expected_revisions.iter().map(|e|json!({"id":e.id,"expectedRevision":e.expected_revision})).collect::<Vec<_>>(),"aggregates":[a]}}),
-    )
+    command_contracts::transition(&a, &request.space_id, &expected, &current)?;
+    command_contracts::to_wire(request.changed(
+        command_type,
+        vec![a],
+        request.expected_revisions.clone(),
+    ))
 }

@@ -588,6 +588,26 @@ pub enum AggregateKind {
     Schedule,
     ScheduleOccurrence,
 }
+impl AggregateKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Account => "account",
+            Self::FinancialRevision => "financialRevision",
+            Self::CategoryGroup => "categoryGroup",
+            Self::Category => "category",
+            Self::Payee => "payee",
+            Self::Transaction => "transaction",
+            Self::Transfer => "transfer",
+            Self::Reconciliation => "reconciliation",
+            Self::ImportMapping => "importMapping",
+            Self::ImportBatch => "importBatch",
+            Self::ImportFingerprint => "importFingerprint",
+            Self::Rule => "rule",
+            Self::Schedule => "schedule",
+            Self::ScheduleOccurrence => "scheduleOccurrence",
+        }
+    }
+}
 impl Aggregate {
     pub fn kind(&self) -> AggregateKind {
         match self {
@@ -641,6 +661,60 @@ impl Aggregate {
             Self::Rule(v) => &v.updated_at,
             Self::Schedule(v) => &v.updated_at,
             Self::ScheduleOccurrence(v) => &v.updated_at,
+        }
+    }
+    pub(crate) fn revision_mut(&mut self) -> &mut StoredRevision {
+        match self {
+            Self::Account(v) => &mut v.revision,
+            Self::FinancialRevision(v) => &mut v.revision,
+            Self::CategoryGroup(v) => &mut v.revision,
+            Self::Category(v) => &mut v.revision,
+            Self::Payee(v) => &mut v.revision,
+            Self::Transaction(v) => &mut v.revision,
+            Self::Transfer(v) => &mut v.revision,
+            Self::Reconciliation(v) => &mut v.revision,
+            Self::ImportMapping(v) => &mut v.revision,
+            Self::ImportBatch(v) => &mut v.revision,
+            Self::ImportFingerprint(v) => &mut v.revision,
+            Self::Rule(v) => &mut v.revision,
+            Self::Schedule(v) => &mut v.revision,
+            Self::ScheduleOccurrence(v) => &mut v.revision,
+        }
+    }
+    pub(crate) fn updated_at_mut(&mut self) -> &mut UtcTimestamp {
+        match self {
+            Self::Account(v) => &mut v.updated_at,
+            Self::FinancialRevision(v) => &mut v.updated_at,
+            Self::CategoryGroup(v) => &mut v.updated_at,
+            Self::Category(v) => &mut v.updated_at,
+            Self::Payee(v) => &mut v.updated_at,
+            Self::Transaction(v) => &mut v.updated_at,
+            Self::Transfer(v) => &mut v.updated_at,
+            Self::Reconciliation(v) => &mut v.updated_at,
+            Self::ImportMapping(v) => &mut v.updated_at,
+            Self::ImportBatch(v) => &mut v.updated_at,
+            Self::ImportFingerprint(v) => &mut v.updated_at,
+            Self::Rule(v) => &mut v.updated_at,
+            Self::Schedule(v) => &mut v.updated_at,
+            Self::ScheduleOccurrence(v) => &mut v.updated_at,
+        }
+    }
+    pub(crate) fn deleted_at_mut(&mut self) -> &mut Option<UtcTimestamp> {
+        match self {
+            Self::Account(v) => &mut v.deleted_at,
+            Self::FinancialRevision(v) => &mut v.deleted_at,
+            Self::CategoryGroup(v) => &mut v.deleted_at,
+            Self::Category(v) => &mut v.deleted_at,
+            Self::Payee(v) => &mut v.deleted_at,
+            Self::Transaction(v) => &mut v.deleted_at,
+            Self::Transfer(v) => &mut v.deleted_at,
+            Self::Reconciliation(v) => &mut v.deleted_at,
+            Self::ImportMapping(v) => &mut v.deleted_at,
+            Self::ImportBatch(v) => &mut v.deleted_at,
+            Self::ImportFingerprint(v) => &mut v.deleted_at,
+            Self::Rule(v) => &mut v.deleted_at,
+            Self::Schedule(v) => &mut v.deleted_at,
+            Self::ScheduleOccurrence(v) => &mut v.deleted_at,
         }
     }
     pub fn id(&self) -> &EntityId {

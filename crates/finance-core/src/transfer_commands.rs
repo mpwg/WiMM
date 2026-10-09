@@ -1,127 +1,129 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Transfer und beide Seiten werden ausschließlich gemeinsam vorbereitet.
+//! Transfer und beide Seiten werden ausschließlich gemeinsam typisiert vorbereitet.
 use crate::{
     CoreResult,
-    aggregate_schema::{self, array, integer, kind, string},
-    financial_commands as financial,
-    master_commands::{Expectation, Request},
+    aggregate_schema::INVALID,
+    command_contracts::{self, COMMAND_ERROR, Expectation, Request},
+    models::{
+        Aggregate, AggregateKind, Clearance, Command, GroupKind, Transaction, TransactionKind,
+    },
+    scalars::{EntityId, Revision},
+    typed_financial,
 };
-use serde_json::{Value, json};
+use serde_json::Value;
 use std::collections::BTreeMap;
-const COMMAND: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist ungültig.");
 fn needed<'a>(
-    current: &BTreeMap<&str, &'a Value>,
-    id: &Value,
-    ty: &str,
-    space: &str,
-) -> CoreResult<&'a Value> {
+    current: &BTreeMap<&EntityId, &'a Aggregate>,
+    id: &EntityId,
+    kind: AggregateKind,
+    space: &EntityId,
+) -> CoreResult<&'a Aggregate> {
     current
-        .get(string(id)?)
+        .get(id)
         .copied()
-        .filter(|a| kind(a) == ty && a["spaceId"] == space)
+        .filter(|a| a.kind() == kind && a.space_id() == space)
         .ok_or((
             "INVALID_AGGREGATE",
             "Eine benötigte Referenz ist nicht im selben Bereich vorhanden.",
         ))
 }
-pub fn execute(decoded: Value) -> CoreResult<Value> {
-    let request: Request = serde_json::from_value(decoded).map_err(|_| COMMAND)?;
-    if request.contract_version != 1
-        || request.domain_schema_version != 1
-        || !crate::valid_id(&request.space_id)
-        || !crate::valid_id(&request.context.operation_id)
-        || !aggregate_schema::timestamp(&request.context.occurred_at)
-        || request
-            .context
-            .generated_ids
-            .iter()
-            .any(|id| !crate::valid_id(id))
-    {
-        return Err(COMMAND);
-    }
-    for a in &request.aggregates {
-        aggregate_schema::aggregate(a).map_err(|_| COMMAND)?;
-    }
-    let current: BTreeMap<&str, &Value> = request
-        .aggregates
-        .iter()
-        .map(|a| Ok((string(&a["id"])?, a)))
-        .collect::<CoreResult<_>>()?;
-    let command = string(&request.command["commandType"])?;
-    let deleting = command == "transfer.delete";
-    if request.command.as_object().is_none_or(|o| o.len() != 2) {
-        return Err(COMMAND);
-    }
-    let (transfer, source, target) = if deleting {
-        let id = string(&request.command["aggregateId"]).map_err(|_| COMMAND)?;
-        if !crate::valid_id(id) {
-            return Err(COMMAND);
-        }
-        let transfer = current
-            .get(id)
-            .copied()
-            .filter(|a| kind(a) == "transfer")
-            .ok_or(aggregate_schema::INVALID)?;
-        let source = needed(
-            &current,
-            &transfer["sourceTransactionId"],
-            "transaction",
-            &request.space_id,
-        )?;
-        let target = needed(
-            &current,
-            &transfer["targetTransactionId"],
-            "transaction",
-            &request.space_id,
-        )?;
-        (
-            transfer.clone(),
-            financial::normalize(source.clone())?,
-            financial::normalize(target.clone())?,
-        )
-    } else {
-        let entries = array(&request.command["aggregates"]).map_err(|_| COMMAND)?;
-        if entries.len() != 3 {
-            return Err((
-                "INVALID_COMMAND",
-                "Eine Umbuchung benötigt Transfer und beide vollständigen Seiten.",
-            ));
-        }
-        for a in entries {
-            aggregate_schema::aggregate(a).map_err(|_| COMMAND)?;
-        }
-        let transfer = entries
-            .iter()
-            .find(|a| kind(a) == "transfer")
-            .ok_or(aggregate_schema::INVALID)?;
-        let source = entries
-            .iter()
-            .find(|a| a["id"] == transfer["sourceTransactionId"])
-            .ok_or(aggregate_schema::INVALID)?;
-        let target = entries
-            .iter()
-            .find(|a| a["id"] == transfer["targetTransactionId"])
-            .ok_or(aggregate_schema::INVALID)?;
-        (
-            transfer.clone(),
-            financial::normalize(source.clone())?,
-            financial::normalize(target.clone())?,
-        )
+fn normalize(a: &Aggregate) -> CoreResult<Transaction> {
+    let Aggregate::Transaction(a) = a else {
+        return Err((
+            "INVALID_AGGREGATE",
+            "Die Buchung hat einen unpassenden Aggregattyp.",
+        ));
     };
-    if transfer["spaceId"] != request.space_id {
+    typed_financial::normalize(a.clone())
+}
+pub fn execute(decoded: Value) -> CoreResult<Value> {
+    let request: Request = serde_json::from_value(decoded).map_err(|_| COMMAND_ERROR)?;
+    command_contracts::to_wire(execute_typed(request)?)
+}
+pub(crate) fn execute_typed(request: Request) -> CoreResult<command_contracts::ChangeSet> {
+    request.check_versions()?;
+    let current = request.current();
+    let scope = request.scope();
+    let (deleting, command_type, transfer, source, target) = match &request.command {
+        Command::TransferDelete(c) => {
+            let a = current
+                .get(&c.aggregate_id)
+                .copied()
+                .filter(|a| a.kind() == AggregateKind::Transfer)
+                .ok_or(INVALID)?;
+            let Aggregate::Transfer(t) = a else {
+                return Err(INVALID);
+            };
+            let source = needed(
+                &current,
+                &t.source_transaction_id,
+                AggregateKind::Transaction,
+                &request.space_id,
+            )?;
+            let target = needed(
+                &current,
+                &t.target_transaction_id,
+                AggregateKind::Transaction,
+                &request.space_id,
+            )?;
+            (
+                true,
+                "transfer.delete",
+                t.clone(),
+                normalize(source)?,
+                normalize(target)?,
+            )
+        }
+        Command::TransferSave(c) => {
+            let entries = c.aggregates.as_slice();
+            if entries.len() != 3 {
+                return Err((
+                    "INVALID_COMMAND",
+                    "Eine Umbuchung benötigt Transfer und beide vollständigen Seiten.",
+                ));
+            }
+            let transfer = entries
+                .iter()
+                .find_map(|a| {
+                    if let Aggregate::Transfer(t) = a {
+                        Some(t)
+                    } else {
+                        None
+                    }
+                })
+                .ok_or(INVALID)?;
+            let source = entries
+                .iter()
+                .find(|a| a.id() == &transfer.source_transaction_id)
+                .ok_or(INVALID)?;
+            let target = entries
+                .iter()
+                .find(|a| a.id() == &transfer.target_transaction_id)
+                .ok_or(INVALID)?;
+            (
+                false,
+                "transfer.save",
+                transfer.clone(),
+                normalize(source)?,
+                normalize(target)?,
+            )
+        }
+        _ => return Err(COMMAND_ERROR),
+    };
+    if transfer.space_id != request.space_id {
         return Err((
             "CROSS_SPACE_REFERENCE",
             "Die Umbuchung gehört zu einem anderen Bereich.",
         ));
     }
-    let amount = integer(&transfer["amount"])?;
+    let amount = transfer.amount.cents();
     if amount <= 0 {
         return Err((
             "INVALID_AGGREGATE",
             "Der Umbuchungsbetrag muss positiv sein.",
         ));
     }
-    if transfer["sourceAccountId"] == transfer["targetAccountId"] {
+    if transfer.source_account_id == transfer.target_account_id {
         return Err((
             "INVALID_AGGREGATE",
             "Quell- und Zielkonto müssen verschieden sein.",
@@ -137,27 +139,27 @@ pub fn execute(decoded: Value) -> CoreResult<Value> {
             "Die Zielseite ist keine vollständige Umbuchungsseite.",
         ),
     ] {
-        if side["spaceId"] != request.space_id {
+        if side.space_id != request.space_id {
             return Err((
                 "CROSS_SPACE_REFERENCE",
                 "Die Umbuchungsbuchung gehört zu einem anderen Bereich.",
             ));
         }
-        if side["kind"] != "transfer"
-            || side["transferId"] != transfer["id"]
-            || !array(&side["splits"])?.is_empty()
+        if side.kind != TransactionKind::Transfer
+            || side.transfer_id.as_ref() != Some(&transfer.id)
+            || !side.splits.is_empty()
         {
             return Err(("INVALID_AGGREGATE", message));
         }
     }
-    if source["id"] != transfer["sourceTransactionId"]
-        || target["id"] != transfer["targetTransactionId"]
-        || source["accountId"] != transfer["sourceAccountId"]
-        || target["accountId"] != transfer["targetAccountId"]
-        || source["date"] != transfer["date"]
-        || target["date"] != transfer["date"]
-        || integer(&source["amount"])? != -amount
-        || integer(&target["amount"])? != amount
+    if source.id != transfer.source_transaction_id
+        || target.id != transfer.target_transaction_id
+        || source.account_id != transfer.source_account_id
+        || target.account_id != transfer.target_account_id
+        || source.date != transfer.date
+        || target.date != transfer.date
+        || source.amount.cents() != -amount
+        || target.amount.cents() != amount
     {
         return Err((
             "INVALID_AGGREGATE",
@@ -166,38 +168,46 @@ pub fn execute(decoded: Value) -> CoreResult<Value> {
     }
     let source_account = needed(
         &current,
-        &transfer["sourceAccountId"],
-        "account",
+        &transfer.source_account_id,
+        AggregateKind::Account,
         &request.space_id,
     )?;
     let target_account = needed(
         &current,
-        &transfer["targetAccountId"],
-        "account",
+        &transfer.target_account_id,
+        AggregateKind::Account,
         &request.space_id,
     )?;
-    let leaves = source_account["onBudget"] == true && target_account["onBudget"] == false;
-    let enters = source_account["onBudget"] == false && target_account["onBudget"] == true;
-    let budget = transfer.get("budgetCategoryId");
+    let Aggregate::Account(source_account_value) = source_account else {
+        return Err(INVALID);
+    };
+    let Aggregate::Account(target_account_value) = target_account else {
+        return Err(INVALID);
+    };
+    let leaves = source_account_value.on_budget && !target_account_value.on_budget;
+    let enters = !source_account_value.on_budget && target_account_value.on_budget;
+    let budget = transfer.budget_category_id.as_ref();
     if leaves && budget.is_none() {
         return Err((
             "INVALID_AGGREGATE",
             "Beim Verlassen des Budgets ist eine Ausgabenkategorie erforderlich.",
         ));
     }
-    let category = budget
-        .and_then(Value::as_str)
-        .and_then(|id| current.get(id).copied());
-    let group = category
-        .and_then(|a| a["groupId"].as_str())
-        .and_then(|id| current.get(id).copied());
+    let category = budget.and_then(|id| current.get(id).copied());
+    let group = category.and_then(|a| {
+        if let Aggregate::Category(c) = a {
+            current.get(&c.group_id).copied()
+        } else {
+            None
+        }
+    });
     if leaves
-        && (category.is_none_or(|a| kind(a) != "category" || a["spaceId"] != request.space_id)
-            || group.is_none_or(|a| {
-                kind(a) != "categoryGroup"
-                    || a["spaceId"] != request.space_id
-                    || a["kind"] != "expense"
-            }))
+        && (category.is_none_or(|a| {
+            a.kind() != AggregateKind::Category || a.space_id() != &request.space_id
+        }) || group.is_none_or(|a| {
+            a.space_id() != &request.space_id
+                || !matches!(a,Aggregate::CategoryGroup(g) if g.kind==GroupKind::Expense)
+        }))
     {
         return Err((
             "INVALID_AGGREGATE",
@@ -210,7 +220,7 @@ pub fn execute(decoded: Value) -> CoreResult<Value> {
             "Eine Budgetkategorie ist nur beim Verlassen des Budgets zulässig.",
         ));
     }
-    if enters != (transfer["budgetRelease"] == true) {
+    if enters != transfer.budget_release.unwrap_or(false) {
         return Err((
             "INVALID_AGGREGATE",
             "Beim Eintritt ins Budget muss vorhandenes Geld ausdrücklich freigegeben werden.",
@@ -222,42 +232,42 @@ pub fn execute(decoded: Value) -> CoreResult<Value> {
         "Abgeglichene Umbuchungen müssen vor Änderungen atomar entsperrt werden."
     };
     for side in [&source, &target] {
-        if side["clearance"] == "reconciled"
-            || current
-                .get(string(&side["id"])?)
-                .is_some_and(|a| kind(a) == "transaction" && a["clearance"] == "reconciled")
+        if side.clearance == Clearance::Reconciled
+            || current.get(&side.id).is_some_and(
+                |a| matches!(a,Aggregate::Transaction(t) if t.clearance==Clearance::Reconciled),
+            )
         {
             return Err(("INVALID_COMMAND", blocked));
         }
     }
     let mut expected = request.expected_revisions.clone();
-    // Gelesene Konto-/Budgetreferenzen werden wie im bestehenden Handler aus dem Kopfstand verankert.
     for a in [Some(source_account), Some(target_account), category, group]
         .into_iter()
         .flatten()
     {
-        let id = string(&a["id"])?;
-        if !expected.iter().any(|e| e.id == id) {
+        if !expected.iter().any(|e| &e.id == a.id()) {
             expected.push(Expectation {
-                id: id.to_string(),
-                expected_revision: integer(&a["revision"])?,
+                id: a.id().clone(),
+                expected_revision: Revision::new(a.revision().value())?,
             });
         }
     }
-    let mut changes = vec![transfer, source, target];
+    let mut changes = vec![
+        Aggregate::Transfer(transfer),
+        Aggregate::Transaction(source),
+        Aggregate::Transaction(target),
+    ];
     if deleting {
         changes = changes
             .into_iter()
             .map(|mut a| {
-                a["deletedAt"] = a["updatedAt"].clone();
-                financial::revise(a, &request.context.occurred_at)
+                *a.deleted_at_mut() = Some(a.updated_at().clone());
+                command_contracts::revise(a, &request.context.occurred_at)
             })
             .collect::<CoreResult<_>>()?;
     }
-    financial::inspect_changes(&changes, &request.space_id, &expected, &current, &request)?;
-    let (changes, expected) = financial::prepare_financial(changes, expected, &request)?;
-    financial::inspect_changes(&changes, &request.space_id, &expected, &current, &request)?;
-    Ok(
-        json!({"contractVersion":1,"status":"changed","changeSet":{"spaceId":request.space_id,"commandType":command,"operationId":request.context.operation_id,"occurredAt":request.context.occurred_at,"expectedRevisions":expected.iter().map(|e|json!({"id":e.id,"expectedRevision":e.expected_revision})).collect::<Vec<_>>(),"aggregates":changes}}),
-    )
+    command_contracts::inspect_changes(&changes, &expected, &scope)?;
+    let (changes, expected) = typed_financial::prepare(changes, expected, &scope)?;
+    command_contracts::inspect_changes(&changes, &expected, &scope)?;
+    Ok(request.changed(command_type, changes, expected))
 }
