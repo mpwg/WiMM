@@ -51,7 +51,7 @@ export const browserImportPreview: BackgroundExecutionPort<ImportPreviewInput, I
     } finally { stop(); }
   }
 };
-export function createBrowserApplicationRuntime(storageForProfile: WorkspaceStorageFactory, profile: ProfileApplication): ApplicationRuntime {
+export function createBrowserApplicationRuntime(storageForProfile: WorkspaceStorageFactory, profile: ProfileApplication,options:Pick<ApplicationRuntime,'persistence'>={}): ApplicationRuntime {
   const dependencies = browserDomainDependencies();
-  return { dependencies, importPreparation: browserImportPreparation, importPreview: browserImportPreview, financeForScope(profileId, spaceId) { return new FinanceApplication(spaceId, storageForProfile(profileId), dependencies, profile.isChanging, profile.activity); } };
+  return { ...options,dependencies, importPreparation: browserImportPreparation, importPreview: browserImportPreview, financeForScope(profileId, spaceId) { return new FinanceApplication(spaceId, storageForProfile(profileId), dependencies, profile.isChanging, profile.activity); } };
 }

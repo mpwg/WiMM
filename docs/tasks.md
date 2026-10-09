@@ -12,6 +12,10 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 
 Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungsstand offener Deltas. Fortschritt, Blockaden und Prüfbelege direkt im jeweiligen Issue pflegen; diese Datei behält Auftrag, Freigaben und zusammengefassten Paketstatus. Kriterienmatrizen dokumentieren Abnahmesnapshots mit Issueverweisen. Für P4 ist [Übersicht #57](https://github.com/mpwg/WiMM/issues/57) der Einstieg; das Anlegen eines Issues ändert keine Produktfreigabe.
 
+## Haltepunkt vom 9. Oktober 2026
+
+Der Gesamtauftrag ist auf ausdrücklichen Nutzerwunsch „komm an einem geeigneten punkt zum stopp“ angehalten. [Datierter Wiederaufnahmepunkt](handoffs/issues-2026-10-09-haltepunkt.md): #82/#83/#104 geschlossen mit aktueller grüner CI; erster geprüfter #84-Persistenzstatusabschnitt gesichert, Quota-/Download-Abnahme offen. #113 dokumentiert den zusätzlich beobachteten CAMT-CI-Zeitbefund. Pakete bleiben im bisherigen Status; ohne erneuten Fortsetzungsauftrag keine weitere Umsetzung. Die fremden DAL-Konzept-/Trackingcommits und deren fehlende Implementierungsfreigabe bleiben erhalten.
+
 ## DAL — Gemeinsamer Rust-DAL: Konzept und Issuetracking
 
 - Status: Konzept- und Trackinganlage erledigt (9. Oktober 2026); DAL01–DAL07 bleiben offen, nicht zur Implementierung freigegeben.

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { createBrowserProfileStore, createBrowserApplicationRuntime } from '@wimm/browser-adapters';
+import { createBrowserProfileStore, createBrowserApplicationRuntime,createBrowserStoragePersistence } from '@wimm/browser-adapters';
 import { ProfileApplication, ApplicationActivity } from '@wimm/application';
 import { AppShell, createBrowserPlatformServices } from '@wimm/ui';
 import { IndexedDbStorageAdapter } from '@wimm/storage';
@@ -14,7 +14,7 @@ const profileApplication = new ProfileApplication(profileStore, { next: () => cr
 const platform = createBrowserPlatformServices();
 const storageForProfile = (profileId: UUID) => new IndexedDbStorageAdapter(profileId, `wimm-ui-${profileId}`);
 
-const runtime = createBrowserApplicationRuntime(storageForProfile, profileApplication);
+const runtime = createBrowserApplicationRuntime(storageForProfile, profileApplication,{persistence:createBrowserStoragePersistence()});
 
 export function App() {
   return <AppShell platform={platform} application={profileApplication} runtime={runtime} title="WhereIsMyMoney">{(context) => <FinanceWorkspace context={context} />}</AppShell>;

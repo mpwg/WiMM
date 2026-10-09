@@ -15,6 +15,6 @@ navigate wartet jetzt zuerst auf die tatsächliche sichtbare app-shell und besti
 | Layoutentscheidung nach sichtbarem Arbeitsbereich | erfüllt | Explizite sichtbare app-shell-Assertion vor isVisible |
 | Tatsächlicher betroffener Touch-Abgleich | erfüllt | Beide Web-/Desktop-Frontendfälle in derselben Serie bestanden |
 | Gemeinsame Arbeitsbereichsserie | erfüllt | env -u NO_COLOR pnpm test:ui:integration: 124 bestanden in 34,2 s, unveränderte Zeitgrenzen |
-| Passender abschließender CI-Beleg | offen | Exakter CI-Stand wird direkt im Issue nach dem Commit ergänzt |
+| Passender abschließender CI-Beleg | erfüllt | Prüfung 37891458821 und CodeQL 37891458521 auf b1899bf erfolgreich; gleicher Navigationstestfix enthalten |
 
 Aktive Arbeitskopie macOS 27.0.1 arm64, Chromium aus Playwright 1.63.0, Node 26.10.0/pnpm 12.8.1. Artefakt test-results/ui-navigation-104.log. Ausschließlich synthetische Daten. Browserfrontendbelege werden nicht als native Tauri-/Geräte-/Screenreaderabnahme ausgegeben.

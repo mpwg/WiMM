@@ -12,6 +12,7 @@ import { TransferForm, ReconciliationForm } from './account-actions.js';
 import { ImportView, AutomationView } from './automation-views.js';
 import { Transactions, TransactionForm, TransactionList } from './transactions.js';
 import { Button, Dialog, EmptyState } from './components.js';
+import {StoragePersistenceNotice} from './storage-persistence-notice.js';
 import { Receipt, LayoutDashboard, ArrowLeftRight, Landmark, Settings, LockKeyhole, CircleHelp, Ellipsis, ChevronRight, Plus, Upload, Undo2, Redo2, Check, Tags, Users, ListFilter, CalendarClock, Palette } from 'lucide-react';
 import { today } from './account-actions.js';
 
@@ -172,6 +173,7 @@ function WorkspaceContent({ context, desktop = false, view, setView }: { readonl
         <div className="toolbar history-actions"><Button variant="quiet" icon={Undo2} disabled={saving || !history.canUndo} onClick={() => void moveHistory('undo')}>Rückgängig</Button><Button variant="quiet" icon={Redo2} disabled={saving || !history.canRedo} onClick={() => void moveHistory('redo')}>Wiederholen</Button></div>
       </div>
       {message === undefined || message === 'Lokal gespeichert.' ? null : <p role="alert" className="notice error">{message}</p>}
+      {context.runtime.persistence===undefined||view==='settings'?null:<StoragePersistenceNotice context={context}/>}
       {state === 'loading' ? <p role="status">Lokale Daten werden geladen …</p> : null}
       {state === 'error' ? <p role="alert">Die Daten bleiben unverändert. Bitte entsperren Sie den Tresor erneut oder starten Sie die App neu.</p> : null}
       <fieldset className="workspace-content" disabled={saving}>
@@ -191,6 +193,7 @@ function WorkspaceContent({ context, desktop = false, view, setView }: { readonl
             {view === 'more' ? <><Button icon={CircleHelp} disabled={saving} onClick={() => go('help')}>Hilfe<ChevronRight size={18} aria-hidden="true" /></Button><Button icon={LockKeyhole} onClick={() => guard.request(() => { void context.lock(); })}>Tresor sperren</Button></> : null}
           </div> : <Button variant="quiet" icon={Settings} onClick={() => go('settings')}>Alle Einstellungen</Button>}
           {view === 'settings' ? <section className="appearance"><h2><Palette size={18} aria-hidden="true" /> Erscheinungsbild</h2><label>Farbschema<select value={colorScheme} onChange={(event) => changeColorScheme(event.target.value as ColorScheme)}><option value="system">System</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label></section> : null}
+          {view==='settings'&&context.runtime.persistence!==undefined?<StoragePersistenceNotice context={context} details/>:null}
         </> : null}
         {view === 'help' ? <section><h2>WhereIsMyMoney</h2><p className="help-text">Version 0.0.0 · Lokal und verschlüsselt</p>{[['Hilfe und Quellcode', 'https://github.com/mpwg/WiMM'], ['Lizenz AGPL-3.0-or-later', 'https://www.gnu.org/licenses/agpl-3.0.html']].map(([label, url]) => <p key={url}><a href={url} onClick={(event) => { event.preventDefault(); void context.platform.openExternalUrl(url!).catch(() => setMessage('Der Link konnte nicht geöffnet werden.')); }}>{label}</a></p>)}</section> : null}
       </fieldset>

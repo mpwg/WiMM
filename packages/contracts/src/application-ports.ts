@@ -6,6 +6,8 @@ import type { StorageMigrationPlan } from './finance-engine.js';
 
 export interface IdSourcePort { next(): UUID }
 export interface ClockPort { now(): UtcTimestamp }
+export type StoragePersistenceOutcome = {readonly supported:false;readonly status:'unsupported'}|{readonly supported:true;readonly status:'granted'|'denied'|'error'};
+export interface StoragePersistencePort {request():Promise<StoragePersistenceOutcome>}
 export interface CancellationPort { isCancelled(): boolean; onCancel(handler: () => void): () => void }
 export interface BackgroundExecutionPort<TInput, TOutput> { execute(input: TInput, cancellation: CancellationPort): Promise<TOutput> }
 export interface ProfileCoordinationPort { withExclusive<T>(profileId: UUID, action: () => Promise<T>): Promise<T> }
