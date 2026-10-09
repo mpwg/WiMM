@@ -17,6 +17,7 @@
     "packages/importers/tests/**/*.ts",
     "tests/storage/**/*.ts",
     "tests/core-bindings/**/*.ts",
+    "tests/contract-bindings/**/*.ts",
     "tests/dal-proof/**/*.ts"
   ],
   "exclude": [

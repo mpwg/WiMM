@@ -1,0 +1,17 @@
+{
+  "bindingVersion": 2,
+  "domainSchemaVersion": 1,
+  "legacyBindingVersion": 1,
+  "scope": "money.parse; weitere V2-Aktionen offen",
+  "generators": {
+    "uniffi": "0.32.2",
+    "wasmBindgen": "0.2.129"
+  },
+  "files": [
+    "swift/WiMMCore.swift",
+    "swift/WiMMCoreFFI.h",
+    "swift/WiMMCoreFFI.modulemap",
+    "kotlin/org/wimm/core/wimm_core_bindings.kt",
+    "wasm/wimm_core_bindings.d.ts"
+  ]
+}

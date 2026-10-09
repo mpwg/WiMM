@@ -1,0 +1,273 @@
+[
+  {
+    "name": "positive Grenze",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "90071992547409.91"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "money",
+      "value": 9007199254740991
+    }
+  },
+  {
+    "name": "negative Grenze",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "-90071992547409,91"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "money",
+      "value": -9007199254740991
+    }
+  },
+  {
+    "name": "Vorzeichen und Komma",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "+1,2"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "money",
+      "value": 120
+    }
+  },
+  {
+    "name": "negative Null",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "-0"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "money",
+      "value": 0
+    }
+  },
+  {
+    "name": "ein Cent",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "0.01"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "money",
+      "value": 1
+    }
+  },
+  {
+    "name": "positive Überschreitung",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "90071992547409.92"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "MONEY_OVERFLOW",
+        "message": "Der Geldbetrag überschreitet den sicheren Centbereich."
+      }
+    }
+  },
+  {
+    "name": "negative Überschreitung",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "-90071992547409.92"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "MONEY_OVERFLOW",
+        "message": "Der Geldbetrag überschreitet den sicheren Centbereich."
+      }
+    }
+  },
+  {
+    "name": "zusätzliche Dezimalstelle",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "1,234"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_MONEY",
+        "message": "Der Geldbetrag muss ein Dezimaltext mit höchstens zwei Nachkommastellen sein."
+      }
+    }
+  },
+  {
+    "name": "Exponentialtext",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "1e3"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_MONEY",
+        "message": "Der Geldbetrag muss ein Dezimaltext mit höchstens zwei Nachkommastellen sein."
+      }
+    }
+  },
+  {
+    "name": "Unicode-Ziffern",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "１２,３４"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_MONEY",
+        "message": "Der Geldbetrag muss ein Dezimaltext mit höchstens zwei Nachkommastellen sein."
+      }
+    }
+  },
+  {
+    "name": "Unicode-Text",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "Österreich – Grüße 🏠"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_MONEY",
+        "message": "Der Geldbetrag muss ein Dezimaltext mit höchstens zwei Nachkommastellen sein."
+      }
+    }
+  },
+  {
+    "name": "leerer Text",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": ""
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_MONEY",
+        "message": "Der Geldbetrag muss ein Dezimaltext mit höchstens zwei Nachkommastellen sein."
+      }
+    }
+  },
+  {
+    "name": "Leerzeichen",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": " 1.00"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_MONEY",
+        "message": "Der Geldbetrag muss ein Dezimaltext mit höchstens zwei Nachkommastellen sein."
+      }
+    }
+  },
+  {
+    "name": "unbekannte Bindingversion",
+    "request": {
+      "contractVersion": 1,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "0.01"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "UPDATE_REQUIRED",
+        "message": "Der Enginevertrag wird nicht unterstützt."
+      }
+    }
+  },
+  {
+    "name": "unbekannte Fachversion",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 2,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "text": "0.01"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "UPDATE_REQUIRED",
+        "message": "Der Enginevertrag wird nicht unterstützt."
+      }
+    }
+  },
+  {
+    "name": "ungültige UUID",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "privat – ungültig 🏠",
+      "text": "0.01"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_COMMAND",
+        "message": "Der Fachbefehl ist ungültig."
+      }
+    }
+  },
+  {
+    "name": "UUID-Schreibweise",
+    "request": {
+      "contractVersion": 2,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-ABCD-4000-8000-000000000001",
+      "text": "0.01"
+    },
+    "expected": {
+      "contractVersion": 2,
+      "status": "money",
+      "value": 1
+    }
+  }
+]

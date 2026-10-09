@@ -9,6 +9,7 @@
     "**/dist/**",
     "**/target/**",
     "**/gen/**",
+    "packages/contracts/generated/**",
     "test-results/**"
   ],
   "env": {

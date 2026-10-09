@@ -35,7 +35,7 @@
     "test:rust": "node scripts/check-rust.mjs test",
     "test:ui-unit": "pnpm --filter @wimm/ui test",
     "test:toolchain": "node --test scripts/check-toolchain.test.mjs",
-    "check:all": "pnpm check:docs && pnpm test:docs && pnpm test:clean && pnpm check:package-graph && pnpm check:application && pnpm test:package-graph && pnpm typecheck:contracts && pnpm typecheck && pnpm lint && pnpm check:rust && pnpm check:core && pnpm test:toolchain && pnpm test && pnpm test:application && pnpm test:storage:native && pnpm test:storage:migrations && pnpm test:storage:persistence && pnpm test:core:wrapper && pnpm test:core:wasm && pnpm test:ui && pnpm test:ui:integration && pnpm test:ui:matrix && pnpm test:ux && pnpm build && pnpm test:ui:offline && pnpm test:importers:worker",
+    "check:all": "pnpm check:docs && pnpm test:docs && pnpm test:clean && pnpm check:package-graph && pnpm check:application && pnpm test:package-graph && pnpm typecheck:contracts && pnpm typecheck && pnpm lint && pnpm check:rust && pnpm check:core && pnpm test:contracts:bindings:v2 && pnpm test:toolchain && pnpm test && pnpm test:application && pnpm test:storage:native && pnpm test:storage:migrations && pnpm test:storage:persistence && pnpm test:core:wrapper && pnpm test:core:wasm && pnpm test:ui && pnpm test:ui:integration && pnpm test:ui:matrix && pnpm test:ux && pnpm build && pnpm test:ui:offline && pnpm test:importers:worker",
     "test:ui:build": "node scripts/test-ui.mjs --build",
     "test:ui:offline": "node scripts/test-ui-offline.mjs",
     "test:ui:integration": "pnpm exec playwright test --config tests/workspace/config.ts",
@@ -64,7 +64,11 @@
     "test:application": "pnpm --filter @wimm/application test",
     "test:storage:migrations": "pnpm exec playwright test --config tests/storage/backups.config.ts && pnpm exec playwright test --config tests/storage/migrations.config.ts",
     "test:storage:persistence": "pnpm exec playwright test --config tests/storage/persistence.config.ts",
-    "test:dal:proof": "node scripts/test-dal-proof.mjs"
+    "test:dal:proof": "node scripts/test-dal-proof.mjs",
+    "check:contracts:generated": "node scripts/generate-contract-bindings.mjs --check",
+    "generate:contracts:bindings": "node scripts/generate-contract-bindings.mjs --write",
+    "test:contracts:bindings:v2": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-contract-bindings-v2.mjs",
+    "test:contracts:bindings:v2:all": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-contract-bindings-v2.mjs --native-languages swift,kotlin"
   },
   "devDependencies": {
     "@babel/parser": "8.0.6",

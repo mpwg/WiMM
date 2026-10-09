@@ -1,0 +1,15 @@
+# Generierte private Bindingverträge — V2
+
+Eigene Rust-Vertragsdefinitionen: AGPL-3.0-or-later. Generatoren und ihr eingebetteter Hilfscode behalten ursprüngliche Lizenzen/Hinweise; [gesperrtes Herkunftsregister](../../../../docs/dependency-provenance/rust-core.json). UniFFI 0.32.2 (MPL-2.0) und wasm-bindgen 0.2.129 (MIT OR Apache-2.0) sind vorhandene, unverändert gesperrte Abhängigkeiten. Keine neuen Fremdpakete.
+
+Quelle ist [das tatsächliche Rust-Binding](../../../../crates/finance-bindings/src/v2.rs). [Generierungswrapper](../../../../scripts/generate-contract-bindings.mjs) baut die echte native/WASM-Bibliothek und verwendet ausschließlich deren etablierte Generatoren für Swift, Kotlin und TypeScript. Einzige lokale Nachbearbeitung: LF, Entfernen nachlaufender Leerzeichen und Abschlussnewline gemäß Editorregeln. Keine Änderungen an Generatorhinweisen, Feldern oder APIsemantik. `generation.json` nennt Versionen, Generatoren und den begrenzten Abschnittsumfang.
+
+```sh
+pnpm generate:contracts:bindings
+pnpm check:contracts:generated
+pnpm test:contracts:bindings:v2:all
+```
+
+`--check` erzeugt eigene Prüfausgaben unter dem ignorierten test-results und vergleicht exakte Inhalte, ohne diese versionierten Dateien zu ändern. Eine zusätzliche Rust-Enumvariante wurde tatsächlich injiziert: derselbe in CI verwendete Befehl scheiterte mit Vertragsdrift; alle versionierten Bytes blieben unverändert. Nach Wiederherstellung der Quelle bestand der Prüfmodus. Der Änderungsversuch betrifft eigene neue V2-Quelle, keine historischen Goldens.
+
+Vorhanden sind private Geldrequest-/Ergebnis-/Statussignaturen und die bisherigen V1-Einstiege. `money.parse` ist mit 17 identischen Fällen nativ/Swift/Kotlin/WASM/Chromium geprüft. Weitere private Aktionen sowie getrennte lokale/öffentliche Verträge und vollständige Schemaformen folgen in [#116](https://github.com/mpwg/WiMM/issues/116). Dieses Verzeichnis enthält keine Finanzdaten, Schlüssel, ORMmodelle oder bereits abgenommene vollständige V2-Engine.

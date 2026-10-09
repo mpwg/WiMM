@@ -10,6 +10,21 @@ Der vollständige Sprachlauf benötigt vorhandene Swift-/Kotlin-/Java-Werkzeuge;
 
 Generatorgrundlagen: [UniFFI-Procedural-Macros und Sprachcode](https://mozilla.github.io/uniffi-rs/latest/tutorial/foreign_language_bindings.html), [wasm-bindgen für wasm32-unknown-unknown](https://wasm-bindgen.github.io/wasm-bindgen/reference/rust-targets.html). Kein neuer eigener Kryptocode, keine neue native Produktoberfläche und keine echte Geräte-/GUI-/Screenreaderabnahme aus dem K03-Harness.
 
+## AR02 — typisiertes V2-Binding
+
+Die Nutzerentscheidung B ist in ADR-053 festgehalten. `calculate_money_v2` nimmt einen generierten `MoneyRequestV2` und liefert einen `MoneyResultV2` mit Bindingversion 2, Status, sicheren Cent oder stabilem Fehlercode/deutscher Meldung. Rust/Swift/Kotlin verwenden ganze 64-Bit-Cent; der WASM-Getter stellt ausschließlich bereits geprüfte sichere Cent exakt als JavaScript-Zahl dar. Die WASM-Requestklasse wird beim Aufruf übernommen; die Ergebnisinstanz ist mit `free()` freizugeben. Ungültige Versionen werden vor Berechnung abgewiesen, einschließlich nichtganzzahliger/übergroßer WASM-Versionen ohne u32-Trunkierung.
+
+Die V1-JSON-Einstiege bleiben unverändert. `MoneyResultV2::to_v1_json` ist ein expliziter Ausgabeadapter; er ändert weder Finanzschema noch Storage-/Crypto-/Transport-/Exportversionen. Der Test vergleicht zusätzlich V1 und V2 gegen dasselbe Geldorakel. Der Abschnitt deckt ausschließlich die bestehende Aktion `money.parse` ab; weitere Aktionen, vollständige Formschemas sowie lokale/öffentliche Module sind noch keine AR02-Abnahme.
+
+```sh
+pnpm generate:contracts:bindings
+pnpm check:contracts:generated
+pnpm test:contracts:bindings:v2
+pnpm test:contracts:bindings:v2:all
+```
+
+Der letzte Befehl verlangt tatsächliche Swift-/Kotlin-/Java-Werkzeuge und führt alle 17 gemeinsamen synthetischen Fälle zusätzlich über beide nativen Sprachbindings aus. Kein automatisches Überspringen oder Ersatzlauf. Standardprüfung/Ubuntu-CI führen native Rust-Assertions, Sprachdriftvergleich, WASM/Node und Chromium/WASM aus. Beide WASM-Laufzeiten ergänzen sechs Versionstrunkierungsfälle; Node weist zusätzlich ein fremdes Requestobjekt ab. Generierte Definitionen liegen versioniert unter [private-v2](../../packages/contracts/generated/private-v2/README.md). Datierte Abnahme und genaue Grenzen in [AR02](../../docs/ar02-contract-generation.md).
+
 ## Architekturstand vom 9. Oktober 2026
 
 Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.
