@@ -18,9 +18,9 @@
   "markdown.validate.fragmentLinks.enabled": true,
   "markdown.validate.referenceLinks.enabled": true,
   "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.check.allTargets": true,
   "rust-analyzer.check.extraArgs": [
     "--locked",
-    "--all-targets",
     "--",
     "-D",
     "warnings"
