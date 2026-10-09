@@ -23,7 +23,11 @@ mod reconciliation_commands;
 mod references;
 mod rule_reorder;
 mod schedule_dates;
+mod state_api;
 mod state_validation;
+pub use state_api::{
+    decode_projection_request_v1, decode_validation_request_v1, project, validate,
+};
 mod transfer_commands;
 mod typed_financial;
 pub use state_validation::{project_json, validate_json};

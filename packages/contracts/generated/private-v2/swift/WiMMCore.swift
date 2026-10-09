@@ -908,6 +908,22 @@ public func executeV2(request: Request)throws  -> CommandOutcomeV2  {
     )
 })
 }
+public func projectV2(request: ProjectionRequest)throws  -> ProjectionOutcome  {
+    return try  FfiConverterTypeProjectionOutcome_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_project_v2(
+        FfiConverterTypeProjectionRequest_lower(request),uniffiCallStatus
+    )
+})
+}
+public func validateV2(request: ValidationRequest)throws  -> ValidationOutcome  {
+    return try  FfiConverterTypeValidationOutcome_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_validate_v2(
+        FfiConverterTypeValidationRequest_lower(request),uniffiCallStatus
+    )
+})
+}
 public func calculateMoneyV2(request: MoneyRequestV2) -> MoneyResultV2  {
     return try!  FfiConverterTypeMoneyResultV2_lift(try! rustCall() {
         uniffiCallStatus in
@@ -948,6 +964,12 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_wimm_core_bindings_checksum_func_execute_v2() != 24569) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_func_project_v2() != 48756) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_func_validate_v2() != 56325) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_wimm_core_bindings_checksum_func_calculate_money_v2() != 822) {

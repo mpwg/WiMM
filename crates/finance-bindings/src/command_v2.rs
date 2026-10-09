@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! V2-Binding derselben privaten Rust-Befehlsformen und Fachhandler.
+#[cfg(all(feature = "wasm", not(feature = "native")))]
+use crate::wasm_boundary::wasm_error;
 use wimm_finance_types::{
     ContractError,
     command_contracts::{ChangeSet, CommandResult, Request},
@@ -99,46 +101,11 @@ fn execute_typed_v2(mut request: Request) -> Result<CommandOutcomeV2, ContractEr
 }
 
 #[cfg(all(feature = "wasm", not(feature = "native")))]
-fn wasm_error(error: ContractError) -> wasm_bindgen::JsValue {
-    tsify::Ts::from_rust(&error)
-        .expect("Ein versionierter Fehler mit Strings und u32 ist serialisierbar.")
-        .js_value()
-}
-
-#[cfg(all(feature = "wasm", not(feature = "native")))]
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn execute_v2(
     input: tsify::Ts<Request>,
 ) -> Result<tsify::Ts<CommandOutcomeV2>, wasm_bindgen::JsValue> {
-    use wasm_bindgen::JsValue;
-    let raw = input.js_value();
-    if !raw.is_object() || raw.is_null() || js_sys::Array::is_array(&raw) {
-        return Err(wasm_error(ContractError::invalid_command()));
-    }
-    let binding = js_sys::Reflect::get(&raw, &JsValue::from_str("contractVersion"))
-        .map_err(|_| wasm_error(ContractError::invalid_command()))?;
-    let domain = js_sys::Reflect::get(&raw, &JsValue::from_str("domainSchemaVersion"))
-        .map_err(|_| wasm_error(ContractError::invalid_command()))?;
-    if binding.is_undefined() || domain.is_undefined() {
-        return Err(wasm_error(ContractError::invalid_command()));
-    }
-    if binding.as_f64() != Some(2.0) || domain.as_f64() != Some(1.0) {
-        return Err(wasm_error(
-            (
-                "UPDATE_REQUIRED",
-                "Der Enginevertrag wird nicht unterstützt.",
-            )
-                .into(),
-        ));
-    }
-    // Standard-JSON und dieselbe strikte Serdeform wie V1. Die fallible
-    // JS-Stringify-Grenze vermeidet gloo::into_serde/unwrap_throw bei Zyklen.
-    let json = js_sys::JSON::stringify(&raw)
-        .map_err(|_| wasm_error(ContractError::invalid_command()))?
-        .as_string()
-        .ok_or_else(|| wasm_error(ContractError::invalid_command()))?;
-    let request =
-        serde_json::from_str(&json).map_err(|_| wasm_error(ContractError::invalid_command()))?;
+    let request = crate::wasm_boundary::decode(input)?;
     let result = execute_typed_v2(request).map_err(wasm_error)?;
     tsify::Ts::from_rust(&result).map_err(|_| wasm_error(ContractError::invalid_command()))
 }

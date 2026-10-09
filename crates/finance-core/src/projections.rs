@@ -6,7 +6,7 @@ use crate::{
     models::{Aggregate, GroupKind, Transaction, TransactionKind},
     scalars::{EntityId, MoneyCents},
 };
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::Value;
 use std::{cmp::Ordering, collections::BTreeMap};
 pub fn uuid_order(a: &str, b: &str) -> Ordering {
@@ -17,33 +17,9 @@ pub fn uuid_order(a: &str, b: &str) -> Ordering {
 fn sum(a: MoneyCents, b: MoneyCents, message: &'static str) -> CoreResult<MoneyCents> {
     a.checked_add(b).map_err(|(code, _)| (code, message))
 }
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct AccountBalance {
-    pub account_id: EntityId,
-    pub balance: MoneyCents,
-}
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct CategoryConsumption {
-    pub category_id: EntityId,
-    pub group_kind: GroupKind,
-    pub amount: MoneyCents,
-}
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Consumption {
-    pub income: MoneyCents,
-    pub expense: MoneyCents,
-    pub net: MoneyCents,
-    pub categories: Vec<CategoryConsumption>,
-}
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct ProjectionSet {
-    pub account_balances: Vec<AccountBalance>,
-    pub consumption: Consumption,
-}
+pub use wimm_finance_types::state_contracts::{
+    AccountBalance, CategoryConsumption, Consumption, ProjectionSet,
+};
 fn transactions(all: &[Aggregate]) -> Vec<&Transaction> {
     let mut values = all
         .iter()
@@ -160,9 +136,13 @@ fn to_wire<T: Serialize>(value: T) -> CoreResult<Value> {
 // Übergangsadapter für die noch dynamischen Handler; Berechnung nur typisiert.
 pub fn rebuild(all: &[Value]) -> CoreResult<Value> {
     let all = from_wire(all)?;
-    to_wire(ProjectionSet {
-        account_balances: typed_balances(&all)?,
-        consumption: typed_consumption(&all)?,
+    to_wire(typed_rebuild(&all)?)
+}
+
+pub fn typed_rebuild(all: &[Aggregate]) -> CoreResult<ProjectionSet> {
+    Ok(ProjectionSet {
+        account_balances: typed_balances(all)?,
+        consumption: typed_consumption(all)?,
     })
 }
 

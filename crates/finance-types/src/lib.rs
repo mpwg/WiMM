@@ -17,6 +17,7 @@ pub mod models;
 pub mod scalars;
 #[cfg(feature = "contract-schema")]
 pub mod schema;
+pub mod state_contracts;
 pub mod versions;
 pub fn valid_id(value: &str) -> bool {
     let b = value.as_bytes();

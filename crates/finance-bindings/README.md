@@ -33,6 +33,10 @@ Der letzte Befehl verlangt tatsächliche Swift-/Kotlin-/Java-Werkzeuge und führ
 
 `pnpm test:contracts:commands:wasm` prüft 176 unveränderte Befehlsorakel plus dieselben sieben Sprachobjekt-Negativfixtures, acht Formnegativfixtures und zwei JavaScript-Datenfälle in echtem WASM/Node und Chromium/WASM. Direkte Rust-Assertions ergänzen den Formvergleich. Dieser Lauf ist in der regulären V2-Prüfkette/CI enthalten. `pnpm test:contracts:commands:native` prüft dieselben 176/sieben Fälle in tatsächlichem Swift/Kotlin; weitere Engineaktionen und öffentliche/lokale Module bleiben in #116 offen.
 
+`project_v2` und `validate_v2` übertragen gemeinsame generierte Bestandsrequests und Ergebnisrecords mit Version 2/typisiertem Status. Projektion und Bestands-/Mutationsvalidierung bleiben vollständig im Kern. Die WASM-Objektgrenze verwendet denselben strikten falliblen Header-/Serdeadapter wie execute_v2.
+
+`pnpm test:contracts:state:native` prüft alle 110 unveränderten Katalogorakel in Rust/Swift/Kotlin; 87 tatsächlich konstruierbare Fälle werden als native Records/Enums an die V2-Fachaktionen übertragen, 23 Formen bereits vorher abgewiesen. `pnpm test:contracts:state:wasm` prüft dieselben Orakel in echtem WASM/Node und Chromium: 109 Objektaufrufe und eine vorgeschaltete JSON-Syntaxablehnung. Die tatsächlichen Aufrufzahlen werden explizit geprüft; direkte Rust-Fachassertions ergänzen die Sprachvergleiche. Ergebnisse und Grenzen im AR02-Snapshot.
+
 ## Architekturstand vom 9. Oktober 2026
 
 Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.

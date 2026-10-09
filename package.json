@@ -67,8 +67,10 @@
     "test:dal:proof": "node scripts/test-dal-proof.mjs",
     "check:contracts:generated": "node scripts/generate-contract-bindings.mjs --check",
     "generate:contracts:bindings": "node scripts/generate-contract-bindings.mjs --write",
-    "test:contracts:bindings:v2": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-typed-command-wasm.mjs --node-only && node scripts/test-contract-bindings-v2.mjs",
-    "test:contracts:bindings:v2:all": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-typed-command-wasm.mjs --node-only && node scripts/test-contract-bindings-v2.mjs --native-languages swift,kotlin",
+    "test:contracts:bindings:v2": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-typed-command-wasm.mjs --node-only && node scripts/test-typed-state-wasm.mjs --node-only && node scripts/test-contract-bindings-v2.mjs",
+    "test:contracts:bindings:v2:all": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-typed-command-wasm.mjs --node-only && node scripts/test-typed-state-wasm.mjs --node-only && node scripts/test-contract-bindings-v2.mjs --native-languages swift,kotlin",
+    "test:contracts:state:native": "node scripts/test-typed-state-bindings.mjs",
+    "test:contracts:state:wasm": "pnpm check:contracts:generated && node scripts/test-typed-state-wasm.mjs",
     "test:contracts:commands:native": "node scripts/test-typed-command-bindings.mjs",
     "test:contracts:commands:wasm": "pnpm check:contracts:generated && node scripts/test-typed-command-wasm.mjs"
   },

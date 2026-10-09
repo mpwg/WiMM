@@ -34,11 +34,23 @@ import org.wimm.privatecontracts.ChangeSet
 import org.wimm.privatecontracts.ContractException
 import org.wimm.privatecontracts.FfiConverterTypeChangeSet
 import org.wimm.privatecontracts.FfiConverterTypeContractError
+import org.wimm.privatecontracts.FfiConverterTypeProjectionOutcome
+import org.wimm.privatecontracts.FfiConverterTypeProjectionRequest
 import org.wimm.privatecontracts.FfiConverterTypeRequest
+import org.wimm.privatecontracts.FfiConverterTypeValidationOutcome
+import org.wimm.privatecontracts.FfiConverterTypeValidationRequest
+import org.wimm.privatecontracts.ProjectionOutcome
+import org.wimm.privatecontracts.ProjectionRequest
 import org.wimm.privatecontracts.Request
+import org.wimm.privatecontracts.ValidationOutcome
+import org.wimm.privatecontracts.ValidationRequest
 import org.wimm.privatecontracts.RustBuffer as RustBufferChangeSet
 import org.wimm.privatecontracts.RustBuffer as RustBufferContractError
+import org.wimm.privatecontracts.RustBuffer as RustBufferProjectionOutcome
+import org.wimm.privatecontracts.RustBuffer as RustBufferProjectionRequest
 import org.wimm.privatecontracts.RustBuffer as RustBufferRequest
+import org.wimm.privatecontracts.RustBuffer as RustBufferValidationOutcome
+import org.wimm.privatecontracts.RustBuffer as RustBufferValidationRequest
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
 // A rust-owned buffer is represented by its capacity, its current length, and a
@@ -695,6 +707,10 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_execute_v2(
     ): Int
+    external fun uniffi_wimm_core_bindings_checksum_func_project_v2(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_func_validate_v2(
+    ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_calculate_money_v2(
     ): Int
     external fun ffi_wimm_core_bindings_uniffi_contract_version(
@@ -725,6 +741,10 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_execute_v2(`request`: RustBufferRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
+    external fun uniffi_wimm_core_bindings_fn_func_project_v2(`request`: RustBufferProjectionRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBufferProjectionOutcome.ByValue
+    external fun uniffi_wimm_core_bindings_fn_func_validate_v2(`request`: RustBufferValidationRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBufferValidationOutcome.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_calculate_money_v2(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
     external fun ffi_wimm_core_bindings_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus,
@@ -862,6 +882,12 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_execute_v2() and 0xFFFF) != 24569) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_func_project_v2() and 0xFFFF) != 48756) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_v2() and 0xFFFF) != 56325) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_calculate_money_v2() and 0xFFFF) != 822) {
@@ -1358,6 +1384,12 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 
 
 
+
+
+
+
+
+
 object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<ContractException> {
     override fun lift(error_buf: RustBuffer.ByValue): ContractException =
         org.wimm.privatecontracts.ContractException.ErrorHandler.lift(
@@ -1367,7 +1399,9 @@ object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<
                 data = error_buf.data
             }
         )
-} fun `calculateJson`(`request`: kotlin.String): kotlin.String {
+}
+
+ fun `calculateJson`(`request`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.uniffi_wimm_core_bindings_fn_func_calculate_json(
@@ -1433,6 +1467,30 @@ object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<
 
 
         FfiConverterTypeRequest.lower(`request`),_status)
+}
+    )
+    }
+
+
+    @Throws(ContractException::class) fun `projectV2`(`request`: ProjectionRequest): ProjectionOutcome {
+            return FfiConverterTypeProjectionOutcome.lift(
+    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_func_project_v2(
+
+
+        FfiConverterTypeProjectionRequest.lower(`request`),_status)
+}
+    )
+    }
+
+
+    @Throws(ContractException::class) fun `validateV2`(`request`: ValidationRequest): ValidationOutcome {
+            return FfiConverterTypeValidationOutcome.lift(
+    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_func_validate_v2(
+
+
+        FfiConverterTypeValidationRequest.lower(`request`),_status)
 }
     )
     }

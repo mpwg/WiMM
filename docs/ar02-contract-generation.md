@@ -14,8 +14,8 @@ Optionale present-Felder bleiben ohne null: Schemaattribute beschreiben ihren vo
 
 | Kriterium aus #116 | Status | Abschnittsnachweis |
 | --- | --- | --- |
-| TS-/Swift-/Kotlin-Verträge reproduzierbar, getrennte öffentliche/lokale/private Module, versionierte Fehler-/Exportformen | offen | Native private Schemaquelle und typisierte private money.parse-Sprachsignaturen vorhanden; vollständige Aktionen und lokale/öffentliche Module fehlen |
-| Identische positive/negative Grenz-/Form-/Unicode-/Datums-/Null-/Zahlenfälle | offen | 17 gemeinsame Geldfälle in allen fünf tatsächlichen Laufzeiten, sechs zusätzliche WASM-Versionsfälle; vollständiger Schema-/Bindingvergleich noch auszuführen |
+| TS-/Swift-/Kotlin-Verträge reproduzierbar, getrennte öffentliche/lokale/private Module, versionierte Fehler-/Exportformen | offen | Gemeinsame private Rust-Modelle und typisierte money.parse-/execute-/project-/validate-Sprachverträge vorhanden; weitere Aktionen und lokale/öffentliche Module fehlen |
+| Identische positive/negative Grenz-/Form-/Unicode-/Datums-/Null-/Zahlenfälle | offen | Geld-, Befehls- und Bestandskataloge in tatsächlichem Rust/Swift/Kotlin/WASM/Chromium; vollständiger Schema-/Bindingvergleich noch auszuführen |
 | Absichtlicher Vertragsdrift lässt CI scheitern | erfüllt für V2-Sprachabschnitt; gesamt offen | Versionierte Geldsignaturen, CI-Prüfmodus und tatsächlich injizierte Enumvariante mit Driftablehnung ohne Umschreiben. Vollständige Schema-/Modulabdeckung noch offen |
 | README und Herkunft/Lizenzen | erfüllt für Prototyp | [Werkzeug-README](../tools/contract-schema/README.md), [Dependencyregister](dependency-provenance/contract-schema.json); sechs neue Fremdpakete mit Version, Datum, Lizenz und Lockfilechecksumme |
 
@@ -76,3 +76,13 @@ Aktive CachyOS-Arbeitskopie x86_64 und unveränderte Toolchain. `pnpm test:contr
 Zwischenzeitliche Remoteänderungen #127/#88/#126/#89 per Fetch geprüft und ohne Force-Push übernommen. Native Tauri-Prüfung mit aktuellem separatem Lockfile und Remoteversionen erfolgreich: cargo check --locked und cargo test --locked, 26 Tests bestanden/zwei bestehende ignoriert. Keine GUI-/Geräte-/vollständige Persistenzabnahme aus diesem Build-/Testnachweis. Versionsbasis aktualisiert, fremde Manifest-/Lockfileänderungen erhalten.
 
 AR02 bleibt offen: Weitere typisierte Engineaktionen, vollständige Schema-/Versions-/Ergebnisabdeckung und getrennte öffentliche/lokale Rust-Vertragsquellen fehlen. Kein Issueabschluss aus diesem abgeschlossenen Befehlsabschnitt.
+
+## Typisierte Projektionen und Bestandsprüfungen
+
+`ProjectionRequest`, die diskriminierten historischen/Mutations-`ValidationRequest`-Formen sowie Kontostands-/Verbrauchs-/Ergebnisformen liegen jetzt ausschließlich in `wimm-finance-types`. Schemars, UniFFI und Tsify leiten dieselben Formen ab. Der Kern berechnet `ProjectionSet` unmittelbar aus Aggregaten; die V1-Projektionsausgabe verwendet ebenfalls diese Berechnung. `project`/`validate` verwenden die vorhandenen typisierten Bestands-/Referenz-/Mutationsprüfungen. Keine Finanzregel in Bindings oder Sprachharnesses. Neue V2-Ergebnisse tragen Version 2 und einen typisierten Status projected/valid; die V1-Einstiege und ausdrücklichen Testkatalogadapter bleiben erhalten. Gemeinsame fallible WASM-Header-/Formgrenze für execute/project/validate statt dreier abweichender Deserialisierungswege.
+
+Aktive CachyOS-x86_64-Arbeitskopie, oben dokumentierte Toolchain. Alle **110** unveränderten Projektions-/Validierungsorakel erfolgreich in Rust und tatsächlichem Swift/Kotlin/WASM/Chromium. **41 Projektions- und 46 Validierungsfälle** erreichen jeweils die native typisierte Fachaktion; **23** nicht darstellbare Eingaben werden vorher vom ausdrücklichen V1-Formadapter verworfen. Beide tatsächlichen Sprachharnesses weisen diese Aufrufzahlen nach. Direkte native Rust-Assertions im Kern prüfen dieselben 87 vollständigen Fachorakel; zusätzliche native Bindingassertions prüfen sämtliche 110 Ergebnisse einschließlich Formablehnung. WASM/Node und Chromium führen **109** Objektgrenzenaufrufe durch; ein syntaktisch ungültiger JSON-Text wird vor Herstellung eines JS-Objekts verworfen. Keine Behauptung eines typisierten Aufrufs für diese Formablehnungen.
+
+Reproduzierbar: `pnpm test:contracts:state:native`, `pnpm test:contracts:state:wasm`; reguläre V2-/CI-Kette ergänzt den Node-Bestandslauf und Chromium-Spec. Die Browserprüfung besteht zusätzlich die bestehenden Geld- und 176 Befehlsorakel samt Negativfällen. `pnpm check:core`, WASM-Clippy, Typecheck/Lint, Generierungsvergleich, Dokumentationsvalidator/Tests und Whitespace erfolgreich. Lokale Ergebnisse unter ignoriertem test-results/typed-state-bindings. Keine neue Fremdabhängigkeit und keine Goldenänderung.
+
+#116 bleibt offen. Weitere calculate-/reverse-Aktionen, getrennte öffentliche/lokale Vertragsquellen und vollständiger Schema-/Versions-/Negativvergleich sind weiterhin vor Abschluss erforderlich.

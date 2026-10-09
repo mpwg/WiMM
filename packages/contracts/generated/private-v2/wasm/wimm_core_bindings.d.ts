@@ -18,6 +18,11 @@ export interface Account {
     archived: boolean;
 }
 
+export interface AccountBalance {
+    accountId: EntityId;
+    balance: MoneyCents;
+}
+
 export interface AggregateCommand {
     aggregateId: EntityId;
 }
@@ -34,6 +39,12 @@ export interface Category {
     sortOrder: Ordinal;
     archived: boolean;
     system?: CategorySystem;
+}
+
+export interface CategoryConsumption {
+    categoryId: EntityId;
+    groupKind: GroupKind;
+    amount: MoneyCents;
 }
 
 export interface CategoryGroup {
@@ -56,6 +67,13 @@ export interface ChangeSet {
     occurredAt: UtcTimestamp;
     expectedRevisions: Expectation[];
     aggregates: Aggregate[];
+}
+
+export interface Consumption {
+    income: MoneyCents;
+    expense: MoneyCents;
+    net: MoneyCents;
+    categories: CategoryConsumption[];
 }
 
 export interface Context {
@@ -160,6 +178,24 @@ export interface PayeeMerge {
     targetId: EntityId;
     sourceIds: NonEmptyVec<EntityId>;
     transactionIds: EntityId[];
+}
+
+export interface ProjectionOutcome {
+    contractVersion: number;
+    status: ProjectionStatus;
+    projections: ProjectionSet;
+}
+
+export interface ProjectionRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+}
+
+export interface ProjectionSet {
+    accountBalances: AccountBalance[];
+    consumption: Consumption;
 }
 
 export interface Reconciliation {
@@ -317,6 +353,11 @@ export interface Transfer {
     budgetRelease?: boolean;
 }
 
+export interface ValidationOutcome {
+    contractVersion: number;
+    status: ValidationStatus;
+}
+
 export type AccountType = "checking" | "cash" | "savings" | "credit" | "other";
 
 export type Aggregate = ({ aggregateType: "account" } & Account) | ({ aggregateType: "financialRevision" } & FinancialRevision) | ({ aggregateType: "categoryGroup" } & CategoryGroup) | ({ aggregateType: "category" } & Category) | ({ aggregateType: "payee" } & Payee) | ({ aggregateType: "transaction" } & Transaction) | ({ aggregateType: "transfer" } & Transfer) | ({ aggregateType: "reconciliation" } & Reconciliation) | ({ aggregateType: "importMapping" } & ImportMapping) | ({ aggregateType: "importBatch" } & ImportBatch) | ({ aggregateType: "importFingerprint" } & ImportFingerprint) | ({ aggregateType: "rule" } & Rule) | ({ aggregateType: "schedule" } & Schedule) | ({ aggregateType: "scheduleOccurrence" } & ScheduleOccurrence);
@@ -373,6 +414,8 @@ export type ParserSource = "csv" | "camt053" | "ofx" | "qfx";
 
 export type PositiveOrdinal = number;
 
+export type ProjectionStatus = "projected";
+
 export type Revision = number;
 
 export type RuleAction = { field: "categoryId"; value: EntityId } | { field: "payeeId"; value: EntityId } | { field: "clearance"; value: ImportClearance };
@@ -382,6 +425,10 @@ export type StoredRevision = number;
 export type TransactionKind = "normal" | "opening" | "transfer" | "contribution" | "settlement";
 
 export type UtcTimestamp = string;
+
+export type ValidationRequest = { mode: "historical"; contractVersion: EngineBindingVersion; domainSchemaVersion: DomainSchemaVersion; spaceId: EntityId; aggregates: Aggregate[] } | { mode: "mutation"; contractVersion: EngineBindingVersion; domainSchemaVersion: DomainSchemaVersion; spaceId: EntityId; before: Aggregate[]; after: Aggregate[] };
+
+export type ValidationStatus = "valid";
 
 
 export class MoneyRequestV2 {
@@ -426,9 +473,13 @@ export function execute_v2(input: Request): CommandOutcomeV2;
 
 export function project_json(request: string): string;
 
+export function project_v2(request: ProjectionRequest): ProjectionOutcome;
+
 export function reverse_json(request: string): string;
 
 export function validate_json(request: string): string;
+
+export function validate_v2(request: ValidationRequest): ValidationOutcome;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
@@ -451,8 +502,10 @@ export interface InitOutput {
     readonly moneyresultv2_status: (a: number) => number;
     readonly moneyresultv2_value: (a: number) => [number, number];
     readonly project_json: (a: number, b: number) => [number, number];
+    readonly project_v2: (a: any) => [number, number, number];
     readonly reverse_json: (a: number, b: number) => [number, number];
     readonly validate_json: (a: number, b: number) => [number, number];
+    readonly validate_v2: (a: any) => [number, number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;
