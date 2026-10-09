@@ -18,7 +18,7 @@ Die bisher getrennten Übersichten #91/#105 sind durch [#114](https://github.com
 
 ## Laufende Architekturumsetzung
 
-- Status: in Arbeit. Erster Abschnitt ist [DAL01 #106](https://github.com/mpwg/WiMM/issues/106).
+- Status: in Arbeit. [DAL01 #106](https://github.com/mpwg/WiMM/issues/106) ist mit vollständigem eigenem CI-Job abgenommen; aktueller Abschnitt [AR01 #115](https://github.com/mpwg/WiMM/issues/115), zunächst geschützte Cent-/Revisionstypen. Alle weiteren Architekturpakete bleiben offen.
 - Reihenfolge: zuerst das unabhängige Diesel-/VFS-/DSL-Machbarkeitstor; danach Fachtypisierung → gemeinsame Verträge → Fehler-/Architekturgrenzen → Kryptografie und DAL-Ports → lokale Receipts/Commitdienst → native Persistenz und Rust-Anwendung → Browser-DAL/Ansichten → Export-/Bestandskonformität → sichere Updates/Speicheraktivierung/Produktumschaltung → öffentlicher Rust-Server/SQL-Adapter/Wechsel → Gesamtabnahme. Die konkrete nummerierte Issuefolge und Voraussetzungen stehen ausschließlich in #114.
 - Begründung: Ein früher echter Browser-DAL-Nachweis verhindert umfangreiche abhängige Umsetzung auf einer ungeprüften technischen Basis. Er benötigt weder neue Finanzfunktionen noch Serveranmeldung. Bestehende Daten und Produktpfade bleiben bis zur geprüften Umschaltung maßgeblich.
 - Abnahme: pro Paket aktuelle Kriterienmatrix, README, direkte Rust-Assertions und tatsächliche verlangte Laufzeiten; Zwischencommits nur abgeschlossener eigener Abschnitte. Kein pauschaler Gesamtabschluss aus Teilbelegen.
