@@ -273,6 +273,11 @@ RustBuffer uniffi_wimm_core_bindings_fn_func_validate_json(RustBuffer request, R
 RustBuffer uniffi_wimm_core_bindings_fn_func_execute_v2(RustBuffer request, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_FUNC_REVERSE_V2
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_FUNC_REVERSE_V2
+RustBuffer uniffi_wimm_core_bindings_fn_func_reverse_v2(RustBuffer request, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_FUNC_PROJECT_V2
 #define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_FUNC_PROJECT_V2
 RustBuffer uniffi_wimm_core_bindings_fn_func_project_v2(RustBuffer request, RustCallStatus *_Nonnull out_status
@@ -581,6 +586,12 @@ uint16_t uniffi_wimm_core_bindings_checksum_func_validate_json(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_FUNC_EXECUTE_V2
 #define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_FUNC_EXECUTE_V2
 uint16_t uniffi_wimm_core_bindings_checksum_func_execute_v2(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_FUNC_REVERSE_V2
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_FUNC_REVERSE_V2
+uint16_t uniffi_wimm_core_bindings_checksum_func_reverse_v2(void
 
 );
 #endif

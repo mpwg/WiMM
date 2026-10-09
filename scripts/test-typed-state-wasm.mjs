@@ -10,8 +10,8 @@ if (process.argv.slice(2).some((argument) => argument !== '--node-only')) throw 
 const root = resolve('test-results/contract-bindings-generation/wasm');
 const wasm = await import(pathToFileURL(resolve(root, 'wimm_core_bindings.js')).href);
 wasm.initSync({ module: await readFile(resolve(root, 'wimm_core_bindings_bg.wasm')) });
-const cases = JSON.parse(await readFile('crates/finance-core/tests/fixtures/contract-catalog.json', 'utf8')).filter((scenario) => ['project', 'validate'].includes(scenario.method));
-assert.equal(cases.length, 110);
+const cases = JSON.parse(await readFile('crates/finance-core/tests/fixtures/contract-catalog.json', 'utf8')).filter((scenario) => ['project', 'validate', 'reverse'].includes(scenario.method));
+assert.equal(cases.length, 121);
 let jsonRejections = 0;
 for (const scenario of cases) {
   let request;

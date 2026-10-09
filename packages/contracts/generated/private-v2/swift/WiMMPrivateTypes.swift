@@ -2357,6 +2357,134 @@ public func FfiConverterTypeRequest_lower(_ value: Request) -> RustBuffer {
 }
 
 
+public struct ReverseRequest: Equatable, Hashable {
+    public var contractVersion: EngineBindingVersion
+    public var domainSchemaVersion: DomainSchemaVersion
+    public var spaceId: EntityId
+    public var aggregates: [Aggregate]
+    public var expectedRevisions: [Expectation]
+    public var context: Context
+    public var targets: ReverseTargets
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: EngineBindingVersion, domainSchemaVersion: DomainSchemaVersion, spaceId: EntityId, aggregates: [Aggregate], expectedRevisions: [Expectation], context: Context, targets: ReverseTargets) {
+        self.contractVersion = contractVersion
+        self.domainSchemaVersion = domainSchemaVersion
+        self.spaceId = spaceId
+        self.aggregates = aggregates
+        self.expectedRevisions = expectedRevisions
+        self.context = context
+        self.targets = targets
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ReverseRequest: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeReverseRequest: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ReverseRequest {
+        return
+            try ReverseRequest(
+                contractVersion: FfiConverterTypeEngineBindingVersion.read(from: &buf),
+                domainSchemaVersion: FfiConverterTypeDomainSchemaVersion.read(from: &buf),
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                aggregates: FfiConverterSequenceTypeAggregate.read(from: &buf),
+                expectedRevisions: FfiConverterSequenceTypeExpectation.read(from: &buf),
+                context: FfiConverterTypeContext.read(from: &buf),
+                targets: FfiConverterTypeReverseTargets.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ReverseRequest, into buf: inout [UInt8]) {
+        FfiConverterTypeEngineBindingVersion.write(value.contractVersion, into: &buf)
+        FfiConverterTypeDomainSchemaVersion.write(value.domainSchemaVersion, into: &buf)
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterSequenceTypeAggregate.write(value.aggregates, into: &buf)
+        FfiConverterSequenceTypeExpectation.write(value.expectedRevisions, into: &buf)
+        FfiConverterTypeContext.write(value.context, into: &buf)
+        FfiConverterTypeReverseTargets.write(value.targets, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeReverseRequest_lift(_ buf: RustBuffer) throws -> ReverseRequest {
+    return try FfiConverterTypeReverseRequest.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeReverseRequest_lower(_ value: ReverseRequest) -> RustBuffer {
+    return FfiConverterTypeReverseRequest.lower(value)
+}
+
+
+public struct ReverseTarget: Equatable, Hashable {
+    public var id: EntityId
+    public var previous: Aggregate?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(id: EntityId, previous: Aggregate?) {
+        self.id = id
+        self.previous = previous
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ReverseTarget: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeReverseTarget: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ReverseTarget {
+        return
+            try ReverseTarget(
+                id: FfiConverterTypeEntityId.read(from: &buf),
+                previous: FfiConverterOptionTypeAggregate.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ReverseTarget, into buf: inout [UInt8]) {
+        FfiConverterTypeEntityId.write(value.id, into: &buf)
+        FfiConverterOptionTypeAggregate.write(value.previous, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeReverseTarget_lift(_ buf: RustBuffer) throws -> ReverseTarget {
+    return try FfiConverterTypeReverseTarget.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeReverseTarget_lower(_ value: ReverseTarget) -> RustBuffer {
+    return FfiConverterTypeReverseTarget.lower(value)
+}
+
+
 public struct Rule: Equatable, Hashable {
     public var id: EntityId
     public var spaceId: EntityId
@@ -5453,6 +5581,30 @@ fileprivate struct FfiConverterOptionTypeImportCandidate: FfiConverterRustBuffer
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeAggregate: FfiConverterRustBuffer {
+    typealias SwiftType = Aggregate?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeAggregate.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeAggregate.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeCategorySystem: FfiConverterRustBuffer {
     typealias SwiftType = CategorySystem?
 
@@ -5738,6 +5890,31 @@ fileprivate struct FfiConverterSequenceTypeImportRow: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeImportRow.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeReverseTarget: FfiConverterRustBuffer {
+    typealias SwiftType = [ReverseTarget]
+
+    public static func write(_ value: [ReverseTarget], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeReverseTarget.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [ReverseTarget] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [ReverseTarget]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeReverseTarget.read(from: &buf))
         }
         return seq
     }
@@ -6515,6 +6692,46 @@ public func FfiConverterTypePositiveOrdinal_lift(_ value: Int64) throws -> Posit
 #endif
 public func FfiConverterTypePositiveOrdinal_lower(_ value: PositiveOrdinal) -> Int64 {
     return FfiConverterTypePositiveOrdinal.lower(value)
+}
+
+
+
+public typealias ReverseTargets = [ReverseTarget]
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeReverseTargets: FfiConverter {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ReverseTargets {
+        return try FfiConverterSequenceTypeReverseTarget.read(from: &buf)
+    }
+
+    public static func write(_ value: ReverseTargets, into buf: inout [UInt8]) {
+        return FfiConverterSequenceTypeReverseTarget.write(value, into: &buf)
+    }
+
+    public static func lift(_ value: RustBuffer) throws -> ReverseTargets {
+        return try FfiConverterSequenceTypeReverseTarget.lift(value)
+    }
+
+    public static func lower(_ value: ReverseTargets) -> RustBuffer {
+        return FfiConverterSequenceTypeReverseTarget.lower(value)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeReverseTargets_lift(_ value: RustBuffer) throws -> ReverseTargets {
+    return try FfiConverterTypeReverseTargets.lift(value)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeReverseTargets_lower(_ value: ReverseTargets) -> RustBuffer {
+    return FfiConverterTypeReverseTargets.lower(value)
 }
 
 

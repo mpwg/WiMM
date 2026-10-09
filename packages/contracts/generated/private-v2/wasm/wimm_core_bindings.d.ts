@@ -232,6 +232,21 @@ export interface Request {
     context: Context;
 }
 
+export interface ReverseRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    expectedRevisions: Expectation[];
+    context: Context;
+    targets: NonEmptyVec<ReverseTarget>;
+}
+
+export interface ReverseTarget {
+    id: EntityId;
+    previous?: Aggregate;
+}
+
 export interface Rule {
     id: EntityId;
     spaceId: EntityId;
@@ -477,6 +492,8 @@ export function project_v2(request: ProjectionRequest): ProjectionOutcome;
 
 export function reverse_json(request: string): string;
 
+export function reverse_v2(request: ReverseRequest): CommandOutcomeV2;
+
 export function validate_json(request: string): string;
 
 export function validate_v2(request: ValidationRequest): ValidationOutcome;
@@ -504,6 +521,7 @@ export interface InitOutput {
     readonly project_json: (a: number, b: number) => [number, number];
     readonly project_v2: (a: any) => [number, number, number];
     readonly reverse_json: (a: number, b: number) => [number, number];
+    readonly reverse_v2: (a: any) => [number, number, number];
     readonly validate_json: (a: number, b: number) => [number, number];
     readonly validate_v2: (a: any) => [number, number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;

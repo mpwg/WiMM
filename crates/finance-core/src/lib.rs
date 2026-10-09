@@ -13,7 +13,7 @@ mod typed_automation_commands;
 #[cfg(test)]
 #[path = "../tests/support/v1_shape_reference.rs"]
 mod v1_shape_reference;
-pub use inverse::reverse_json;
+pub use inverse::{decode_reverse_request_v1, reverse, reverse_json};
 pub mod calendar;
 mod master_commands;
 mod payee_merge;

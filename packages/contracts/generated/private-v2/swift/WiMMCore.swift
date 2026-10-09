@@ -908,6 +908,14 @@ public func executeV2(request: Request)throws  -> CommandOutcomeV2  {
     )
 })
 }
+public func reverseV2(request: ReverseRequest)throws  -> CommandOutcomeV2  {
+    return try  FfiConverterTypeCommandOutcomeV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_reverse_v2(
+        FfiConverterTypeReverseRequest_lower(request),uniffiCallStatus
+    )
+})
+}
 public func projectV2(request: ProjectionRequest)throws  -> ProjectionOutcome  {
     return try  FfiConverterTypeProjectionOutcome_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
         uniffiCallStatus in
@@ -964,6 +972,9 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_wimm_core_bindings_checksum_func_execute_v2() != 24569) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_func_reverse_v2() != 8840) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_wimm_core_bindings_checksum_func_project_v2() != 48756) {

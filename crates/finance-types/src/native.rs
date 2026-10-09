@@ -52,6 +52,7 @@ pub type EntityIdList = NonEmptyVec<EntityId>;
 pub type AggregateList = NonEmptyVec<Aggregate>;
 pub type ConditionList = NonEmptyVec<RuleCondition>;
 pub type ActionList = NonEmptyVec<RuleAction>;
+pub type ReverseTargets = NonEmptyVec<crate::reverse_contracts::ReverseTarget>;
 pub type ImportRows = BoundedVec<ImportRow, 1, 100_000>;
 macro_rules! checked_list {
     ($name:ident, $element:ty) => {
@@ -66,6 +67,7 @@ checked_list!(AggregateList, Aggregate);
 checked_list!(ConditionList, RuleCondition);
 checked_list!(ActionList, RuleAction);
 checked_list!(ImportRows, ImportRow);
+checked_list!(ReverseTargets, crate::reverse_contracts::ReverseTarget);
 
 // Das bestehende Importmapping ist ausdrücklich ein opakes JSON-Fremdpayload.
 // Alle Aggregate/Befehle bleiben Records/Enums, keine versteckten JSON-Strings.

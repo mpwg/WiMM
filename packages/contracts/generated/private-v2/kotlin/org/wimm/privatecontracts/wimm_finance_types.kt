@@ -2502,6 +2502,107 @@ public object FfiConverterTypeRequest: FfiConverterRustBuffer<Request> {
 
 
 
+data class ReverseRequest (
+    var `contractVersion`: EngineBindingVersion
+    ,
+    var `domainSchemaVersion`: DomainSchemaVersion
+    ,
+    var `spaceId`: EntityId
+    ,
+    var `aggregates`: List<Aggregate>
+    ,
+    var `expectedRevisions`: List<Expectation>
+    ,
+    var `context`: Context
+    ,
+    var `targets`: ReverseTargets
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeReverseRequest: FfiConverterRustBuffer<ReverseRequest> {
+    override fun read(buf: ByteBuffer): ReverseRequest {
+        return ReverseRequest(
+            FfiConverterTypeEngineBindingVersion.read(buf),
+            FfiConverterTypeDomainSchemaVersion.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeAggregate.read(buf),
+            FfiConverterSequenceTypeExpectation.read(buf),
+            FfiConverterTypeContext.read(buf),
+            FfiConverterTypeReverseTargets.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ReverseRequest) = (
+            FfiConverterTypeEngineBindingVersion.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeDomainSchemaVersion.allocationSize(value.`domainSchemaVersion`) +
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterSequenceTypeAggregate.allocationSize(value.`aggregates`) +
+            FfiConverterSequenceTypeExpectation.allocationSize(value.`expectedRevisions`) +
+            FfiConverterTypeContext.allocationSize(value.`context`) +
+            FfiConverterTypeReverseTargets.allocationSize(value.`targets`)
+    )
+
+    override fun write(value: ReverseRequest, buf: ByteBuffer) {
+            FfiConverterTypeEngineBindingVersion.write(value.`contractVersion`, buf)
+            FfiConverterTypeDomainSchemaVersion.write(value.`domainSchemaVersion`, buf)
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterSequenceTypeAggregate.write(value.`aggregates`, buf)
+            FfiConverterSequenceTypeExpectation.write(value.`expectedRevisions`, buf)
+            FfiConverterTypeContext.write(value.`context`, buf)
+            FfiConverterTypeReverseTargets.write(value.`targets`, buf)
+    }
+}
+
+
+
+data class ReverseTarget (
+    var `id`: EntityId
+    ,
+    var `previous`: Aggregate?
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeReverseTarget: FfiConverterRustBuffer<ReverseTarget> {
+    override fun read(buf: ByteBuffer): ReverseTarget {
+        return ReverseTarget(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterOptionalTypeAggregate.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ReverseTarget) = (
+            FfiConverterTypeEntityId.allocationSize(value.`id`) +
+            FfiConverterOptionalTypeAggregate.allocationSize(value.`previous`)
+    )
+
+    override fun write(value: ReverseTarget, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`id`, buf)
+            FfiConverterOptionalTypeAggregate.write(value.`previous`, buf)
+    }
+}
+
+
+
 data class Rule (
     var `id`: EntityId
     ,
@@ -5350,6 +5451,38 @@ public object FfiConverterOptionalTypeImportCandidate: FfiConverterRustBuffer<Im
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeAggregate: FfiConverterRustBuffer<Aggregate?> {
+    override fun read(buf: ByteBuffer): Aggregate? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeAggregate.read(buf)
+    }
+
+    override fun allocationSize(value: Aggregate?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeAggregate.allocationSize(value)
+        }
+    }
+
+    override fun write(value: Aggregate?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeAggregate.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeCategorySystem: FfiConverterRustBuffer<CategorySystem?> {
     override fun read(buf: ByteBuffer): CategorySystem? {
         if (buf.get().toInt() == 0) {
@@ -5714,6 +5847,34 @@ public object FfiConverterSequenceTypeImportRow: FfiConverterRustBuffer<List<Imp
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypeReverseTarget: FfiConverterRustBuffer<List<ReverseTarget>> {
+    override fun read(buf: ByteBuffer): List<ReverseTarget> {
+        val len = buf.getInt()
+        return List<ReverseTarget>(len) {
+            FfiConverterTypeReverseTarget.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<ReverseTarget>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeReverseTarget.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<ReverseTarget>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeReverseTarget.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeRuleCondition: FfiConverterRustBuffer<List<RuleCondition>> {
     override fun read(buf: ByteBuffer): List<RuleCondition> {
         val len = buf.getInt()
@@ -5978,6 +6139,11 @@ public typealias FfiConverterTypeOrdinal = FfiConverterLong
 
 public typealias PositiveOrdinal = kotlin.Long
 public typealias FfiConverterTypePositiveOrdinal = FfiConverterLong
+
+
+
+public typealias ReverseTargets = List<ReverseTarget>
+public typealias FfiConverterTypeReverseTargets = FfiConverterSequenceTypeReverseTarget
 
 
 

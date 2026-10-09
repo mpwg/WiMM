@@ -15,6 +15,10 @@ while let input = readLine() {
             let request = try validationRequestFromV1(input: String(parts[1]))
             typed = true
             output = try validationOutcomeToV1(outcome: validateV2(request: request))
+        case "reverse":
+            let request = try reverseRequestFromV1(input: String(parts[1]))
+            typed = true
+            output = try commandOutcomeToV1(outcome: reverseV2(request: request))
         default: fatalError("Unbekannte synthetische Bindingaktion.")
         }
     } catch let error as ContractError {

@@ -37,6 +37,8 @@ Der letzte Befehl verlangt tatsächliche Swift-/Kotlin-/Java-Werkzeuge und führ
 
 `pnpm test:contracts:state:native` prüft alle 110 unveränderten Katalogorakel in Rust/Swift/Kotlin; 87 tatsächlich konstruierbare Fälle werden als native Records/Enums an die V2-Fachaktionen übertragen, 23 Formen bereits vorher abgewiesen. `pnpm test:contracts:state:wasm` prüft dieselben Orakel in echtem WASM/Node und Chromium: 109 Objektaufrufe und eine vorgeschaltete JSON-Syntaxablehnung. Die tatsächlichen Aufrufzahlen werden explizit geprüft; direkte Rust-Fachassertions ergänzen die Sprachvergleiche. Ergebnisse und Grenzen im AR02-Snapshot.
 
+`reverse_v2` ergänzt die direkte Gegenbefehlsaktion mit gemeinsamen `ReverseRequest`-/`ReverseTarget`-Typen und demselben `CommandOutcomeV2` wie execute. previous bleibt optional/nichtnullable, targets nichtleer. Die beiden Bestandsprüfbefehle decken zusätzlich alle elf Gegenbefehlsorakel als tatsächliche typisierte Aufrufe ab: insgesamt 121 Orakel, 98 native Fachaufrufe und 23 vorgeschaltete Formablehnungen bzw. 120 WASM-Objektgrenzenaufrufe und eine JSON-Syntaxablehnung. Direkte native Kernassertions prüfen die elf vollständigen Gegenbefehlsresultate.
+
 ## Architekturstand vom 9. Oktober 2026
 
 Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.

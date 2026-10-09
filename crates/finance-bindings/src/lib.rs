@@ -10,6 +10,8 @@ mod state_v2;
 #[cfg(all(feature = "wasm", not(feature = "native")))]
 mod wasm_boundary;
 pub use state_v2::{project_v2, validate_v2};
+mod reverse_v2;
+pub use reverse_v2::reverse_v2;
 mod command_v2;
 pub use command_v2::{CommandOutcomeV2, execute_v2};
 

@@ -22,8 +22,8 @@ const jar = resolve('test-results/core-bindings/deps/jna-5.18.0.jar');
 assert.equal(createHash('sha256').update(await readFile(jar)).digest('hex'), 'fe27c1e5e34a6aca84cb44da5f15271cd69069b1cf701ab5ba7320c57c55c439', 'Gesperrte JNA-Testabhängigkeit erforderlich; zuerst V2-Geldsprachlauf ausführen.');
 await run(process.env.WIMM_KOTLINC ?? 'kotlinc', [resolve(root, 'kotlin/org/wimm/core/wimm_core_bindings.kt'), resolve(root, 'kotlin/org/wimm/privatecontracts/wimm_finance_types.kt'), 'tests/contract-bindings/state/Main.kt', '-classpath', jar, '-include-runtime', '-jvm-target', '21', '-Werror', '-d', resolve(root, 'probe.jar')]);
 await run(process.env.WIMM_SWIFTC ?? 'swiftc', ['-warnings-as-errors', '-swift-version', '6', '-I', resolve(root, 'swift'), '-Xcc', `-fmodule-map-file=${resolve(root, 'swift/WiMMCoreFFI.modulemap')}`, '-Xcc', `-fmodule-map-file=${resolve(root, 'swift/WiMMPrivateTypesFFI.modulemap')}`, resolve(root, 'swift/WiMMCore.swift'), resolve(root, 'swift/WiMMPrivateTypes.swift'), 'tests/contract-bindings/state/main.swift', '-L', resolve('target/debug'), '-lwimm_core_bindings', '-Xlinker', '-rpath', '-Xlinker', resolve('target/debug'), '-o', resolve(root, 'swift-probe')]);
-const cases = JSON.parse(await readFile('crates/finance-core/tests/fixtures/contract-catalog.json', 'utf8')).filter((scenario) => ['project', 'validate'].includes(scenario.method));
-assert.equal(cases.length, 110);
+const cases = JSON.parse(await readFile('crates/finance-core/tests/fixtures/contract-catalog.json', 'utf8')).filter((scenario) => ['project', 'validate', 'reverse'].includes(scenario.method));
+assert.equal(cases.length, 121);
 const wire = (scenario) => typeof scenario.request === 'string' ? scenario.request : JSON.stringify(scenario.request);
 const input = cases.map((scenario) => `${scenario.method}\t${wire(scenario)}`).join('\n') + '\n';
 const results = [];
@@ -37,10 +37,10 @@ for (const [runtime, command, args] of [
   const lines = result.stdout.trim().split(/\r?\n/).map((line) => JSON.parse(line));
   assert.equal(lines.length, cases.length);
   cases.forEach((scenario, index) => assert.deepEqual(lines[index].output, scenario.expected, `${runtime}: ${scenario.name}`));
-  const typed = { project: 0, validate: 0 };
+  const typed = { project: 0, validate: 0, reverse: 0 };
   lines.forEach((line, index) => { if (line.typed) typed[cases[index].method] += 1; });
-  assert.deepEqual(typed, { project: 41, validate: 46 });
-  results.push({ runtime, passed: cases.length, actualTypedCalls: typed, formRejections: cases.length - typed.project - typed.validate });
+  assert.deepEqual(typed, { project: 41, validate: 46, reverse: 11 });
+  results.push({ runtime, passed: cases.length, actualTypedCalls: typed, formRejections: cases.length - typed.project - typed.validate - typed.reverse });
 }
 await writeFile(resolve(root, 'results.json'), JSON.stringify(results, null, 2) + '\n');
 console.log(JSON.stringify(results));

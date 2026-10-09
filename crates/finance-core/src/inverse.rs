@@ -3,50 +3,12 @@
 use crate::{
     CoreResult,
     aggregate_schema::INVALID,
-    command_contracts::{self, COMMAND_ERROR, ChangeSet, Context, Expectation, Request, Scope},
+    command_contracts::{self, COMMAND_ERROR, ChangeSet, Expectation},
     models::*,
     scalars::*,
 };
-use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct Target {
-    id: EntityId,
-    #[serde(default, deserialize_with = "present")]
-    previous: Option<Aggregate>,
-}
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct ReverseRequest {
-    contract_version: u32,
-    domain_schema_version: u32,
-    space_id: EntityId,
-    aggregates: Vec<Aggregate>,
-    expected_revisions: Vec<Expectation>,
-    context: Context,
-    targets: NonEmptyVec<Target>,
-}
-impl ReverseRequest {
-    fn scope(&self) -> Scope<'_> {
-        Scope {
-            space_id: &self.space_id,
-            aggregates: &self.aggregates,
-            context: &self.context,
-        }
-    }
-    fn child(&self, command: Command, expected_revisions: Vec<Expectation>) -> Request {
-        Request {
-            contract_version: 1.into(),
-            domain_schema_version: 1.into(),
-            space_id: self.space_id.clone(),
-            aggregates: self.aggregates.clone(),
-            command,
-            expected_revisions,
-            context: self.context.clone(),
-        }
-    }
-}
+use wimm_finance_types::reverse_contracts::ReverseRequest;
 fn expectations(
     aggs: &[&Aggregate],
     current: &BTreeMap<&EntityId, &Aggregate>,
@@ -69,12 +31,11 @@ fn expectations(
 }
 pub fn reverse_json(input: &str) -> String {
     crate::output((|| {
-        let request: ReverseRequest =
-            serde_json::from_value(crate::decode(input)?).map_err(|_| COMMAND_ERROR)?;
+        let request = decode_reverse_request_v1(input)?;
         command_contracts::to_wire(reverse(request)?)
     })())
 }
-fn reverse(request: ReverseRequest) -> CoreResult<ChangeSet> {
+pub fn reverse(request: ReverseRequest) -> CoreResult<ChangeSet> {
     if request.contract_version != 1 || request.domain_schema_version != 1 {
         return Err(COMMAND_ERROR);
     }
@@ -345,4 +306,8 @@ fn reverse(request: ReverseRequest) -> CoreResult<ChangeSet> {
         expected_revisions: expected,
         aggregates: changes,
     })
+}
+
+pub fn decode_reverse_request_v1(input: &str) -> CoreResult<ReverseRequest> {
+    serde_json::from_value(crate::decode(input)?).map_err(|_| COMMAND_ERROR)
 }

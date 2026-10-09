@@ -37,11 +37,13 @@ import org.wimm.privatecontracts.FfiConverterTypeContractError
 import org.wimm.privatecontracts.FfiConverterTypeProjectionOutcome
 import org.wimm.privatecontracts.FfiConverterTypeProjectionRequest
 import org.wimm.privatecontracts.FfiConverterTypeRequest
+import org.wimm.privatecontracts.FfiConverterTypeReverseRequest
 import org.wimm.privatecontracts.FfiConverterTypeValidationOutcome
 import org.wimm.privatecontracts.FfiConverterTypeValidationRequest
 import org.wimm.privatecontracts.ProjectionOutcome
 import org.wimm.privatecontracts.ProjectionRequest
 import org.wimm.privatecontracts.Request
+import org.wimm.privatecontracts.ReverseRequest
 import org.wimm.privatecontracts.ValidationOutcome
 import org.wimm.privatecontracts.ValidationRequest
 import org.wimm.privatecontracts.RustBuffer as RustBufferChangeSet
@@ -49,6 +51,7 @@ import org.wimm.privatecontracts.RustBuffer as RustBufferContractError
 import org.wimm.privatecontracts.RustBuffer as RustBufferProjectionOutcome
 import org.wimm.privatecontracts.RustBuffer as RustBufferProjectionRequest
 import org.wimm.privatecontracts.RustBuffer as RustBufferRequest
+import org.wimm.privatecontracts.RustBuffer as RustBufferReverseRequest
 import org.wimm.privatecontracts.RustBuffer as RustBufferValidationOutcome
 import org.wimm.privatecontracts.RustBuffer as RustBufferValidationRequest
 
@@ -707,6 +710,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_execute_v2(
     ): Int
+    external fun uniffi_wimm_core_bindings_checksum_func_reverse_v2(
+    ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_project_v2(
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_validate_v2(
@@ -740,6 +745,8 @@ internal object UniffiLib {
     external fun uniffi_wimm_core_bindings_fn_func_validate_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_execute_v2(`request`: RustBufferRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBuffer.ByValue
+    external fun uniffi_wimm_core_bindings_fn_func_reverse_v2(`request`: RustBufferReverseRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_project_v2(`request`: RustBufferProjectionRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBufferProjectionOutcome.ByValue
@@ -882,6 +889,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_execute_v2() and 0xFFFF) != 24569) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_func_reverse_v2() and 0xFFFF) != 8840) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_wimm_core_bindings_checksum_func_project_v2() and 0xFFFF) != 48756) {
@@ -1390,6 +1400,8 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 
 
 
+
+
 object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<ContractException> {
     override fun lift(error_buf: RustBuffer.ByValue): ContractException =
         org.wimm.privatecontracts.ContractException.ErrorHandler.lift(
@@ -1467,6 +1479,18 @@ object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<
 
 
         FfiConverterTypeRequest.lower(`request`),_status)
+}
+    )
+    }
+
+
+    @Throws(ContractException::class) fun `reverseV2`(`request`: ReverseRequest): CommandOutcomeV2 {
+            return FfiConverterTypeCommandOutcomeV2.lift(
+    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_func_reverse_v2(
+
+
+        FfiConverterTypeReverseRequest.lower(`request`),_status)
 }
     )
     }

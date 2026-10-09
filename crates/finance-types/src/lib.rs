@@ -14,6 +14,7 @@ pub mod aggregate_schema;
 pub mod calendar;
 pub mod command_contracts;
 pub mod models;
+pub mod reverse_contracts;
 pub mod scalars;
 #[cfg(feature = "contract-schema")]
 pub mod schema;
