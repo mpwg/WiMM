@@ -105,9 +105,162 @@ impl<'de> Deserialize<'de> for Revision {
     }
 }
 
+// Strings werden geprüft, aber weder normalisiert noch umgeschrieben: UUID-
+// Schreibweise und Zeitstempelpräzision gehören zum bestehenden V1-Vertrag.
+macro_rules! checked_string {
+    ($name:ident, $check:expr) => {
+        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+        #[serde(try_from = "String")]
+        pub struct $name(String);
+        impl $name {
+            pub fn new(value: String) -> CoreResult<Self> {
+                if ($check)(&value) {
+                    Ok(Self(value))
+                } else {
+                    Err(crate::aggregate_schema::INVALID)
+                }
+            }
+            pub fn as_str(&self) -> &str {
+                &self.0
+            }
+        }
+        impl TryFrom<String> for $name {
+            type Error = &'static str;
+            fn try_from(value: String) -> Result<Self, Self::Error> {
+                Self::new(value).map_err(|(_, message)| message)
+            }
+        }
+    };
+}
+checked_string!(EntityId, crate::valid_id);
+checked_string!(FinanceDate, |s: &str| crate::calendar::parse_finance_date(
+    s
+)
+.is_ok());
+checked_string!(UtcTimestamp, crate::aggregate_schema::timestamp);
+checked_string!(NonEmptyText, |s: &str| !s
+    .trim_matches(crate::aggregate_schema::js_space)
+    .is_empty());
+checked_string!(FileHash, |s: &str| s.len() == 64
+    && s.bytes()
+        .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)));
+
+macro_rules! checked_ordinal {
+    ($name:ident, $minimum:expr) => {
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+        #[serde(transparent)]
+        pub struct $name(i64);
+        impl $name {
+            pub fn new(value: i64) -> CoreResult<Self> {
+                if ($minimum..=MAX_SAFE).contains(&value) {
+                    Ok(Self(value))
+                } else {
+                    Err(crate::aggregate_schema::INVALID)
+                }
+            }
+            pub fn value(self) -> i64 {
+                self.0
+            }
+        }
+        impl<'de> Deserialize<'de> for $name {
+            fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+                Self::new(d.deserialize_any(IntegerVisitor)?).map_err(|(_, m)| de::Error::custom(m))
+            }
+        }
+    };
+}
+checked_ordinal!(Ordinal, 0);
+checked_ordinal!(PositiveOrdinal, 1);
+checked_ordinal!(StoredRevision, 1);
+
+/// Formgrenzen werden auch bei nativer Konstruktion erzwungen.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(transparent)]
+pub struct BoundedVec<T, const MIN: usize, const MAX: usize>(Vec<T>);
+impl<T, const MIN: usize, const MAX: usize> BoundedVec<T, MIN, MAX> {
+    pub fn new(values: Vec<T>) -> CoreResult<Self> {
+        if (MIN..=MAX).contains(&values.len()) {
+            Ok(Self(values))
+        } else {
+            Err(crate::aggregate_schema::INVALID)
+        }
+    }
+    pub fn as_slice(&self) -> &[T] {
+        &self.0
+    }
+}
+impl<'de, T: Deserialize<'de>, const MIN: usize, const MAX: usize> Deserialize<'de>
+    for BoundedVec<T, MIN, MAX>
+{
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        Self::new(Vec::<T>::deserialize(d)?).map_err(|(_, m)| de::Error::custom(m))
+    }
+}
+pub type NonEmptyVec<T> = BoundedVec<T, 1, { usize::MAX }>;
+
+/// Optional heißt fehlend. Ein vorhandenes null ist für V1 kein gültiger Wert.
+pub(crate) fn present<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<T>, D::Error> {
+    T::deserialize(d).map(Some)
+}
+/// Nur Importzeilen besitzen ein erforderliches, ausdrücklich nullable Feld.
+pub(crate) fn nullable<'de, T: Deserialize<'de>, D: Deserializer<'de>>(
+    d: D,
+) -> Result<Option<T>, D::Error> {
+    Option::<T>::deserialize(d)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn ids_dates_timestamps_and_text_keep_v1_boundaries_and_original_spelling() {
+        for id in [
+            "00000000-0000-0000-0000-000000000000",
+            "ffffffff-ffff-ffff-ffff-ffffffffffff",
+            "ABCDEF00-0000-8000-8000-000000000001",
+        ] {
+            let typed = EntityId::new(id.to_owned()).unwrap();
+            assert_eq!(typed.as_str(), id);
+            assert_eq!(serde_json::to_value(typed).unwrap(), serde_json::json!(id));
+        }
+        for id in [
+            "abcdef00-0000-9000-8000-000000000001",
+            "abcdef00-0000-4000-0000-000000000001",
+            "abcdef00000040008000000000000001",
+        ] {
+            assert!(EntityId::new(id.to_owned()).is_err());
+        }
+        for date in ["0000-02-29", "2000-02-29", "9999-12-31"] {
+            assert!(FinanceDate::new(date.to_owned()).is_ok());
+        }
+        for date in ["1900-02-29", "2028-04-31", "２０２８-02-29"] {
+            assert!(FinanceDate::new(date.to_owned()).is_err());
+        }
+        for time in ["2026-10-09T00:00:00Z", "2026-10-09T23:59:59.123456Z"] {
+            assert_eq!(UtcTimestamp::new(time.to_owned()).unwrap().as_str(), time);
+        }
+        for time in [
+            "2026-10-09T24:00:00Z",
+            "2026-10-09T00:00Z",
+            "2026-10-09T00:00:00+02:00",
+            "2026-10-09T00:00:00.Z",
+        ] {
+            assert!(UtcTimestamp::new(time.to_owned()).is_err());
+        }
+        assert!(NonEmptyText::new("\u{feff}\u{00a0}\t".to_owned()).is_err());
+        assert_eq!(
+            NonEmptyText::new("  Konto  ".to_owned()).unwrap().as_str(),
+            "  Konto  "
+        );
+        assert!(FileHash::new("f".repeat(64)).is_ok());
+        assert!(FileHash::new("F".repeat(64)).is_err());
+        assert!(Ordinal::new(0).is_ok());
+        assert!(PositiveOrdinal::new(0).is_err());
+        assert!(PositiveOrdinal::new(MAX_SAFE).is_ok());
+        assert!(PositiveOrdinal::new(MAX_SAFE + 1).is_err());
+    }
     #[test]
     fn money_boundaries_and_intermediate_overflow_remain_exact() {
         for value in [-MAX_SAFE, -1, 0, 1, MAX_SAFE] {

@@ -20,32 +20,57 @@ pub(crate) fn normal_text(s: &str) -> String {
         .join(" ")
 }
 pub fn transaction(tx: &Value) -> CoreResult<()> {
+    if tx.get("aggregateType").is_none() {
+        let template: crate::models::TransactionTemplate =
+            serde_json::from_value(tx.clone()).map_err(|_| INVALID)?;
+        return transaction_fields(
+            template.kind,
+            template.amount,
+            &template.splits,
+            template.transfer_id.as_ref(),
+        );
+    }
+    let crate::models::Aggregate::Transaction(tx) = crate::models::Aggregate::from_wire(tx)? else {
+        return Err(INVALID);
+    };
+    typed_transaction(&tx)
+}
+pub(crate) fn typed_transaction(tx: &crate::models::Transaction) -> CoreResult<()> {
+    transaction_fields(tx.kind, tx.amount, &tx.splits, tx.transfer_id.as_ref())
+}
+fn transaction_fields(
+    kind: crate::models::TransactionKind,
+    amount: crate::scalars::MoneyCents,
+    splits: &[crate::models::Split],
+    transfer_id: Option<&crate::scalars::EntityId>,
+) -> CoreResult<()> {
+    use crate::models::TransactionKind;
     let mut ids = BTreeSet::new();
-    let splits = array(&tx["splits"])?;
     for split in splits {
-        if !ids.insert(string(&split["id"])?) {
+        if !ids.insert(&split.id) {
             return failure(
                 "DUPLICATE_REFERENCE",
                 "Eine Split-ID darf nur einmal vorkommen.",
             );
         }
     }
-    if tx["kind"] == "normal" {
+    if kind == TransactionKind::Normal {
         if splits.is_empty() {
             return failure(
                 "INVALID_AGGREGATE",
                 "Normale Buchungen benötigen mindestens einen Split; nicht zugeordnete Buchungen verwenden die Systemkategorie.",
             );
         }
-        let mut sum = 0;
+        let mut sum = crate::scalars::MoneyCents::new(0)?;
         for split in splits {
-            sum = projections::add(
-                sum,
-                integer(&split["amount"])?,
-                "Die Splitsumme überschreitet den sicheren Centbereich.",
-            )?;
+            sum = sum.checked_add(split.amount).map_err(|(code, _)| {
+                (
+                    code,
+                    "Die Splitsumme überschreitet den sicheren Centbereich.",
+                )
+            })?;
         }
-        if sum != integer(&tx["amount"])? {
+        if sum != amount {
             return failure(
                 "INVALID_AGGREGATE",
                 "Die Splitsumme muss exakt dem Buchungsbetrag entsprechen.",
@@ -57,13 +82,13 @@ pub fn transaction(tx: &Value) -> CoreResult<()> {
             "Nur normale Buchungen dürfen kategorisierte Splits enthalten.",
         );
     }
-    if tx["kind"] == "opening" && tx.get("transferId").is_some() {
+    if kind == TransactionKind::Opening && transfer_id.is_some() {
         return failure(
             "INVALID_AGGREGATE",
             "Ein Anfangsbestand darf keine Umbuchung sein.",
         );
     }
-    if tx["kind"] == "transfer" && tx.get("transferId").is_none() {
+    if kind == TransactionKind::Transfer && transfer_id.is_none() {
         return failure(
             "INVALID_AGGREGATE",
             "Eine Umbuchungsseite benötigt ihre Umbuchungs-ID.",
@@ -72,27 +97,34 @@ pub fn transaction(tx: &Value) -> CoreResult<()> {
     Ok(())
 }
 pub(crate) fn rule(a: &Value) -> CoreResult<()> {
-    for c in array(&a["conditions"])? {
-        if c["field"] == "amount" {
-            if integer(&c["value"]).is_err() {
+    use crate::models::{Aggregate, ConditionField, ConditionOperator, ConditionValue};
+    let Aggregate::Rule(a) = Aggregate::from_wire(a)? else {
+        return Err(INVALID);
+    };
+    for c in a.conditions.as_slice() {
+        if c.field == ConditionField::Amount {
+            if !matches!(c.value, ConditionValue::Money(_)) {
                 return failure(
                     "INVALID_SAFE_INTEGER",
                     "Der Geldbetrag muss ein sicherer ganzzahliger Centbetrag sein.",
                 );
             }
-            if c["operator"] == "contains" {
+            if c.operator == ConditionOperator::Contains {
                 return failure("INVALID_COMMAND", "Beträge unterstützen keine Textsuche.");
             }
         } else {
-            let Some(text) = c["value"].as_str().filter(|s| !s.is_empty()) else {
-                return failure("INVALID_COMMAND", "Die Textbedingung ist leer.");
+            let text = match &c.value {
+                ConditionValue::Text(text) if !text.is_empty() => text,
+                _ => return failure("INVALID_COMMAND", "Die Textbedingung ist leer."),
             };
-            if c["field"] == "date" {
+            if c.field == ConditionField::Date {
                 calendar::parse_finance_date(text)?;
-                if c["operator"] == "contains" {
+                if c.operator == ConditionOperator::Contains {
                     return failure("INVALID_COMMAND", "Datum unterstützt keine Textsuche.");
                 }
-            } else if c["operator"] != "equals" && c["operator"] != "contains" {
+            } else if ![ConditionOperator::Equals, ConditionOperator::Contains]
+                .contains(&c.operator)
+            {
                 return failure(
                     "INVALID_COMMAND",
                     "Text unterstützt nur Gleichheit und Enthalten.",
@@ -103,30 +135,34 @@ pub(crate) fn rule(a: &Value) -> CoreResult<()> {
     Ok(())
 }
 pub(crate) fn import_batch(a: &Value) -> CoreResult<()> {
-    let rows = array(&a["rows"])?;
-    let ids: BTreeSet<_> = rows
-        .iter()
-        .map(|r| integer(&r["sourceRow"]))
-        .collect::<CoreResult<_>>()?;
+    use crate::models::{Aggregate, ImportDecision};
+    let Aggregate::ImportBatch(a) = Aggregate::from_wire(a)? else {
+        return Err(INVALID);
+    };
+    let rows = a.rows.as_slice();
+    let ids = rows.iter().map(|r| r.source_row).collect::<BTreeSet<_>>();
     if ids.len() != rows.len() {
         return failure("INVALID_COMMAND", "Die Importbeschreibung ist ungültig.");
     }
     for row in rows {
-        if row["decision"] != "exclude"
-            && (row["candidate"].is_null() || !array(&row["issues"])?.is_empty())
+        if row.decision != ImportDecision::Exclude
+            && (row.candidate.is_none() || !row.issues.is_empty())
         {
             return failure(
                 "INVALID_COMMAND",
                 "Ungültige Zeilen müssen korrigiert oder ausdrücklich ausgeschlossen werden.",
             );
         }
-        if !row["candidate"].is_null() && row["candidate"]["sourceRow"] != row["sourceRow"] {
+        if row
+            .candidate
+            .as_ref()
+            .is_some_and(|c| c.source_row != row.source_row)
+        {
             return failure("INVALID_COMMAND", "Die Quellzeile stimmt nicht überein.");
         }
     }
-    let committed = array(&a["committedRows"])?;
-    let unique: BTreeSet<_> = committed.iter().map(integer).collect::<CoreResult<_>>()?;
-    if unique.len() != committed.len() || unique.iter().any(|n| !ids.contains(n)) {
+    let unique = a.committed_rows.iter().copied().collect::<BTreeSet<_>>();
+    if unique.len() != a.committed_rows.len() || unique.iter().any(|n| !ids.contains(n)) {
         return failure("INVALID_COMMAND", "Der Importfortschritt ist ungültig.");
     }
     Ok(())

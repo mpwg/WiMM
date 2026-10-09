@@ -27,28 +27,40 @@ pub(crate) fn revise(mut a: Value, time: &str) -> CoreResult<Value> {
     a["updatedAt"] = json!(time);
     Ok(a)
 }
-pub(crate) fn normalize(mut tx: Value) -> CoreResult<Value> {
+pub(crate) fn normalize(tx: Value) -> CoreResult<Value> {
     if kind(&tx) != "transaction" {
         return Err((
             "INVALID_AGGREGATE",
             "Die Buchung hat einen unpassenden Aggregattyp.",
         ));
     }
-    state_validation::transaction(&tx)?;
+    let crate::models::Aggregate::Transaction(mut tx) = crate::models::Aggregate::from_wire(&tx)?
+    else {
+        return Err(aggregate_schema::INVALID);
+    };
+    state_validation::typed_transaction(&tx)?;
     use unicode_normalization::UnicodeNormalization;
-    for field in ["note", "importReference"] {
-        if let Some(s) = tx.get(field).and_then(Value::as_str) {
-            let n = s
-                .nfc()
-                .collect::<String>()
-                .trim_matches(aggregate_schema::js_space)
-                .to_string();
-            if !n.is_empty() {
-                tx[field] = json!(n);
-            }
+    if let Some(note) = &mut tx.note {
+        let normalized = note
+            .nfc()
+            .collect::<String>()
+            .trim_matches(aggregate_schema::js_space)
+            .to_string();
+        if !normalized.is_empty() {
+            *note = normalized;
         }
     }
-    Ok(tx)
+    if let Some(reference) = &mut tx.import_reference {
+        let normalized = reference
+            .as_str()
+            .nfc()
+            .collect::<String>()
+            .trim_matches(aggregate_schema::js_space)
+            .to_string();
+        *reference = crate::scalars::NonEmptyText::new(normalized)?;
+    }
+    serde_json::to_value(crate::models::Aggregate::Transaction(tx))
+        .map_err(|_| aggregate_schema::INVALID)
 }
 fn require(
     tx: &Value,

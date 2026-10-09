@@ -36,7 +36,7 @@ pub(crate) struct Request {
 fn fail(code: &'static str, message: &'static str) -> CoreResult<Value> {
     Err((code, message))
 }
-pub(crate) fn normalize(mut a: Value, ty: &str) -> CoreResult<Value> {
+pub(crate) fn normalize(a: Value, ty: &str) -> CoreResult<Value> {
     if aggregate_schema::kind(&a) != ty {
         return fail(
             "INVALID_AGGREGATE",
@@ -48,31 +48,46 @@ pub(crate) fn normalize(mut a: Value, ty: &str) -> CoreResult<Value> {
             },
         );
     }
-    a["name"] = json!(state_validation::normal_text(string(&a["name"])?));
-    if ty == "account" && a["type"] == "credit" && a["onBudget"] == true {
-        return fail(
-            "INVALID_AGGREGATE",
-            "Kreditkonten müssen außerhalb des Umschlagbudgets bleiben.",
-        );
-    }
-    if ty == "payee" {
-        let name = string(&a["name"])?.to_lowercase();
-        let mut seen = BTreeSet::new();
-        let mut aliases = vec![];
-        for alias in array(&a["aliases"])? {
-            let display = state_validation::normal_text(string(alias)?);
-            let key = display.to_lowercase();
-            if key == name || !seen.insert(key) {
+    use crate::{
+        models::{AccountType, Aggregate},
+        scalars::NonEmptyText,
+    };
+    let mut a = Aggregate::from_wire(&a)?;
+    match &mut a {
+        Aggregate::Account(a) => {
+            a.name = NonEmptyText::new(state_validation::normal_text(a.name.as_str()))?;
+            if a.account_type == AccountType::Credit && a.on_budget {
                 return fail(
-                    "DUPLICATE_REFERENCE",
-                    "Empfängeraliasse müssen eindeutig sein und dürfen nicht dem Empfängernamen entsprechen.",
+                    "INVALID_AGGREGATE",
+                    "Kreditkonten müssen außerhalb des Umschlagbudgets bleiben.",
                 );
             }
-            aliases.push(display);
         }
-        a["aliases"] = json!(aliases);
+        Aggregate::CategoryGroup(a) => {
+            a.name = NonEmptyText::new(state_validation::normal_text(a.name.as_str()))?
+        }
+        Aggregate::Category(a) => {
+            a.name = NonEmptyText::new(state_validation::normal_text(a.name.as_str()))?
+        }
+        Aggregate::Payee(a) => {
+            a.name = NonEmptyText::new(state_validation::normal_text(a.name.as_str()))?;
+            let name = a.name.as_str().to_lowercase();
+            let mut seen = BTreeSet::new();
+            for alias in &mut a.aliases {
+                let display = state_validation::normal_text(alias.as_str());
+                let key = display.to_lowercase();
+                if key == name || !seen.insert(key) {
+                    return fail(
+                        "DUPLICATE_REFERENCE",
+                        "Empfängeraliasse müssen eindeutig sein und dürfen nicht dem Empfängernamen entsprechen.",
+                    );
+                }
+                *alias = NonEmptyText::new(display)?;
+            }
+        }
+        _ => return Err(aggregate_schema::INVALID),
     }
-    Ok(a)
+    serde_json::to_value(a).map_err(|_| aggregate_schema::INVALID)
 }
 pub(crate) fn expected(
     request: &Request,

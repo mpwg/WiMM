@@ -10,6 +10,9 @@ mod aggregate_schema;
 mod automation;
 mod automation_commands;
 mod inverse;
+#[cfg(test)]
+#[path = "../tests/support/v1_shape_reference.rs"]
+mod v1_shape_reference;
 pub use inverse::reverse_json;
 pub mod calendar;
 mod financial_commands;
@@ -23,6 +26,7 @@ mod schedule_dates;
 mod state_validation;
 mod transfer_commands;
 pub use state_validation::{project_json, validate_json};
+pub mod models;
 pub mod money;
 #[cfg(feature = "contract-probe")]
 mod primitive_probe;
