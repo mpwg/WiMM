@@ -12,6 +12,19 @@ Statuswerte: `offen`, `in Arbeit`, `blockiert`, `erledigt`. Blockiert benötigt 
 
 Seit Nutzerauftrag vom 8. Oktober 2026 führt GitHub den aktuellen Bearbeitungsstand offener Deltas. Fortschritt, Blockaden und Prüfbelege direkt im jeweiligen Issue pflegen; diese Datei behält Auftrag, Freigaben und zusammengefassten Paketstatus. Kriterienmatrizen dokumentieren Abnahmesnapshots mit Issueverweisen. Für P4 ist [Übersicht #57](https://github.com/mpwg/WiMM/issues/57) der Einstieg; das Anlegen eines Issues ändert keine Produktfreigabe.
 
+## DAL — Gemeinsamer Rust-DAL: Konzept und Issuetracking
+
+- Status: in Arbeit (9. Oktober 2026); ausschließlich Konzept- und Trackinganlage.
+- Freigabe: Nutzerauftrag „erst mal ein konzept anlegen und github issues dafür. noch keine implementierung“, anschließend ausdrückliche Umsetzung dieses Dokumentationsplans. Freigegeben sind Dokumentation, vorgeschlagene ADR, GitHub-Issues und zusammengehörige Dokumentationscommits. DAL01–DAL07 sind **offen, nicht zur Implementierung freigegeben**, einschließlich Machbarkeitstests, Prototypen, Installationen und Datenmigrationen. Frühere Gesamtfreigaben für K-/Speicherdeltas erweitern diesen neuen Auftrag nicht.
+- Voraussetzungen: aktive Arbeitskopie, bestehende Fach-/E2EE-/Speicherverträge und Duplikatprüfung gegen #77/#82–#85/#91/#97–#102.
+- Schritte: [Konzept](rust-dal.md) mit Bestand/Ziel, ORM-/DSL-Kandidaten, Bibliotheksgrenzen, Browserpersistenz und gesicherter Migration; ADR-049 als vorgeschlagen; Gesamtübersicht und sieben Einzelissues mit Voraussetzungen und Abnahmekriterien anlegen und rücklesen.
+- Ergebnis: gemeinsamer Rust-DAL als Architekturvorschlag; Diesel zuerst prüfen, SeaORM als Alternative. Die bestehende PWA bleibt IndexedDB. Bestehende K-/P3-Freigaben und Issuekriterien bleiben erhalten.
+- Verträge: [ADR-049](decisions.md#adr-049--gemeinsamer-rust-dal-mit-orm-als-architekturvorschlag), [Architektur](architecture.md), [K-Konzept](core-and-sql-portability.md), K01-Speicherports; keine Code-/API-/Schema-/Abhängigkeitsänderung.
+- Abnahme: widerspruchsfreie Freigaben, korrekte Dokumentationslinks und ADR-Nummerierung, acht offene rückgelesene GitHub-Issues mit gegenseitigen Abhängigkeitslinks und ohne neue Implementierungsfreigabe.
+- Prüfungen: Dokumentationsvalidator, Whitespace-/Freigabeprüfung und GitHub-Rücklesen; keine Produktprüfungen für diesen Dokumentationsauftrag.
+- Prüfbelege: folgen nach Dokumentationsprüfung und Issueanlage; keine ORM-/WASM-/Bindingnachweise behauptet.
+- Einschränkungen: ORM-, VFS-, Schema-DSL- und Fastify-Bindingeignung noch nicht praktisch nachgewiesen. Native Produkt-Apps, neue P6–P11-Funktionen, Releases und Clusterbetrieb bleiben außerhalb des Auftrags.
+
 ## K — Rust-Fachkern und SQL-Portabilität
 
 - Status: in Arbeit (Implementierungsfreigabe K01–K11 am 8. Oktober 2026); Konzeptdokumentation und Issueanlage zuvor abgeschlossen.

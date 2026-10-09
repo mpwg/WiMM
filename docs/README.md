@@ -16,6 +16,10 @@ Das [Konzept für gemeinsamen Rust-Fachkern und austauschbare SQL-Datenbanken](c
 
 Die [vollständige K04-Fachmigration](handoffs/k04-2026-10-08.md) ist mit nativen Rust-Assertions und tatsächlichen Sprachbindings abgenommen; produktive Umschaltung bleibt K05. Die [K02-Anwendung samt Profil-/Composition-Endabnahme](handoffs/k02-2026-10-08.md) ist vollständig geprüft. Die [tatsächliche K03-Sprachbindingabnahme](handoffs/k03-2026-10-08.md) ergänzt die [K01-Abnahme vom 8. Oktober](handoffs/k01-2026-10-08.md) und [plattformfreien K01-Verträge](core-contracts.md) konkretisieren Engine-Bindings, Anwendungsabläufe und getrennte Speicher-/Sicherungs-/Servertransaktionen.
 
+## Architekturvorschlag: gemeinsamer Rust-DAL
+
+Das [Rust-DAL-Konzept](rust-dal.md) ergänzt am 9. Oktober 2026 den Vorschlag einer gemeinsamen ORM-Persistenzbasis mit Diesel als bevorzugtem Kandidaten und künftigem SQLite/WASM in der PWA. [ADR-049](decisions.md#adr-049--gemeinsamer-rust-dal-mit-orm-als-architekturvorschlag) ist vorgeschlagen; [Auftrag und Status](tasks.md#dal--gemeinsamer-rust-dal-konzept-und-issuetracking) erlauben ausschließlich Konzept- und Issueanlage. DAL01–DAL07 einschließlich Machbarkeitsprototypen sind offen, nicht zur Implementierung freigegeben. Die verbindliche Bestandsarchitektur mit IndexedDB in der PWA und die bisherigen K-/P3-Freigaben bleiben erhalten.
+
 ## Lesereihenfolge
 
 | Schritt | Dokument | Zweck |

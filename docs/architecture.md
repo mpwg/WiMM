@@ -35,6 +35,8 @@ Routing und UI-Zustand bleiben von persistenten Fachdaten getrennt. Kontolisten 
 
 ## Speicherports
 
+Der [gemeinsame Rust-DAL](rust-dal.md) ist seit dem Konzeptauftrag vom 9. Oktober 2026 ein zusätzlicher Architekturvorschlag: typisierte ORM-Zugriffe, Rust-Migrations-DSL und künftig SQLite/WASM auch in der PWA. [ADR-049](decisions.md#adr-049--gemeinsamer-rust-dal-mit-orm-als-architekturvorschlag) ist vorgeschlagen; DAL01–DAL07 sind [nicht zur Implementierung freigegeben](tasks.md#dal--gemeinsamer-rust-dal-konzept-und-issuetracking), auch nicht als Prototyp. Die folgenden SQLite-/IndexedDB-Speicherverträge bleiben für Bestand und freigegebenen K-/P3-Auftrag verbindlich. Lokale Finanzdaten und Serverchiffrate bleiben getrennte Ports; Fachkern und öffentliche Schnittstellen erhalten keine ORM-Abhängigkeit.
+
 `StorageAdapter` bietet `readAggregate`, `query`, `applyAtomicBatch`, `loadConfirmed`, `loadPending`, `saveSyncPage`, `exportSnapshot`, `replaceSnapshot` und `rebuildProjections`. `applyAtomicBatch` prüft erwartete lokale Revisionen und schreibt Aggregate, Outbox und Projektionen gemeinsam. `saveSyncPage` schreibt alle Seitenänderungen samt Folgekursor in einer Transaktion.
 
 Der lokale Port ergänzt `initializeArea(spaceId, proposedEpoch)` für die atomare, idempotente Epochengrundlage gemäß [ADR-040](decisions.md#adr-040--dauerhafte-lokale-epoche-ohne-synczustand). Diese Metadaten benötigen weder Serveranmeldung noch Cursor oder Outbox und bleiben von den Finanzaggregaten getrennt.

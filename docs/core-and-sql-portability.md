@@ -12,6 +12,10 @@ Die [Architektur](architecture.md) unterscheidet Bestand und Ziel; ADR-042–ADR
 
 Die [K01-Verträge](core-contracts.md) und `packages/contracts` bilden die konkrete plattformfreie Grundlage für die freigegebene Umsetzung. Sie ersetzen keine tatsächliche Rust-/WASM-/Bindingabnahme.
 
+## Ergänzender DAL-Vorschlag vom 9. Oktober 2026
+
+Das [Rust-DAL-Konzept](rust-dal.md) untersucht eine gemeinsame ORM-Persistenzbasis und den späteren Wechsel der PWA von IndexedDB zu SQLite/WASM. Dieser zusätzliche Vorschlag gehört nicht zur bestehenden Implementierungsfreigabe K01–K11. [ADR-049](decisions.md#adr-049--gemeinsamer-rust-dal-mit-orm-als-architekturvorschlag) ist vorgeschlagen; [DAL-Auftrag](tasks.md#dal--gemeinsamer-rust-dal-konzept-und-issuetracking) erlaubt nur Dokumentation und GitHub-Issues, keine Machbarkeitsimplementierung. Bis zu einer gesondert angenommenen und freigegebenen Änderung bleiben lokale SQLite-/IndexedDB-Ziele dieses Dokuments verbindlich. Bestehende K-/Speicherissues behalten Kriterien und Freigaben; die DAL-Issues ergänzen ausschließlich den neuen technischen Strang.
+
 ## Verantwortung und Abhängigkeitsrichtung
 
 | Schicht | Verantwortung | Schnittstelle und Grenze |
