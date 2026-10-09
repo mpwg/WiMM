@@ -14,3 +14,31 @@ test('Unabhängiges lokales WASM: 20 gemeinsame Migrationsformorakel ohne Write'
     else expect(result, c.name).toMatchObject({ contractVersion: 2, code: 'INVALID_LOCAL_CONTRACT' });
   }
 });
+test('Vollständiger Snapshotrundlauf und elf Portformen im unabhängigen lokalen WASM', async ({ page }) => {
+  await page.goto(`/tests/local-wasm.html?wasmUrl=${encodeURIComponent(`/@fs/${resolve('test-results/contract-bindings-generation/local-wasm/wimm_local_contracts.js')}`)}`);
+  await page.waitForFunction(() => window.localSnapshotProbe !== undefined);
+  const snapshots = JSON.parse(readFileSync('crates/local-contracts/tests/fixtures/snapshot-forms.json', 'utf8')) as typeof catalog;
+  expect(snapshots.cases).toHaveLength(40);
+  for (const c of snapshots.cases) {
+    const result = await page.evaluate(value => window.localSnapshotProbe(value), c.request);
+    if (c.valid) expect(result, c.name).toEqual({ contractVersion: 2, status: 'snapshot', snapshot: c.request });
+    else expect(result, c.name).toMatchObject({ contractVersion: 2, code: expect.any(String) });
+  }
+  const ports = JSON.parse(readFileSync('crates/local-contracts/tests/fixtures/port-forms.json', 'utf8')) as typeof catalog;
+  expect(ports.cases).toHaveLength(15);
+  for (const c of ports.cases) {
+    const result = await page.evaluate(value => window.localPortProbe(value), c.request);
+    if (c.valid) expect(result, c.name).toEqual({ contractVersion: 2, status: 'formValid' });
+    else expect(result, c.name).toMatchObject({ contractVersion: 2, code: expect.any(String) });
+  }
+  const opaque = snapshots.cases.find(c => c.name.startsWith('Opaker Altentwurf'))!;
+  for (const kind of ['nan', 'infinity', 'undefined', 'map', 'date', 'bigint', 'function', 'cycle']) {
+    const result = await page.evaluate(({ input, kind }) => {
+      const value = input as { pending: { draft: unknown }[] };
+      const bad: Record<string, unknown> = { original: kind === 'nan' ? NaN : kind === 'infinity' ? Infinity : kind === 'undefined' ? undefined : kind === 'map' ? new Map() : kind === 'date' ? new Date() : kind === 'bigint' ? 1n : kind === 'function' ? (() => 1) : null };
+      if (kind === 'cycle') bad.self = bad;
+      value.pending[0]!.draft = bad; return window.localSnapshotProbe(value);
+    }, { input: opaque.request, kind });
+    expect(result).toMatchObject({ contractVersion: 2, code: 'INVALID_LOCAL_CONTRACT' });
+  }
+});

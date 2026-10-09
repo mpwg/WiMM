@@ -1989,8 +1989,10 @@ dependencies = [
 name = "wimm-contract-primitives"
 version = "0.0.0"
 dependencies = [
+ "js-sys",
  "serde",
  "uuid",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1998,6 +2000,7 @@ name = "wimm-contract-schema"
 version = "0.0.0"
 dependencies = [
  "serde_json",
+ "wimm-core-bindings",
  "wimm-finance-types",
  "wimm-local-contracts",
  "wimm-public-contracts",
@@ -2008,11 +2011,13 @@ name = "wimm-core-bindings"
 version = "0.0.0"
 dependencies = [
  "js-sys",
+ "schemars",
  "serde",
  "serde_json",
  "tsify",
  "uniffi",
  "wasm-bindgen",
+ "wimm-contract-primitives",
  "wimm-finance-core",
  "wimm-finance-types",
  "wimm-local-contracts",
@@ -2085,6 +2090,7 @@ dependencies = [
  "uniffi",
  "wasm-bindgen",
  "wimm-contract-primitives",
+ "wimm-finance-types",
  "wimm-public-contracts",
 ]
 

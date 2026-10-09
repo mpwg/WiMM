@@ -1,0 +1,1056 @@
+{
+  "synthetic": true,
+  "cases": [
+    {
+      "name": "Leerer V1-Snapshot",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Leerer V2-Snapshot",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 2,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat rule",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "30000000-0000-4000-8000-000000000010",
+            "spaceId": "30000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "aggregateType": "rule",
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "order": 10,
+            "conditions": [
+              {
+                "field": "date",
+                "operator": "equals",
+                "value": "2028-02-29"
+              },
+              {
+                "field": "memo",
+                "operator": "contains",
+                "value": "Österreich – Grüße 🏠"
+              }
+            ],
+            "actions": [
+              {
+                "field": "clearance",
+                "value": "cleared"
+              }
+            ],
+            "enabled": true,
+            "stopProcessing": false,
+            "handle": "30000000-0000-4000-8000-000000000010"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat account",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "30000000-0000-4000-8000-000000000050",
+            "spaceId": "30000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T12:00:00Z",
+            "updatedAt": "2026-10-08T12:00:00Z",
+            "aggregateType": "account",
+            "name": "Synthetisches Konto",
+            "type": "cash",
+            "onBudget": true,
+            "archived": false,
+            "handle": "30000000-0000-4000-8000-000000000050"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat transaction",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "30000000-0000-4000-8000-000000000051",
+            "spaceId": "30000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T12:00:00Z",
+            "updatedAt": "2026-10-08T12:00:00Z",
+            "aggregateType": "transaction",
+            "accountId": "30000000-0000-4000-8000-000000000050",
+            "date": "2028-02-29",
+            "amount": 9007199254740991,
+            "kind": "opening",
+            "clearance": "cleared",
+            "splits": [],
+            "handle": "30000000-0000-4000-8000-000000000051"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat categoryGroup",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000003",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "categoryGroup",
+            "name": "Ausgaben",
+            "kind": "expense",
+            "sortOrder": 0,
+            "archived": false,
+            "handle": "40000000-0000-4000-8000-000000000003"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat category",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000005",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "category",
+            "name": "Lebensmittel",
+            "groupId": "40000000-0000-4000-8000-000000000003",
+            "sortOrder": 0,
+            "archived": false,
+            "handle": "40000000-0000-4000-8000-000000000005"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat transfer",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000021",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "transfer",
+            "date": "2026-10-08",
+            "sourceAccountId": "40000000-0000-4000-8000-000000000002",
+            "targetAccountId": "40000000-0000-4000-8000-000000000020",
+            "sourceTransactionId": "40000000-0000-4000-8000-000000000022",
+            "targetTransactionId": "40000000-0000-4000-8000-000000000023",
+            "amount": 20000,
+            "handle": "40000000-0000-4000-8000-000000000021"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat schedule",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000030",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "schedule",
+            "startDate": "2026-10-08",
+            "frequency": "monthly",
+            "interval": 1,
+            "enabled": true,
+            "template": {
+              "accountId": "40000000-0000-4000-8000-000000000002",
+              "amount": -10000,
+              "kind": "normal",
+              "clearance": "cleared",
+              "splits": [
+                {
+                  "id": "40000000-0000-4000-8000-000000000009",
+                  "categoryId": "40000000-0000-4000-8000-000000000005",
+                  "amount": -10000
+                }
+              ]
+            },
+            "handle": "40000000-0000-4000-8000-000000000030"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat scheduleOccurrence",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000031",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "scheduleOccurrence",
+            "scheduleId": "40000000-0000-4000-8000-000000000030",
+            "dueDate": "2026-10-08",
+            "state": "confirmed",
+            "transactionId": "40000000-0000-4000-8000-000000000032",
+            "handle": "40000000-0000-4000-8000-000000000031"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat importBatch",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000041",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "importBatch",
+            "fileHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "accountId": "40000000-0000-4000-8000-000000000002",
+            "rows": [
+              {
+                "sourceRow": 1,
+                "candidate": {
+                  "sourceRow": 1,
+                  "date": "2026-10-08",
+                  "amount": -10000,
+                  "categoryId": "40000000-0000-4000-8000-000000000005"
+                },
+                "decision": "import",
+                "issues": []
+              }
+            ],
+            "committedRows": [
+              1
+            ],
+            "state": "completed",
+            "handle": "40000000-0000-4000-8000-000000000041"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat importFingerprint",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000042",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "importFingerprint",
+            "accountId": "40000000-0000-4000-8000-000000000002",
+            "parserSource": "csv",
+            "fingerprint": "synthetisch",
+            "transactionId": "40000000-0000-4000-8000-000000000040",
+            "importId": "40000000-0000-4000-8000-000000000041",
+            "sourceRow": 1,
+            "handle": "40000000-0000-4000-8000-000000000042"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat payee",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000050",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "payee",
+            "name": "Österreich",
+            "aliases": [
+              "Prüfladen"
+            ],
+            "archived": false,
+            "handle": "40000000-0000-4000-8000-000000000050"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat importMapping",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000052",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "importMapping",
+            "name": "Vorlage",
+            "mapping": {
+              "nested": [
+                true,
+                null,
+                "Österreich",
+                1
+              ]
+            },
+            "handle": "40000000-0000-4000-8000-000000000052"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat reconciliation",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000060",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "reconciliation",
+            "accountId": "40000000-0000-4000-8000-000000000002",
+            "statementDate": "2026-10-08",
+            "statementBalance": 90000,
+            "transactionIds": [
+              "40000000-0000-4000-8000-000000000007",
+              "40000000-0000-4000-8000-000000000008"
+            ],
+            "handle": "40000000-0000-4000-8000-000000000060"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Flaches Aggregat financialRevision",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "40000000-0000-4000-8000-000000000001",
+            "spaceId": "40000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "aggregateType": "financialRevision",
+            "handle": "40000000-0000-4000-8000-000000000001"
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Opaker Altentwurf 16",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [
+          {
+            "operationId": "50000000-0000-4000-8000-000000000001",
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "expectedRevisions": [],
+            "dependsOn": [],
+            "state": "conflict",
+            "draft": null,
+            "retryCount": 0
+          }
+        ],
+        "projections": []
+      }
+    },
+    {
+      "name": "Opaker Altentwurf 17",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [
+          {
+            "operationId": "50000000-0000-4000-8000-000000000001",
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "expectedRevisions": [],
+            "dependsOn": [],
+            "state": "conflict",
+            "draft": {
+              "text": "Entwurf 🏠",
+              "arbitrary": [
+                1,
+                "保留",
+                null,
+                {
+                  "unchanged": true
+                }
+              ]
+            },
+            "retryCount": 0
+          }
+        ],
+        "projections": []
+      }
+    },
+    {
+      "name": "Opaker Altentwurf 18",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [
+          {
+            "operationId": "50000000-0000-4000-8000-000000000001",
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "expectedRevisions": [],
+            "dependsOn": [],
+            "state": "conflict",
+            "draft": [
+              "freier Entwurf"
+            ],
+            "retryCount": 0
+          }
+        ],
+        "projections": []
+      }
+    },
+    {
+      "name": "Opaker Altentwurf 19",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [
+          {
+            "operationId": "50000000-0000-4000-8000-000000000001",
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "expectedRevisions": [],
+            "dependsOn": [],
+            "state": "conflict",
+            "draft": 42,
+            "retryCount": 0
+          }
+        ],
+        "projections": []
+      }
+    },
+    {
+      "name": "Opaker Altentwurf 20",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [
+          {
+            "operationId": "50000000-0000-4000-8000-000000000001",
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "expectedRevisions": [],
+            "dependsOn": [],
+            "state": "conflict",
+            "draft": "Rohtext",
+            "retryCount": 0
+          }
+        ],
+        "projections": []
+      }
+    },
+    {
+      "name": "Snapshot Negativ storageSchemaVersion 0",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 0,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Snapshot Negativ storageSchemaVersion 3",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 3,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Snapshot Negativ domainSchemaVersion 2",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 2,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Snapshot Negativ profileId privat – ungültig 🏠",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "privat – ungültig 🏠",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Snapshot Negativ profileId FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Snapshot Negativ surprise True",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [],
+        "surprise": true
+      }
+    },
+    {
+      "name": "Snapshot Negativ syncState None",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [],
+        "syncState": null
+      }
+    },
+    {
+      "name": "Cursor '0'",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [],
+        "syncState": {
+          "profileId": "50000000-0000-4000-8000-000000000001",
+          "spaceId": "50000000-0000-4000-8000-000000000002",
+          "epoch": "50000000-0000-4000-8000-000000000003",
+          "cursor": "0"
+        }
+      }
+    },
+    {
+      "name": "Cursor '123'",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [],
+        "syncState": {
+          "profileId": "50000000-0000-4000-8000-000000000001",
+          "spaceId": "50000000-0000-4000-8000-000000000002",
+          "epoch": "50000000-0000-4000-8000-000000000003",
+          "cursor": "123"
+        }
+      }
+    },
+    {
+      "name": "Cursor '00'",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [],
+        "syncState": {
+          "profileId": "50000000-0000-4000-8000-000000000001",
+          "spaceId": "50000000-0000-4000-8000-000000000002",
+          "epoch": "50000000-0000-4000-8000-000000000003",
+          "cursor": "00"
+        }
+      }
+    },
+    {
+      "name": "Cursor '-1'",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [],
+        "syncState": {
+          "profileId": "50000000-0000-4000-8000-000000000001",
+          "spaceId": "50000000-0000-4000-8000-000000000002",
+          "epoch": "50000000-0000-4000-8000-000000000003",
+          "cursor": "-1"
+        }
+      }
+    },
+    {
+      "name": "Cursor '1.0'",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [],
+        "syncState": {
+          "profileId": "50000000-0000-4000-8000-000000000001",
+          "spaceId": "50000000-0000-4000-8000-000000000002",
+          "epoch": "50000000-0000-4000-8000-000000000003",
+          "cursor": "1.0"
+        }
+      }
+    },
+    {
+      "name": "Cursor ''",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [],
+        "syncState": {
+          "profileId": "50000000-0000-4000-8000-000000000001",
+          "spaceId": "50000000-0000-4000-8000-000000000002",
+          "epoch": "50000000-0000-4000-8000-000000000003",
+          "cursor": ""
+        }
+      }
+    },
+    {
+      "name": "Typisierte Projektion balance",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [
+          {
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "kind": "balance",
+            "key": "50000000-0000-4000-8000-000000000002",
+            "payload": 123
+          }
+        ]
+      }
+    },
+    {
+      "name": "Typisierte Projektion accountBalance",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [
+          {
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "kind": "accountBalance",
+            "key": "50000000-0000-4000-8000-000000000002",
+            "payload": {
+              "balance": 123
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Typisierte Projektion consumption",
+      "valid": true,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [],
+        "projections": [
+          {
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "kind": "consumption",
+            "key": "month",
+            "payload": {
+              "income": 123,
+              "expense": 0,
+              "net": 123,
+              "categories": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Unbekanntes Aggregatfeld",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "30000000-0000-4000-8000-000000000010",
+            "spaceId": "30000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "aggregateType": "rule",
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "order": 10,
+            "conditions": [
+              {
+                "field": "date",
+                "operator": "equals",
+                "value": "2028-02-29"
+              },
+              {
+                "field": "memo",
+                "operator": "contains",
+                "value": "Österreich – Grüße 🏠"
+              }
+            ],
+            "actions": [
+              {
+                "field": "clearance",
+                "value": "cleared"
+              }
+            ],
+            "enabled": true,
+            "stopProcessing": false,
+            "handle": "30000000-0000-4000-8000-000000000010",
+            "surprise": true
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Erforderliches Handle fehlt",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [
+          {
+            "id": "30000000-0000-4000-8000-000000000010",
+            "spaceId": "30000000-0000-4000-8000-000000000001",
+            "revision": 1,
+            "aggregateType": "rule",
+            "createdAt": "2026-10-08T10:00:00Z",
+            "updatedAt": "2026-10-08T10:00:00Z",
+            "order": 10,
+            "conditions": [
+              {
+                "field": "date",
+                "operator": "equals",
+                "value": "2028-02-29"
+              },
+              {
+                "field": "memo",
+                "operator": "contains",
+                "value": "Österreich – Grüße 🏠"
+              }
+            ],
+            "actions": [
+              {
+                "field": "clearance",
+                "value": "cleared"
+              }
+            ],
+            "enabled": true,
+            "stopProcessing": false
+          }
+        ],
+        "confirmed": [],
+        "pending": [],
+        "projections": []
+      }
+    },
+    {
+      "name": "Erforderlicher Entwurf fehlt",
+      "valid": false,
+      "request": {
+        "storageSchemaVersion": 1,
+        "domainSchemaVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "aggregates": [],
+        "confirmed": [],
+        "pending": [
+          {
+            "operationId": "50000000-0000-4000-8000-000000000001",
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "expectedRevisions": [],
+            "dependsOn": [],
+            "state": "queued",
+            "retryCount": 0
+          }
+        ],
+        "projections": []
+      }
+    }
+  ]
+}

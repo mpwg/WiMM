@@ -13,6 +13,7 @@ pub mod aggregate_schema;
 pub mod calculation_contracts;
 pub mod calendar;
 pub mod command_contracts;
+pub mod legacy_contracts;
 pub mod models;
 pub mod reverse_contracts;
 pub mod scalars;

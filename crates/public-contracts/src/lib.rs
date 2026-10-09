@@ -4,6 +4,7 @@
 pub mod api;
 pub mod envelopes;
 pub mod errors;
+pub mod persistence;
 pub mod scalars;
 #[cfg(feature = "contract-schema")]
 pub mod schema;

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ImportFileRequest",
+  "type": "object",
+  "properties": {
+    "acceptedExtensions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "acceptedMediaTypes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "maxBytes": {
+      "$ref": "#/$defs/LocalPositive"
+    },
+    "maxFiles": {
+      "$ref": "#/$defs/LocalPositive"
+    },
+    "maxTotalBytes": {
+      "$ref": "#/$defs/LocalPositive"
+    },
+    "multiple": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "acceptedMediaTypes",
+    "acceptedExtensions",
+    "multiple"
+  ],
+  "$defs": {
+    "LocalPositive": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 1
+    }
+  }
+}

@@ -28,7 +28,11 @@ pub fn validate_local_migration_form_v2(
             .expect("Statische lokale Formfehler sind serialisierbar.")
             .js_value()
     }
-    let text = js_sys::JSON::stringify(&input.js_value())
+    let raw = input.js_value();
+    if !wimm_contract_primitives::wasm_data::check(&raw) {
+        return Err(error());
+    }
+    let text = js_sys::JSON::stringify(&raw)
         .map_err(|_| error())?
         .as_string()
         .ok_or_else(error)?;

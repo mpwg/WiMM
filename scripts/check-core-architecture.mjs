@@ -12,7 +12,7 @@ for (const component of [core, types]) {
     const nativeGenerator = component === types && dependency.name === 'uniffi' && dependency.optional
       && JSON.stringify(types.features['native-bindings']) === JSON.stringify(['dep:uniffi']);
     const wasmGenerator = component === types && ['tsify', 'wasm-bindgen'].includes(dependency.name) && dependency.optional
-      && JSON.stringify(types.features['wasm-bindings']) === JSON.stringify(['dep:tsify', 'dep:wasm-bindgen']);
+      && JSON.stringify(types.features['wasm-bindings']) === JSON.stringify(['wimm-contract-primitives/wasm-data', 'dep:tsify', 'dep:wasm-bindgen']);
     if (!pureDependencies.has(dependency.name) && !nativeGenerator && !wasmGenerator) throw new Error(`Der Fachkern darf ${dependency.name} nicht importieren.`);
   }
 }

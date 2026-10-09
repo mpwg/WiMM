@@ -56,7 +56,7 @@ const localManifest=JSON.parse(await readFile(resolve(staging,'local-schema/mani
 localFiles.push('wasm/wimm_local_contracts.d.ts',...localManifest.files.map(name=>`schema/${name}`),'schema/manifest.json');
 const localStaging=file=>file.startsWith('schema/')?resolve(staging,'local-schema',file.slice(7)):file.startsWith('wasm/')?resolve(staging,'local-wasm',file.slice(5)):resolve(staging,file);
 for(const file of localFiles){const path=localStaging(file);const original=await readFile(path,'utf8');await writeFile(path,original.replace(/\r\n/g,'\n').replace(/[\t ]+$/gm,'').replace(/\n*$/,'\n'));}
-await writeFile(resolve(staging,'local-generation.json'),JSON.stringify({bindingVersion:2,scope:'local',sourceScope:'Port-/Migrationsmetadaten; Snapshotkompatibilität offen',files:localFiles,generators:{uniffi:'0.32.2',wasmBindgen:'0.2.129'}},null,2)+'\n');
+await writeFile(resolve(staging,'local-generation.json'),JSON.stringify({bindingVersion:2,scope:'local',sourceScope:'vollständige vorhandene Snapshot-/Port-/Migrationsdaten; V1-Wireadapter',files:localFiles,generators:{uniffi:'0.32.2',wasmBindgen:'0.2.129'}},null,2)+'\n');
 for(const file of [...localFiles,'generation.json']){
  const source=file==='generation.json'?resolve(staging,'local-generation.json'):localStaging(file);const destination=resolve(localRoot,file);
  if(mode==='--write'){await mkdir(dirname(destination),{recursive:true});await writeFile(destination,await readFile(source));}

@@ -540,6 +540,24 @@ fileprivate struct FfiConverterString: FfiConverter {
     }
 }
 
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterData: FfiConverterRustBuffer {
+    typealias SwiftType = Data
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Data {
+        let len: Int32 = try readInt(&buf)
+        return Data(try readBytes(&buf, count: Int(len)))
+    }
+
+    public static func write(_ value: Data, into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        writeBytes(&buf, value)
+    }
+}
+
 
 public struct ContractIssue: Equatable, Hashable {
     public var path: NonEmptyString
@@ -592,6 +610,60 @@ public func FfiConverterTypeContractIssue_lift(_ buf: RustBuffer) throws -> Cont
 #endif
 public func FfiConverterTypeContractIssue_lower(_ value: ContractIssue) -> RustBuffer {
     return FfiConverterTypeContractIssue.lower(value)
+}
+
+
+public struct EncryptedChangeRecord: Equatable, Hashable {
+    public var cursor: String
+    public var operation: EncryptedOperation
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(cursor: String, operation: EncryptedOperation) {
+        self.cursor = cursor
+        self.operation = operation
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension EncryptedChangeRecord: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeEncryptedChangeRecord: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> EncryptedChangeRecord {
+        return
+            try EncryptedChangeRecord(
+                cursor: FfiConverterString.read(from: &buf),
+                operation: FfiConverterTypeEncryptedOperation.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: EncryptedChangeRecord, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.cursor, into: &buf)
+        FfiConverterTypeEncryptedOperation.write(value.operation, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeEncryptedChangeRecord_lift(_ buf: RustBuffer) throws -> EncryptedChangeRecord {
+    return try FfiConverterTypeEncryptedChangeRecord.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeEncryptedChangeRecord_lower(_ value: EncryptedChangeRecord) -> RustBuffer {
+    return FfiConverterTypeEncryptedChangeRecord.lower(value)
 }
 
 
@@ -744,6 +816,72 @@ public func FfiConverterTypeEncryptedOperationHeader_lift(_ buf: RustBuffer) thr
 #endif
 public func FfiConverterTypeEncryptedOperationHeader_lower(_ value: EncryptedOperationHeader) -> RustBuffer {
     return FfiConverterTypeEncryptedOperationHeader.lower(value)
+}
+
+
+public struct EncryptedSnapshotRecord: Equatable, Hashable {
+    public var spaceId: PublicId
+    public var epoch: PublicId
+    public var cursor: String
+    public var ciphertextHash: Base64Url
+    public var bytes: Data
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(spaceId: PublicId, epoch: PublicId, cursor: String, ciphertextHash: Base64Url, bytes: Data) {
+        self.spaceId = spaceId
+        self.epoch = epoch
+        self.cursor = cursor
+        self.ciphertextHash = ciphertextHash
+        self.bytes = bytes
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension EncryptedSnapshotRecord: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeEncryptedSnapshotRecord: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> EncryptedSnapshotRecord {
+        return
+            try EncryptedSnapshotRecord(
+                spaceId: FfiConverterTypePublicId.read(from: &buf),
+                epoch: FfiConverterTypePublicId.read(from: &buf),
+                cursor: FfiConverterString.read(from: &buf),
+                ciphertextHash: FfiConverterTypeBase64Url.read(from: &buf),
+                bytes: FfiConverterData.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: EncryptedSnapshotRecord, into buf: inout [UInt8]) {
+        FfiConverterTypePublicId.write(value.spaceId, into: &buf)
+        FfiConverterTypePublicId.write(value.epoch, into: &buf)
+        FfiConverterString.write(value.cursor, into: &buf)
+        FfiConverterTypeBase64Url.write(value.ciphertextHash, into: &buf)
+        FfiConverterData.write(value.bytes, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeEncryptedSnapshotRecord_lift(_ buf: RustBuffer) throws -> EncryptedSnapshotRecord {
+    return try FfiConverterTypeEncryptedSnapshotRecord.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeEncryptedSnapshotRecord_lower(_ value: EncryptedSnapshotRecord) -> RustBuffer {
+    return FfiConverterTypeEncryptedSnapshotRecord.lower(value)
 }
 
 
@@ -941,6 +1079,122 @@ public func FfiConverterTypeKeyRosterMember_lower(_ value: KeyRosterMember) -> R
 }
 
 
+public struct OpaqueAggregateHead: Equatable, Hashable {
+    public var handle: PublicId
+    public var revision: PublicRevision
+    public var ciphertextHash: Base64Url
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(handle: PublicId, revision: PublicRevision, ciphertextHash: Base64Url) {
+        self.handle = handle
+        self.revision = revision
+        self.ciphertextHash = ciphertextHash
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension OpaqueAggregateHead: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeOpaqueAggregateHead: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> OpaqueAggregateHead {
+        return
+            try OpaqueAggregateHead(
+                handle: FfiConverterTypePublicId.read(from: &buf),
+                revision: FfiConverterTypePublicRevision.read(from: &buf),
+                ciphertextHash: FfiConverterTypeBase64Url.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: OpaqueAggregateHead, into buf: inout [UInt8]) {
+        FfiConverterTypePublicId.write(value.handle, into: &buf)
+        FfiConverterTypePublicRevision.write(value.revision, into: &buf)
+        FfiConverterTypeBase64Url.write(value.ciphertextHash, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeOpaqueAggregateHead_lift(_ buf: RustBuffer) throws -> OpaqueAggregateHead {
+    return try FfiConverterTypeOpaqueAggregateHead.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeOpaqueAggregateHead_lower(_ value: OpaqueAggregateHead) -> RustBuffer {
+    return FfiConverterTypeOpaqueAggregateHead.lower(value)
+}
+
+
+public struct OperationReceiptRecord: Equatable, Hashable {
+    public var key: ServerOperationKey
+    public var contentHash: Base64Url
+    public var cursor: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(key: ServerOperationKey, contentHash: Base64Url, cursor: String) {
+        self.key = key
+        self.contentHash = contentHash
+        self.cursor = cursor
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension OperationReceiptRecord: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeOperationReceiptRecord: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> OperationReceiptRecord {
+        return
+            try OperationReceiptRecord(
+                key: FfiConverterTypeServerOperationKey.read(from: &buf),
+                contentHash: FfiConverterTypeBase64Url.read(from: &buf),
+                cursor: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: OperationReceiptRecord, into buf: inout [UInt8]) {
+        FfiConverterTypeServerOperationKey.write(value.key, into: &buf)
+        FfiConverterTypeBase64Url.write(value.contentHash, into: &buf)
+        FfiConverterString.write(value.cursor, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeOperationReceiptRecord_lift(_ buf: RustBuffer) throws -> OperationReceiptRecord {
+    return try FfiConverterTypeOperationReceiptRecord.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeOperationReceiptRecord_lower(_ value: OperationReceiptRecord) -> RustBuffer {
+    return FfiConverterTypeOperationReceiptRecord.lower(value)
+}
+
+
 public struct PublicError: Equatable, Hashable {
     public var code: PublicErrorCode
     public var message: NonEmptyString
@@ -1003,6 +1257,68 @@ public func FfiConverterTypePublicError_lower(_ value: PublicError) -> RustBuffe
 }
 
 
+public struct PublicIdentityRecord: Equatable, Hashable {
+    public var identityId: PublicId
+    public var revision: PublicRevision
+    public var issuer: String
+    public var subject: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(identityId: PublicId, revision: PublicRevision, issuer: String, subject: String) {
+        self.identityId = identityId
+        self.revision = revision
+        self.issuer = issuer
+        self.subject = subject
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension PublicIdentityRecord: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypePublicIdentityRecord: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PublicIdentityRecord {
+        return
+            try PublicIdentityRecord(
+                identityId: FfiConverterTypePublicId.read(from: &buf),
+                revision: FfiConverterTypePublicRevision.read(from: &buf),
+                issuer: FfiConverterString.read(from: &buf),
+                subject: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: PublicIdentityRecord, into buf: inout [UInt8]) {
+        FfiConverterTypePublicId.write(value.identityId, into: &buf)
+        FfiConverterTypePublicRevision.write(value.revision, into: &buf)
+        FfiConverterString.write(value.issuer, into: &buf)
+        FfiConverterString.write(value.subject, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePublicIdentityRecord_lift(_ buf: RustBuffer) throws -> PublicIdentityRecord {
+    return try FfiConverterTypePublicIdentityRecord.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePublicIdentityRecord_lower(_ value: PublicIdentityRecord) -> RustBuffer {
+    return FfiConverterTypePublicIdentityRecord.lower(value)
+}
+
+
 public struct PublicValidationOutcome: Equatable, Hashable {
     public var contractVersion: UInt32
     public var status: PublicValidationStatus
@@ -1054,6 +1370,64 @@ public func FfiConverterTypePublicValidationOutcome_lift(_ buf: RustBuffer) thro
 #endif
 public func FfiConverterTypePublicValidationOutcome_lower(_ value: PublicValidationOutcome) -> RustBuffer {
     return FfiConverterTypePublicValidationOutcome.lower(value)
+}
+
+
+public struct ServerOperationKey: Equatable, Hashable {
+    public var spaceId: PublicId
+    public var epoch: PublicId
+    public var operationId: PublicId
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(spaceId: PublicId, epoch: PublicId, operationId: PublicId) {
+        self.spaceId = spaceId
+        self.epoch = epoch
+        self.operationId = operationId
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ServerOperationKey: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeServerOperationKey: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ServerOperationKey {
+        return
+            try ServerOperationKey(
+                spaceId: FfiConverterTypePublicId.read(from: &buf),
+                epoch: FfiConverterTypePublicId.read(from: &buf),
+                operationId: FfiConverterTypePublicId.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ServerOperationKey, into buf: inout [UInt8]) {
+        FfiConverterTypePublicId.write(value.spaceId, into: &buf)
+        FfiConverterTypePublicId.write(value.epoch, into: &buf)
+        FfiConverterTypePublicId.write(value.operationId, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeServerOperationKey_lift(_ buf: RustBuffer) throws -> ServerOperationKey {
+    return try FfiConverterTypeServerOperationKey.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeServerOperationKey_lower(_ value: ServerOperationKey) -> RustBuffer {
+    return FfiConverterTypeServerOperationKey.lower(value)
 }
 
 

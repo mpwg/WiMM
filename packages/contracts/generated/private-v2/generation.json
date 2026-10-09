@@ -30,6 +30,18 @@
     "schema/private-v2-validation-request.schema.json",
     "schema/private-v2-validation-outcome.schema.json",
     "schema/private-v2-error.schema.json",
+    "schema/private-v1-execute-request.schema.json",
+    "schema/private-v1-command-outcome.schema.json",
+    "schema/private-v1-calculation-request.schema.json",
+    "schema/private-v1-calculation-outcome.schema.json",
+    "schema/private-v1-reverse-request.schema.json",
+    "schema/private-v1-projection-request.schema.json",
+    "schema/private-v1-projection-outcome.schema.json",
+    "schema/private-v1-validation-request.schema.json",
+    "schema/private-v1-validation-outcome.schema.json",
+    "schema/private-v1-error.schema.json",
+    "schema/private-v2-money-class-request.schema.json",
+    "schema/private-v2-money-class-outcome.schema.json",
     "schema/manifest.json"
   ]
 }

@@ -38,7 +38,7 @@ export const financialAggregateSchema = z.discriminatedUnion('aggregateType', [
   z.object({ ...metadata, aggregateType: z.literal('scheduleOccurrence'), scheduleId: uuidSchema, dueDate: isoDateSchema, state: z.enum(['confirmed', 'skipped']), transactionId: uuidSchema.optional() }).strict()
 ]);
 
-export const storedFinancialAggregateSchema = financialAggregateSchema.and(z.object({ handle: uuidSchema }));
+export const storedFinancialAggregateSchema = financialAggregateSchema.refine((aggregate) => aggregate.handle !== undefined, 'Gespeicherte Aggregate benötigen ein Handle.');
 export const accountBalancePayloadSchema = z.object({ accountId: uuidSchema.optional(), balance: moneySchema }).strict();
 export const consumptionPayloadSchema = z.object({ income: moneySchema, expense: moneySchema, net: moneySchema, categories: z.array(z.object({ categoryId: uuidSchema, groupKind: z.enum(['income', 'expense']), amount: moneySchema }).strict()) }).strict();
 const projection = z.discriminatedUnion('kind', [

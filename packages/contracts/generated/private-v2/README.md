@@ -16,3 +16,5 @@ Vorhanden sind Geldrequest-/Ergebnis-/Statussignaturen, alle 14 Aggregatarten/22
 
 
 Das Unterverzeichnis schema enthält zehn zusätzliche V2-Request-/Ergebnis-/Fehlerschemas, drei Prototypformen und einen Exportmanifest. Die Schemars-Ausgaben werden zusammen mit den Sprachdateien reproduziert und ohne Umschreiben geprüft; der CLI-Schemaprüfer weist auch zusätzliche JSON-Dateien ab. `pnpm test:contracts:schema` prüft tatsächliche Rust-Serde-/Ajv2020-/WASM-Form-/Ergebnissemantik und echte negative CI-Quellendrift. Die Werkzeugquelle und genauen Grenzen stehen im [Schema-README](../../../../tools/contract-schema/README.md) und AR02-Snapshot. Keine Behauptung vollständiger öffentlicher/lokaler Module oder sämtlicher Komfort-/Kompatibilitätsexportschemas.
+
+Vollständige V1-Kompatibilitätsformen und Geldkomfortschemas sind ergänzt: 25 Rust-abgeleitete Formschemas und explizite logische Export-/Version-/Ergebnis-/Fehlerzuordnung im Manifest. Geld-WASM-Klassen verwenden erzeugte Getter; kanonische JSONschemabeschreibung ist im Manifest als Repräsentation gekennzeichnet. Die Gesamt-Abnahme läuft über `pnpm test:contracts:acceptance`.

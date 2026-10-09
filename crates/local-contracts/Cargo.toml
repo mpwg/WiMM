@@ -8,8 +8,9 @@ publish = false
 [lib]
 crate-type = ["rlib", "cdylib"]
 [dependencies]
+wimm-finance-types = { path = "../finance-types" }
 wimm-public-contracts = { path = "../public-contracts" }
-serde_json = { workspace = true, optional = true }
+serde_json.workspace = true
 js-sys = { version = "=0.3.106", optional = true }
 wimm-contract-primitives = { path = "../contract-primitives" }
 serde.workspace = true
@@ -18,9 +19,9 @@ tsify = { version = "=0.5.8", default-features = false, features = ["json"], opt
 wasm-bindgen = { workspace = true, optional = true }
 schemars = { version = "=1.2.2", optional = true }
 [features]
-contract-schema = ["wimm-public-contracts/contract-schema", "dep:schemars"]
-native-bindings = ["wimm-public-contracts/native-bindings", "dep:uniffi"]
-wasm-bindings = ["wimm-public-contracts/wasm-bindings", "dep:serde_json", "dep:js-sys", "dep:tsify", "dep:wasm-bindgen"]
+contract-schema = ["wimm-finance-types/contract-schema", "wimm-public-contracts/contract-schema", "dep:schemars"]
+native-bindings = ["wimm-finance-types/native-bindings", "wimm-public-contracts/native-bindings", "dep:uniffi"]
+wasm-bindings = ["wimm-contract-primitives/wasm-data", "wimm-finance-types/wasm-bindings", "wimm-public-contracts/wasm-bindings", "dep:js-sys", "dep:tsify", "dep:wasm-bindgen"]
 [lints]
 workspace = true
 

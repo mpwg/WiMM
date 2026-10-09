@@ -15,6 +15,12 @@
     }
   ],
   "files": [
+    "public-aggregate-head.schema.json",
+    "public-operation-key.schema.json",
+    "public-operation-receipt.schema.json",
+    "public-encrypted-snapshot.schema.json",
+    "public-encrypted-change.schema.json",
+    "public-identity.schema.json",
     "public-error.schema.json",
     "public-form-outcome.schema.json",
     "public-binding-error.schema.json",

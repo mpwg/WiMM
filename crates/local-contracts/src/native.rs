@@ -7,3 +7,5 @@ text!(LocalHash);
 macro_rules! integer {($name:ident)=>{uniffi::custom_type!($name,i64,{lower:|v|v.value(),try_lift:|v|Ok($name::new(v).map_err(|_|LocalContractError::invalid())?)});};}
 integer!(LocalRevision);
 integer!(LocalPositive);
+uniffi::custom_type!(SupportedFlag,bool,{lower:|v|v.value(),try_lift:|v|Ok(SupportedFlag::new(v).map_err(|_|LocalContractError::invalid())?)});
+uniffi::custom_type!(UnsupportedFlag,bool,{lower:|v|v.value(),try_lift:|v|Ok(UnsupportedFlag::new(v).map_err(|_|LocalContractError::invalid())?)});

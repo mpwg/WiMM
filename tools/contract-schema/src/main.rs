@@ -41,6 +41,8 @@ fn exports() -> Vec<(&'static str, String)> {
     let mut exports: Vec<_> = schemas
         .into_iter()
         .chain(schema::private_v2())
+        .chain(schema::private_v1())
+        .chain(wimm_core_bindings::v2::money_schemas())
         .map(|(name, schema)| {
             (
                 name,
@@ -54,6 +56,14 @@ fn exports() -> Vec<(&'static str, String)> {
         "domainSchemaVersion": wimm_finance_types::versions::DOMAIN_SCHEMA_VERSION,
         "scope": "private",
         "files": exports.iter().map(|(name, _)| *name).collect::<Vec<_>>(),
+        "compatibilityExports": [
+            {"name":"execute_json","bindingVersion":1,"request":"private-v1-execute-request.schema.json","result":"private-v1-command-outcome.schema.json","error":"private-v1-error.schema.json"},
+            {"name":"calculate_json","bindingVersion":1,"request":"private-v1-calculation-request.schema.json","result":"private-v1-calculation-outcome.schema.json","error":"private-v1-error.schema.json"},
+            {"name":"project_json","bindingVersion":1,"request":"private-v1-projection-request.schema.json","result":"private-v1-projection-outcome.schema.json","error":"private-v1-error.schema.json"},
+            {"name":"validate_json","bindingVersion":1,"request":"private-v1-validation-request.schema.json","result":"private-v1-validation-outcome.schema.json","error":"private-v1-error.schema.json"},
+            {"name":"reverse_json","bindingVersion":1,"request":"private-v1-reverse-request.schema.json","result":"private-v1-command-outcome.schema.json","error":"private-v1-error.schema.json"}
+        ],
+        "convenienceExports":[{"name":"calculate_money_v2","bindingVersion":2,"request":"private-v2-money-class-request.schema.json","result":"private-v2-money-class-outcome.schema.json","error":"returned rejected record with errorCode/message","representation":"generated native record / opaque WASM class with typed getters"}],
         "exports": [
             {"name":"execute_v2", "request":"private-v2-execute-request.schema.json", "result":"private-v2-command-outcome.schema.json", "error":"private-v2-error.schema.json"},
             {"name":"calculate_v2", "request":"private-v2-calculation-request.schema.json", "result":"private-v2-calculation-outcome.schema.json", "error":"private-v2-error.schema.json"},
@@ -128,6 +138,30 @@ fn main() {
         if let Err(error) = run_exports(&args[1..], local_exports()) {
             eprintln!("{error}");
             std::process::exit(1);
+        }
+        return;
+    }
+    if args == ["--probe-local-port-v2"] {
+        use std::io::BufRead;
+        for line in std::io::stdin().lock().lines() {
+            let valid = line
+                .ok()
+                .and_then(|l| {
+                    serde_json::from_str::<wimm_local_contracts::storage::LocalPortRequestV2>(&l)
+                        .ok()
+                })
+                .is_some_and(|r| wimm_local_contracts::storage_api::check_port(r).is_ok());
+            println!("{}", serde_json::json!({"valid":valid}));
+        }
+        return;
+    }
+    if args == ["--probe-local-snapshot-v2"] {
+        use std::io::BufRead;
+        for line in std::io::stdin().lock().lines() {
+            let valid = line.ok().is_some_and(|l| {
+                wimm_local_contracts::storage_api::snapshot_from_v1_json(&l).is_ok()
+            });
+            println!("{}", serde_json::json!({"valid":valid}));
         }
         return;
     }
@@ -211,7 +245,7 @@ fn local_exports() -> Vec<(&'static str, String)> {
         .into_iter()
         .map(|(name, schema)| (name, serde_json::to_string_pretty(&schema).unwrap() + "\n"))
         .collect::<Vec<_>>();
-    let manifest = serde_json::json!({"scope":"local","bindingVersion":2,"files":exports.iter().map(|(name,_)|*name).collect::<Vec<_>>(),"requiresRustRelationalValidation":true,"exports":[{"name":"validate_local_migration_form_v2","request":"local-migration-plan.schema.json","result":"local-form-outcome.schema.json","error":"local-binding-error.schema.json"}],"storageOrExportMigration":false});
+    let manifest = serde_json::json!({"scope":"local","bindingVersion":2,"files":exports.iter().map(|(name,_)|*name).collect::<Vec<_>>(),"requiresRustRelationalValidation":true,"exports":[{"name":"validate_local_migration_form_v2","request":"local-migration-plan.schema.json","result":"local-form-outcome.schema.json","error":"local-binding-error.schema.json"},{"name":"roundtrip_local_snapshot_v2","request":"local-snapshot.schema.json","result":"local-snapshot-outcome.schema.json","error":"local-snapshot-error.schema.json"},{"name":"validate_local_port_form_v2","request":"local-port-request.schema.json","result":"local-form-outcome.schema.json","error":"local-snapshot-error.schema.json"}],"storageOrExportMigration":false});
     exports.push((
         "manifest.json",
         serde_json::to_string_pretty(&manifest).unwrap() + "\n",

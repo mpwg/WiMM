@@ -87,6 +87,9 @@ for (const [index, scenario] of cases.entries()) {
   assert.equal(resultSchema({ ...v2, contractVersion: 1 }), false, `${scenario.name}: falsche Ergebnisversion`);
   assert.equal(resultSchema({ ...v2, surprise: true }), false, `${scenario.name}: Zusatzfeld im Ergebnis`);
 }
+// Vollständige unveränderte V1-Ergebnisse müssen auch die Rust-abgeleiteten Legacyformen erfüllen.
+const legacy=new Map(manifest.compatibilityExports.map(entry=>[entry.name.replace(/_json$/,''),entry]));
+for(const scenario of catalog){const entry=legacy.get(scenario.method);const validator=validators.get(entry.result);assert.equal(validator(scenario.expected),true,`${scenario.name}: V1-Ergebnis ${JSON.stringify(validator.errors)}`);assert.equal(validator({...scenario.expected,contractVersion:2}),false,`${scenario.name}: V1-Version gesperrt`);}
 assert.equal(counts.catalogFormAccepted, 354);
 assert.equal(counts.catalogFormRejected, 26);
 await writeFile('test-results/typed-state-bindings/schema-results.json', JSON.stringify({ runtime: 'Ajv2020 + tatsächliche Rust-Serdeformen/WASM-Node', ...counts, schemaFiles: manifest.files.length }, null, 2) + '\n');

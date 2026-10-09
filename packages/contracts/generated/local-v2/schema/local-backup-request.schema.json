@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EncryptedBackupRequest",
+  "type": "object",
+  "properties": {
+    "ciphertext": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "maximum": 255,
+        "minimum": 0
+      }
+    },
+    "epoch": {
+      "$ref": "#/$defs/PublicId"
+    },
+    "profileId": {
+      "$ref": "#/$defs/PublicId"
+    },
+    "snapshotHash": {
+      "$ref": "#/$defs/Base64Url"
+    },
+    "spaceId": {
+      "$ref": "#/$defs/PublicId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "profileId",
+    "spaceId",
+    "epoch",
+    "snapshotHash",
+    "ciphertext"
+  ],
+  "$defs": {
+    "Base64Url": {
+      "type": "string",
+      "maxLength": 65536,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "PublicId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    }
+  }
+}

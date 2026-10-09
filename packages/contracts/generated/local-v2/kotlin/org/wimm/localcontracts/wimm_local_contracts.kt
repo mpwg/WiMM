@@ -30,6 +30,33 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
+import org.wimm.privatecontracts.Aggregate
+import org.wimm.privatecontracts.Consumption
+import org.wimm.privatecontracts.EngineBindingVersion
+import org.wimm.privatecontracts.EntityId
+import org.wimm.privatecontracts.FfiConverterTypeAggregate
+import org.wimm.privatecontracts.FfiConverterTypeConsumption
+import org.wimm.privatecontracts.FfiConverterTypeEngineBindingVersion
+import org.wimm.privatecontracts.FfiConverterTypeEntityId
+import org.wimm.privatecontracts.FfiConverterTypeMoneyCents
+import org.wimm.privatecontracts.FfiConverterTypeNonEmptyText
+import org.wimm.privatecontracts.FfiConverterTypeOrdinal
+import org.wimm.privatecontracts.FfiConverterTypeRevision
+import org.wimm.privatecontracts.FfiConverterTypeUtcTimestamp
+import org.wimm.privatecontracts.MoneyCents
+import org.wimm.privatecontracts.NonEmptyText
+import org.wimm.privatecontracts.Ordinal
+import org.wimm.privatecontracts.Revision
+import org.wimm.privatecontracts.UtcTimestamp
+import org.wimm.privatecontracts.RustBuffer as RustBufferAggregate
+import org.wimm.privatecontracts.RustBuffer as RustBufferConsumption
+import org.wimm.privatecontracts.RustBuffer as RustBufferEngineBindingVersion
+import org.wimm.privatecontracts.RustBuffer as RustBufferEntityId
+import org.wimm.privatecontracts.RustBuffer as RustBufferMoneyCents
+import org.wimm.privatecontracts.RustBuffer as RustBufferNonEmptyText
+import org.wimm.privatecontracts.RustBuffer as RustBufferOrdinal
+import org.wimm.privatecontracts.RustBuffer as RustBufferRevision
+import org.wimm.privatecontracts.RustBuffer as RustBufferUtcTimestamp
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
 // A rust-owned buffer is represented by its capacity, its current length, and a
@@ -685,6 +712,7 @@ internal object UniffiLib {
 
     init {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "wimm_local_contracts"))
+        org.wimm.privatecontracts.uniffiEnsureInitialized()
 
     }
 
@@ -1027,6 +1055,58 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     }
 }
 
+/**
+ * @suppress
+ */
+public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
+    override fun read(buf: ByteBuffer): ByteArray {
+        val len = buf.getInt()
+        val byteArr = ByteArray(len)
+        buf.get(byteArr)
+        return byteArr
+    }
+    override fun allocationSize(value: ByteArray): ULong {
+        return 4UL + value.size.toULong()
+    }
+    override fun write(value: ByteArray, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        buf.put(value)
+    }
+}
+
+
+
+data class AggregateQuery (
+    var `spaceId`: EntityId
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeAggregateQuery: FfiConverterRustBuffer<AggregateQuery> {
+    override fun read(buf: ByteBuffer): AggregateQuery {
+        return AggregateQuery(
+            FfiConverterTypeEntityId.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: AggregateQuery) = (
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`)
+    )
+
+    override fun write(value: AggregateQuery, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+    }
+}
+
 
 
 data class ApplicationScope (
@@ -1072,6 +1152,135 @@ public object FfiConverterTypeApplicationScope: FfiConverterRustBuffer<Applicati
             FfiConverterTypeLocalId.write(value.`spaceId`, buf)
             FfiConverterTypeLocalRevision.write(value.`profileRevision`, buf)
             FfiConverterTypeLocalRevision.write(value.`sessionGeneration`, buf)
+    }
+}
+
+
+
+data class AtomicBatch (
+    var `expectedRevisions`: List<RevisionExpectation>
+    ,
+    var `aggregates`: List<StoredAggregate>
+    ,
+    var `outbox`: List<PendingOperation>
+    ,
+    var `projections`: List<StoredProjection>
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeAtomicBatch: FfiConverterRustBuffer<AtomicBatch> {
+    override fun read(buf: ByteBuffer): AtomicBatch {
+        return AtomicBatch(
+            FfiConverterSequenceTypeRevisionExpectation.read(buf),
+            FfiConverterSequenceTypeStoredAggregate.read(buf),
+            FfiConverterSequenceTypePendingOperation.read(buf),
+            FfiConverterSequenceTypeStoredProjection.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: AtomicBatch) = (
+            FfiConverterSequenceTypeRevisionExpectation.allocationSize(value.`expectedRevisions`) +
+            FfiConverterSequenceTypeStoredAggregate.allocationSize(value.`aggregates`) +
+            FfiConverterSequenceTypePendingOperation.allocationSize(value.`outbox`) +
+            FfiConverterSequenceTypeStoredProjection.allocationSize(value.`projections`)
+    )
+
+    override fun write(value: AtomicBatch, buf: ByteBuffer) {
+            FfiConverterSequenceTypeRevisionExpectation.write(value.`expectedRevisions`, buf)
+            FfiConverterSequenceTypeStoredAggregate.write(value.`aggregates`, buf)
+            FfiConverterSequenceTypePendingOperation.write(value.`outbox`, buf)
+            FfiConverterSequenceTypeStoredProjection.write(value.`projections`, buf)
+    }
+}
+
+
+
+data class BalancePayload (
+    var `accountId`: EntityId?
+    ,
+    var `balance`: MoneyCents
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeBalancePayload: FfiConverterRustBuffer<BalancePayload> {
+    override fun read(buf: ByteBuffer): BalancePayload {
+        return BalancePayload(
+            FfiConverterOptionalTypeEntityId.read(buf),
+            FfiConverterTypeMoneyCents.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: BalancePayload) = (
+            FfiConverterOptionalTypeEntityId.allocationSize(value.`accountId`) +
+            FfiConverterTypeMoneyCents.allocationSize(value.`balance`)
+    )
+
+    override fun write(value: BalancePayload, buf: ByteBuffer) {
+            FfiConverterOptionalTypeEntityId.write(value.`accountId`, buf)
+            FfiConverterTypeMoneyCents.write(value.`balance`, buf)
+    }
+}
+
+
+
+data class ConfirmedAggregate (
+    var `spaceId`: EntityId
+    ,
+    var `epoch`: EntityId
+    ,
+    var `aggregate`: StoredAggregate
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeConfirmedAggregate: FfiConverterRustBuffer<ConfirmedAggregate> {
+    override fun read(buf: ByteBuffer): ConfirmedAggregate {
+        return ConfirmedAggregate(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeStoredAggregate.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ConfirmedAggregate) = (
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`epoch`) +
+            FfiConverterTypeStoredAggregate.allocationSize(value.`aggregate`)
+    )
+
+    override fun write(value: ConfirmedAggregate, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterTypeEntityId.write(value.`epoch`, buf)
+            FfiConverterTypeStoredAggregate.write(value.`aggregate`, buf)
     }
 }
 
@@ -1130,6 +1339,203 @@ public object FfiConverterTypeEncryptedBackupReceipt: FfiConverterRustBuffer<Enc
 
 
 
+data class EncryptedBackupRequest (
+    var `profileId`: LocalId
+    ,
+    var `spaceId`: LocalId
+    ,
+    var `epoch`: LocalId
+    ,
+    var `snapshotHash`: LocalHash
+    ,
+    var `ciphertext`: kotlin.ByteArray
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeEncryptedBackupRequest: FfiConverterRustBuffer<EncryptedBackupRequest> {
+    override fun read(buf: ByteBuffer): EncryptedBackupRequest {
+        return EncryptedBackupRequest(
+            FfiConverterTypeLocalId.read(buf),
+            FfiConverterTypeLocalId.read(buf),
+            FfiConverterTypeLocalId.read(buf),
+            FfiConverterTypeLocalHash.read(buf),
+            FfiConverterByteArray.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: EncryptedBackupRequest) = (
+            FfiConverterTypeLocalId.allocationSize(value.`profileId`) +
+            FfiConverterTypeLocalId.allocationSize(value.`spaceId`) +
+            FfiConverterTypeLocalId.allocationSize(value.`epoch`) +
+            FfiConverterTypeLocalHash.allocationSize(value.`snapshotHash`) +
+            FfiConverterByteArray.allocationSize(value.`ciphertext`)
+    )
+
+    override fun write(value: EncryptedBackupRequest, buf: ByteBuffer) {
+            FfiConverterTypeLocalId.write(value.`profileId`, buf)
+            FfiConverterTypeLocalId.write(value.`spaceId`, buf)
+            FfiConverterTypeLocalId.write(value.`epoch`, buf)
+            FfiConverterTypeLocalHash.write(value.`snapshotHash`, buf)
+            FfiConverterByteArray.write(value.`ciphertext`, buf)
+    }
+}
+
+
+
+data class ExportFileRequest (
+    var `suggestedName`: kotlin.String
+    ,
+    var `mediaType`: kotlin.String
+    ,
+    var `bytes`: kotlin.ByteArray
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeExportFileRequest: FfiConverterRustBuffer<ExportFileRequest> {
+    override fun read(buf: ByteBuffer): ExportFileRequest {
+        return ExportFileRequest(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterByteArray.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ExportFileRequest) = (
+            FfiConverterString.allocationSize(value.`suggestedName`) +
+            FfiConverterString.allocationSize(value.`mediaType`) +
+            FfiConverterByteArray.allocationSize(value.`bytes`)
+    )
+
+    override fun write(value: ExportFileRequest, buf: ByteBuffer) {
+            FfiConverterString.write(value.`suggestedName`, buf)
+            FfiConverterString.write(value.`mediaType`, buf)
+            FfiConverterByteArray.write(value.`bytes`, buf)
+    }
+}
+
+
+
+data class ImportFileRequest (
+    var `acceptedMediaTypes`: List<kotlin.String>
+    ,
+    var `acceptedExtensions`: List<kotlin.String>
+    ,
+    var `multiple`: kotlin.Boolean
+    ,
+    var `maxBytes`: LocalPositive?
+    ,
+    var `maxFiles`: LocalPositive?
+    ,
+    var `maxTotalBytes`: LocalPositive?
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeImportFileRequest: FfiConverterRustBuffer<ImportFileRequest> {
+    override fun read(buf: ByteBuffer): ImportFileRequest {
+        return ImportFileRequest(
+            FfiConverterSequenceString.read(buf),
+            FfiConverterSequenceString.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterOptionalTypeLocalPositive.read(buf),
+            FfiConverterOptionalTypeLocalPositive.read(buf),
+            FfiConverterOptionalTypeLocalPositive.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ImportFileRequest) = (
+            FfiConverterSequenceString.allocationSize(value.`acceptedMediaTypes`) +
+            FfiConverterSequenceString.allocationSize(value.`acceptedExtensions`) +
+            FfiConverterBoolean.allocationSize(value.`multiple`) +
+            FfiConverterOptionalTypeLocalPositive.allocationSize(value.`maxBytes`) +
+            FfiConverterOptionalTypeLocalPositive.allocationSize(value.`maxFiles`) +
+            FfiConverterOptionalTypeLocalPositive.allocationSize(value.`maxTotalBytes`)
+    )
+
+    override fun write(value: ImportFileRequest, buf: ByteBuffer) {
+            FfiConverterSequenceString.write(value.`acceptedMediaTypes`, buf)
+            FfiConverterSequenceString.write(value.`acceptedExtensions`, buf)
+            FfiConverterBoolean.write(value.`multiple`, buf)
+            FfiConverterOptionalTypeLocalPositive.write(value.`maxBytes`, buf)
+            FfiConverterOptionalTypeLocalPositive.write(value.`maxFiles`, buf)
+            FfiConverterOptionalTypeLocalPositive.write(value.`maxTotalBytes`, buf)
+    }
+}
+
+
+
+data class ImportedFile (
+    var `name`: kotlin.String
+    ,
+    var `mediaType`: kotlin.String?
+    ,
+    var `bytes`: kotlin.ByteArray
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeImportedFile: FfiConverterRustBuffer<ImportedFile> {
+    override fun read(buf: ByteBuffer): ImportedFile {
+        return ImportedFile(
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterByteArray.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ImportedFile) = (
+            FfiConverterString.allocationSize(value.`name`) +
+            FfiConverterOptionalString.allocationSize(value.`mediaType`) +
+            FfiConverterByteArray.allocationSize(value.`bytes`)
+    )
+
+    override fun write(value: ImportedFile, buf: ByteBuffer) {
+            FfiConverterString.write(value.`name`, buf)
+            FfiConverterOptionalString.write(value.`mediaType`, buf)
+            FfiConverterByteArray.write(value.`bytes`, buf)
+    }
+}
+
+
+
 data class LocalFormOutcome (
     var `contractVersion`: kotlin.UInt
     ,
@@ -1163,6 +1569,400 @@ public object FfiConverterTypeLocalFormOutcome: FfiConverterRustBuffer<LocalForm
     override fun write(value: LocalFormOutcome, buf: ByteBuffer) {
             FfiConverterUInt.write(value.`contractVersion`, buf)
             FfiConverterTypeLocalFormStatus.write(value.`status`, buf)
+    }
+}
+
+
+
+data class LocalMigrationRequest (
+    var `plan`: StorageMigrationPlan
+    ,
+    var `expectedSnapshot`: LocalSnapshot
+    ,
+    var `backup`: EncryptedBackupReceipt?
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalMigrationRequest: FfiConverterRustBuffer<LocalMigrationRequest> {
+    override fun read(buf: ByteBuffer): LocalMigrationRequest {
+        return LocalMigrationRequest(
+            FfiConverterTypeStorageMigrationPlan.read(buf),
+            FfiConverterTypeLocalSnapshot.read(buf),
+            FfiConverterOptionalTypeEncryptedBackupReceipt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalMigrationRequest) = (
+            FfiConverterTypeStorageMigrationPlan.allocationSize(value.`plan`) +
+            FfiConverterTypeLocalSnapshot.allocationSize(value.`expectedSnapshot`) +
+            FfiConverterOptionalTypeEncryptedBackupReceipt.allocationSize(value.`backup`)
+    )
+
+    override fun write(value: LocalMigrationRequest, buf: ByteBuffer) {
+            FfiConverterTypeStorageMigrationPlan.write(value.`plan`, buf)
+            FfiConverterTypeLocalSnapshot.write(value.`expectedSnapshot`, buf)
+            FfiConverterOptionalTypeEncryptedBackupReceipt.write(value.`backup`, buf)
+    }
+}
+
+
+
+data class LocalPortRequestV2 (
+    var `contractVersion`: EngineBindingVersion
+    ,
+    var `command`: LocalPortCommand
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalPortRequestV2: FfiConverterRustBuffer<LocalPortRequestV2> {
+    override fun read(buf: ByteBuffer): LocalPortRequestV2 {
+        return LocalPortRequestV2(
+            FfiConverterTypeEngineBindingVersion.read(buf),
+            FfiConverterTypeLocalPortCommand.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalPortRequestV2) = (
+            FfiConverterTypeEngineBindingVersion.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeLocalPortCommand.allocationSize(value.`command`)
+    )
+
+    override fun write(value: LocalPortRequestV2, buf: ByteBuffer) {
+            FfiConverterTypeEngineBindingVersion.write(value.`contractVersion`, buf)
+            FfiConverterTypeLocalPortCommand.write(value.`command`, buf)
+    }
+}
+
+
+
+data class LocalSnapshot (
+    var `storageSchemaVersion`: SnapshotStorageVersion
+    ,
+    var `domainSchemaVersion`: SnapshotDomainVersion
+    ,
+    var `profileId`: EntityId
+    ,
+    var `spaceId`: EntityId
+    ,
+    var `epoch`: EntityId
+    ,
+    var `aggregates`: List<StoredAggregate>
+    ,
+    var `confirmed`: List<ConfirmedAggregate>
+    ,
+    var `pending`: List<PendingOperation>
+    ,
+    var `projections`: List<StoredProjection>
+    ,
+    var `syncState`: SyncState?
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalSnapshot: FfiConverterRustBuffer<LocalSnapshot> {
+    override fun read(buf: ByteBuffer): LocalSnapshot {
+        return LocalSnapshot(
+            FfiConverterTypeSnapshotStorageVersion.read(buf),
+            FfiConverterTypeSnapshotDomainVersion.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeStoredAggregate.read(buf),
+            FfiConverterSequenceTypeConfirmedAggregate.read(buf),
+            FfiConverterSequenceTypePendingOperation.read(buf),
+            FfiConverterSequenceTypeStoredProjection.read(buf),
+            FfiConverterOptionalTypeSyncState.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalSnapshot) = (
+            FfiConverterTypeSnapshotStorageVersion.allocationSize(value.`storageSchemaVersion`) +
+            FfiConverterTypeSnapshotDomainVersion.allocationSize(value.`domainSchemaVersion`) +
+            FfiConverterTypeEntityId.allocationSize(value.`profileId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`epoch`) +
+            FfiConverterSequenceTypeStoredAggregate.allocationSize(value.`aggregates`) +
+            FfiConverterSequenceTypeConfirmedAggregate.allocationSize(value.`confirmed`) +
+            FfiConverterSequenceTypePendingOperation.allocationSize(value.`pending`) +
+            FfiConverterSequenceTypeStoredProjection.allocationSize(value.`projections`) +
+            FfiConverterOptionalTypeSyncState.allocationSize(value.`syncState`)
+    )
+
+    override fun write(value: LocalSnapshot, buf: ByteBuffer) {
+            FfiConverterTypeSnapshotStorageVersion.write(value.`storageSchemaVersion`, buf)
+            FfiConverterTypeSnapshotDomainVersion.write(value.`domainSchemaVersion`, buf)
+            FfiConverterTypeEntityId.write(value.`profileId`, buf)
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterTypeEntityId.write(value.`epoch`, buf)
+            FfiConverterSequenceTypeStoredAggregate.write(value.`aggregates`, buf)
+            FfiConverterSequenceTypeConfirmedAggregate.write(value.`confirmed`, buf)
+            FfiConverterSequenceTypePendingOperation.write(value.`pending`, buf)
+            FfiConverterSequenceTypeStoredProjection.write(value.`projections`, buf)
+            FfiConverterOptionalTypeSyncState.write(value.`syncState`, buf)
+    }
+}
+
+
+
+data class PendingOperation (
+    var `operationId`: EntityId
+    ,
+    var `spaceId`: EntityId
+    ,
+    var `expectedRevisions`: List<RevisionExpectation>
+    ,
+    var `dependsOn`: List<EntityId>
+    ,
+    var `state`: PendingState
+    ,
+    var `draft`: LegacyJson
+    ,
+    var `retryCount`: Ordinal
+    ,
+    var `createdAt`: UtcTimestamp?
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePendingOperation: FfiConverterRustBuffer<PendingOperation> {
+    override fun read(buf: ByteBuffer): PendingOperation {
+        return PendingOperation(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeRevisionExpectation.read(buf),
+            FfiConverterSequenceTypeEntityId.read(buf),
+            FfiConverterTypePendingState.read(buf),
+            FfiConverterTypeLegacyJson.read(buf),
+            FfiConverterTypeOrdinal.read(buf),
+            FfiConverterOptionalTypeUtcTimestamp.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: PendingOperation) = (
+            FfiConverterTypeEntityId.allocationSize(value.`operationId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterSequenceTypeRevisionExpectation.allocationSize(value.`expectedRevisions`) +
+            FfiConverterSequenceTypeEntityId.allocationSize(value.`dependsOn`) +
+            FfiConverterTypePendingState.allocationSize(value.`state`) +
+            FfiConverterTypeLegacyJson.allocationSize(value.`draft`) +
+            FfiConverterTypeOrdinal.allocationSize(value.`retryCount`) +
+            FfiConverterOptionalTypeUtcTimestamp.allocationSize(value.`createdAt`)
+    )
+
+    override fun write(value: PendingOperation, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`operationId`, buf)
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterSequenceTypeRevisionExpectation.write(value.`expectedRevisions`, buf)
+            FfiConverterSequenceTypeEntityId.write(value.`dependsOn`, buf)
+            FfiConverterTypePendingState.write(value.`state`, buf)
+            FfiConverterTypeLegacyJson.write(value.`draft`, buf)
+            FfiConverterTypeOrdinal.write(value.`retryCount`, buf)
+            FfiConverterOptionalTypeUtcTimestamp.write(value.`createdAt`, buf)
+    }
+}
+
+
+
+data class PlatformCommand (
+    var `id`: kotlin.String
+    ,
+    var `title`: kotlin.String
+    ,
+    var `enabled`: kotlin.Boolean
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePlatformCommand: FfiConverterRustBuffer<PlatformCommand> {
+    override fun read(buf: ByteBuffer): PlatformCommand {
+        return PlatformCommand(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: PlatformCommand) = (
+            FfiConverterString.allocationSize(value.`id`) +
+            FfiConverterString.allocationSize(value.`title`) +
+            FfiConverterBoolean.allocationSize(value.`enabled`)
+    )
+
+    override fun write(value: PlatformCommand, buf: ByteBuffer) {
+            FfiConverterString.write(value.`id`, buf)
+            FfiConverterString.write(value.`title`, buf)
+            FfiConverterBoolean.write(value.`enabled`, buf)
+    }
+}
+
+
+
+data class ProjectionRebuild (
+    var `spaceId`: EntityId
+    ,
+    var `sourceAggregates`: List<StoredAggregate>
+    ,
+    var `projections`: List<StoredProjection>
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeProjectionRebuild: FfiConverterRustBuffer<ProjectionRebuild> {
+    override fun read(buf: ByteBuffer): ProjectionRebuild {
+        return ProjectionRebuild(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeStoredAggregate.read(buf),
+            FfiConverterSequenceTypeStoredProjection.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ProjectionRebuild) = (
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterSequenceTypeStoredAggregate.allocationSize(value.`sourceAggregates`) +
+            FfiConverterSequenceTypeStoredProjection.allocationSize(value.`projections`)
+    )
+
+    override fun write(value: ProjectionRebuild, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterSequenceTypeStoredAggregate.write(value.`sourceAggregates`, buf)
+            FfiConverterSequenceTypeStoredProjection.write(value.`projections`, buf)
+    }
+}
+
+
+
+data class RevisionExpectation (
+    var `handle`: EntityId
+    ,
+    var `expectedRevision`: Revision
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRevisionExpectation: FfiConverterRustBuffer<RevisionExpectation> {
+    override fun read(buf: ByteBuffer): RevisionExpectation {
+        return RevisionExpectation(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeRevision.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: RevisionExpectation) = (
+            FfiConverterTypeEntityId.allocationSize(value.`handle`) +
+            FfiConverterTypeRevision.allocationSize(value.`expectedRevision`)
+    )
+
+    override fun write(value: RevisionExpectation, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`handle`, buf)
+            FfiConverterTypeRevision.write(value.`expectedRevision`, buf)
+    }
+}
+
+
+
+data class SnapshotOutcomeV2 (
+    var `contractVersion`: kotlin.UInt
+    ,
+    var `status`: SnapshotStatus
+    ,
+    var `snapshot`: LocalSnapshot
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSnapshotOutcomeV2: FfiConverterRustBuffer<SnapshotOutcomeV2> {
+    override fun read(buf: ByteBuffer): SnapshotOutcomeV2 {
+        return SnapshotOutcomeV2(
+            FfiConverterUInt.read(buf),
+            FfiConverterTypeSnapshotStatus.read(buf),
+            FfiConverterTypeLocalSnapshot.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SnapshotOutcomeV2) = (
+            FfiConverterUInt.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeSnapshotStatus.allocationSize(value.`status`) +
+            FfiConverterTypeLocalSnapshot.allocationSize(value.`snapshot`)
+    )
+
+    override fun write(value: SnapshotOutcomeV2, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`contractVersion`, buf)
+            FfiConverterTypeSnapshotStatus.write(value.`status`, buf)
+            FfiConverterTypeLocalSnapshot.write(value.`snapshot`, buf)
     }
 }
 
@@ -1297,6 +2097,262 @@ public object FfiConverterTypeStorageVersions: FfiConverterRustBuffer<StorageVer
 
 
 
+/**
+ * Native Records trennen Handle und Fachaggregat; Serde erhält das flache V1-Format.
+ */
+data class StoredAggregate (
+    var `handle`: EntityId
+    ,
+    var `aggregate`: Aggregate
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeStoredAggregate: FfiConverterRustBuffer<StoredAggregate> {
+    override fun read(buf: ByteBuffer): StoredAggregate {
+        return StoredAggregate(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeAggregate.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: StoredAggregate) = (
+            FfiConverterTypeEntityId.allocationSize(value.`handle`) +
+            FfiConverterTypeAggregate.allocationSize(value.`aggregate`)
+    )
+
+    override fun write(value: StoredAggregate, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`handle`, buf)
+            FfiConverterTypeAggregate.write(value.`aggregate`, buf)
+    }
+}
+
+
+
+data class SyncPage (
+    var `state`: SyncState
+    ,
+    var `confirmed`: List<ConfirmedAggregate>
+    ,
+    var `removeOperationIds`: List<EntityId>
+    ,
+    var `projections`: List<StoredProjection>
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSyncPage: FfiConverterRustBuffer<SyncPage> {
+    override fun read(buf: ByteBuffer): SyncPage {
+        return SyncPage(
+            FfiConverterTypeSyncState.read(buf),
+            FfiConverterSequenceTypeConfirmedAggregate.read(buf),
+            FfiConverterSequenceTypeEntityId.read(buf),
+            FfiConverterSequenceTypeStoredProjection.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SyncPage) = (
+            FfiConverterTypeSyncState.allocationSize(value.`state`) +
+            FfiConverterSequenceTypeConfirmedAggregate.allocationSize(value.`confirmed`) +
+            FfiConverterSequenceTypeEntityId.allocationSize(value.`removeOperationIds`) +
+            FfiConverterSequenceTypeStoredProjection.allocationSize(value.`projections`)
+    )
+
+    override fun write(value: SyncPage, buf: ByteBuffer) {
+            FfiConverterTypeSyncState.write(value.`state`, buf)
+            FfiConverterSequenceTypeConfirmedAggregate.write(value.`confirmed`, buf)
+            FfiConverterSequenceTypeEntityId.write(value.`removeOperationIds`, buf)
+            FfiConverterSequenceTypeStoredProjection.write(value.`projections`, buf)
+    }
+}
+
+
+
+data class SyncState (
+    var `profileId`: EntityId
+    ,
+    var `spaceId`: EntityId
+    ,
+    var `epoch`: EntityId
+    ,
+    var `cursor`: kotlin.String
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSyncState: FfiConverterRustBuffer<SyncState> {
+    override fun read(buf: ByteBuffer): SyncState {
+        return SyncState(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SyncState) = (
+            FfiConverterTypeEntityId.allocationSize(value.`profileId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`epoch`) +
+            FfiConverterString.allocationSize(value.`cursor`)
+    )
+
+    override fun write(value: SyncState, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`profileId`, buf)
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterTypeEntityId.write(value.`epoch`, buf)
+            FfiConverterString.write(value.`cursor`, buf)
+    }
+}
+
+
+
+sealed class CommitOutcomeV2 {
+
+    data class Committed(
+        val `contractVersion`: kotlin.UInt,
+        val `value`: LocalPortOutcomeV2) : CommitOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class NotCommitted(
+        val `contractVersion`: kotlin.UInt,
+        val `code`: org.wimm.localcontracts.PersistenceErrorCode) : CommitOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Unknown(
+        val `contractVersion`: kotlin.UInt,
+        val `operationId`: org.wimm.privatecontracts.EntityId) : CommitOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCommitOutcomeV2 : FfiConverterRustBuffer<CommitOutcomeV2>{
+    override fun read(buf: ByteBuffer): CommitOutcomeV2 {
+        return when(buf.getInt()) {
+            1 -> CommitOutcomeV2.Committed(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypeLocalPortOutcomeV2.read(buf),
+                )
+            2 -> CommitOutcomeV2.NotCommitted(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypePersistenceErrorCode.read(buf),
+                )
+            3 -> CommitOutcomeV2.Unknown(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypeEntityId.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: CommitOutcomeV2): ULong = when(value) {
+        is CommitOutcomeV2.Committed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypeLocalPortOutcomeV2.allocationSize(value.`value`)
+            )
+        }
+        is CommitOutcomeV2.NotCommitted -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypePersistenceErrorCode.allocationSize(value.`code`)
+            )
+        }
+        is CommitOutcomeV2.Unknown -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypeEntityId.allocationSize(value.`operationId`)
+            )
+        }
+    }
+
+    override fun write(value: CommitOutcomeV2, buf: ByteBuffer) {
+        when(value) {
+            is CommitOutcomeV2.Committed -> {
+                buf.putInt(1)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypeLocalPortOutcomeV2.write(value.`value`, buf)
+                Unit
+            }
+            is CommitOutcomeV2.NotCommitted -> {
+                buf.putInt(2)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypePersistenceErrorCode.write(value.`code`, buf)
+                Unit
+            }
+            is CommitOutcomeV2.Unknown -> {
+                buf.putInt(3)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypeEntityId.write(value.`operationId`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
 
 
 sealed class LocalContractException: kotlin.Exception() {
@@ -1402,6 +2458,1373 @@ public object FfiConverterTypeLocalFormStatus: FfiConverterRustBuffer<LocalFormS
 
 
 
+sealed class LocalPortCommand {
+
+    data class ReadAggregate(
+        val `handle`: org.wimm.privatecontracts.EntityId) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+    data class Query(
+        val `query`: org.wimm.localcontracts.AggregateQuery) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+    data class ApplyAtomicBatch(
+        val `batch`: org.wimm.localcontracts.AtomicBatch) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+    data class LoadConfirmed(
+        val `spaceId`: org.wimm.privatecontracts.EntityId) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+    data class LoadPending(
+        val `spaceId`: org.wimm.privatecontracts.EntityId) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+    data class SaveSyncPage(
+        val `page`: org.wimm.localcontracts.SyncPage) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+    data class ExportSnapshot(
+        val `spaceId`: org.wimm.privatecontracts.EntityId) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+    data class ReplaceSnapshot(
+        val `snapshot`: org.wimm.localcontracts.LocalSnapshot) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+    data class RebuildProjections(
+        val `request`: org.wimm.localcontracts.ProjectionRebuild) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+    data class GetSyncState(
+        val `spaceId`: org.wimm.privatecontracts.EntityId) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+    data class InitializeArea(
+        val `spaceId`: org.wimm.privatecontracts.EntityId,
+        val `proposedEpoch`: org.wimm.privatecontracts.EntityId) : LocalPortCommand()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalPortCommand : FfiConverterRustBuffer<LocalPortCommand>{
+    override fun read(buf: ByteBuffer): LocalPortCommand {
+        return when(buf.getInt()) {
+            1 -> LocalPortCommand.ReadAggregate(
+                FfiConverterTypeEntityId.read(buf),
+                )
+            2 -> LocalPortCommand.Query(
+                FfiConverterTypeAggregateQuery.read(buf),
+                )
+            3 -> LocalPortCommand.ApplyAtomicBatch(
+                FfiConverterTypeAtomicBatch.read(buf),
+                )
+            4 -> LocalPortCommand.LoadConfirmed(
+                FfiConverterTypeEntityId.read(buf),
+                )
+            5 -> LocalPortCommand.LoadPending(
+                FfiConverterTypeEntityId.read(buf),
+                )
+            6 -> LocalPortCommand.SaveSyncPage(
+                FfiConverterTypeSyncPage.read(buf),
+                )
+            7 -> LocalPortCommand.ExportSnapshot(
+                FfiConverterTypeEntityId.read(buf),
+                )
+            8 -> LocalPortCommand.ReplaceSnapshot(
+                FfiConverterTypeLocalSnapshot.read(buf),
+                )
+            9 -> LocalPortCommand.RebuildProjections(
+                FfiConverterTypeProjectionRebuild.read(buf),
+                )
+            10 -> LocalPortCommand.GetSyncState(
+                FfiConverterTypeEntityId.read(buf),
+                )
+            11 -> LocalPortCommand.InitializeArea(
+                FfiConverterTypeEntityId.read(buf),
+                FfiConverterTypeEntityId.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: LocalPortCommand): ULong = when(value) {
+        is LocalPortCommand.ReadAggregate -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeEntityId.allocationSize(value.`handle`)
+            )
+        }
+        is LocalPortCommand.Query -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeAggregateQuery.allocationSize(value.`query`)
+            )
+        }
+        is LocalPortCommand.ApplyAtomicBatch -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeAtomicBatch.allocationSize(value.`batch`)
+            )
+        }
+        is LocalPortCommand.LoadConfirmed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeEntityId.allocationSize(value.`spaceId`)
+            )
+        }
+        is LocalPortCommand.LoadPending -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeEntityId.allocationSize(value.`spaceId`)
+            )
+        }
+        is LocalPortCommand.SaveSyncPage -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeSyncPage.allocationSize(value.`page`)
+            )
+        }
+        is LocalPortCommand.ExportSnapshot -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeEntityId.allocationSize(value.`spaceId`)
+            )
+        }
+        is LocalPortCommand.ReplaceSnapshot -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeLocalSnapshot.allocationSize(value.`snapshot`)
+            )
+        }
+        is LocalPortCommand.RebuildProjections -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeProjectionRebuild.allocationSize(value.`request`)
+            )
+        }
+        is LocalPortCommand.GetSyncState -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeEntityId.allocationSize(value.`spaceId`)
+            )
+        }
+        is LocalPortCommand.InitializeArea -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeEntityId.allocationSize(value.`spaceId`)
+                + FfiConverterTypeEntityId.allocationSize(value.`proposedEpoch`)
+            )
+        }
+    }
+
+    override fun write(value: LocalPortCommand, buf: ByteBuffer) {
+        when(value) {
+            is LocalPortCommand.ReadAggregate -> {
+                buf.putInt(1)
+                FfiConverterTypeEntityId.write(value.`handle`, buf)
+                Unit
+            }
+            is LocalPortCommand.Query -> {
+                buf.putInt(2)
+                FfiConverterTypeAggregateQuery.write(value.`query`, buf)
+                Unit
+            }
+            is LocalPortCommand.ApplyAtomicBatch -> {
+                buf.putInt(3)
+                FfiConverterTypeAtomicBatch.write(value.`batch`, buf)
+                Unit
+            }
+            is LocalPortCommand.LoadConfirmed -> {
+                buf.putInt(4)
+                FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+                Unit
+            }
+            is LocalPortCommand.LoadPending -> {
+                buf.putInt(5)
+                FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+                Unit
+            }
+            is LocalPortCommand.SaveSyncPage -> {
+                buf.putInt(6)
+                FfiConverterTypeSyncPage.write(value.`page`, buf)
+                Unit
+            }
+            is LocalPortCommand.ExportSnapshot -> {
+                buf.putInt(7)
+                FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+                Unit
+            }
+            is LocalPortCommand.ReplaceSnapshot -> {
+                buf.putInt(8)
+                FfiConverterTypeLocalSnapshot.write(value.`snapshot`, buf)
+                Unit
+            }
+            is LocalPortCommand.RebuildProjections -> {
+                buf.putInt(9)
+                FfiConverterTypeProjectionRebuild.write(value.`request`, buf)
+                Unit
+            }
+            is LocalPortCommand.GetSyncState -> {
+                buf.putInt(10)
+                FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+                Unit
+            }
+            is LocalPortCommand.InitializeArea -> {
+                buf.putInt(11)
+                FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+                FfiConverterTypeEntityId.write(value.`proposedEpoch`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+sealed class LocalPortOutcomeV2 {
+
+    data class Aggregate(
+        val `contractVersion`: kotlin.UInt,
+        val `value`: org.wimm.localcontracts.StoredAggregate?) : LocalPortOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Aggregates(
+        val `contractVersion`: kotlin.UInt,
+        val `value`: List<org.wimm.localcontracts.StoredAggregate>) : LocalPortOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Confirmed(
+        val `contractVersion`: kotlin.UInt,
+        val `value`: List<org.wimm.localcontracts.ConfirmedAggregate>) : LocalPortOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Pending(
+        val `contractVersion`: kotlin.UInt,
+        val `value`: List<org.wimm.localcontracts.PendingOperation>) : LocalPortOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Snapshot(
+        val `contractVersion`: kotlin.UInt,
+        val `value`: org.wimm.localcontracts.LocalSnapshot) : LocalPortOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class SyncState(
+        val `contractVersion`: kotlin.UInt,
+        val `value`: org.wimm.localcontracts.SyncState?) : LocalPortOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Initialized(
+        val `contractVersion`: kotlin.UInt,
+        val `epoch`: org.wimm.privatecontracts.EntityId) : LocalPortOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Applied(
+        val `contractVersion`: kotlin.UInt) : LocalPortOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalPortOutcomeV2 : FfiConverterRustBuffer<LocalPortOutcomeV2>{
+    override fun read(buf: ByteBuffer): LocalPortOutcomeV2 {
+        return when(buf.getInt()) {
+            1 -> LocalPortOutcomeV2.Aggregate(
+                FfiConverterUInt.read(buf),
+                FfiConverterOptionalTypeStoredAggregate.read(buf),
+                )
+            2 -> LocalPortOutcomeV2.Aggregates(
+                FfiConverterUInt.read(buf),
+                FfiConverterSequenceTypeStoredAggregate.read(buf),
+                )
+            3 -> LocalPortOutcomeV2.Confirmed(
+                FfiConverterUInt.read(buf),
+                FfiConverterSequenceTypeConfirmedAggregate.read(buf),
+                )
+            4 -> LocalPortOutcomeV2.Pending(
+                FfiConverterUInt.read(buf),
+                FfiConverterSequenceTypePendingOperation.read(buf),
+                )
+            5 -> LocalPortOutcomeV2.Snapshot(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypeLocalSnapshot.read(buf),
+                )
+            6 -> LocalPortOutcomeV2.SyncState(
+                FfiConverterUInt.read(buf),
+                FfiConverterOptionalTypeSyncState.read(buf),
+                )
+            7 -> LocalPortOutcomeV2.Initialized(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypeEntityId.read(buf),
+                )
+            8 -> LocalPortOutcomeV2.Applied(
+                FfiConverterUInt.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: LocalPortOutcomeV2): ULong = when(value) {
+        is LocalPortOutcomeV2.Aggregate -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterOptionalTypeStoredAggregate.allocationSize(value.`value`)
+            )
+        }
+        is LocalPortOutcomeV2.Aggregates -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterSequenceTypeStoredAggregate.allocationSize(value.`value`)
+            )
+        }
+        is LocalPortOutcomeV2.Confirmed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterSequenceTypeConfirmedAggregate.allocationSize(value.`value`)
+            )
+        }
+        is LocalPortOutcomeV2.Pending -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterSequenceTypePendingOperation.allocationSize(value.`value`)
+            )
+        }
+        is LocalPortOutcomeV2.Snapshot -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypeLocalSnapshot.allocationSize(value.`value`)
+            )
+        }
+        is LocalPortOutcomeV2.SyncState -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterOptionalTypeSyncState.allocationSize(value.`value`)
+            )
+        }
+        is LocalPortOutcomeV2.Initialized -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypeEntityId.allocationSize(value.`epoch`)
+            )
+        }
+        is LocalPortOutcomeV2.Applied -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+            )
+        }
+    }
+
+    override fun write(value: LocalPortOutcomeV2, buf: ByteBuffer) {
+        when(value) {
+            is LocalPortOutcomeV2.Aggregate -> {
+                buf.putInt(1)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterOptionalTypeStoredAggregate.write(value.`value`, buf)
+                Unit
+            }
+            is LocalPortOutcomeV2.Aggregates -> {
+                buf.putInt(2)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterSequenceTypeStoredAggregate.write(value.`value`, buf)
+                Unit
+            }
+            is LocalPortOutcomeV2.Confirmed -> {
+                buf.putInt(3)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterSequenceTypeConfirmedAggregate.write(value.`value`, buf)
+                Unit
+            }
+            is LocalPortOutcomeV2.Pending -> {
+                buf.putInt(4)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterSequenceTypePendingOperation.write(value.`value`, buf)
+                Unit
+            }
+            is LocalPortOutcomeV2.Snapshot -> {
+                buf.putInt(5)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypeLocalSnapshot.write(value.`value`, buf)
+                Unit
+            }
+            is LocalPortOutcomeV2.SyncState -> {
+                buf.putInt(6)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterOptionalTypeSyncState.write(value.`value`, buf)
+                Unit
+            }
+            is LocalPortOutcomeV2.Initialized -> {
+                buf.putInt(7)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypeEntityId.write(value.`epoch`, buf)
+                Unit
+            }
+            is LocalPortOutcomeV2.Applied -> {
+                buf.putInt(8)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+
+enum class PendingState {
+
+    QUEUED,
+    SENDING,
+    ACCEPTED,
+    CONFLICT,
+    BLOCKED,
+    FORBIDDEN,
+    INVALID;
+
+
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePendingState: FfiConverterRustBuffer<PendingState> {
+    override fun read(buf: ByteBuffer) = try {
+        PendingState.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: PendingState) = 4UL
+
+    override fun write(value: PendingState, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+
+enum class PersistenceErrorCode {
+
+    REVISION_CONFLICT,
+    QUOTA,
+    WRITE_FAILED,
+    UPDATE_REQUIRED,
+    EPOCH_MISMATCH,
+    OPERATION_ID_REUSED;
+
+
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePersistenceErrorCode: FfiConverterRustBuffer<PersistenceErrorCode> {
+    override fun read(buf: ByteBuffer) = try {
+        PersistenceErrorCode.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: PersistenceErrorCode) = 4UL
+
+    override fun write(value: PersistenceErrorCode, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+sealed class ProfileLoadOutcome {
+
+    object Missing : ProfileLoadOutcome()
+
+
+    data class Loaded(
+        val `profile`: org.wimm.localcontracts.LegacyJson) : ProfileLoadOutcome()
+
+    {
+
+
+        companion object
+    }
+
+    object Corrupt : ProfileLoadOutcome()
+
+
+    object Unreadable : ProfileLoadOutcome()
+
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeProfileLoadOutcome : FfiConverterRustBuffer<ProfileLoadOutcome>{
+    override fun read(buf: ByteBuffer): ProfileLoadOutcome {
+        return when(buf.getInt()) {
+            1 -> ProfileLoadOutcome.Missing
+            2 -> ProfileLoadOutcome.Loaded(
+                FfiConverterTypeLegacyJson.read(buf),
+                )
+            3 -> ProfileLoadOutcome.Corrupt
+            4 -> ProfileLoadOutcome.Unreadable
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: ProfileLoadOutcome): ULong = when(value) {
+        is ProfileLoadOutcome.Missing -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is ProfileLoadOutcome.Loaded -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeLegacyJson.allocationSize(value.`profile`)
+            )
+        }
+        is ProfileLoadOutcome.Corrupt -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is ProfileLoadOutcome.Unreadable -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: ProfileLoadOutcome, buf: ByteBuffer) {
+        when(value) {
+            is ProfileLoadOutcome.Missing -> {
+                buf.putInt(1)
+                Unit
+            }
+            is ProfileLoadOutcome.Loaded -> {
+                buf.putInt(2)
+                FfiConverterTypeLegacyJson.write(value.`profile`, buf)
+                Unit
+            }
+            is ProfileLoadOutcome.Corrupt -> {
+                buf.putInt(3)
+                Unit
+            }
+            is ProfileLoadOutcome.Unreadable -> {
+                buf.putInt(4)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+
+enum class SnapshotStatus {
+
+    SNAPSHOT;
+
+
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSnapshotStatus: FfiConverterRustBuffer<SnapshotStatus> {
+    override fun read(buf: ByteBuffer) = try {
+        SnapshotStatus.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: SnapshotStatus) = 4UL
+
+    override fun write(value: SnapshotStatus, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+sealed class StoragePersistenceOutcome {
+
+    data class Unsupported(
+        val `supported`: org.wimm.localcontracts.UnsupportedFlag) : StoragePersistenceOutcome()
+
+    {
+
+
+        companion object
+    }
+
+    data class Granted(
+        val `supported`: org.wimm.localcontracts.SupportedFlag) : StoragePersistenceOutcome()
+
+    {
+
+
+        companion object
+    }
+
+    data class Denied(
+        val `supported`: org.wimm.localcontracts.SupportedFlag) : StoragePersistenceOutcome()
+
+    {
+
+
+        companion object
+    }
+
+    data class Error(
+        val `supported`: org.wimm.localcontracts.SupportedFlag) : StoragePersistenceOutcome()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeStoragePersistenceOutcome : FfiConverterRustBuffer<StoragePersistenceOutcome>{
+    override fun read(buf: ByteBuffer): StoragePersistenceOutcome {
+        return when(buf.getInt()) {
+            1 -> StoragePersistenceOutcome.Unsupported(
+                FfiConverterTypeUnsupportedFlag.read(buf),
+                )
+            2 -> StoragePersistenceOutcome.Granted(
+                FfiConverterTypeSupportedFlag.read(buf),
+                )
+            3 -> StoragePersistenceOutcome.Denied(
+                FfiConverterTypeSupportedFlag.read(buf),
+                )
+            4 -> StoragePersistenceOutcome.Error(
+                FfiConverterTypeSupportedFlag.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: StoragePersistenceOutcome): ULong = when(value) {
+        is StoragePersistenceOutcome.Unsupported -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeUnsupportedFlag.allocationSize(value.`supported`)
+            )
+        }
+        is StoragePersistenceOutcome.Granted -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeSupportedFlag.allocationSize(value.`supported`)
+            )
+        }
+        is StoragePersistenceOutcome.Denied -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeSupportedFlag.allocationSize(value.`supported`)
+            )
+        }
+        is StoragePersistenceOutcome.Error -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeSupportedFlag.allocationSize(value.`supported`)
+            )
+        }
+    }
+
+    override fun write(value: StoragePersistenceOutcome, buf: ByteBuffer) {
+        when(value) {
+            is StoragePersistenceOutcome.Unsupported -> {
+                buf.putInt(1)
+                FfiConverterTypeUnsupportedFlag.write(value.`supported`, buf)
+                Unit
+            }
+            is StoragePersistenceOutcome.Granted -> {
+                buf.putInt(2)
+                FfiConverterTypeSupportedFlag.write(value.`supported`, buf)
+                Unit
+            }
+            is StoragePersistenceOutcome.Denied -> {
+                buf.putInt(3)
+                FfiConverterTypeSupportedFlag.write(value.`supported`, buf)
+                Unit
+            }
+            is StoragePersistenceOutcome.Error -> {
+                buf.putInt(4)
+                FfiConverterTypeSupportedFlag.write(value.`supported`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+sealed class StoredProjection {
+
+    data class Balance(
+        val `spaceId`: org.wimm.privatecontracts.EntityId,
+        val `key`: org.wimm.privatecontracts.EntityId,
+        val `payload`: org.wimm.privatecontracts.MoneyCents) : StoredProjection()
+
+    {
+
+
+        companion object
+    }
+
+    data class AccountBalance(
+        val `spaceId`: org.wimm.privatecontracts.EntityId,
+        val `key`: org.wimm.privatecontracts.EntityId,
+        val `payload`: org.wimm.localcontracts.BalancePayload) : StoredProjection()
+
+    {
+
+
+        companion object
+    }
+
+    data class Consumption(
+        val `spaceId`: org.wimm.privatecontracts.EntityId,
+        val `key`: org.wimm.privatecontracts.NonEmptyText,
+        val `payload`: org.wimm.privatecontracts.Consumption) : StoredProjection()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeStoredProjection : FfiConverterRustBuffer<StoredProjection>{
+    override fun read(buf: ByteBuffer): StoredProjection {
+        return when(buf.getInt()) {
+            1 -> StoredProjection.Balance(
+                FfiConverterTypeEntityId.read(buf),
+                FfiConverterTypeEntityId.read(buf),
+                FfiConverterTypeMoneyCents.read(buf),
+                )
+            2 -> StoredProjection.AccountBalance(
+                FfiConverterTypeEntityId.read(buf),
+                FfiConverterTypeEntityId.read(buf),
+                FfiConverterTypeBalancePayload.read(buf),
+                )
+            3 -> StoredProjection.Consumption(
+                FfiConverterTypeEntityId.read(buf),
+                FfiConverterTypeNonEmptyText.read(buf),
+                FfiConverterTypeConsumption.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: StoredProjection): ULong = when(value) {
+        is StoredProjection.Balance -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeEntityId.allocationSize(value.`spaceId`)
+                + FfiConverterTypeEntityId.allocationSize(value.`key`)
+                + FfiConverterTypeMoneyCents.allocationSize(value.`payload`)
+            )
+        }
+        is StoredProjection.AccountBalance -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeEntityId.allocationSize(value.`spaceId`)
+                + FfiConverterTypeEntityId.allocationSize(value.`key`)
+                + FfiConverterTypeBalancePayload.allocationSize(value.`payload`)
+            )
+        }
+        is StoredProjection.Consumption -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeEntityId.allocationSize(value.`spaceId`)
+                + FfiConverterTypeNonEmptyText.allocationSize(value.`key`)
+                + FfiConverterTypeConsumption.allocationSize(value.`payload`)
+            )
+        }
+    }
+
+    override fun write(value: StoredProjection, buf: ByteBuffer) {
+        when(value) {
+            is StoredProjection.Balance -> {
+                buf.putInt(1)
+                FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+                FfiConverterTypeEntityId.write(value.`key`, buf)
+                FfiConverterTypeMoneyCents.write(value.`payload`, buf)
+                Unit
+            }
+            is StoredProjection.AccountBalance -> {
+                buf.putInt(2)
+                FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+                FfiConverterTypeEntityId.write(value.`key`, buf)
+                FfiConverterTypeBalancePayload.write(value.`payload`, buf)
+                Unit
+            }
+            is StoredProjection.Consumption -> {
+                buf.putInt(3)
+                FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+                FfiConverterTypeNonEmptyText.write(value.`key`, buf)
+                FfiConverterTypeConsumption.write(value.`payload`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?> {
+    override fun read(buf: ByteBuffer): kotlin.String? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterString.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.String?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterString.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.String?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterString.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeEncryptedBackupReceipt: FfiConverterRustBuffer<EncryptedBackupReceipt?> {
+    override fun read(buf: ByteBuffer): EncryptedBackupReceipt? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeEncryptedBackupReceipt.read(buf)
+    }
+
+    override fun allocationSize(value: EncryptedBackupReceipt?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeEncryptedBackupReceipt.allocationSize(value)
+        }
+    }
+
+    override fun write(value: EncryptedBackupReceipt?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeEncryptedBackupReceipt.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeStoredAggregate: FfiConverterRustBuffer<StoredAggregate?> {
+    override fun read(buf: ByteBuffer): StoredAggregate? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeStoredAggregate.read(buf)
+    }
+
+    override fun allocationSize(value: StoredAggregate?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeStoredAggregate.allocationSize(value)
+        }
+    }
+
+    override fun write(value: StoredAggregate?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeStoredAggregate.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeSyncState: FfiConverterRustBuffer<SyncState?> {
+    override fun read(buf: ByteBuffer): SyncState? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeSyncState.read(buf)
+    }
+
+    override fun allocationSize(value: SyncState?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeSyncState.allocationSize(value)
+        }
+    }
+
+    override fun write(value: SyncState?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeSyncState.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeEntityId: FfiConverterRustBuffer<EntityId?> {
+    override fun read(buf: ByteBuffer): EntityId? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeEntityId.read(buf)
+    }
+
+    override fun allocationSize(value: EntityId?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeEntityId.allocationSize(value)
+        }
+    }
+
+    override fun write(value: EntityId?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeEntityId.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeUtcTimestamp: FfiConverterRustBuffer<UtcTimestamp?> {
+    override fun read(buf: ByteBuffer): UtcTimestamp? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeUtcTimestamp.read(buf)
+    }
+
+    override fun allocationSize(value: UtcTimestamp?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeUtcTimestamp.allocationSize(value)
+        }
+    }
+
+    override fun write(value: UtcTimestamp?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeUtcTimestamp.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeLocalPositive: FfiConverterRustBuffer<LocalPositive?> {
+    override fun read(buf: ByteBuffer): LocalPositive? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeLocalPositive.read(buf)
+    }
+
+    override fun allocationSize(value: LocalPositive?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeLocalPositive.allocationSize(value)
+        }
+    }
+
+    override fun write(value: LocalPositive?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeLocalPositive.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.String>> {
+    override fun read(buf: ByteBuffer): List<kotlin.String> {
+        val len = buf.getInt()
+        return List<kotlin.String>(len) {
+            FfiConverterString.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<kotlin.String>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterString.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<kotlin.String>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterString.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeConfirmedAggregate: FfiConverterRustBuffer<List<ConfirmedAggregate>> {
+    override fun read(buf: ByteBuffer): List<ConfirmedAggregate> {
+        val len = buf.getInt()
+        return List<ConfirmedAggregate>(len) {
+            FfiConverterTypeConfirmedAggregate.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<ConfirmedAggregate>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeConfirmedAggregate.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<ConfirmedAggregate>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeConfirmedAggregate.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypePendingOperation: FfiConverterRustBuffer<List<PendingOperation>> {
+    override fun read(buf: ByteBuffer): List<PendingOperation> {
+        val len = buf.getInt()
+        return List<PendingOperation>(len) {
+            FfiConverterTypePendingOperation.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<PendingOperation>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypePendingOperation.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<PendingOperation>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypePendingOperation.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeRevisionExpectation: FfiConverterRustBuffer<List<RevisionExpectation>> {
+    override fun read(buf: ByteBuffer): List<RevisionExpectation> {
+        val len = buf.getInt()
+        return List<RevisionExpectation>(len) {
+            FfiConverterTypeRevisionExpectation.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<RevisionExpectation>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeRevisionExpectation.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<RevisionExpectation>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeRevisionExpectation.write(it, buf)
+        }
+    }
+}
+
+
+
 
 /**
  * @suppress
@@ -1430,6 +3853,95 @@ public object FfiConverterSequenceTypeStorageMigrationStep: FfiConverterRustBuff
 
 
 
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeStoredAggregate: FfiConverterRustBuffer<List<StoredAggregate>> {
+    override fun read(buf: ByteBuffer): List<StoredAggregate> {
+        val len = buf.getInt()
+        return List<StoredAggregate>(len) {
+            FfiConverterTypeStoredAggregate.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<StoredAggregate>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeStoredAggregate.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<StoredAggregate>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeStoredAggregate.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeStoredProjection: FfiConverterRustBuffer<List<StoredProjection>> {
+    override fun read(buf: ByteBuffer): List<StoredProjection> {
+        val len = buf.getInt()
+        return List<StoredProjection>(len) {
+            FfiConverterTypeStoredProjection.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<StoredProjection>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeStoredProjection.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<StoredProjection>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeStoredProjection.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeEntityId: FfiConverterRustBuffer<List<EntityId>> {
+    override fun read(buf: ByteBuffer): List<EntityId> {
+        val len = buf.getInt()
+        return List<EntityId>(len) {
+            FfiConverterTypeEntityId.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<EntityId>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeEntityId.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<EntityId>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeEntityId.write(it, buf)
+        }
+    }
+}
+
+
+
+public typealias LegacyJson = kotlin.String
+public typealias FfiConverterTypeLegacyJson = FfiConverterString
+
+
+
 public typealias LocalHash = kotlin.String
 public typealias FfiConverterTypeLocalHash = FfiConverterString
 
@@ -1447,3 +3959,23 @@ public typealias FfiConverterTypeLocalPositive = FfiConverterLong
 
 public typealias LocalRevision = kotlin.Long
 public typealias FfiConverterTypeLocalRevision = FfiConverterLong
+
+
+
+public typealias SnapshotDomainVersion = kotlin.UInt
+public typealias FfiConverterTypeSnapshotDomainVersion = FfiConverterUInt
+
+
+
+public typealias SnapshotStorageVersion = kotlin.UInt
+public typealias FfiConverterTypeSnapshotStorageVersion = FfiConverterUInt
+
+
+
+public typealias SupportedFlag = kotlin.Boolean
+public typealias FfiConverterTypeSupportedFlag = FfiConverterBoolean
+
+
+
+public typealias UnsupportedFlag = kotlin.Boolean
+public typealias FfiConverterTypeUnsupportedFlag = FfiConverterBoolean

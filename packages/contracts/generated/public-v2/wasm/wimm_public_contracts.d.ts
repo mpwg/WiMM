@@ -5,6 +5,11 @@ export interface ContractIssue {
     code: NonEmptyString;
 }
 
+export interface EncryptedChangeRecord {
+    cursor: string;
+    operation: EncryptedOperation;
+}
+
 export interface EncryptedOperation {
     header: EncryptedOperationHeader;
     nonce: Base64Url;
@@ -24,6 +29,14 @@ export interface EncryptedOperationHeader {
     dependsOn: PublicId[];
     reads: ExistingHandle[];
     writes: WriteHandle[];
+}
+
+export interface EncryptedSnapshotRecord {
+    spaceId: PublicId;
+    epoch: PublicId;
+    cursor: string;
+    ciphertextHash: Base64Url;
+    bytes: number[];
 }
 
 export interface ExistingHandle {
@@ -49,6 +62,18 @@ export interface KeyRosterMember {
     role: Role;
 }
 
+export interface OpaqueAggregateHead {
+    handle: PublicId;
+    revision: PublicRevision;
+    ciphertextHash: Base64Url;
+}
+
+export interface OperationReceiptRecord {
+    key: ServerOperationKey;
+    contentHash: Base64Url;
+    cursor: string;
+}
+
 export interface PublicError {
     code: PublicErrorCode;
     message: NonEmptyString;
@@ -56,9 +81,22 @@ export interface PublicError {
     requestId?: NonEmptyString;
 }
 
+export interface PublicIdentityRecord {
+    identityId: PublicId;
+    revision: PublicRevision;
+    issuer: string;
+    subject: string;
+}
+
 export interface PublicValidationOutcome {
     contractVersion: number;
     status: PublicValidationStatus;
+}
+
+export interface ServerOperationKey {
+    spaceId: PublicId;
+    epoch: PublicId;
+    operationId: PublicId;
 }
 
 export interface SignedKeyRoster {

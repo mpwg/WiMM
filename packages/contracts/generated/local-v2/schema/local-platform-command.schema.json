@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PlatformCommand",
+  "type": "object",
+  "properties": {
+    "enabled": {
+      "type": "boolean"
+    },
+    "id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "enabled"
+  ]
+}

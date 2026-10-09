@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoredProjection",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "kind": {
+          "type": "string",
+          "const": "balance"
+        },
+        "payload": {
+          "$ref": "#/$defs/MoneyCents"
+        },
+        "spaceId": {
+          "$ref": "#/$defs/EntityId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "spaceId",
+        "key",
+        "payload"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "kind": {
+          "type": "string",
+          "const": "accountBalance"
+        },
+        "payload": {
+          "$ref": "#/$defs/BalancePayload"
+        },
+        "spaceId": {
+          "$ref": "#/$defs/EntityId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "spaceId",
+        "key",
+        "payload"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/NonEmptyText"
+        },
+        "kind": {
+          "type": "string",
+          "const": "consumption"
+        },
+        "payload": {
+          "$ref": "#/$defs/Consumption"
+        },
+        "spaceId": {
+          "$ref": "#/$defs/EntityId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "spaceId",
+        "key",
+        "payload"
+      ]
+    }
+  ],
+  "$defs": {
+    "BalancePayload": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "balance": {
+          "$ref": "#/$defs/MoneyCents"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "balance"
+      ]
+    },
+    "CategoryConsumption": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/$defs/MoneyCents"
+        },
+        "categoryId": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "groupKind": {
+          "$ref": "#/$defs/GroupKind"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "categoryId",
+        "groupKind",
+        "amount"
+      ]
+    },
+    "Consumption": {
+      "type": "object",
+      "properties": {
+        "categories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CategoryConsumption"
+          }
+        },
+        "expense": {
+          "$ref": "#/$defs/MoneyCents"
+        },
+        "income": {
+          "$ref": "#/$defs/MoneyCents"
+        },
+        "net": {
+          "$ref": "#/$defs/MoneyCents"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "income",
+        "expense",
+        "net",
+        "categories"
+      ]
+    },
+    "EntityId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    },
+    "GroupKind": {
+      "type": "string",
+      "enum": [
+        "income",
+        "expense"
+      ]
+    },
+    "MoneyCents": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": -9007199254740991
+    },
+    "NonEmptyText": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "[^\\u0009\\u000a\\u000b\\u000c\\u000d\\u0020\\u00a0\\u1680\\u2000\\u2001\\u2002\\u2003\\u2004\\u2005\\u2006\\u2007\\u2008\\u2009\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+    }
+  }
+}

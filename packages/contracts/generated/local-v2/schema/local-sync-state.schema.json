@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SyncState",
+  "type": "object",
+  "properties": {
+    "cursor": {
+      "type": "string"
+    },
+    "epoch": {
+      "$ref": "#/$defs/EntityId"
+    },
+    "profileId": {
+      "$ref": "#/$defs/EntityId"
+    },
+    "spaceId": {
+      "$ref": "#/$defs/EntityId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "profileId",
+    "spaceId",
+    "epoch",
+    "cursor"
+  ],
+  "$defs": {
+    "EntityId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    }
+  }
+}

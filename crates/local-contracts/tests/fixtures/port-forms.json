@@ -1,0 +1,202 @@
+{
+  "synthetic": true,
+  "cases": [
+    {
+      "name": "readAggregate",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "readAggregate",
+          "handle": "50000000-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "name": "query",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "query",
+          "query": {
+            "spaceId": "50000000-0000-4000-8000-000000000002"
+          }
+        }
+      }
+    },
+    {
+      "name": "applyAtomicBatch",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "applyAtomicBatch",
+          "batch": {
+            "expectedRevisions": [],
+            "aggregates": [],
+            "outbox": [],
+            "projections": []
+          }
+        }
+      }
+    },
+    {
+      "name": "loadConfirmed",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "loadConfirmed",
+          "spaceId": "50000000-0000-4000-8000-000000000002"
+        }
+      }
+    },
+    {
+      "name": "loadPending",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "loadPending",
+          "spaceId": "50000000-0000-4000-8000-000000000002"
+        }
+      }
+    },
+    {
+      "name": "saveSyncPage",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "saveSyncPage",
+          "page": {
+            "state": {
+              "profileId": "50000000-0000-4000-8000-000000000001",
+              "spaceId": "50000000-0000-4000-8000-000000000002",
+              "epoch": "50000000-0000-4000-8000-000000000003",
+              "cursor": "0"
+            },
+            "confirmed": [],
+            "removeOperationIds": [],
+            "projections": []
+          }
+        }
+      }
+    },
+    {
+      "name": "exportSnapshot",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "exportSnapshot",
+          "spaceId": "50000000-0000-4000-8000-000000000002"
+        }
+      }
+    },
+    {
+      "name": "replaceSnapshot",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "replaceSnapshot",
+          "snapshot": {
+            "storageSchemaVersion": 1,
+            "domainSchemaVersion": 1,
+            "profileId": "50000000-0000-4000-8000-000000000001",
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "epoch": "50000000-0000-4000-8000-000000000003",
+            "aggregates": [],
+            "confirmed": [],
+            "pending": [],
+            "projections": []
+          }
+        }
+      }
+    },
+    {
+      "name": "rebuildProjections",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "rebuildProjections",
+          "request": {
+            "spaceId": "50000000-0000-4000-8000-000000000002",
+            "sourceAggregates": [],
+            "projections": []
+          }
+        }
+      }
+    },
+    {
+      "name": "getSyncState",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "getSyncState",
+          "spaceId": "50000000-0000-4000-8000-000000000002"
+        }
+      }
+    },
+    {
+      "name": "initializeArea",
+      "valid": true,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "initializeArea",
+          "spaceId": "50000000-0000-4000-8000-000000000002",
+          "proposedEpoch": "50000000-0000-4000-8000-000000000003"
+        }
+      }
+    },
+    {
+      "name": "Alte Bindingversion",
+      "valid": false,
+      "request": {
+        "contractVersion": 1,
+        "command": {
+          "method": "readAggregate",
+          "handle": "50000000-0000-4000-8000-000000000001"
+        }
+      }
+    },
+    {
+      "name": "Unbekannte Methode",
+      "valid": false,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "unknown"
+        }
+      }
+    },
+    {
+      "name": "Unbekanntes Methodenfeld",
+      "valid": false,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "readAggregate",
+          "handle": "50000000-0000-4000-8000-000000000001",
+          "surprise": true
+        }
+      }
+    },
+    {
+      "name": "Ungültiges Handle",
+      "valid": false,
+      "request": {
+        "contractVersion": 2,
+        "command": {
+          "method": "readAggregate",
+          "handle": "invalid"
+        }
+      }
+    }
+  ]
+}

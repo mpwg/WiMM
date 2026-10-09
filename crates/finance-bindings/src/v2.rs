@@ -4,7 +4,9 @@ use wimm_finance_core::scalars::EntityId;
 
 pub const BINDING_VERSION: u32 = wimm_finance_types::versions::ENGINE_BINDING_VERSION;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[cfg_attr(feature = "native", derive(uniffi::Record))]
 #[cfg_attr(feature = "wasm", wasm_bindgen::prelude::wasm_bindgen)]
 pub struct MoneyRequestV2 {
@@ -13,6 +15,7 @@ pub struct MoneyRequestV2 {
     #[cfg_attr(feature = "wasm", wasm_bindgen(skip))]
     pub domain_schema_version: u32,
     #[cfg_attr(feature = "wasm", wasm_bindgen(skip))]
+    #[cfg_attr(feature = "contract-schema", schemars(with = "EntityId"))]
     pub space_id: String,
     #[cfg_attr(feature = "wasm", wasm_bindgen(skip))]
     pub text: String,
@@ -63,7 +66,9 @@ fn exact_version(value: f64) -> u32 {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[cfg_attr(feature = "native", derive(uniffi::Enum))]
 #[cfg_attr(feature = "wasm", wasm_bindgen::prelude::wasm_bindgen)]
 pub enum MoneyStatusV2 {
@@ -72,12 +77,18 @@ pub enum MoneyStatusV2 {
 }
 
 /// Nur Ausgabevertrag: ein Erfolg hat Cent, eine Ablehnung Code/Meldung.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[cfg_attr(feature = "native", derive(uniffi::Record))]
 #[cfg_attr(feature = "wasm", wasm_bindgen::prelude::wasm_bindgen)]
 pub struct MoneyResultV2 {
     contract_version: u32,
     status: MoneyStatusV2,
+    #[cfg_attr(
+        feature = "contract-schema",
+        schemars(with = "Option<wimm_finance_types::scalars::MoneyCents>")
+    )]
     value: Option<i64>,
     error_code: Option<String>,
     message: Option<String>,
@@ -164,4 +175,18 @@ pub fn calculate_money_v2(request: MoneyRequestV2) -> MoneyResultV2 {
             message: Some(message.into()),
         },
     }
+}
+
+#[cfg(feature = "contract-schema")]
+pub fn money_schemas() -> Vec<(&'static str, schemars::Schema)> {
+    vec![
+        (
+            "private-v2-money-class-request.schema.json",
+            wimm_finance_types::schema::binding_v2(schemars::schema_for!(MoneyRequestV2)),
+        ),
+        (
+            "private-v2-money-class-outcome.schema.json",
+            wimm_finance_types::schema::binding_v2(schemars::schema_for!(MoneyResultV2)),
+        ),
+    ]
 }

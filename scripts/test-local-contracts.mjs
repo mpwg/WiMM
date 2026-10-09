@@ -2,7 +2,7 @@
 import './warnings-as-errors.mjs';
 import { runWithWarningCheck } from './run-with-warning-check.mjs';
 for (const args of [
-  ['exec', 'vitest', 'run', 'packages/contracts/src/local-generation.test.ts'],
+  ['exec', 'vitest', 'run', 'packages/contracts/src/local-generation.test.ts', 'packages/contracts/src/snapshot-generation.test.ts', 'packages/contracts/src/stored-aggregate.test.ts', 'packages/contracts/src/port-generation.test.ts'],
   ['exec', 'playwright', 'test', '--config', 'tests/contract-bindings/config.ts', 'local-wasm.spec.ts']
 ]) {
   const status = await runWithWarningCheck('pnpm', args);

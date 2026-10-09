@@ -1004,6 +1004,25 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     }
 }
 
+/**
+ * @suppress
+ */
+public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
+    override fun read(buf: ByteBuffer): ByteArray {
+        val len = buf.getInt()
+        val byteArr = ByteArray(len)
+        buf.get(byteArr)
+        return byteArr
+    }
+    override fun allocationSize(value: ByteArray): ULong {
+        return 4UL + value.size.toULong()
+    }
+    override fun write(value: ByteArray, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        buf.put(value)
+    }
+}
+
 
 
 data class ContractIssue (
@@ -1039,6 +1058,44 @@ public object FfiConverterTypeContractIssue: FfiConverterRustBuffer<ContractIssu
     override fun write(value: ContractIssue, buf: ByteBuffer) {
             FfiConverterTypeNonEmptyString.write(value.`path`, buf)
             FfiConverterTypeNonEmptyString.write(value.`code`, buf)
+    }
+}
+
+
+
+data class EncryptedChangeRecord (
+    var `cursor`: kotlin.String
+    ,
+    var `operation`: EncryptedOperation
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeEncryptedChangeRecord: FfiConverterRustBuffer<EncryptedChangeRecord> {
+    override fun read(buf: ByteBuffer): EncryptedChangeRecord {
+        return EncryptedChangeRecord(
+            FfiConverterString.read(buf),
+            FfiConverterTypeEncryptedOperation.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: EncryptedChangeRecord) = (
+            FfiConverterString.allocationSize(value.`cursor`) +
+            FfiConverterTypeEncryptedOperation.allocationSize(value.`operation`)
+    )
+
+    override fun write(value: EncryptedChangeRecord, buf: ByteBuffer) {
+            FfiConverterString.write(value.`cursor`, buf)
+            FfiConverterTypeEncryptedOperation.write(value.`operation`, buf)
     }
 }
 
@@ -1170,6 +1227,59 @@ public object FfiConverterTypeEncryptedOperationHeader: FfiConverterRustBuffer<E
             FfiConverterSequenceTypePublicId.write(value.`dependsOn`, buf)
             FfiConverterSequenceTypeExistingHandle.write(value.`reads`, buf)
             FfiConverterSequenceTypeWriteHandle.write(value.`writes`, buf)
+    }
+}
+
+
+
+data class EncryptedSnapshotRecord (
+    var `spaceId`: PublicId
+    ,
+    var `epoch`: PublicId
+    ,
+    var `cursor`: kotlin.String
+    ,
+    var `ciphertextHash`: Base64Url
+    ,
+    var `bytes`: kotlin.ByteArray
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeEncryptedSnapshotRecord: FfiConverterRustBuffer<EncryptedSnapshotRecord> {
+    override fun read(buf: ByteBuffer): EncryptedSnapshotRecord {
+        return EncryptedSnapshotRecord(
+            FfiConverterTypePublicId.read(buf),
+            FfiConverterTypePublicId.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterTypeBase64Url.read(buf),
+            FfiConverterByteArray.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: EncryptedSnapshotRecord) = (
+            FfiConverterTypePublicId.allocationSize(value.`spaceId`) +
+            FfiConverterTypePublicId.allocationSize(value.`epoch`) +
+            FfiConverterString.allocationSize(value.`cursor`) +
+            FfiConverterTypeBase64Url.allocationSize(value.`ciphertextHash`) +
+            FfiConverterByteArray.allocationSize(value.`bytes`)
+    )
+
+    override fun write(value: EncryptedSnapshotRecord, buf: ByteBuffer) {
+            FfiConverterTypePublicId.write(value.`spaceId`, buf)
+            FfiConverterTypePublicId.write(value.`epoch`, buf)
+            FfiConverterString.write(value.`cursor`, buf)
+            FfiConverterTypeBase64Url.write(value.`ciphertextHash`, buf)
+            FfiConverterByteArray.write(value.`bytes`, buf)
     }
 }
 
@@ -1329,6 +1439,92 @@ public object FfiConverterTypeKeyRosterMember: FfiConverterRustBuffer<KeyRosterM
 
 
 
+data class OpaqueAggregateHead (
+    var `handle`: PublicId
+    ,
+    var `revision`: PublicRevision
+    ,
+    var `ciphertextHash`: Base64Url
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeOpaqueAggregateHead: FfiConverterRustBuffer<OpaqueAggregateHead> {
+    override fun read(buf: ByteBuffer): OpaqueAggregateHead {
+        return OpaqueAggregateHead(
+            FfiConverterTypePublicId.read(buf),
+            FfiConverterTypePublicRevision.read(buf),
+            FfiConverterTypeBase64Url.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: OpaqueAggregateHead) = (
+            FfiConverterTypePublicId.allocationSize(value.`handle`) +
+            FfiConverterTypePublicRevision.allocationSize(value.`revision`) +
+            FfiConverterTypeBase64Url.allocationSize(value.`ciphertextHash`)
+    )
+
+    override fun write(value: OpaqueAggregateHead, buf: ByteBuffer) {
+            FfiConverterTypePublicId.write(value.`handle`, buf)
+            FfiConverterTypePublicRevision.write(value.`revision`, buf)
+            FfiConverterTypeBase64Url.write(value.`ciphertextHash`, buf)
+    }
+}
+
+
+
+data class OperationReceiptRecord (
+    var `key`: ServerOperationKey
+    ,
+    var `contentHash`: Base64Url
+    ,
+    var `cursor`: kotlin.String
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeOperationReceiptRecord: FfiConverterRustBuffer<OperationReceiptRecord> {
+    override fun read(buf: ByteBuffer): OperationReceiptRecord {
+        return OperationReceiptRecord(
+            FfiConverterTypeServerOperationKey.read(buf),
+            FfiConverterTypeBase64Url.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: OperationReceiptRecord) = (
+            FfiConverterTypeServerOperationKey.allocationSize(value.`key`) +
+            FfiConverterTypeBase64Url.allocationSize(value.`contentHash`) +
+            FfiConverterString.allocationSize(value.`cursor`)
+    )
+
+    override fun write(value: OperationReceiptRecord, buf: ByteBuffer) {
+            FfiConverterTypeServerOperationKey.write(value.`key`, buf)
+            FfiConverterTypeBase64Url.write(value.`contentHash`, buf)
+            FfiConverterString.write(value.`cursor`, buf)
+    }
+}
+
+
+
 data class PublicError (
     var `code`: PublicErrorCode
     ,
@@ -1377,6 +1573,54 @@ public object FfiConverterTypePublicError: FfiConverterRustBuffer<PublicError> {
 
 
 
+data class PublicIdentityRecord (
+    var `identityId`: PublicId
+    ,
+    var `revision`: PublicRevision
+    ,
+    var `issuer`: kotlin.String
+    ,
+    var `subject`: kotlin.String
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePublicIdentityRecord: FfiConverterRustBuffer<PublicIdentityRecord> {
+    override fun read(buf: ByteBuffer): PublicIdentityRecord {
+        return PublicIdentityRecord(
+            FfiConverterTypePublicId.read(buf),
+            FfiConverterTypePublicRevision.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: PublicIdentityRecord) = (
+            FfiConverterTypePublicId.allocationSize(value.`identityId`) +
+            FfiConverterTypePublicRevision.allocationSize(value.`revision`) +
+            FfiConverterString.allocationSize(value.`issuer`) +
+            FfiConverterString.allocationSize(value.`subject`)
+    )
+
+    override fun write(value: PublicIdentityRecord, buf: ByteBuffer) {
+            FfiConverterTypePublicId.write(value.`identityId`, buf)
+            FfiConverterTypePublicRevision.write(value.`revision`, buf)
+            FfiConverterString.write(value.`issuer`, buf)
+            FfiConverterString.write(value.`subject`, buf)
+    }
+}
+
+
+
 data class PublicValidationOutcome (
     var `contractVersion`: kotlin.UInt
     ,
@@ -1410,6 +1654,49 @@ public object FfiConverterTypePublicValidationOutcome: FfiConverterRustBuffer<Pu
     override fun write(value: PublicValidationOutcome, buf: ByteBuffer) {
             FfiConverterUInt.write(value.`contractVersion`, buf)
             FfiConverterTypePublicValidationStatus.write(value.`status`, buf)
+    }
+}
+
+
+
+data class ServerOperationKey (
+    var `spaceId`: PublicId
+    ,
+    var `epoch`: PublicId
+    ,
+    var `operationId`: PublicId
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeServerOperationKey: FfiConverterRustBuffer<ServerOperationKey> {
+    override fun read(buf: ByteBuffer): ServerOperationKey {
+        return ServerOperationKey(
+            FfiConverterTypePublicId.read(buf),
+            FfiConverterTypePublicId.read(buf),
+            FfiConverterTypePublicId.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ServerOperationKey) = (
+            FfiConverterTypePublicId.allocationSize(value.`spaceId`) +
+            FfiConverterTypePublicId.allocationSize(value.`epoch`) +
+            FfiConverterTypePublicId.allocationSize(value.`operationId`)
+    )
+
+    override fun write(value: ServerOperationKey, buf: ByteBuffer) {
+            FfiConverterTypePublicId.write(value.`spaceId`, buf)
+            FfiConverterTypePublicId.write(value.`epoch`, buf)
+            FfiConverterTypePublicId.write(value.`operationId`, buf)
     }
 }
 

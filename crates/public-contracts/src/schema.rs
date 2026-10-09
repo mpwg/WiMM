@@ -47,6 +47,30 @@ schema!(
 pub fn exports() -> Vec<(&'static str, Schema)> {
     vec![
         (
+            "public-aggregate-head.schema.json",
+            schemars::schema_for!(crate::persistence::OpaqueAggregateHead),
+        ),
+        (
+            "public-operation-key.schema.json",
+            schemars::schema_for!(crate::persistence::ServerOperationKey),
+        ),
+        (
+            "public-operation-receipt.schema.json",
+            schemars::schema_for!(crate::persistence::OperationReceiptRecord),
+        ),
+        (
+            "public-encrypted-snapshot.schema.json",
+            schemars::schema_for!(crate::persistence::EncryptedSnapshotRecord),
+        ),
+        (
+            "public-encrypted-change.schema.json",
+            schemars::schema_for!(crate::persistence::EncryptedChangeRecord),
+        ),
+        (
+            "public-identity.schema.json",
+            schemars::schema_for!(crate::persistence::PublicIdentityRecord),
+        ),
+        (
             "public-error.schema.json",
             schemars::schema_for!(PublicError),
         ),

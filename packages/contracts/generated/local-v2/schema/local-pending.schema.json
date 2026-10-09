@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PendingOperation",
+  "type": "object",
+  "properties": {
+    "createdAt": {
+      "$ref": "#/$defs/UtcTimestamp"
+    },
+    "dependsOn": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EntityId"
+      }
+    },
+    "draft": true,
+    "expectedRevisions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RevisionExpectation"
+      }
+    },
+    "operationId": {
+      "$ref": "#/$defs/EntityId"
+    },
+    "retryCount": {
+      "$ref": "#/$defs/Ordinal"
+    },
+    "spaceId": {
+      "$ref": "#/$defs/EntityId"
+    },
+    "state": {
+      "$ref": "#/$defs/PendingState"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "operationId",
+    "spaceId",
+    "expectedRevisions",
+    "dependsOn",
+    "state",
+    "draft",
+    "retryCount"
+  ],
+  "$defs": {
+    "EntityId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    },
+    "Ordinal": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 0
+    },
+    "PendingState": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "sending",
+        "accepted",
+        "conflict",
+        "blocked",
+        "forbidden",
+        "invalid"
+      ]
+    },
+    "Revision": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 0
+    },
+    "RevisionExpectation": {
+      "type": "object",
+      "properties": {
+        "expectedRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "handle": {
+          "$ref": "#/$defs/EntityId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "handle",
+        "expectedRevision"
+      ]
+    },
+    "UtcTimestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\\.[0-9]+)?Z$"
+    }
+  }
+}

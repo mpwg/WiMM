@@ -34,8 +34,11 @@ pub fn request() -> Schema {
 }
 
 /// Derselbe V2-Header für alle privaten Aktionsformen; keine zweite Feldliste.
-fn binding_v2(mut schema: Schema) -> Schema {
-    fn versions(value: &mut serde_json::Value) {
+pub fn binding_v2(schema: Schema) -> Schema {
+    binding_schema(schema, crate::versions::ENGINE_BINDING_VERSION)
+}
+pub fn binding_schema(mut schema: Schema, binding: u32) -> Schema {
+    fn versions(value: &mut serde_json::Value, binding: u32) {
         match value {
             serde_json::Value::Object(object) => {
                 if let Some(properties) = object
@@ -43,7 +46,7 @@ fn binding_v2(mut schema: Schema) -> Schema {
                     .and_then(serde_json::Value::as_object_mut)
                 {
                     for (name, version) in [
-                        ("contractVersion", crate::versions::ENGINE_BINDING_VERSION),
+                        ("contractVersion", binding),
                         (
                             "domainSchemaVersion",
                             crate::versions::DOMAIN_SCHEMA_VERSION,
@@ -57,14 +60,16 @@ fn binding_v2(mut schema: Schema) -> Schema {
                         }
                     }
                 }
-                object.values_mut().for_each(versions);
+                object.values_mut().for_each(|v| versions(v, binding));
             }
-            serde_json::Value::Array(values) => values.iter_mut().for_each(versions),
+            serde_json::Value::Array(values) => {
+                values.iter_mut().for_each(|v| versions(v, binding))
+            }
             _ => {}
         }
     }
     let mut value = schema.to_value();
-    versions(&mut value);
+    versions(&mut value, binding);
     schema = value
         .try_into()
         .expect("Eine Schemaobjekt-Transformation bleibt ein Schema.");
@@ -124,6 +129,63 @@ pub fn private_v2() -> Vec<(&'static str, Schema)> {
         ),
     ]
 }
+pub fn private_v1() -> Vec<(&'static str, Schema)> {
+    use crate::{
+        calculation_contracts::{CalculationOutcome, CalculationRequest},
+        command_contracts::{CommandOutcomeV2, Request},
+        legacy_contracts::LegacyOutcome,
+        reverse_contracts::ReverseRequest,
+        state_contracts::{
+            ProjectionOutcome, ProjectionRequest, ValidationOutcome, ValidationRequest,
+        },
+    };
+    vec![
+        (
+            "private-v1-execute-request.schema.json",
+            binding_schema(schemars::schema_for!(Request), 1),
+        ),
+        (
+            "private-v1-command-outcome.schema.json",
+            binding_schema(schemars::schema_for!(LegacyOutcome<CommandOutcomeV2>), 1),
+        ),
+        (
+            "private-v1-calculation-request.schema.json",
+            binding_schema(schemars::schema_for!(CalculationRequest), 1),
+        ),
+        (
+            "private-v1-calculation-outcome.schema.json",
+            binding_schema(schemars::schema_for!(LegacyOutcome<CalculationOutcome>), 1),
+        ),
+        (
+            "private-v1-reverse-request.schema.json",
+            binding_schema(schemars::schema_for!(ReverseRequest), 1),
+        ),
+        (
+            "private-v1-projection-request.schema.json",
+            binding_schema(schemars::schema_for!(ProjectionRequest), 1),
+        ),
+        (
+            "private-v1-projection-outcome.schema.json",
+            binding_schema(schemars::schema_for!(LegacyOutcome<ProjectionOutcome>), 1),
+        ),
+        (
+            "private-v1-validation-request.schema.json",
+            binding_schema(schemars::schema_for!(ValidationRequest), 1),
+        ),
+        (
+            "private-v1-validation-outcome.schema.json",
+            binding_schema(schemars::schema_for!(LegacyOutcome<ValidationOutcome>), 1),
+        ),
+        (
+            "private-v1-error.schema.json",
+            binding_schema(
+                schemars::schema_for!(crate::legacy_contracts::LegacyRejected),
+                1,
+            ),
+        ),
+    ]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

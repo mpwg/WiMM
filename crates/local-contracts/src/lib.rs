@@ -6,9 +6,14 @@ pub mod errors;
 pub mod models;
 #[cfg(feature = "native-bindings")]
 mod native;
+pub mod ports;
 pub mod scalars;
 #[cfg(feature = "contract-schema")]
 pub mod schema;
+pub mod storage;
+pub mod storage_api;
+pub mod storage_port;
+mod wire_policy;
 #[cfg(feature = "native-bindings")]
 uniffi::setup_scaffolding!();
 pub use wimm_contract_primitives::Validate;

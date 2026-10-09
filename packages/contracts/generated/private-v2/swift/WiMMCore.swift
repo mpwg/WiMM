@@ -843,11 +843,27 @@ public func executeV2(request: Request)throws  -> CommandOutcomeV2  {
     )
 })
 }
+public func roundtripLocalSnapshotV2(snapshot: LocalSnapshot)throws  -> SnapshotOutcomeV2  {
+    return try  FfiConverterTypeSnapshotOutcomeV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_roundtrip_local_snapshot_v2(
+        FfiConverterTypeLocalSnapshot_lower(snapshot),uniffiCallStatus
+    )
+})
+}
 public func validateLocalMigrationFormV2(plan: StorageMigrationPlan)throws  -> LocalFormOutcome  {
     return try  FfiConverterTypeLocalFormOutcome_lift(try rustCallWithError(FfiConverterTypeLocalContractError_lift) {
         uniffiCallStatus in
     uniffi_wimm_core_bindings_fn_func_validate_local_migration_form_v2(
         FfiConverterTypeStorageMigrationPlan_lower(plan),uniffiCallStatus
+    )
+})
+}
+public func validateLocalPortFormV2(request: LocalPortRequestV2)throws  -> LocalFormOutcome  {
+    return try  FfiConverterTypeLocalFormOutcome_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_func_validate_local_port_form_v2(
+        FfiConverterTypeLocalPortRequestV2_lower(request),uniffiCallStatus
     )
 })
 }
@@ -936,7 +952,13 @@ private let initializationResult: InitializationResult = {
     if (uniffi_wimm_core_bindings_checksum_func_execute_v2() != 55143) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_wimm_core_bindings_checksum_func_roundtrip_local_snapshot_v2() != 43357) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_wimm_core_bindings_checksum_func_validate_local_migration_form_v2() != 59983) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_func_validate_local_port_form_v2() != 43583) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_wimm_core_bindings_checksum_func_validate_public_operation_form_v2() != 24232) {

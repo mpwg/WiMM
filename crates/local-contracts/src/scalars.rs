@@ -39,3 +39,17 @@ macro_rules! integer {
 }
 integer!(LocalRevision, 0);
 integer!(LocalPositive, 1);
+macro_rules! flag {
+    ($name:ident,$expected:expr)=>{
+        #[derive(Debug,Clone,Copy,Serialize)]
+        #[serde(transparent)]
+        #[cfg_attr(feature="wasm-bindings",derive(tsify::Tsify))]
+        pub struct $name(bool);
+        impl $name {pub fn new(v:bool)->Result<Self,&'static str>{if v==$expected{Ok(Self(v))}else{Err("Der Persistenzstatus widerspricht seiner Unterstützungsmarkierung.")}}pub fn value(self)->bool{self.0}}
+        impl<'de> Deserialize<'de> for $name{fn deserialize<D:serde::Deserializer<'de>>(d:D)->Result<Self,D::Error>{Self::new(bool::deserialize(d)?).map_err(serde::de::Error::custom)}}
+        #[cfg(feature="contract-schema")]
+        impl schemars::JsonSchema for $name {fn schema_name()->std::borrow::Cow<'static,str>{stringify!($name).into()}fn json_schema(_: &mut schemars::SchemaGenerator)->schemars::Schema{schemars::json_schema!({"type":"boolean","const":$expected})}}
+    }
+}
+flag!(SupportedFlag, true);
+flag!(UnsupportedFlag, false);

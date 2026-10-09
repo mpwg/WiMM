@@ -1,9 +1,96 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Lokale Strukturformen; lückenlose Migrationsrelationen zusätzlich in Rust.
-use crate::{errors::*, models::*};
+use crate::{errors::*, models::*, ports::*, storage::*, storage_api::SnapshotOutcomeV2};
 use schemars::Schema;
 pub fn exports() -> Vec<(&'static str, Schema)> {
     vec![
+        ("local-snapshot.schema.json", snapshot_schema()),
+        (
+            "local-stored-aggregate.schema.json",
+            schemars::schema_for!(StoredAggregate),
+        ),
+        (
+            "local-confirmed.schema.json",
+            schemars::schema_for!(ConfirmedAggregate),
+        ),
+        (
+            "local-pending.schema.json",
+            schemars::schema_for!(PendingOperation),
+        ),
+        (
+            "local-projection.schema.json",
+            schemars::schema_for!(StoredProjection),
+        ),
+        (
+            "local-sync-state.schema.json",
+            schemars::schema_for!(SyncState),
+        ),
+        (
+            "local-sync-page.schema.json",
+            schemars::schema_for!(SyncPage),
+        ),
+        (
+            "local-atomic-batch.schema.json",
+            schemars::schema_for!(AtomicBatch),
+        ),
+        (
+            "local-projection-rebuild.schema.json",
+            schemars::schema_for!(ProjectionRebuild),
+        ),
+        (
+            "local-port-request.schema.json",
+            schemars::schema_for!(LocalPortRequestV2),
+        ),
+        (
+            "local-port-outcome.schema.json",
+            wimm_finance_types::schema::binding_v2(schemars::schema_for!(LocalPortOutcomeV2)),
+        ),
+        (
+            "local-commit-outcome.schema.json",
+            wimm_finance_types::schema::binding_v2(schemars::schema_for!(CommitOutcomeV2)),
+        ),
+        (
+            "local-snapshot-outcome.schema.json",
+            schemars::schema_for!(SnapshotOutcomeV2),
+        ),
+        (
+            "local-snapshot-error.schema.json",
+            wimm_finance_types::schema::binding_v2(schemars::schema_for!(
+                wimm_finance_types::ContractError
+            )),
+        ),
+        (
+            "local-import-request.schema.json",
+            schemars::schema_for!(ImportFileRequest),
+        ),
+        (
+            "local-imported-file.schema.json",
+            schemars::schema_for!(ImportedFile),
+        ),
+        (
+            "local-export-request.schema.json",
+            schemars::schema_for!(ExportFileRequest),
+        ),
+        (
+            "local-platform-command.schema.json",
+            schemars::schema_for!(PlatformCommand),
+        ),
+        (
+            "local-backup-request.schema.json",
+            schemars::schema_for!(EncryptedBackupRequest),
+        ),
+        (
+            "local-migration-request.schema.json",
+            schemars::schema_for!(LocalMigrationRequest),
+        ),
+        (
+            "local-profile-outcome.schema.json",
+            schemars::schema_for!(ProfileLoadOutcome),
+        ),
+        (
+            "local-persistence-outcome.schema.json",
+            schemars::schema_for!(StoragePersistenceOutcome),
+        ),
         (
             "local-versions.schema.json",
             schemars::schema_for!(StorageVersions),
@@ -33,4 +120,33 @@ pub fn exports() -> Vec<(&'static str, Schema)> {
             schemars::schema_for!(LocalContractError),
         ),
     ]
+}
+
+pub fn snapshot_schema() -> Schema {
+    let mut schema = schemars::schema_for!(LocalSnapshot);
+    let properties = schema
+        .get_mut("properties")
+        .and_then(serde_json::Value::as_object_mut)
+        .expect("Der Snapshot ist ein Record.");
+    properties["storageSchemaVersion"]
+        .as_object_mut()
+        .unwrap()
+        .insert("enum".into(), serde_json::json!([1, 2]));
+    properties["domainSchemaVersion"]
+        .as_object_mut()
+        .unwrap()
+        .insert("const".into(), 1.into());
+    if let Some(defs) = schema
+        .get_mut("$defs")
+        .and_then(serde_json::Value::as_object_mut)
+    {
+        if let Some(sync) = defs.get_mut("SyncState") {
+            sync["properties"]["cursor"] =
+                serde_json::json!({"type":"string","pattern":"^(0|[1-9][0-9]*)$"});
+        }
+        if let Some(id) = defs.get_mut("EntityId") {
+            id["pattern"] = wimm_contract_primitives::public_uuid_pattern().into();
+        }
+    }
+    schema
 }

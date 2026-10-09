@@ -104,3 +104,6 @@ macro_rules! record {
 pub trait Validate {
     fn validate(&self) -> Result<(), &'static str>;
 }
+
+#[cfg(feature = "wasm-data")]
+pub mod wasm_data;

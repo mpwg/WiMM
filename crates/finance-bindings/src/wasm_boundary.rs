@@ -34,6 +34,9 @@ pub(crate) fn decode<T: tsify::Tsify + serde::de::DeserializeOwned>(
     }
     // Standard-JSON und dieselbe strikte Serdeform wie V1. Die fallible
     // JS-Stringify-Grenze vermeidet gloo::into_serde/unwrap_throw bei Zyklen.
+    if !wimm_contract_primitives::wasm_data::check(&raw) {
+        return Err(wasm_error(ContractError::invalid_command()));
+    }
     let json = js_sys::JSON::stringify(&raw)
         .map_err(|_| wasm_error(ContractError::invalid_command()))?
         .as_string()

@@ -5,6 +5,13 @@
  */
 export type BoundedVec<T> = T[];
 
+/**
+ * Native Records trennen Handle und Fachaggregat; Serde erhält das flache V1-Format.
+ */
+export interface StoredAggregate extends Aggregate {
+    handle: EntityId;
+}
+
 export interface Account {
     id: EntityId;
     spaceId: EntityId;
@@ -27,11 +34,27 @@ export interface AggregateCommand {
     aggregateId: EntityId;
 }
 
+export interface AggregateQuery {
+    spaceId: EntityId;
+}
+
 export interface ApplicationScope {
     profileId: PublicId;
     spaceId: PublicId;
     profileRevision: Revision;
     sessionGeneration: Revision;
+}
+
+export interface AtomicBatch {
+    expectedRevisions: RevisionExpectation[];
+    aggregates: StoredAggregate[];
+    outbox: PendingOperation[];
+    projections: StoredProjection[];
+}
+
+export interface BalancePayload {
+    accountId?: EntityId;
+    balance: MoneyCents;
 }
 
 export interface Category {
@@ -79,6 +102,12 @@ export interface ChangeSet {
 export interface ClassificationRow {
     sourceRow: PositiveOrdinal;
     classification: Classification;
+}
+
+export interface ConfirmedAggregate {
+    spaceId: EntityId;
+    epoch: EntityId;
+    aggregate: StoredAggregate;
 }
 
 export interface Consumption {
@@ -245,6 +274,24 @@ export interface LocalFormOutcome {
     status: LocalFormStatus;
 }
 
+export interface LocalPortRequestV2 {
+    contractVersion: EngineBindingVersion;
+    command: LocalPortCommand;
+}
+
+export interface LocalSnapshot {
+    storageSchemaVersion: SnapshotStorageVersion;
+    domainSchemaVersion: SnapshotDomainVersion;
+    profileId: EntityId;
+    spaceId: EntityId;
+    epoch: EntityId;
+    aggregates: StoredAggregate[];
+    confirmed: ConfirmedAggregate[];
+    pending: PendingOperation[];
+    projections: StoredProjection[];
+    syncState?: SyncState;
+}
+
 export interface MoneyParseRequest {
     contractVersion: EngineBindingVersion;
     domainSchemaVersion: DomainSchemaVersion;
@@ -270,10 +317,27 @@ export interface PayeeMerge {
     transactionIds: EntityId[];
 }
 
+export interface PendingOperation {
+    operationId: EntityId;
+    spaceId: EntityId;
+    expectedRevisions: RevisionExpectation[];
+    dependsOn: EntityId[];
+    state: PendingState;
+    draft: LegacyJson;
+    retryCount: Ordinal;
+    createdAt?: UtcTimestamp;
+}
+
 export interface ProjectionOutcome {
     contractVersion: number;
     status: ProjectionStatus;
     projections: ProjectionSet;
+}
+
+export interface ProjectionRebuild {
+    spaceId: EntityId;
+    sourceAggregates: StoredAggregate[];
+    projections: StoredProjection[];
 }
 
 export interface ProjectionRequest {
@@ -347,6 +411,11 @@ export interface ReverseRequest {
 export interface ReverseTarget {
     id: EntityId;
     previous?: Aggregate;
+}
+
+export interface RevisionExpectation {
+    handle: EntityId;
+    expectedRevision: Revision;
 }
 
 export interface Rule {
@@ -438,6 +507,12 @@ export interface SignedKeyRoster {
     signature: Base64Url;
 }
 
+export interface SnapshotOutcomeV2 {
+    contractVersion: number;
+    status: SnapshotStatus;
+    snapshot: LocalSnapshot;
+}
+
 export interface Split {
     id: EntityId;
     categoryId: EntityId;
@@ -460,6 +535,20 @@ export interface StorageMigrationStep {
 export interface StorageVersions {
     storageSchemaVersion: PositiveOrdinal;
     domainSchemaVersion: PositiveOrdinal;
+}
+
+export interface SyncPage {
+    state: SyncState;
+    confirmed: ConfirmedAggregate[];
+    removeOperationIds: EntityId[];
+    projections: StoredProjection[];
+}
+
+export interface SyncState {
+    profileId: EntityId;
+    spaceId: EntityId;
+    epoch: EntityId;
+    cursor: string;
 }
 
 export interface Transaction {
@@ -544,6 +633,8 @@ export type Command = ({ commandType: "account.save" } & SaveCommand) | ({ comma
 
 export type CommandOutcomeV2 = { status: "changed"; contractVersion: number; changeSet: ChangeSet } | { status: "unchanged"; contractVersion: number };
 
+export type CommitOutcomeV2 = { status: "committed"; contractVersion: number; value: LocalPortOutcomeV2 } | { status: "notCommitted"; contractVersion: number; code: PersistenceErrorCode } | { status: "unknown"; contractVersion: number; operationId: EntityId };
+
 export type ConditionField = "date" | "amount" | "payee" | "memo";
 
 export type ConditionOperator = "equals" | "contains" | "gte" | "lte";
@@ -574,6 +665,8 @@ export type ImportDecision = "import" | "exclude" | "separate";
 
 export type ImportState = "ready" | "partial" | "completed";
 
+export type LegacyJson = unknown;
+
 export type LocalContractError = { contractVersion: number; code: string; detail: string };
 
 export type LocalFormStatus = "formValid";
@@ -581,6 +674,10 @@ export type LocalFormStatus = "formValid";
 export type LocalHash = Base64Url;
 
 export type LocalId = PublicId;
+
+export type LocalPortCommand = { method: "readAggregate"; handle: EntityId } | { method: "query"; query: AggregateQuery } | { method: "applyAtomicBatch"; batch: AtomicBatch } | { method: "loadConfirmed"; spaceId: EntityId } | { method: "loadPending"; spaceId: EntityId } | { method: "saveSyncPage"; page: SyncPage } | { method: "exportSnapshot"; spaceId: EntityId } | { method: "replaceSnapshot"; snapshot: LocalSnapshot } | { method: "rebuildProjections"; request: ProjectionRebuild } | { method: "getSyncState"; spaceId: EntityId } | { method: "initializeArea"; spaceId: EntityId; proposedEpoch: EntityId };
+
+export type LocalPortOutcomeV2 = { status: "aggregate"; contractVersion: number; value: StoredAggregate | null } | { status: "aggregates"; contractVersion: number; value: StoredAggregate[] } | { status: "confirmed"; contractVersion: number; value: ConfirmedAggregate[] } | { status: "pending"; contractVersion: number; value: PendingOperation[] } | { status: "snapshot"; contractVersion: number; value: LocalSnapshot } | { status: "syncState"; contractVersion: number; value: SyncState | null } | { status: "initialized"; contractVersion: number; epoch: EntityId } | { status: "applied"; contractVersion: number };
 
 export type LocalPositive = number;
 
@@ -599,6 +696,10 @@ export type OccurrenceState = "confirmed" | "skipped";
 export type Ordinal = number;
 
 export type ParserSource = "csv" | "camt053" | "ofx" | "qfx";
+
+export type PendingState = "queued" | "sending" | "accepted" | "conflict" | "blocked" | "forbidden" | "invalid";
+
+export type PersistenceErrorCode = "REVISION_CONFLICT" | "QUOTA" | "WRITE_FAILED" | "UPDATE_REQUIRED" | "EPOCH_MISMATCH" | "OPERATION_ID_REUSED";
 
 export type PositiveOrdinal = number;
 
@@ -624,9 +725,21 @@ export type Role = "admin" | "member" | "viewer";
 
 export type RuleAction = { field: "categoryId"; value: EntityId } | { field: "payeeId"; value: EntityId } | { field: "clearance"; value: ImportClearance };
 
+export type SnapshotDomainVersion = number;
+
+export type SnapshotStatus = "snapshot";
+
+export type SnapshotStorageVersion = number;
+
+export type StoredProjection = { kind: "balance"; spaceId: EntityId; key: EntityId; payload: MoneyCents } | { kind: "accountBalance"; spaceId: EntityId; key: EntityId; payload: BalancePayload } | { kind: "consumption"; spaceId: EntityId; key: NonEmptyText; payload: Consumption };
+
 export type StoredRevision = number;
 
+export type SupportedFlag = boolean;
+
 export type TransactionKind = "normal" | "opening" | "transfer" | "contribution" | "settlement";
+
+export type UnsupportedFlag = boolean;
 
 export type UtcTimestamp = string;
 
@@ -685,9 +798,13 @@ export function reverse_json(request: string): string;
 
 export function reverse_v2(request: ReverseRequest): CommandOutcomeV2;
 
+export function roundtrip_local_snapshot_v2(input: LocalSnapshot): SnapshotOutcomeV2;
+
 export function validate_json(request: string): string;
 
 export function validate_local_migration_form_v2(input: StorageMigrationPlan): LocalFormOutcome;
+
+export function validate_local_port_form_v2(input: LocalPortRequestV2): LocalFormOutcome;
 
 export function validate_public_operation_form_v2(input: EncryptedOperation): PublicValidationOutcome;
 
@@ -720,8 +837,10 @@ export interface InitOutput {
     readonly project_v2: (a: any) => [number, number, number];
     readonly reverse_json: (a: number, b: number) => [number, number];
     readonly reverse_v2: (a: any) => [number, number, number];
+    readonly roundtrip_local_snapshot_v2: (a: any) => [number, number, number];
     readonly validate_json: (a: number, b: number) => [number, number];
     readonly validate_local_migration_form_v2: (a: any) => [number, number, number];
+    readonly validate_local_port_form_v2: (a: any) => [number, number, number];
     readonly validate_public_operation_form_v2: (a: any) => [number, number, number];
     readonly validate_public_roster_form_v2: (a: any) => [number, number, number];
     readonly validate_v2: (a: any) => [number, number, number];

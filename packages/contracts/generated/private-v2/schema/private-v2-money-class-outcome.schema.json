@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MoneyResultV2",
+  "description": "Nur Ausgabevertrag: ein Erfolg hat Cent, eine Ablehnung Code/Meldung.",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "integer",
+      "format": "uint32",
+      "const": 2,
+      "minimum": 0
+    },
+    "errorCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "message": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "$ref": "#/$defs/MoneyStatusV2"
+    },
+    "value": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MoneyCents"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "status"
+  ],
+  "$defs": {
+    "MoneyCents": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": -9007199254740991
+    },
+    "MoneyStatusV2": {
+      "type": "string",
+      "enum": [
+        "money",
+        "rejected"
+      ]
+    }
+  }
+}

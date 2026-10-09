@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "StoragePersistenceOutcome",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "unsupported"
+        },
+        "supported": {
+          "$ref": "#/$defs/UnsupportedFlag"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "supported"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "granted"
+        },
+        "supported": {
+          "$ref": "#/$defs/SupportedFlag"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "supported"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "denied"
+        },
+        "supported": {
+          "$ref": "#/$defs/SupportedFlag"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "supported"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "error"
+        },
+        "supported": {
+          "$ref": "#/$defs/SupportedFlag"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "supported"
+      ]
+    }
+  ],
+  "$defs": {
+    "SupportedFlag": {
+      "type": "boolean",
+      "const": true
+    },
+    "UnsupportedFlag": {
+      "type": "boolean",
+      "const": false
+    }
+  }
+}

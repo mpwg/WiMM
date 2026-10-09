@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExportFileRequest",
+  "type": "object",
+  "properties": {
+    "bytes": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "maximum": 255,
+        "minimum": 0
+      }
+    },
+    "mediaType": {
+      "type": "string"
+    },
+    "suggestedName": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "suggestedName",
+    "mediaType",
+    "bytes"
+  ]
+}

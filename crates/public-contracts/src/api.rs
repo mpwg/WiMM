@@ -50,6 +50,9 @@ fn decode<T: tsify::Tsify + serde::de::DeserializeOwned>(
     if protocol.as_f64() != Some(1.0) {
         return Err(error(PublicContractError::update_required()));
     }
+    if !wimm_contract_primitives::wasm_data::check(&raw) {
+        return Err(error(PublicContractError::invalid()));
+    }
     let text = js_sys::JSON::stringify(&raw)
         .map_err(|_| error(PublicContractError::invalid()))?
         .as_string()

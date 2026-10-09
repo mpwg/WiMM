@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProfileLoadOutcome",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "missing"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "loaded"
+        },
+        "profile": true
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "profile"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "corrupt"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "unreadable"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ]
+    }
+  ]
+}

@@ -6,9 +6,43 @@
       "name": "validate_local_migration_form_v2",
       "request": "local-migration-plan.schema.json",
       "result": "local-form-outcome.schema.json"
+    },
+    {
+      "error": "local-snapshot-error.schema.json",
+      "name": "roundtrip_local_snapshot_v2",
+      "request": "local-snapshot.schema.json",
+      "result": "local-snapshot-outcome.schema.json"
+    },
+    {
+      "error": "local-snapshot-error.schema.json",
+      "name": "validate_local_port_form_v2",
+      "request": "local-port-request.schema.json",
+      "result": "local-form-outcome.schema.json"
     }
   ],
   "files": [
+    "local-snapshot.schema.json",
+    "local-stored-aggregate.schema.json",
+    "local-confirmed.schema.json",
+    "local-pending.schema.json",
+    "local-projection.schema.json",
+    "local-sync-state.schema.json",
+    "local-sync-page.schema.json",
+    "local-atomic-batch.schema.json",
+    "local-projection-rebuild.schema.json",
+    "local-port-request.schema.json",
+    "local-port-outcome.schema.json",
+    "local-commit-outcome.schema.json",
+    "local-snapshot-outcome.schema.json",
+    "local-snapshot-error.schema.json",
+    "local-import-request.schema.json",
+    "local-imported-file.schema.json",
+    "local-export-request.schema.json",
+    "local-platform-command.schema.json",
+    "local-backup-request.schema.json",
+    "local-migration-request.schema.json",
+    "local-profile-outcome.schema.json",
+    "local-persistence-outcome.schema.json",
     "local-versions.schema.json",
     "local-migration-step.schema.json",
     "local-migration-plan.schema.json",
