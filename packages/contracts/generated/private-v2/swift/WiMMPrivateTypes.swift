@@ -4040,7 +4040,7 @@ enum ContractError: Swift.Error, Equatable, Hashable, Foundation.LocalizedError 
 
 
 
-    case Rejected(code: String, detail: String
+    case Rejected(contractVersion: UInt32, code: String, detail: String
     )
 
 
@@ -4072,6 +4072,7 @@ public struct FfiConverterTypeContractError: FfiConverterRustBuffer {
 
 
         case 1: return .Rejected(
+            contractVersion: try FfiConverterUInt32.read(from: &buf),
             code: try FfiConverterString.read(from: &buf),
             detail: try FfiConverterString.read(from: &buf)
             )
@@ -4087,8 +4088,9 @@ public struct FfiConverterTypeContractError: FfiConverterRustBuffer {
 
 
 
-        case let .Rejected(code,detail):
+        case let .Rejected(contractVersion,code,detail):
             writeInt(&buf, Int32(1))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
             FfiConverterString.write(code, into: &buf)
             FfiConverterString.write(detail, into: &buf)
 

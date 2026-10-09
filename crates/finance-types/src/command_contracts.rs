@@ -13,6 +13,7 @@ pub const COMMAND_ERROR: (&str, &str) = ("INVALID_COMMAND", "Der Fachbefehl ist 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Expectation {
     pub id: EntityId,
     pub expected_revision: Revision,
@@ -21,6 +22,7 @@ pub struct Expectation {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Context {
     pub operation_id: EntityId,
     pub occurred_at: UtcTimestamp,
@@ -30,6 +32,7 @@ pub struct Context {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Request {
     #[cfg_attr(feature = "contract-schema", schemars(with = "u32"))]
     pub contract_version: crate::versions::EngineBindingVersion,
@@ -42,9 +45,10 @@ pub struct Request {
     pub context: Context,
 }
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ChangeSet {
     pub space_id: EntityId,
     pub command_type: String,

@@ -25,10 +25,8 @@ await run(process.env.WIMM_SWIFTC ?? 'swiftc', ['-warnings-as-errors', '-swift-v
 const cases = JSON.parse(await readFile('crates/finance-core/tests/fixtures/contract-catalog.json', 'utf8')).filter((scenario) => scenario.method === 'execute');
 assert.equal(cases.length, 176);
 const wire = (scenario) => typeof scenario.request === 'string' ? scenario.request : JSON.stringify(scenario.request);
-const centFixture = cases.find((scenario) => (typeof scenario.request === 'string' ? JSON.parse(scenario.request) : scenario.request).aggregates.some((aggregate) => aggregate.aggregateType === 'transaction'));
-assert.ok(centFixture, 'Synthetische Buchungsfixture für direkten nativen Centfehler fehlt.');
-const invalid = { contractVersion: 1, status: 'rejected', error: { code: 'INVALID_COMMAND', message: 'Der Fachbefehl ist ungültig.' } };
-const negative = ['version', 'mixedVersion', 'mixedDomain', 'uuid', 'utc', 'list', 'cent'].map((mode) => ({ name: `Direkter Sprachobjekt-Negativfall: ${mode}`, mode, request: mode === 'cent' ? centFixture.request : cases[0].request, expected: ['version', 'mixedVersion', 'mixedDomain'].includes(mode) ? { contractVersion: 1, status: 'rejected', error: { code: 'UPDATE_REQUIRED', message: 'Der Enginevertrag wird nicht unterstützt.' } } : invalid }));
+const negative = JSON.parse(await readFile('crates/finance-bindings/tests/fixtures/command-v2-negative.json', 'utf8'));
+assert.equal(negative.length, 7);
 const scenarios = [...cases.map((scenario) => ({ ...scenario, mode: 'catalog' })), ...negative];
 const input = scenarios.map((scenario) => `${scenario.mode}\t${wire(scenario)}`).join('\n') + '\n';
 const results = [];

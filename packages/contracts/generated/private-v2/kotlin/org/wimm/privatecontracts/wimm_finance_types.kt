@@ -4324,12 +4324,14 @@ sealed class ContractException: kotlin.Exception() {
 
     class Rejected(
 
+        val `contractVersion`: kotlin.UInt,
+
         val `code`: kotlin.String,
 
         val `detail`: kotlin.String
         ) : ContractException() {
         override val message
-            get() = "code=${ `code` }, detail=${ `detail` }"
+            get() = "contractVersion=${ `contractVersion` }, code=${ `code` }, detail=${ `detail` }"
     }
 
 
@@ -4352,6 +4354,7 @@ public object FfiConverterTypeContractError : FfiConverterRustBuffer<ContractExc
 
         return when(buf.getInt()) {
             1 -> ContractException.Rejected(
+                FfiConverterUInt.read(buf),
                 FfiConverterString.read(buf),
                 FfiConverterString.read(buf),
                 )
@@ -4364,6 +4367,7 @@ public object FfiConverterTypeContractError : FfiConverterRustBuffer<ContractExc
             is ContractException.Rejected -> (
                 // Add the size for the Int that specifies the variant plus the size needed for all fields
                 4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
                 + FfiConverterString.allocationSize(value.`code`)
                 + FfiConverterString.allocationSize(value.`detail`)
             )
@@ -4374,6 +4378,7 @@ public object FfiConverterTypeContractError : FfiConverterRustBuffer<ContractExc
         when(value) {
             is ContractException.Rejected -> {
                 buf.putInt(1)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
                 FfiConverterString.write(value.`code`, buf)
                 FfiConverterString.write(value.`detail`, buf)
                 Unit

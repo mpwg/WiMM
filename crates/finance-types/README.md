@@ -10,6 +10,8 @@ Das optionale Feature `contract-schema` erzeugt unveränderte Schemars-Formschem
 
 Formfehler werden als typisierter `ContractError` mit `code` und deutscher `detail` übertragen, ohne Originalpayload. `detail` vermeidet die Kollision mit Kotlins geerbter Throwable.message; die V1-Ausgabeadapter serialisieren weiterhin error.message. Das bereits vorhandene Importmapping bleibt als ausdrücklich opakes JSON-Fremdpayload die einzige String-Transportausnahme; Finanzaggregate und Befehle sind echte native Records/Enums.
 
+`wasm-bindings` erzeugt mit Tsify 0.5.8 die TypeScript-Formen aus denselben Rust-/Serde-Definitionen. Der Objektaufruf wird an der WASM-Grenze mit Standard-JSON und serde_json strikt deserialisiert; der native js-Deserialisierungsmodus wird wegen übersehener Zusatzfelder nicht verwendet. Null/Abwesenheit, Tags und sichere Zahlen bleiben erhalten. `ContractError` trägt jetzt auch die explizite Bindingversion 2; seine Meldung bleibt payloadfrei. Vier neue Fremdpakete samt ursprünglichen Lizenzen/Checksummen/Herkunft im [Abschnittsregister](../../docs/dependency-provenance/typed-wasm-contracts.json); kein eigener Ersatzgenerator oder Parser.
+
 ```sh
 cargo test --locked -p wimm-finance-types --features contract-schema
 cargo test --locked -p wimm-finance-types --features native-bindings

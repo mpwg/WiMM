@@ -31,7 +31,7 @@ fun main() {
                     var found = false
                     request.aggregates.forEach { aggregate ->
                         if (aggregate is Aggregate.Transaction) {
-                            aggregate.v1.amount = Long.MAX_VALUE
+                            aggregate.v1.amount = 9_007_199_254_740_992L
                             found = true
                         }
                     }

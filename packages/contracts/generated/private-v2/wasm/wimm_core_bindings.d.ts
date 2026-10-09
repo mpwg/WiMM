@@ -1,5 +1,388 @@
 /* tslint:disable */
 /* eslint-disable */
+/**
+ * Formgrenzen werden auch bei nativer Konstruktion erzwungen.
+ */
+export type BoundedVec<T> = T[];
+
+export interface Account {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    name: NonEmptyText;
+    type: AccountType;
+    onBudget: boolean;
+    archived: boolean;
+}
+
+export interface AggregateCommand {
+    aggregateId: EntityId;
+}
+
+export interface Category {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    name: NonEmptyText;
+    groupId: EntityId;
+    sortOrder: Ordinal;
+    archived: boolean;
+    system?: CategorySystem;
+}
+
+export interface CategoryGroup {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    name: NonEmptyText;
+    kind: GroupKind;
+    sortOrder: Ordinal;
+    archived: boolean;
+}
+
+export interface ChangeSet {
+    spaceId: EntityId;
+    commandType: string;
+    operationId: EntityId;
+    occurredAt: UtcTimestamp;
+    expectedRevisions: Expectation[];
+    aggregates: Aggregate[];
+}
+
+export interface Context {
+    operationId: EntityId;
+    occurredAt: UtcTimestamp;
+    generatedIds: EntityId[];
+}
+
+export interface Expectation {
+    id: EntityId;
+    expectedRevision: Revision;
+}
+
+export interface FinancialRevision {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+}
+
+export interface ImportBatch {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    fileHash: FileHash;
+    accountId: EntityId;
+    rows: BoundedVec<ImportRow>;
+    committedRows: PositiveOrdinal[];
+    state: ImportState;
+}
+
+export interface ImportCandidate {
+    sourceRow: PositiveOrdinal;
+    date: FinanceDate;
+    amount: MoneyCents;
+    parserSource?: ParserSource;
+    payee?: string;
+    memo?: string;
+    externalId?: string;
+    sourceFingerprint?: NonEmptyText;
+    categoryId?: EntityId;
+    payeeId?: EntityId;
+    clearance?: ImportClearance;
+}
+
+export interface ImportCommit {
+    importId: EntityId;
+}
+
+export interface ImportFingerprint {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    accountId: EntityId;
+    parserSource: NonEmptyText;
+    fingerprint: NonEmptyText;
+    transactionId: EntityId;
+    importId: EntityId;
+    sourceRow: PositiveOrdinal;
+    externalId?: string;
+}
+
+export interface ImportMapping {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    name: NonEmptyText;
+    mapping: unknown;
+}
+
+export interface ImportRow {
+    sourceRow: PositiveOrdinal;
+    candidate: ImportCandidate | null;
+    decision: ImportDecision;
+    issues: string[];
+}
+
+export interface Payee {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    name: NonEmptyText;
+    aliases: NonEmptyText[];
+    archived: boolean;
+}
+
+export interface PayeeMerge {
+    targetId: EntityId;
+    sourceIds: NonEmptyVec<EntityId>;
+    transactionIds: EntityId[];
+}
+
+export interface Reconciliation {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    accountId: EntityId;
+    statementDate: FinanceDate;
+    statementBalance: MoneyCents;
+    transactionIds: NonEmptyVec<EntityId>;
+}
+
+export interface ReconciliationConfirm {
+    accountId: EntityId;
+    statementDate: FinanceDate;
+    statementBalance: MoneyCents;
+    selectedTransactionIds: NonEmptyVec<EntityId>;
+}
+
+export interface ReconciliationUnlock {
+    reconciliationId: EntityId;
+}
+
+export interface Request {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    command: Command;
+    expectedRevisions: Expectation[];
+    context: Context;
+}
+
+export interface Rule {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    order: Ordinal;
+    conditions: NonEmptyVec<RuleCondition>;
+    actions: NonEmptyVec<RuleAction>;
+    stopProcessing: boolean;
+    enabled: boolean;
+}
+
+export interface RuleCondition {
+    field: ConditionField;
+    operator: ConditionOperator;
+    value: ConditionValue;
+}
+
+export interface RuleReorder {
+    ruleIds: EntityId[];
+}
+
+export interface SaveCommand {
+    aggregates: NonEmptyVec<Aggregate>;
+}
+
+export interface Schedule {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    startDate: FinanceDate;
+    frequency: Frequency;
+    interval: PositiveOrdinal;
+    enabled: boolean;
+    template: TransactionTemplate;
+    endDate?: FinanceDate;
+}
+
+export interface ScheduleConfirm {
+    scheduleId: EntityId;
+    dueDate: FinanceDate;
+    importedTransactionId?: EntityId;
+}
+
+export interface ScheduleOccurrence {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    scheduleId: EntityId;
+    dueDate: FinanceDate;
+    state: OccurrenceState;
+    transactionId?: EntityId;
+}
+
+export interface ScheduleSkip {
+    scheduleId: EntityId;
+    dueDate: FinanceDate;
+}
+
+export interface Split {
+    id: EntityId;
+    categoryId: EntityId;
+    amount: MoneyCents;
+}
+
+export interface Transaction {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    accountId: EntityId;
+    amount: MoneyCents;
+    kind: TransactionKind;
+    clearance: Clearance;
+    splits: Split[];
+    payeeId?: EntityId;
+    note?: string;
+    transferId?: EntityId;
+    date: FinanceDate;
+    importReference?: NonEmptyText;
+    scheduleOccurrenceId?: EntityId;
+}
+
+export interface TransactionTemplate {
+    accountId: EntityId;
+    amount: MoneyCents;
+    kind: TransactionKind;
+    clearance: Clearance;
+    splits: Split[];
+    payeeId?: EntityId;
+    note?: string;
+    transferId?: EntityId;
+}
+
+export interface Transfer {
+    id: EntityId;
+    spaceId: EntityId;
+    revision: StoredRevision;
+    createdAt: UtcTimestamp;
+    updatedAt: UtcTimestamp;
+    deletedAt?: UtcTimestamp;
+    date: FinanceDate;
+    sourceAccountId: EntityId;
+    targetAccountId: EntityId;
+    sourceTransactionId: EntityId;
+    targetTransactionId: EntityId;
+    amount: MoneyCents;
+    budgetCategoryId?: EntityId;
+    budgetRelease?: boolean;
+}
+
+export type AccountType = "checking" | "cash" | "savings" | "credit" | "other";
+
+export type Aggregate = ({ aggregateType: "account" } & Account) | ({ aggregateType: "financialRevision" } & FinancialRevision) | ({ aggregateType: "categoryGroup" } & CategoryGroup) | ({ aggregateType: "category" } & Category) | ({ aggregateType: "payee" } & Payee) | ({ aggregateType: "transaction" } & Transaction) | ({ aggregateType: "transfer" } & Transfer) | ({ aggregateType: "reconciliation" } & Reconciliation) | ({ aggregateType: "importMapping" } & ImportMapping) | ({ aggregateType: "importBatch" } & ImportBatch) | ({ aggregateType: "importFingerprint" } & ImportFingerprint) | ({ aggregateType: "rule" } & Rule) | ({ aggregateType: "schedule" } & Schedule) | ({ aggregateType: "scheduleOccurrence" } & ScheduleOccurrence);
+
+export type AggregateKind = "Account" | "FinancialRevision" | "CategoryGroup" | "Category" | "Payee" | "Transaction" | "Transfer" | "Reconciliation" | "ImportMapping" | "ImportBatch" | "ImportFingerprint" | "Rule" | "Schedule" | "ScheduleOccurrence";
+
+export type CategorySystem = "uncategorized";
+
+export type Clearance = "uncleared" | "cleared" | "reconciled";
+
+export type Command = ({ commandType: "account.save" } & SaveCommand) | ({ commandType: "categoryGroup.save" } & SaveCommand) | ({ commandType: "category.save" } & SaveCommand) | ({ commandType: "payee.save" } & SaveCommand) | ({ commandType: "transaction.save" } & SaveCommand) | ({ commandType: "transfer.save" } & SaveCommand) | ({ commandType: "importMapping.save" } & SaveCommand) | ({ commandType: "importBatch.save" } & SaveCommand) | ({ commandType: "rule.save" } & SaveCommand) | ({ commandType: "schedule.save" } & SaveCommand) | ({ commandType: "account.archive" } & AggregateCommand) | ({ commandType: "category.archive" } & AggregateCommand) | ({ commandType: "transaction.delete" } & AggregateCommand) | ({ commandType: "transfer.delete" } & AggregateCommand) | ({ commandType: "rule.delete" } & AggregateCommand) | ({ commandType: "payee.merge" } & PayeeMerge) | ({ commandType: "reconciliation.confirm" } & ReconciliationConfirm) | ({ commandType: "reconciliation.unlock" } & ReconciliationUnlock) | ({ commandType: "rule.reorder" } & RuleReorder) | ({ commandType: "import.commit" } & ImportCommit) | ({ commandType: "schedule.confirm" } & ScheduleConfirm) | ({ commandType: "schedule.skip" } & ScheduleSkip);
+
+export type CommandOutcomeV2 = { status: "changed"; contractVersion: number; changeSet: ChangeSet } | { status: "unchanged"; contractVersion: number };
+
+export type ConditionField = "date" | "amount" | "payee" | "memo";
+
+export type ConditionOperator = "equals" | "contains" | "gte" | "lte";
+
+export type ConditionValue = string | MoneyCents;
+
+export type ContractError = { contractVersion: number; code: string; detail: string };
+
+export type DomainSchemaVersion = number;
+
+export type EngineBindingVersion = number;
+
+export type EntityId = string;
+
+export type FileHash = string;
+
+export type FinanceDate = string;
+
+export type Frequency = "weekly" | "monthly" | "yearly";
+
+export type GroupKind = "income" | "expense";
+
+export type ImportClearance = "uncleared" | "cleared";
+
+export type ImportDecision = "import" | "exclude" | "separate";
+
+export type ImportState = "ready" | "partial" | "completed";
+
+export type MoneyCents = number;
+
+export type NonEmptyText = string;
+
+export type NonEmptyVec<T> = BoundedVec<T>;
+
+export type OccurrenceState = "confirmed" | "skipped";
+
+export type Ordinal = number;
+
+export type ParserSource = "csv" | "camt053" | "ofx" | "qfx";
+
+export type PositiveOrdinal = number;
+
+export type Revision = number;
+
+export type RuleAction = { field: "categoryId"; value: EntityId } | { field: "payeeId"; value: EntityId } | { field: "clearance"; value: ImportClearance };
+
+export type StoredRevision = number;
+
+export type TransactionKind = "normal" | "opening" | "transfer" | "contribution" | "settlement";
+
+export type UtcTimestamp = string;
+
 
 export class MoneyRequestV2 {
     free(): void;
@@ -39,6 +422,8 @@ export function calculate_money_v2(request: MoneyRequestV2): MoneyResultV2;
  */
 export function execute_json(request: string): string;
 
+export function execute_v2(input: Request): CommandOutcomeV2;
+
 export function project_json(request: string): string;
 
 export function reverse_json(request: string): string;
@@ -54,6 +439,7 @@ export interface InitOutput {
     readonly calculate_json: (a: number, b: number) => [number, number];
     readonly calculate_money_v2: (a: number) => number;
     readonly execute_json: (a: number, b: number) => [number, number];
+    readonly execute_v2: (a: any) => [number, number, number];
     readonly moneyrequestv2_contractVersion: (a: number) => number;
     readonly moneyrequestv2_domainSchemaVersion: (a: number) => number;
     readonly moneyrequestv2_new: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
@@ -67,10 +453,13 @@ export interface InitOutput {
     readonly project_json: (a: number, b: number) => [number, number];
     readonly reverse_json: (a: number, b: number) => [number, number];
     readonly validate_json: (a: number, b: number) => [number, number];
-    readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_exn_store: (a: number) => void;
+    readonly __externref_table_alloc: () => number;
+    readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
+    readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_start: () => void;
 }
 

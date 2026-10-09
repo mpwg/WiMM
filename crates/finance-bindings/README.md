@@ -29,7 +29,9 @@ Der letzte Befehl verlangt tatsächliche Swift-/Kotlin-/Java-Werkzeuge und führ
 
 `pnpm test:contracts:commands:native` prüft 176 unveränderte Befehlsorakel mit direkter Rust-Assertion und echten Swift-/Kotlin-Records/Enums. Jeder Fremdsprachfall decodiert zunächst die synthetische V1-Fixture über den ausdrücklichen Formadapter, überträgt den erhaltenen Sprachrecord erneut an `execute_v2` und prüft das vollständige Ergebnis. Sieben zusätzliche Fälle ändern die Sprachobjekte direkt: Version, Version plus ungültige UUID, Fachversion plus ungültige UTC-Zeit, UUID, UTC-Zeit, leere Pflichtliste und unsicherer Centbetrag. Beide Laufzeiten müssen strukturierte Codes liefern. Der Befehl verlangt die zuvor mit Prüfsumme gesicherte JNA-Testabhängigkeit des Geldsprachlaufs. Generatoren erzeugen/kompilieren beide privaten nativen Module; kein Schemaersatz oder Sprachmock.
 
-Der native Befehlsabschnitt ist noch keine vollständige AR02-Abnahme: typisierter WASM-Befehlsaufruf, weitere Engineaktionen und öffentliche/lokale Module folgen innerhalb #116.
+`execute_v2` ist jetzt auch ein tatsächlicher WASM-Objektaufruf mit generiertem TypeScript-Request/Ergebnis aus derselben Rust-Quelle. Die äußere Standard-JSON-/Serde-Grenze erhält strikte Felder, Zahlformen und Null/Abwesenheit; intern bleibt die Fachausführung vollständig typisiert. Stringify-Fehler wie Zyklen werden fallible abgefangen und als versionierter strukturierter Fehler geliefert. Der ungeprüfte gloo into_serde/unwrap_throw-Eingabepfad wird nicht verwendet. Native und WASM-Fehler enthalten Bindingversion 2, code/detail.
+
+`pnpm test:contracts:commands:wasm` prüft 176 unveränderte Befehlsorakel plus dieselben sieben Sprachobjekt-Negativfixtures, acht Formnegativfixtures und zwei JavaScript-Datenfälle in echtem WASM/Node und Chromium/WASM. Direkte Rust-Assertions ergänzen den Formvergleich. Dieser Lauf ist in der regulären V2-Prüfkette/CI enthalten. `pnpm test:contracts:commands:native` prüft dieselben 176/sieben Fälle in tatsächlichem Swift/Kotlin; weitere Engineaktionen und öffentliche/lokale Module bleiben in #116 offen.
 
 ## Architekturstand vom 9. Oktober 2026
 

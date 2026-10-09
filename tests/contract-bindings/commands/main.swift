@@ -21,7 +21,7 @@ while let input = readLine() {
             var found = false
             request.aggregates = request.aggregates.map { aggregate in
                 if case .transaction(var transaction) = aggregate {
-                    transaction.amount = Int64.max
+                    transaction.amount = 9_007_199_254_740_992
                     found = true
                     return .transaction(transaction)
                 }

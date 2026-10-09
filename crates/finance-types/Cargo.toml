@@ -11,11 +11,14 @@ serde.workspace = true
 serde_json.workspace = true
 uuid.workspace = true
 uniffi = { workspace = true, optional = true }
+tsify = { version = "=0.5.8", default-features = false, features = ["json"], optional = true }
+wasm-bindgen = { workspace = true, optional = true }
 schemars = { version = "=1.2.2", optional = true }
 
 [features]
 contract-schema = ["dep:schemars"]
 native-bindings = ["dep:uniffi"]
+wasm-bindings = ["dep:tsify", "dep:wasm-bindgen"]
 
 [lints]
 workspace = true

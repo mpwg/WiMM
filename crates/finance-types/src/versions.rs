@@ -5,6 +5,7 @@ macro_rules! version {
     ($name:ident) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
         #[serde(transparent)]
+        #[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
         pub struct $name(u32);
         impl $name {
             pub const fn value(self) -> u32 {

@@ -53,14 +53,16 @@ Stand: 9. Oktober 2026, aus tatsächlichen Manifesten dieses Checkouts. Exakte a
 | `Cargo.toml workspace` | `uuid` | `=1.27.0` |
 | `Cargo.toml workspace` | `uniffi` | `=0.32.2` |
 | `Cargo.toml workspace` | `wasm-bindgen` | `=0.2.129` |
+| `crates/finance-types` / `crates/finance-bindings` | `tsify` (optional, json-Feature) | `=0.5.8` |
+| `crates/finance-bindings` | `js-sys` (optional) | `=0.3.106` |
 | `Tauri Cargo.toml` | `tauri` | `=2.12.1` |
 | `Tauri Cargo.toml` | `rusqlite` | `=0.40.2` |
 | `Tauri Cargo.toml` | `serde` | `=1.0.229` |
 | `Tauri Cargo.toml` | `serde_json` | `=1.0.151` |
-| `Tauri Cargo.toml` | `sha2` | `=0.10.9` |
-| `Tauri Cargo.toml` | `base64` | `=0.22.1` |
-| `Tauri Cargo.toml` | `tauri-plugin-dialog` | `=2.7.3` |
-| `Tauri Cargo.toml` | `tauri-plugin-opener` | `=2.5.5` |
+| `Tauri Cargo.toml` | `sha2` | `=0.11.0` |
+| `Tauri Cargo.toml` | `base64` | `=0.23.1` |
+| `Tauri Cargo.toml` | `tauri-plugin-dialog` | `=2.8.1` |
+| `Tauri Cargo.toml` | `tauri-plugin-opener` | `=2.7.0` |
 | `Tauri Cargo.toml` | `url` | `=2.5.8` |
 | `Tauri Cargo.toml` | `tempfile` | `=3.27.0` |
 | `Tauri Cargo.toml` | `wimm-finance-core` | `../../../crates/finance-core` |

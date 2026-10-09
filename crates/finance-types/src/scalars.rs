@@ -6,6 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize, de};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(transparent)]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct MoneyCents(i64);
 impl MoneyCents {
     pub fn new(value: i64) -> CoreResult<Self> {
@@ -35,6 +36,7 @@ impl MoneyCents {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 #[serde(transparent)]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Revision(i64);
 impl Revision {
     pub fn new(value: i64) -> CoreResult<Self> {
@@ -111,6 +113,7 @@ macro_rules! checked_string {
     ($name:ident, $check:expr) => {
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
         #[serde(try_from = "String")]
+        #[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
         pub struct $name(String);
         impl $name {
             pub fn new(value: String) -> CoreResult<Self> {
@@ -149,6 +152,7 @@ macro_rules! checked_ordinal {
     ($name:ident, $minimum:expr) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
         #[serde(transparent)]
+        #[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
         pub struct $name(i64);
         impl $name {
             pub fn new(value: i64) -> CoreResult<Self> {
@@ -176,6 +180,7 @@ checked_ordinal!(StoredRevision, 1);
 /// Formgrenzen werden auch bei nativer Konstruktion erzwungen.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(transparent)]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct BoundedVec<T, const MIN: usize, const MAX: usize>(Vec<T>);
 impl<T, const MIN: usize, const MAX: usize> BoundedVec<T, MIN, MAX> {
     pub fn new(values: Vec<T>) -> CoreResult<Self> {
@@ -196,6 +201,7 @@ impl<'de, T: Deserialize<'de>, const MIN: usize, const MAX: usize> Deserialize<'
         Self::new(Vec::<T>::deserialize(d)?).map_err(|(_, m)| de::Error::custom(m))
     }
 }
+#[cfg_attr(feature = "wasm-bindings", tsify::declare)]
 pub type NonEmptyVec<T> = BoundedVec<T, 1, { usize::MAX }>;
 
 /// Optional heißt fehlend. Ein vorhandenes null ist für V1 kein gültiger Wert.

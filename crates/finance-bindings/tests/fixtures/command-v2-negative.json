@@ -1,0 +1,728 @@
+[
+  {
+    "name": "Direkter Sprachobjekt-Negativfall: version",
+    "mode": "version",
+    "request": {
+      "contractVersion": 1,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "aggregates": [
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 10,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 11,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        }
+      ],
+      "command": {
+        "commandType": "rule.reorder",
+        "ruleIds": [
+          "30000000-0000-4000-8000-000000000011",
+          "30000000-0000-4000-8000-000000000010"
+        ]
+      },
+      "expectedRevisions": [
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "expectedRevision": 1
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "expectedRevision": 1
+        }
+      ],
+      "context": {
+        "operationId": "30000000-0000-4000-8000-000000000002",
+        "occurredAt": "2026-10-08T12:00:00Z",
+        "generatedIds": []
+      }
+    },
+    "expected": {
+      "contractVersion": 1,
+      "status": "rejected",
+      "error": {
+        "code": "UPDATE_REQUIRED",
+        "message": "Der Enginevertrag wird nicht unterstützt."
+      }
+    }
+  },
+  {
+    "name": "Direkter Sprachobjekt-Negativfall: mixedVersion",
+    "mode": "mixedVersion",
+    "request": {
+      "contractVersion": 1,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "aggregates": [
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 10,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 11,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        }
+      ],
+      "command": {
+        "commandType": "rule.reorder",
+        "ruleIds": [
+          "30000000-0000-4000-8000-000000000011",
+          "30000000-0000-4000-8000-000000000010"
+        ]
+      },
+      "expectedRevisions": [
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "expectedRevision": 1
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "expectedRevision": 1
+        }
+      ],
+      "context": {
+        "operationId": "30000000-0000-4000-8000-000000000002",
+        "occurredAt": "2026-10-08T12:00:00Z",
+        "generatedIds": []
+      }
+    },
+    "expected": {
+      "contractVersion": 1,
+      "status": "rejected",
+      "error": {
+        "code": "UPDATE_REQUIRED",
+        "message": "Der Enginevertrag wird nicht unterstützt."
+      }
+    }
+  },
+  {
+    "name": "Direkter Sprachobjekt-Negativfall: mixedDomain",
+    "mode": "mixedDomain",
+    "request": {
+      "contractVersion": 1,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "aggregates": [
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 10,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 11,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        }
+      ],
+      "command": {
+        "commandType": "rule.reorder",
+        "ruleIds": [
+          "30000000-0000-4000-8000-000000000011",
+          "30000000-0000-4000-8000-000000000010"
+        ]
+      },
+      "expectedRevisions": [
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "expectedRevision": 1
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "expectedRevision": 1
+        }
+      ],
+      "context": {
+        "operationId": "30000000-0000-4000-8000-000000000002",
+        "occurredAt": "2026-10-08T12:00:00Z",
+        "generatedIds": []
+      }
+    },
+    "expected": {
+      "contractVersion": 1,
+      "status": "rejected",
+      "error": {
+        "code": "UPDATE_REQUIRED",
+        "message": "Der Enginevertrag wird nicht unterstützt."
+      }
+    }
+  },
+  {
+    "name": "Direkter Sprachobjekt-Negativfall: uuid",
+    "mode": "uuid",
+    "request": {
+      "contractVersion": 1,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "aggregates": [
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 10,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 11,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        }
+      ],
+      "command": {
+        "commandType": "rule.reorder",
+        "ruleIds": [
+          "30000000-0000-4000-8000-000000000011",
+          "30000000-0000-4000-8000-000000000010"
+        ]
+      },
+      "expectedRevisions": [
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "expectedRevision": 1
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "expectedRevision": 1
+        }
+      ],
+      "context": {
+        "operationId": "30000000-0000-4000-8000-000000000002",
+        "occurredAt": "2026-10-08T12:00:00Z",
+        "generatedIds": []
+      }
+    },
+    "expected": {
+      "contractVersion": 1,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_COMMAND",
+        "message": "Der Fachbefehl ist ungültig."
+      }
+    }
+  },
+  {
+    "name": "Direkter Sprachobjekt-Negativfall: utc",
+    "mode": "utc",
+    "request": {
+      "contractVersion": 1,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "aggregates": [
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 10,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 11,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        }
+      ],
+      "command": {
+        "commandType": "rule.reorder",
+        "ruleIds": [
+          "30000000-0000-4000-8000-000000000011",
+          "30000000-0000-4000-8000-000000000010"
+        ]
+      },
+      "expectedRevisions": [
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "expectedRevision": 1
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "expectedRevision": 1
+        }
+      ],
+      "context": {
+        "operationId": "30000000-0000-4000-8000-000000000002",
+        "occurredAt": "2026-10-08T12:00:00Z",
+        "generatedIds": []
+      }
+    },
+    "expected": {
+      "contractVersion": 1,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_COMMAND",
+        "message": "Der Fachbefehl ist ungültig."
+      }
+    }
+  },
+  {
+    "name": "Direkter Sprachobjekt-Negativfall: list",
+    "mode": "list",
+    "request": {
+      "contractVersion": 1,
+      "domainSchemaVersion": 1,
+      "spaceId": "30000000-0000-4000-8000-000000000001",
+      "aggregates": [
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 10,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "spaceId": "30000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "aggregateType": "rule",
+          "createdAt": "2026-10-08T10:00:00Z",
+          "updatedAt": "2026-10-08T10:00:00Z",
+          "order": 11,
+          "conditions": [
+            {
+              "field": "date",
+              "operator": "equals",
+              "value": "2028-02-29"
+            },
+            {
+              "field": "memo",
+              "operator": "contains",
+              "value": "Österreich – Grüße 🏠"
+            }
+          ],
+          "actions": [
+            {
+              "field": "clearance",
+              "value": "cleared"
+            }
+          ],
+          "enabled": true,
+          "stopProcessing": false
+        }
+      ],
+      "command": {
+        "commandType": "rule.reorder",
+        "ruleIds": [
+          "30000000-0000-4000-8000-000000000011",
+          "30000000-0000-4000-8000-000000000010"
+        ]
+      },
+      "expectedRevisions": [
+        {
+          "id": "30000000-0000-4000-8000-000000000011",
+          "expectedRevision": 1
+        },
+        {
+          "id": "30000000-0000-4000-8000-000000000010",
+          "expectedRevision": 1
+        }
+      ],
+      "context": {
+        "operationId": "30000000-0000-4000-8000-000000000002",
+        "occurredAt": "2026-10-08T12:00:00Z",
+        "generatedIds": []
+      }
+    },
+    "expected": {
+      "contractVersion": 1,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_COMMAND",
+        "message": "Der Fachbefehl ist ungültig."
+      }
+    }
+  },
+  {
+    "name": "Direkter Sprachobjekt-Negativfall: cent",
+    "mode": "cent",
+    "request": {
+      "contractVersion": 1,
+      "domainSchemaVersion": 1,
+      "spaceId": "70000000-0000-4000-8000-000000000001",
+      "aggregates": [
+        {
+          "id": "70000000-0000-4000-8000-000000000002",
+          "spaceId": "70000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "createdAt": "2026-10-08T12:00:00Z",
+          "updatedAt": "2026-10-08T12:00:00Z",
+          "aggregateType": "account",
+          "name": "Giro",
+          "type": "checking",
+          "onBudget": true,
+          "archived": false
+        },
+        {
+          "id": "70000000-0000-4000-8000-000000000003",
+          "spaceId": "70000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "createdAt": "2026-10-08T12:00:00Z",
+          "updatedAt": "2026-10-08T12:00:00Z",
+          "aggregateType": "account",
+          "name": "Bar",
+          "type": "checking",
+          "onBudget": true,
+          "archived": false
+        },
+        {
+          "id": "70000000-0000-4000-8000-000000000004",
+          "spaceId": "70000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "createdAt": "2026-10-08T12:00:00Z",
+          "updatedAt": "2026-10-08T12:00:00Z",
+          "aggregateType": "categoryGroup",
+          "name": "Ausgaben",
+          "kind": "expense",
+          "sortOrder": 0,
+          "archived": false
+        },
+        {
+          "id": "70000000-0000-4000-8000-000000000005",
+          "spaceId": "70000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "createdAt": "2026-10-08T12:00:00Z",
+          "updatedAt": "2026-10-08T12:00:00Z",
+          "aggregateType": "category",
+          "name": "Lebensmittel",
+          "groupId": "70000000-0000-4000-8000-000000000004",
+          "sortOrder": 0,
+          "archived": false
+        },
+        {
+          "id": "70000000-0000-4000-8000-000000000006",
+          "spaceId": "70000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "createdAt": "2026-10-08T12:00:00Z",
+          "updatedAt": "2026-10-08T12:00:00Z",
+          "aggregateType": "transaction",
+          "accountId": "70000000-0000-4000-8000-000000000002",
+          "date": "2026-10-08",
+          "amount": -1000,
+          "kind": "normal",
+          "clearance": "cleared",
+          "splits": [
+            {
+              "id": "70000000-0000-4000-8000-000000000007",
+              "categoryId": "70000000-0000-4000-8000-000000000005",
+              "amount": -1000
+            }
+          ]
+        }
+      ],
+      "command": {
+        "commandType": "transaction.save",
+        "aggregates": [
+          {
+            "id": "70000000-0000-4000-8000-000000000006",
+            "spaceId": "70000000-0000-4000-8000-000000000001",
+            "revision": 2,
+            "createdAt": "2026-10-08T12:00:00Z",
+            "updatedAt": "2026-10-08T12:00:00Z",
+            "aggregateType": "transaction",
+            "accountId": "70000000-0000-4000-8000-000000000002",
+            "date": "2026-10-08",
+            "amount": -1000,
+            "kind": "normal",
+            "clearance": "cleared",
+            "splits": [
+              {
+                "id": "70000000-0000-4000-8000-000000000007",
+                "categoryId": "70000000-0000-4000-8000-000000000005",
+                "amount": -1000
+              }
+            ],
+            "note": "  Café  Österreich  "
+          }
+        ]
+      },
+      "expectedRevisions": [
+        {
+          "id": "70000000-0000-4000-8000-000000000006",
+          "expectedRevision": 1
+        },
+        {
+          "id": "70000000-0000-4000-8000-000000000002",
+          "expectedRevision": 1
+        },
+        {
+          "id": "70000000-0000-4000-8000-000000000005",
+          "expectedRevision": 1
+        }
+      ],
+      "context": {
+        "operationId": "70000000-0000-4000-8000-000000000100",
+        "occurredAt": "2026-10-08T13:00:00Z",
+        "generatedIds": []
+      }
+    },
+    "expected": {
+      "contractVersion": 1,
+      "status": "rejected",
+      "error": {
+        "code": "INVALID_COMMAND",
+        "message": "Der Fachbefehl ist ungültig."
+      }
+    }
+  }
+]

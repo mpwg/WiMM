@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum AccountType {
     Checking,
     Cash,
@@ -18,6 +19,7 @@ pub enum AccountType {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum GroupKind {
     Income,
     Expense,
@@ -26,6 +28,7 @@ pub enum GroupKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum CategorySystem {
     Uncategorized,
 }
@@ -33,6 +36,7 @@ pub enum CategorySystem {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum TransactionKind {
     Normal,
     Opening,
@@ -44,6 +48,7 @@ pub enum TransactionKind {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum Clearance {
     Uncleared,
     Cleared,
@@ -53,6 +58,7 @@ pub enum Clearance {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum ImportClearance {
     Uncleared,
     Cleared,
@@ -61,6 +67,7 @@ pub enum ImportClearance {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum ParserSource {
     Csv,
     Camt053,
@@ -71,6 +78,7 @@ pub enum ParserSource {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum ImportDecision {
     Import,
     Exclude,
@@ -80,6 +88,7 @@ pub enum ImportDecision {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum ImportState {
     Ready,
     Partial,
@@ -89,6 +98,7 @@ pub enum ImportState {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum ConditionField {
     Date,
     Amount,
@@ -99,6 +109,7 @@ pub enum ConditionField {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum ConditionOperator {
     Equals,
     Contains,
@@ -109,6 +120,7 @@ pub enum ConditionOperator {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum Frequency {
     Weekly,
     Monthly,
@@ -118,6 +130,7 @@ pub enum Frequency {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum OccurrenceState {
     Confirmed,
     Skipped,
@@ -126,6 +139,7 @@ pub enum OccurrenceState {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(untagged)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum ConditionValue {
     Text(String),
     Money(MoneyCents),
@@ -139,6 +153,7 @@ pub enum ConditionValue {
     deny_unknown_fields
 )]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum RuleAction {
     CategoryId(EntityId),
     PayeeId(EntityId),
@@ -148,6 +163,7 @@ pub enum RuleAction {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Split {
     pub id: EntityId,
     pub category_id: EntityId,
@@ -157,6 +173,7 @@ pub struct Split {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ImportCandidate {
     pub source_row: PositiveOrdinal,
     pub date: FinanceDate,
@@ -222,6 +239,7 @@ pub struct ImportCandidate {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ImportRow {
     pub source_row: PositiveOrdinal,
     #[serde(deserialize_with = "nullable")]
@@ -237,6 +255,7 @@ pub struct ImportRow {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct RuleCondition {
     pub field: ConditionField,
     pub operator: ConditionOperator,
@@ -246,6 +265,7 @@ pub struct RuleCondition {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct TransactionTemplate {
     pub account_id: EntityId,
     pub amount: MoneyCents,
@@ -278,6 +298,7 @@ pub struct TransactionTemplate {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Account {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -301,6 +322,7 @@ pub struct Account {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct FinancialRevision {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -319,6 +341,7 @@ pub struct FinancialRevision {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct CategoryGroup {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -341,6 +364,7 @@ pub struct CategoryGroup {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Category {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -370,6 +394,7 @@ pub struct Category {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Payee {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -391,6 +416,7 @@ pub struct Payee {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Transaction {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -450,6 +476,7 @@ pub struct Transaction {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Transfer {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -488,6 +515,7 @@ pub struct Transfer {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Reconciliation {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -510,6 +538,7 @@ pub struct Reconciliation {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ImportMapping {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -524,12 +553,14 @@ pub struct ImportMapping {
     #[cfg_attr(feature = "contract-schema", schemars(with = "UtcTimestamp"))]
     pub deleted_at: Option<UtcTimestamp>,
     pub name: NonEmptyText,
+    #[cfg_attr(feature = "wasm-bindings", tsify(type = "unknown"))]
     pub mapping: serde_json::Value,
 }
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ImportBatch {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -553,6 +584,7 @@ pub struct ImportBatch {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ImportFingerprint {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -584,6 +616,7 @@ pub struct ImportFingerprint {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Rule {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -607,6 +640,7 @@ pub struct Rule {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct Schedule {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -637,6 +671,7 @@ pub struct Schedule {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ScheduleOccurrence {
     pub id: EntityId,
     pub space_id: EntityId,
@@ -665,6 +700,7 @@ pub struct ScheduleOccurrence {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "aggregateType", rename_all = "camelCase")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum Aggregate {
     Account(Account),
     FinancialRevision(FinancialRevision),
@@ -684,6 +720,7 @@ pub enum Aggregate {
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum AggregateKind {
     Account,
     FinancialRevision,
@@ -912,6 +949,7 @@ impl Aggregate {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct SaveCommand {
     pub aggregates: NonEmptyVec<Aggregate>,
 }
@@ -919,6 +957,7 @@ pub struct SaveCommand {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct AggregateCommand {
     pub aggregate_id: EntityId,
 }
@@ -926,6 +965,7 @@ pub struct AggregateCommand {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct PayeeMerge {
     pub target_id: EntityId,
     pub source_ids: NonEmptyVec<EntityId>,
@@ -935,6 +975,7 @@ pub struct PayeeMerge {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ReconciliationConfirm {
     pub account_id: EntityId,
     pub statement_date: FinanceDate,
@@ -945,6 +986,7 @@ pub struct ReconciliationConfirm {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ReconciliationUnlock {
     pub reconciliation_id: EntityId,
 }
@@ -952,6 +994,7 @@ pub struct ReconciliationUnlock {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct RuleReorder {
     pub rule_ids: Vec<EntityId>,
 }
@@ -959,6 +1002,7 @@ pub struct RuleReorder {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ImportCommit {
     pub import_id: EntityId,
 }
@@ -966,6 +1010,7 @@ pub struct ImportCommit {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ScheduleConfirm {
     pub schedule_id: EntityId,
     pub due_date: FinanceDate,
@@ -981,6 +1026,7 @@ pub struct ScheduleConfirm {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ScheduleSkip {
     pub schedule_id: EntityId,
     pub due_date: FinanceDate,
@@ -989,6 +1035,7 @@ pub struct ScheduleSkip {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "commandType")]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub enum Command {
     #[serde(rename = "account.save")]
     AccountSave(SaveCommand),

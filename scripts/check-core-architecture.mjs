@@ -11,11 +11,13 @@ for (const component of [core, types]) {
   for (const dependency of component.dependencies) {
     const nativeGenerator = component === types && dependency.name === 'uniffi' && dependency.optional
       && JSON.stringify(types.features['native-bindings']) === JSON.stringify(['dep:uniffi']);
-    if (!pureDependencies.has(dependency.name) && !nativeGenerator) throw new Error(`Der Fachkern darf ${dependency.name} nicht importieren.`);
+    const wasmGenerator = component === types && ['tsify', 'wasm-bindgen'].includes(dependency.name) && dependency.optional
+      && JSON.stringify(types.features['wasm-bindings']) === JSON.stringify(['dep:tsify', 'dep:wasm-bindgen']);
+    if (!pureDependencies.has(dependency.name) && !nativeGenerator && !wasmGenerator) throw new Error(`Der Fachkern darf ${dependency.name} nicht importieren.`);
   }
 }
 const defaultCoreTree = execFileSync('cargo', ['tree', '--locked', '-p', 'wimm-finance-core', '--no-default-features', '--edges', 'normal', '--prefix', 'none', '--format', '{p}'], { encoding: 'utf8' });
-if (/^uniffi(?:[_ ]|$)/m.test(defaultCoreTree)) throw new Error('Die plattformfreie Kernkonfiguration darf keine native Bindingruntime importieren.');
+if (/^(?:uniffi(?:[_ ]|$)|wasm-bindgen |js-sys |tsify )/m.test(defaultCoreTree)) throw new Error('Die plattformfreie Kernkonfiguration darf keine native Bindingruntime importieren.');
 console.log('Rust-Fachkern ohne UI-/Tauri-/Datenbank-/HTTP-Abhängigkeit geprüft.');
 
 const ownTargets = metadata.packages.filter((entry) => metadata.workspace_members.includes(entry.id)).flatMap((entry) => entry.targets.map((target) => target.src_path));
