@@ -6,12 +6,14 @@ Stand: 9. Oktober 2026. Der bestehende K01-Vertrag ist die kompatible Ausgangsba
 
 | Dimension | Vertrag |
 | --- | --- |
-| Engine-Binding | `contractVersion: 1`; unbekannter Vertrag liefert `UPDATE_REQUIRED`, keine Berechnung oder Mutation |
+| Engine-Binding | Bestehende JSON-ABI: `contractVersion: 1`. Neues typisiertes Binding gemäß ADR-053: `contractVersion: 2`, eigener versionierter Einstieg und V1-Kompatibilitätsadapter. Unbekannter Vertrag liefert `UPDATE_REQUIRED`, keine Berechnung oder Mutation |
 | Finanzdaten | `domainSchemaVersion: 1`; bestehende P2-/P5-Aggregate, keine zusätzlichen P6–P11-Typen |
 | Lokaler Speicher | gesonderte `storageSchemaVersion`; weder aus Bindingversion noch Epoche abgeleitet |
 | Sync/Export | bestehende Protokoll-, Crypto- und Exportformate unabhängig erhalten |
 
 Alle Requests und Results sind normale JSON-Daten mit festen discriminated unions und strikten Feldern. Finanzaggregate tragen Fach-ID, Bereich, Revision und UTC-Metadaten; lokale `handle`-Felder gehören ausschließlich in Speicherrecords. Die V1-Adapterabbildung ist Fach-ID gleich Handle gemäß ADR-041; der Adapter entfernt das zusätzliche Handle vor dem Engine-Aufruf und ergänzt es erst beim Speichern. Der Server erhält ausschließlich bestehende verschlüsselte Hüllen und öffentliche Metadaten.
+
+ADR-053 ergänzt typisierte native Records/Enums und WASM-Objekte aus Rust für V2. Swift/Kotlin erhalten sichere Cent als 64-Bit-Integer, WASM/TypeScript als exakt darstellbare sichere Zahlen. Das ist eine getrennte Bindingversion; Fach-/Storage-/Crypto-/Transport-/Exportversionen und gespeicherte Daten bleiben unverändert. V1 bleibt während der geprüften schrittweisen Umstellung erreichbar. Neue V2-Einstiege dürfen bestehende V1-Exporte nicht still umdeuten; Formprüfung und Fehlerpriorität des V1-Adapters bleiben erhalten.
 
 Geld, Revisionen, Reihenfolgen und Zähler bleiben sichere Ganzzahlen zwischen den bisherigen Grenzen einschließlich negativer Cent. Rust verwendet hinreichend breite exakte Zwischenwerte und lehnt Überläufe ab, bevor es Daten für den Commit liefert. JavaScript erhält keine erweiterten Rust-Integerwerte oder BigInt-JSON-Fallbacks. Kalenderdaten bleiben `YYYY-MM-DD`, technische Zeitpunkte UTC mit `Z`. Optionale Felder werden bei Abwesenheit ausgelassen; `null`, leerer Text und Abwesenheit dürfen nicht verwechselt werden. UTF-8, UUIDs und vorhandene Texte bleiben verlustfrei; fachliche Normalisierung folgt ausschließlich dem vorhandenen Fachmodell.
 

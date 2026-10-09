@@ -51,3 +51,15 @@ ADR-008/011/024/031/034 sind ersetzt. Frühere D0-Auftragsbegrenzungen ADR-013, 
 - Betroffene Verträge/Pakete: [API](api.md), [Sync](synchronization.md), [Betrieb](operations.md), K06–K11 und [AR10 #124](https://github.com/mpwg/WiMM/issues/124); #111 wird not_planned mit Nachfolger geschlossen, ADR-014/044 entsprechend präzisiert.
 - Migration und Kompatibilität: vorhandene Health/Meta/Pfade/WIMM-Konfiguration erhalten; Fastify erst nach Parität entfernen. Server-SQL-Wechsel und Wiederanlauf bleiben gesicherte Betreiberverfahren. P8/P9-Features und Releases benötigen ihre eigene Freigabe.
 - Prüfung: native Rust-Assertions und echter HTTPserver, getrennte echte Server-DB-Contracts, sechs SQLwechsel, OIDC/CSRF/Rollen-/Signaturmatrix nach Featurefreigabe sowie negative Serverabhängigkeiten.
+
+## ADR-053 — Typisierte UniFFI-/WASM-Bindings mit V1-Kompatibilität
+
+- Datum: 9. Oktober 2026. Status: angenommen; vollständige Umsetzung/Abnahme in AR02 noch offen.
+- Herkunft: ausdrückliche Nutzerwahl „B – Typisierte APIs jetzt einführen“ im Fortsetzungsauftrag zu #116.
+- Problem: Stringbasierte APIs lassen Sprachmodelle und tatsächliche Grenzformen auseinanderlaufen. Die Entscheidung zwischen Beibehaltung der JSON-ABI und neuer typisierter API war offen.
+- Entscheidung: Jetzt typisierte UniFFI-/WASM-Einstiege aus Rust mit expliziter Bindingversion 2 und V1-Kompatibilitätsadapter einführen. Etablierte, gesperrte Generatoren verwenden; Fachkern bleibt plattformfrei, eigener Code unsafe-frei. Sprachsignaturen und maschinenlesbare Schemas reproduzierbar erzeugen und negativ auf Drift prüfen.
+- Alternative: V1 als einzige ABI behalten und nur Sprachdatenmodelle generieren (Variante A). Der Nutzer hat Variante B gewählt.
+- Folgen: Records/Enums, Versions-/Ergebnis-/Fehlerformen und sämtliche vorhandenen Aktionen müssen nachgewiesen werden. Öffentliche, lokale und private Module bleiben getrennt; öffentliche Module erhalten keine privaten Fachabhängigkeiten.
+- Betroffene Verträge/Pakete: [Fach-/Anwendungsverträge](core-contracts.md), [AR02 #116](https://github.com/mpwg/WiMM/issues/116), Bindings und Vertragsgenerierung.
+- Migration und Kompatibilität: Kein globales Ersetzen von V1 durch V2 und keine Datenmigration aus diesem Bindingwechsel. Bestehende JSON-Einstiege bleiben bis nachgewiesener Parität erhalten. Finanzschema eins und vorhandene Crypto-/Transport-/Storage-/Exportversionen bleiben unabhängig.
+- Prüfung: Direkte native Rust-Assertions, identische positive/negative Fälle in tatsächlichen Swift-/Kotlin-/WASM-/Browserläufen, versionierte generierte Dateien und negative CI-Driftprüfung. Generierung allein ist keine Sprachlaufzeitabnahme.
