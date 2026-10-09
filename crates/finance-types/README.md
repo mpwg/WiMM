@@ -21,4 +21,6 @@ pnpm test:contracts:bindings:v2:all
 pnpm test:contracts:commands:native
 ```
 
+Versionierte V2-Request-/Ergebnis-/Fehlerschemas für alle fünf Engineaktionen entstehen zusätzlich aus dieser Quelle. CommandOutcomeV2 und zentrale Binding-/Fachversionskonstanten liegen ebenfalls hier. Der echte Rust-/Ajv-/WASM-Formvergleich samt negativer CI-Quellendriftprüfung läuft über `pnpm test:contracts:schema`.
+
 Direkte native Wert-/Schemaassertions liegen hier. Der vollständige Fach-/Formdifferenzialkatalog bleibt im Kern und verwendet genau diese Typen, einschließlich des unveränderten historischen Vergleichs. Vor der Quelltrennung exportierte Schemas wurden danach bytegenau im Werkzeugprüfmodus verglichen: alle drei unverändert. Keine neue Fremdabhängigkeit; vorhandene Serde-/UUID-/Schemars-Versionen und Lizenzen bleiben gesperrt. Eigener Code bleibt global unsafe-frei.

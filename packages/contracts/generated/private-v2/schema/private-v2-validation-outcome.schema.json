@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ValidationOutcome",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "integer",
+      "format": "uint32",
+      "const": 2,
+      "minimum": 0
+    },
+    "status": {
+      "$ref": "#/$defs/ValidationStatus"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "status"
+  ],
+  "$defs": {
+    "ValidationStatus": {
+      "type": "string",
+      "enum": [
+        "valid"
+      ]
+    }
+  }
+}

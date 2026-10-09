@@ -2,7 +2,7 @@
 //! Typisierter AR02-Einstieg; V1 bleibt ein unabhängiger Kompatibilitätsvertrag.
 use wimm_finance_core::scalars::EntityId;
 
-pub const BINDING_VERSION: u32 = 2;
+pub const BINDING_VERSION: u32 = wimm_finance_types::versions::ENGINE_BINDING_VERSION;
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "native", derive(uniffi::Record))]

@@ -20,7 +20,10 @@ for (const language of ['swift', 'kotlin']) {
 }
 await run(['build', '--locked', '-p', 'wimm-core-bindings', '--no-default-features', '--features', 'wasm', '--target', 'wasm32-unknown-unknown']);
 await run(['run', '--locked', '-p', 'wimm-wasm-glue', '--', 'target/wasm32-unknown-unknown/debug/wimm_core_bindings.wasm', resolve(staging, 'wasm')]);
+await run(['run', '--locked', '-p', 'wimm-contract-schema', '--', '--write', resolve(staging, 'schema')]);
 const files = ['swift/WiMMCore.swift', 'swift/WiMMCoreFFI.h', 'swift/WiMMCoreFFI.modulemap', 'swift/WiMMPrivateTypes.swift', 'swift/WiMMPrivateTypesFFI.h', 'swift/WiMMPrivateTypesFFI.modulemap', 'kotlin/org/wimm/core/wimm_core_bindings.kt', 'kotlin/org/wimm/privatecontracts/wimm_finance_types.kt', 'wasm/wimm_core_bindings.d.ts'];
+const schemaManifest = JSON.parse(await readFile(resolve(staging, 'schema/manifest.json'), 'utf8'));
+files.push(...schemaManifest.files.map((name) => `schema/${name}`), 'schema/manifest.json');
 // Nur Editorformat normalisieren; Generatorhinweise und Sprachcode bleiben erhalten.
 for (const file of files) {
   const path = resolve(staging, file);
@@ -42,4 +45,5 @@ for (const file of [...files, 'generation.json']) {
     if (!actual.equals(await readFile(source))) throw new Error(`Vertragsdrift: ${destination}`);
   }
 }
+if (mode === '--check') await run(['run', '--locked', '-p', 'wimm-contract-schema', '--', '--check', resolve(expectedRoot, 'schema')]);
 console.log(mode === '--check' ? 'Generierte Sprachverträge ohne Umschreiben geprüft.' : 'Sprachverträge aus gesperrten Rust-Bindinggeneratoren erzeugt.');

@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProjectionOutcome",
+  "type": "object",
+  "properties": {
+    "contractVersion": {
+      "type": "integer",
+      "format": "uint32",
+      "const": 2,
+      "minimum": 0
+    },
+    "projections": {
+      "$ref": "#/$defs/ProjectionSet"
+    },
+    "status": {
+      "$ref": "#/$defs/ProjectionStatus"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "status",
+    "projections"
+  ],
+  "$defs": {
+    "AccountBalance": {
+      "type": "object",
+      "properties": {
+        "accountId": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "balance": {
+          "$ref": "#/$defs/MoneyCents"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "accountId",
+        "balance"
+      ]
+    },
+    "CategoryConsumption": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/$defs/MoneyCents"
+        },
+        "categoryId": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "groupKind": {
+          "$ref": "#/$defs/GroupKind"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "categoryId",
+        "groupKind",
+        "amount"
+      ]
+    },
+    "Consumption": {
+      "type": "object",
+      "properties": {
+        "categories": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CategoryConsumption"
+          }
+        },
+        "expense": {
+          "$ref": "#/$defs/MoneyCents"
+        },
+        "income": {
+          "$ref": "#/$defs/MoneyCents"
+        },
+        "net": {
+          "$ref": "#/$defs/MoneyCents"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "income",
+        "expense",
+        "net",
+        "categories"
+      ]
+    },
+    "EntityId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    },
+    "GroupKind": {
+      "type": "string",
+      "enum": [
+        "income",
+        "expense"
+      ]
+    },
+    "MoneyCents": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": -9007199254740991
+    },
+    "ProjectionSet": {
+      "type": "object",
+      "properties": {
+        "accountBalances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AccountBalance"
+          }
+        },
+        "consumption": {
+          "$ref": "#/$defs/Consumption"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "accountBalances",
+        "consumption"
+      ]
+    },
+    "ProjectionStatus": {
+      "type": "string",
+      "enum": [
+        "projected"
+      ]
+    }
+  }
+}

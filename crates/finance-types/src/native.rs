@@ -17,8 +17,11 @@ macro_rules! supported_version {
         });
     };
 }
-supported_version!(EngineBindingVersion, 2);
-supported_version!(DomainSchemaVersion, 1);
+supported_version!(
+    EngineBindingVersion,
+    crate::versions::ENGINE_BINDING_VERSION
+);
+supported_version!(DomainSchemaVersion, crate::versions::DOMAIN_SCHEMA_VERSION);
 
 macro_rules! checked_string {
     ($name:ident) => {

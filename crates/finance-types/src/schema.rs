@@ -32,6 +32,98 @@ pub fn command() -> Schema {
 pub fn request() -> Schema {
     schemars::schema_for!(crate::command_contracts::Request)
 }
+
+/// Derselbe V2-Header für alle privaten Aktionsformen; keine zweite Feldliste.
+fn binding_v2(mut schema: Schema) -> Schema {
+    fn versions(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Object(object) => {
+                if let Some(properties) = object
+                    .get_mut("properties")
+                    .and_then(serde_json::Value::as_object_mut)
+                {
+                    for (name, version) in [
+                        ("contractVersion", crate::versions::ENGINE_BINDING_VERSION),
+                        (
+                            "domainSchemaVersion",
+                            crate::versions::DOMAIN_SCHEMA_VERSION,
+                        ),
+                    ] {
+                        if let Some(property) = properties
+                            .get_mut(name)
+                            .and_then(serde_json::Value::as_object_mut)
+                        {
+                            property.insert("const".into(), version.into());
+                        }
+                    }
+                }
+                object.values_mut().for_each(versions);
+            }
+            serde_json::Value::Array(values) => values.iter_mut().for_each(versions),
+            _ => {}
+        }
+    }
+    let mut value = schema.to_value();
+    versions(&mut value);
+    schema = value
+        .try_into()
+        .expect("Eine Schemaobjekt-Transformation bleibt ein Schema.");
+    schema
+}
+
+pub fn private_v2() -> Vec<(&'static str, Schema)> {
+    use crate::{
+        ContractError,
+        calculation_contracts::{CalculationOutcome, CalculationRequest},
+        command_contracts::{CommandOutcomeV2, Request},
+        reverse_contracts::ReverseRequest,
+        state_contracts::{
+            ProjectionOutcome, ProjectionRequest, ValidationOutcome, ValidationRequest,
+        },
+    };
+    vec![
+        (
+            "private-v2-execute-request.schema.json",
+            binding_v2(schemars::schema_for!(Request)),
+        ),
+        (
+            "private-v2-command-outcome.schema.json",
+            binding_v2(schemars::schema_for!(CommandOutcomeV2)),
+        ),
+        (
+            "private-v2-calculation-request.schema.json",
+            binding_v2(schemars::schema_for!(CalculationRequest)),
+        ),
+        (
+            "private-v2-calculation-outcome.schema.json",
+            binding_v2(schemars::schema_for!(CalculationOutcome)),
+        ),
+        (
+            "private-v2-reverse-request.schema.json",
+            binding_v2(schemars::schema_for!(ReverseRequest)),
+        ),
+        (
+            "private-v2-projection-request.schema.json",
+            binding_v2(schemars::schema_for!(ProjectionRequest)),
+        ),
+        (
+            "private-v2-projection-outcome.schema.json",
+            binding_v2(schemars::schema_for!(ProjectionOutcome)),
+        ),
+        (
+            "private-v2-validation-request.schema.json",
+            binding_v2(schemars::schema_for!(ValidationRequest)),
+        ),
+        (
+            "private-v2-validation-outcome.schema.json",
+            binding_v2(schemars::schema_for!(ValidationOutcome)),
+        ),
+        (
+            "private-v2-error.schema.json",
+            binding_v2(schemars::schema_for!(ContractError)),
+        ),
+    ]
+}
 #[cfg(test)]
 mod tests {
     use super::*;

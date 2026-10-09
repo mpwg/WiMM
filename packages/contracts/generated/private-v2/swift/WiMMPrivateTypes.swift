@@ -4849,6 +4849,79 @@ public func FfiConverterTypeCommand_lower(_ value: Command) -> RustBuffer {
 
 
 
+public enum CommandOutcomeV2: Equatable, Hashable {
+
+    case changed(contractVersion: UInt32, changeSet: ChangeSet
+    )
+    case unchanged(contractVersion: UInt32
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension CommandOutcomeV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCommandOutcomeV2: FfiConverterRustBuffer {
+    typealias SwiftType = CommandOutcomeV2
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CommandOutcomeV2 {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .changed(contractVersion: try FfiConverterUInt32.read(from: &buf), changeSet: try FfiConverterTypeChangeSet.read(from: &buf)
+        )
+
+        case 2: return .unchanged(contractVersion: try FfiConverterUInt32.read(from: &buf)
+        )
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: CommandOutcomeV2, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case let .changed(contractVersion,changeSet):
+            writeInt(&buf, Int32(1))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+            FfiConverterTypeChangeSet.write(changeSet, into: &buf)
+
+
+        case let .unchanged(contractVersion):
+            writeInt(&buf, Int32(2))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommandOutcomeV2_lift(_ buf: RustBuffer) throws -> CommandOutcomeV2 {
+    return try FfiConverterTypeCommandOutcomeV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommandOutcomeV2_lower(_ value: CommandOutcomeV2) -> RustBuffer {
+    return FfiConverterTypeCommandOutcomeV2.lower(value)
+}
+
+
+
+
 public enum CommandResult: Equatable, Hashable {
 
     case changed(ChangeSet

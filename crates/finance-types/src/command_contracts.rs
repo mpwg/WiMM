@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Private Request-/Ergebnisformen und reine Versions-/Formhilfen.
 use crate::{
-    CoreResult,
+    ContractError, CoreResult,
     aggregate_schema::INVALID,
     models::{Aggregate, Command},
     scalars::{EntityId, Revision, UtcTimestamp},
@@ -46,7 +46,7 @@ pub struct Request {
 }
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 #[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 pub struct ChangeSet {
@@ -121,5 +121,48 @@ impl CommandResult {
             Self::Changed(change) => to_wire(change),
             Self::Unchanged => Ok(serde_json::json!({"contractVersion":1,"status":"unchanged"})),
         }
+    }
+}
+
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(
+    tag = "status",
+    rename_all = "camelCase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+pub enum CommandOutcomeV2 {
+    Changed {
+        contract_version: u32,
+        change_set: ChangeSet,
+    },
+    Unchanged {
+        contract_version: u32,
+    },
+}
+
+impl CommandOutcomeV2 {
+    pub fn to_v1_json(self) -> Result<String, ContractError> {
+        let wire = match self {
+            Self::Changed {
+                contract_version: 2,
+                change_set,
+            } => CommandResult::Changed(change_set).to_wire(),
+            Self::Unchanged {
+                contract_version: 2,
+            } => CommandResult::Unchanged.to_wire(),
+            _ => {
+                return Err((
+                    "UPDATE_REQUIRED",
+                    "Der Enginevertrag wird nicht unterstützt.",
+                )
+                    .into());
+            }
+        };
+        wire.map(|value| value.to_string())
+            .map_err(ContractError::from)
     }
 }

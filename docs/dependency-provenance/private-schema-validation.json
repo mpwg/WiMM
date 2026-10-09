@@ -1,0 +1,29 @@
+{
+  "scope": "AR02: tatsächliche private JSON-Schema-2020-12-Validierung als ergänzende Abnahme; kein Finanz-/Produktvalidatorwechsel",
+  "ownLicense": "AGPL-3.0-or-later",
+  "newPackageVersions": 0,
+  "packages": [
+    {
+      "name": "ajv",
+      "version": "8.20.0",
+      "published": "2026-04-24T15:22:16.529Z",
+      "license": "MIT",
+      "source": "https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz",
+      "integrity": "sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==",
+      "gitHead": "0fba0b8e649909613cfce0999b149cd08f4a4987",
+      "originalNotice": "licenses/private-schema-validation/ajv-LICENSE.txt",
+      "localChanges": "Keine Fremdänderungen; unveränderte bereits gesperrte transitive Version jetzt zusätzlich direkt für Schemaabnahme verwendet."
+    },
+    {
+      "name": "ajv-formats",
+      "version": "3.0.1",
+      "published": "2024-03-30T11:30:26.728Z",
+      "license": "MIT",
+      "source": "https://registry.npmjs.org/ajv-formats/-/ajv-formats-3.0.1.tgz",
+      "integrity": "sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==",
+      "gitHead": "1fb3fa7d967f919ff924bb34aef73a2f39ab0de3",
+      "originalNotice": "licenses/private-schema-validation/ajv-formats-LICENSE.txt",
+      "localChanges": "Keine Fremdänderungen; unveränderte bereits gesperrte transitive Version jetzt zusätzlich direkt für Schemaabnahme verwendet."
+    }
+  ]
+}

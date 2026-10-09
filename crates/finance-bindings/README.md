@@ -41,6 +41,8 @@ Der letzte Befehl verlangt tatsächliche Swift-/Kotlin-/Java-Werkzeuge und führ
 
 `calculate_v2` ergänzt den gemeinsamen typisierten Request/Ergebnisvertrag für money.parse/rule.apply/import.classify/schedule.dueDates. Alle vier Berechnungen und ihre Klassifizierungs-/Fälligkeitsformen bleiben im Kern bzw. der gemeinsamen privaten Rust-Typquelle. Die Aktionsprüfbefehle decken jetzt 204 Orakel ab: 178 native typisierte Fachaufrufe/26 Formablehnungen bzw. 203 WASM-Objektgrenzenaufrufe/eine JSON-Syntaxablehnung. Zusammen mit den 176 execute-Fällen sind alle 380 produktiven Katalogorakel abgedeckt; vollständige Schema-/Modul-/Negativabnahme bleibt Teil von #116.
 
+`pnpm test:contracts:schema` ergänzt den echten Rust-/Ajv2020-/WASM-Vergleich für 380 produktive Katalogformen plus 44 Formgrenzfälle, vollständige private V2-Ergebnis-/Fehlerschemas und eine tatsächliche negative CI-Quellendriftprüfung. Die Ergebnisse liegen zusammen mit den Sprachdateien versioniert im privaten generierten Modul. Die gemeinsame CommandOutcomeV2-Quelle liegt nun in WiMMPrivateTypes; bestehende native Funktionssignaturen importieren diese Quelle automatisch. Gesamte AR02-Abnahme und weitere Kompatibilitäts-/lokale/öffentliche Formen bleiben offen.
+
 ## Architekturstand vom 9. Oktober 2026
 
 Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.

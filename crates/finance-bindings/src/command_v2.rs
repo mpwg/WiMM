@@ -4,50 +4,10 @@
 use crate::wasm_boundary::wasm_error;
 use wimm_finance_types::{
     ContractError,
-    command_contracts::{ChangeSet, CommandResult, Request},
+    command_contracts::{CommandResult, Request},
 };
 
-#[cfg_attr(feature = "native", derive(uniffi::Enum))]
-#[cfg_attr(feature = "wasm", derive(tsify::Tsify))]
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[serde(
-    tag = "status",
-    rename_all = "camelCase",
-    rename_all_fields = "camelCase",
-    deny_unknown_fields
-)]
-pub enum CommandOutcomeV2 {
-    Changed {
-        contract_version: u32,
-        change_set: ChangeSet,
-    },
-    Unchanged {
-        contract_version: u32,
-    },
-}
-
-impl CommandOutcomeV2 {
-    pub fn to_v1_json(self) -> Result<String, ContractError> {
-        let wire = match self {
-            Self::Changed {
-                contract_version: 2,
-                change_set,
-            } => CommandResult::Changed(change_set).to_wire(),
-            Self::Unchanged {
-                contract_version: 2,
-            } => CommandResult::Unchanged.to_wire(),
-            _ => {
-                return Err((
-                    "UPDATE_REQUIRED",
-                    "Der Enginevertrag wird nicht unterstützt.",
-                )
-                    .into());
-            }
-        };
-        wire.map(|value| value.to_string())
-            .map_err(ContractError::from)
-    }
-}
+pub use wimm_finance_types::command_contracts::CommandOutcomeV2;
 
 /// Expliziter Formadapter für den synthetischen Bindingkatalog, keine Finanzberechnung.
 #[cfg(all(feature = "native", feature = "contract-probe"))]

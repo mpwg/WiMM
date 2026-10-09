@@ -249,6 +249,7 @@ mod tests {
         }
         for time in [
             "2026-10-09T24:00:00Z",
+            "2026-10-09T23:59:60Z",
             "2026-10-09T00:00Z",
             "2026-10-09T00:00:00+02:00",
             "2026-10-09T00:00:00.Z",
@@ -369,7 +370,7 @@ mod schema_support {
     );
     string_schema!(
         UtcTimestamp,
-        schemars::json_schema!({"type":"string","format":"date-time","pattern":"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"})
+        schemars::json_schema!({"type":"string","format":"date-time","pattern":"^[0-9]{4}-[0-9]{2}-[0-9]{2}T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\\.[0-9]+)?Z$"})
     );
     string_schema!(NonEmptyText, crate::schema::non_empty_text());
     string_schema!(

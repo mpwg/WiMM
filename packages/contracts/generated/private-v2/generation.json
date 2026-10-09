@@ -16,6 +16,20 @@
     "swift/WiMMPrivateTypesFFI.modulemap",
     "kotlin/org/wimm/core/wimm_core_bindings.kt",
     "kotlin/org/wimm/privatecontracts/wimm_finance_types.kt",
-    "wasm/wimm_core_bindings.d.ts"
+    "wasm/wimm_core_bindings.d.ts",
+    "schema/private-aggregate.schema.json",
+    "schema/private-command.schema.json",
+    "schema/private-request.schema.json",
+    "schema/private-v2-execute-request.schema.json",
+    "schema/private-v2-command-outcome.schema.json",
+    "schema/private-v2-calculation-request.schema.json",
+    "schema/private-v2-calculation-outcome.schema.json",
+    "schema/private-v2-reverse-request.schema.json",
+    "schema/private-v2-projection-request.schema.json",
+    "schema/private-v2-projection-outcome.schema.json",
+    "schema/private-v2-validation-request.schema.json",
+    "schema/private-v2-validation-outcome.schema.json",
+    "schema/private-v2-error.schema.json",
+    "schema/manifest.json"
   ]
 }

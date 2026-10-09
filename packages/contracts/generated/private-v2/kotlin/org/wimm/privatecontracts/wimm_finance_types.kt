@@ -5059,6 +5059,93 @@ public object FfiConverterTypeCommand : FfiConverterRustBuffer<Command>{
 
 
 
+sealed class CommandOutcomeV2 {
+
+    data class Changed(
+        val `contractVersion`: kotlin.UInt,
+        val `changeSet`: org.wimm.privatecontracts.ChangeSet) : CommandOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Unchanged(
+        val `contractVersion`: kotlin.UInt) : CommandOutcomeV2()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCommandOutcomeV2 : FfiConverterRustBuffer<CommandOutcomeV2>{
+    override fun read(buf: ByteBuffer): CommandOutcomeV2 {
+        return when(buf.getInt()) {
+            1 -> CommandOutcomeV2.Changed(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypeChangeSet.read(buf),
+                )
+            2 -> CommandOutcomeV2.Unchanged(
+                FfiConverterUInt.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: CommandOutcomeV2): ULong = when(value) {
+        is CommandOutcomeV2.Changed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypeChangeSet.allocationSize(value.`changeSet`)
+            )
+        }
+        is CommandOutcomeV2.Unchanged -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+            )
+        }
+    }
+
+    override fun write(value: CommandOutcomeV2, buf: ByteBuffer) {
+        when(value) {
+            is CommandOutcomeV2.Changed -> {
+                buf.putInt(1)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypeChangeSet.write(value.`changeSet`, buf)
+                Unit
+            }
+            is CommandOutcomeV2.Unchanged -> {
+                buf.putInt(2)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
 sealed class CommandResult {
 
     data class Changed(

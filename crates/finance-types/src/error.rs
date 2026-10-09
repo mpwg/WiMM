@@ -4,7 +4,7 @@
 #[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 #[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-#[serde(untagged, rename_all_fields = "camelCase")]
+#[serde(untagged, rename_all_fields = "camelCase", deny_unknown_fields)]
 pub enum ContractError {
     Rejected {
         contract_version: u32,
