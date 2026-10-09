@@ -571,7 +571,78 @@ pub enum Aggregate {
     Schedule(Schedule),
     ScheduleOccurrence(ScheduleOccurrence),
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AggregateKind {
+    Account,
+    FinancialRevision,
+    CategoryGroup,
+    Category,
+    Payee,
+    Transaction,
+    Transfer,
+    Reconciliation,
+    ImportMapping,
+    ImportBatch,
+    ImportFingerprint,
+    Rule,
+    Schedule,
+    ScheduleOccurrence,
+}
 impl Aggregate {
+    pub fn kind(&self) -> AggregateKind {
+        match self {
+            Self::Account(_) => AggregateKind::Account,
+            Self::FinancialRevision(_) => AggregateKind::FinancialRevision,
+            Self::CategoryGroup(_) => AggregateKind::CategoryGroup,
+            Self::Category(_) => AggregateKind::Category,
+            Self::Payee(_) => AggregateKind::Payee,
+            Self::Transaction(_) => AggregateKind::Transaction,
+            Self::Transfer(_) => AggregateKind::Transfer,
+            Self::Reconciliation(_) => AggregateKind::Reconciliation,
+            Self::ImportMapping(_) => AggregateKind::ImportMapping,
+            Self::ImportBatch(_) => AggregateKind::ImportBatch,
+            Self::ImportFingerprint(_) => AggregateKind::ImportFingerprint,
+            Self::Rule(_) => AggregateKind::Rule,
+            Self::Schedule(_) => AggregateKind::Schedule,
+            Self::ScheduleOccurrence(_) => AggregateKind::ScheduleOccurrence,
+        }
+    }
+    pub fn created_at(&self) -> &UtcTimestamp {
+        match self {
+            Self::Account(v) => &v.created_at,
+            Self::FinancialRevision(v) => &v.created_at,
+            Self::CategoryGroup(v) => &v.created_at,
+            Self::Category(v) => &v.created_at,
+            Self::Payee(v) => &v.created_at,
+            Self::Transaction(v) => &v.created_at,
+            Self::Transfer(v) => &v.created_at,
+            Self::Reconciliation(v) => &v.created_at,
+            Self::ImportMapping(v) => &v.created_at,
+            Self::ImportBatch(v) => &v.created_at,
+            Self::ImportFingerprint(v) => &v.created_at,
+            Self::Rule(v) => &v.created_at,
+            Self::Schedule(v) => &v.created_at,
+            Self::ScheduleOccurrence(v) => &v.created_at,
+        }
+    }
+    pub fn updated_at(&self) -> &UtcTimestamp {
+        match self {
+            Self::Account(v) => &v.updated_at,
+            Self::FinancialRevision(v) => &v.updated_at,
+            Self::CategoryGroup(v) => &v.updated_at,
+            Self::Category(v) => &v.updated_at,
+            Self::Payee(v) => &v.updated_at,
+            Self::Transaction(v) => &v.updated_at,
+            Self::Transfer(v) => &v.updated_at,
+            Self::Reconciliation(v) => &v.updated_at,
+            Self::ImportMapping(v) => &v.updated_at,
+            Self::ImportBatch(v) => &v.updated_at,
+            Self::ImportFingerprint(v) => &v.updated_at,
+            Self::Rule(v) => &v.updated_at,
+            Self::Schedule(v) => &v.updated_at,
+            Self::ScheduleOccurrence(v) => &v.updated_at,
+        }
+    }
     pub fn id(&self) -> &EntityId {
         match self {
             Self::Account(v) => &v.id,

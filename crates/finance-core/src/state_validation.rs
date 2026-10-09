@@ -2,7 +2,7 @@
 //! Vollständige gespeicherte Fachbestände; historische Ziele dürfen Tombstones sein.
 use crate::{
     CoreResult,
-    aggregate_schema::{self, INVALID, array, integer, kind, live, string},
+    aggregate_schema::{self, INVALID, array, string},
     calendar, projections,
 };
 use serde_json::{Value, json};
@@ -18,22 +18,6 @@ pub(crate) fn normal_text(s: &str) -> String {
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>()
         .join(" ")
-}
-pub fn transaction(tx: &Value) -> CoreResult<()> {
-    if tx.get("aggregateType").is_none() {
-        let template: crate::models::TransactionTemplate =
-            serde_json::from_value(tx.clone()).map_err(|_| INVALID)?;
-        return transaction_fields(
-            template.kind,
-            template.amount,
-            &template.splits,
-            template.transfer_id.as_ref(),
-        );
-    }
-    let crate::models::Aggregate::Transaction(tx) = crate::models::Aggregate::from_wire(tx)? else {
-        return Err(INVALID);
-    };
-    typed_transaction(&tx)
 }
 pub(crate) fn typed_transaction(tx: &crate::models::Transaction) -> CoreResult<()> {
     transaction_fields(tx.kind, tx.amount, &tx.splits, tx.transfer_id.as_ref())
@@ -97,10 +81,14 @@ fn transaction_fields(
     Ok(())
 }
 pub(crate) fn rule(a: &Value) -> CoreResult<()> {
-    use crate::models::{Aggregate, ConditionField, ConditionOperator, ConditionValue};
+    use crate::models::Aggregate;
     let Aggregate::Rule(a) = Aggregate::from_wire(a)? else {
         return Err(INVALID);
     };
+    typed_rule(&a)
+}
+fn typed_rule(a: &crate::models::Rule) -> CoreResult<()> {
+    use crate::models::{ConditionField, ConditionOperator, ConditionValue};
     for c in a.conditions.as_slice() {
         if c.field == ConditionField::Amount {
             if !matches!(c.value, ConditionValue::Money(_)) {
@@ -135,10 +123,14 @@ pub(crate) fn rule(a: &Value) -> CoreResult<()> {
     Ok(())
 }
 pub(crate) fn import_batch(a: &Value) -> CoreResult<()> {
-    use crate::models::{Aggregate, ImportDecision};
+    use crate::models::Aggregate;
     let Aggregate::ImportBatch(a) = Aggregate::from_wire(a)? else {
         return Err(INVALID);
     };
+    typed_import_batch(&a)
+}
+fn typed_import_batch(a: &crate::models::ImportBatch) -> CoreResult<()> {
+    use crate::models::ImportDecision;
     let rows = a.rows.as_slice();
     let ids = rows.iter().map(|r| r.source_row).collect::<BTreeSet<_>>();
     if ids.len() != rows.len() {
@@ -168,42 +160,51 @@ pub(crate) fn import_batch(a: &Value) -> CoreResult<()> {
     Ok(())
 }
 pub fn validate(all: &[Value], space: &str) -> CoreResult<()> {
-    let mut by_id = BTreeMap::<&str, &Value>::new();
+    let all = all
+        .iter()
+        .map(crate::models::Aggregate::from_wire)
+        .collect::<CoreResult<Vec<_>>>()?;
+    typed_validate(&all, space)
+}
+pub(crate) fn typed_validate(all: &[crate::models::Aggregate], space: &str) -> CoreResult<()> {
+    use crate::models::{
+        AccountType, Aggregate, AggregateKind, Clearance, GroupKind, OccurrenceState, RuleAction,
+        TransactionKind,
+    };
+    use crate::scalars::{EntityId, MoneyCents};
+    let mut by_id = BTreeMap::<&EntityId, &Aggregate>::new();
     for a in all {
-        aggregate_schema::aggregate(a)?;
-        let id = string(&a["id"])?;
-        if a["spaceId"] != space
-            || by_id.insert(id, a).is_some()
-            || string(&a["updatedAt"])? < string(&a["createdAt"])?
-            || a.get("deletedAt")
-                .is_some_and(|d| d.as_str() < a["createdAt"].as_str())
-            || ((id == space) != (kind(a) == "financialRevision"))
+        if a.space_id().as_str() != space
+            || by_id.insert(a.id(), a).is_some()
+            || a.updated_at() < a.created_at()
+            || a.deleted_at().as_ref().is_some_and(|d| d < a.created_at())
+            || ((a.id().as_str() == space) != (a.kind() == AggregateKind::FinancialRevision))
         {
             return Err(INVALID);
         }
     }
-    let target = |id: &Value, expected: &str| -> CoreResult<&Value> {
+    let target = |id: &EntityId, expected: AggregateKind| -> CoreResult<&Aggregate> {
         by_id
-            .get(string(id)?)
+            .get(id)
             .copied()
-            .filter(|a| kind(a) == expected)
+            .filter(|a| a.kind() == expected)
             .ok_or(INVALID)
     };
     let mut reconciled = BTreeSet::new();
     let mut system_categories = 0;
     for a in all {
-        match kind(a) {
-            "account" if a["type"] == "credit" && a["onBudget"] == true => {
+        match a {
+            Aggregate::Account(a) if a.account_type == AccountType::Credit && a.on_budget => {
                 return failure(
                     "INVALID_AGGREGATE",
                     "Kreditkonten müssen außerhalb des Umschlagbudgets bleiben.",
                 );
             }
-            "payee" => {
-                let name = normal_text(string(&a["name"])?).to_lowercase();
+            Aggregate::Payee(a) => {
+                let name = normal_text(a.name.as_str()).to_lowercase();
                 let mut aliases = BTreeSet::new();
-                for alias in array(&a["aliases"])? {
-                    let key = normal_text(string(alias)?).to_lowercase();
+                for alias in &a.aliases {
+                    let key = normal_text(alias.as_str()).to_lowercase();
                     if key == name || !aliases.insert(key) {
                         return failure(
                             "DUPLICATE_REFERENCE",
@@ -212,61 +213,76 @@ pub fn validate(all: &[Value], space: &str) -> CoreResult<()> {
                     }
                 }
             }
-            "category" => {
-                target(&a["groupId"], "categoryGroup")?;
-                if a.get("system").is_some() {
+            Aggregate::Category(category) => {
+                target(&category.group_id, AggregateKind::CategoryGroup)?;
+                if category.system.is_some() {
                     system_categories += 1;
-                    if a["archived"] == true || !live(a) || system_categories > 1 {
+                    if category.archived || !a.is_live() || system_categories > 1 {
                         return Err(INVALID);
                     }
                 }
             }
-            "transaction" => {
-                transaction(a)?;
-                target(&a["accountId"], "account")?;
-                if let Some(id) = a.get("payeeId") {
-                    target(id, "payee")?;
+            Aggregate::Transaction(tx) => {
+                typed_transaction(tx)?;
+                target(&tx.account_id, AggregateKind::Account)?;
+                if let Some(id) = &tx.payee_id {
+                    target(id, AggregateKind::Payee)?;
                 }
-                for split in array(&a["splits"])? {
-                    target(&split["categoryId"], "category")?;
+                for split in &tx.splits {
+                    target(&split.category_id, AggregateKind::Category)?;
                 }
-                if let Some(id) = a.get("transferId") {
-                    let transfer = target(id, "transfer")?;
-                    if a["kind"] != "transfer"
-                        || (transfer["sourceTransactionId"] != a["id"]
-                            && transfer["targetTransactionId"] != a["id"])
+                if let Some(id) = &tx.transfer_id {
+                    let Aggregate::Transfer(transfer) = target(id, AggregateKind::Transfer)? else {
+                        return Err(INVALID);
+                    };
+                    if tx.kind != TransactionKind::Transfer
+                        || (transfer.source_transaction_id != tx.id
+                            && transfer.target_transaction_id != tx.id)
                     {
                         return Err(INVALID);
                     }
                 }
-                if let Some(id) = a.get("scheduleOccurrenceId") {
-                    let occurrence = target(id, "scheduleOccurrence")?;
-                    if occurrence["transactionId"] != a["id"] || occurrence["state"] != "confirmed"
+                if let Some(id) = &tx.schedule_occurrence_id {
+                    let Aggregate::ScheduleOccurrence(occurrence) =
+                        target(id, AggregateKind::ScheduleOccurrence)?
+                    else {
+                        return Err(INVALID);
+                    };
+                    if occurrence.transaction_id.as_ref() != Some(&tx.id)
+                        || occurrence.state != OccurrenceState::Confirmed
                     {
                         return Err(INVALID);
                     }
                 }
             }
-            "transfer" => {
-                target(&a["sourceAccountId"], "account")?;
-                target(&a["targetAccountId"], "account")?;
-                let source = target(&a["sourceTransactionId"], "transaction")?;
-                let destination = target(&a["targetTransactionId"], "transaction")?;
-                let amount = integer(&a["amount"])?;
+            Aggregate::Transfer(transfer) => {
+                target(&transfer.source_account_id, AggregateKind::Account)?;
+                target(&transfer.target_account_id, AggregateKind::Account)?;
+                let source_aggregate =
+                    target(&transfer.source_transaction_id, AggregateKind::Transaction)?;
+                let destination_aggregate =
+                    target(&transfer.target_transaction_id, AggregateKind::Transaction)?;
+                let Aggregate::Transaction(source) = source_aggregate else {
+                    return Err(INVALID);
+                };
+                let Aggregate::Transaction(destination) = destination_aggregate else {
+                    return Err(INVALID);
+                };
+                let amount = transfer.amount.cents();
                 if amount <= 0 {
                     return failure(
                         "INVALID_AGGREGATE",
                         "Der Umbuchungsbetrag muss positiv sein.",
                     );
                 }
-                if a["sourceAccountId"] == a["targetAccountId"] {
+                if transfer.source_account_id == transfer.target_account_id {
                     return failure(
                         "INVALID_AGGREGATE",
                         "Quell- und Zielkonto müssen verschieden sein.",
                     );
                 }
-                transaction(source)?;
-                transaction(destination)?;
+                typed_transaction(source)?;
+                typed_transaction(destination)?;
                 for (side, label) in [
                     (
                         source,
@@ -277,36 +293,47 @@ pub fn validate(all: &[Value], space: &str) -> CoreResult<()> {
                         "Die Zielseite ist keine vollständige Umbuchungsseite.",
                     ),
                 ] {
-                    if side["kind"] != "transfer" || side["transferId"] != a["id"] {
+                    if side.kind != TransactionKind::Transfer
+                        || side.transfer_id.as_ref() != Some(&transfer.id)
+                    {
                         return failure("INVALID_AGGREGATE", label);
                     }
                 }
-                if source["accountId"] != a["sourceAccountId"]
-                    || destination["accountId"] != a["targetAccountId"]
-                    || source["date"] != a["date"]
-                    || destination["date"] != a["date"]
-                    || integer(&source["amount"])? != -amount
-                    || integer(&destination["amount"])? != amount
+                if source.account_id != transfer.source_account_id
+                    || destination.account_id != transfer.target_account_id
+                    || source.date != transfer.date
+                    || destination.date != transfer.date
+                    || source.amount.cents() != -amount
+                    || destination.amount.cents() != amount
                 {
                     return failure(
                         "INVALID_AGGREGATE",
                         "Die Umbuchungsseiten müssen entgegengesetzte Beträge, Konten und dasselbe Datum besitzen.",
                     );
                 }
-                if live(a) != live(source) || live(a) != live(destination) {
+                if a.is_live() != source_aggregate.is_live()
+                    || a.is_live() != destination_aggregate.is_live()
+                {
                     return Err(INVALID);
                 }
-                if let Some(id) = a.get("budgetCategoryId") {
-                    let category = target(id, "category")?;
-                    if target(&category["groupId"], "categoryGroup")?["kind"] != "expense" {
+                if let Some(id) = &transfer.budget_category_id {
+                    let Aggregate::Category(category) = target(id, AggregateKind::Category)? else {
+                        return Err(INVALID);
+                    };
+                    let Aggregate::CategoryGroup(group) =
+                        target(&category.group_id, AggregateKind::CategoryGroup)?
+                    else {
+                        return Err(INVALID);
+                    };
+                    if group.kind != GroupKind::Expense {
                         return Err(INVALID);
                     }
                 }
             }
-            "reconciliation" => {
-                target(&a["accountId"], "account")?;
-                let ids = array(&a["transactionIds"])?;
-                let unique: BTreeSet<_> = ids.iter().map(string).collect::<CoreResult<_>>()?;
+            Aggregate::Reconciliation(reconciliation) => {
+                target(&reconciliation.account_id, AggregateKind::Account)?;
+                let ids = reconciliation.transaction_ids.as_slice();
+                let unique = ids.iter().collect::<BTreeSet<_>>();
                 if unique.len() != ids.len() {
                     return failure(
                         "DUPLICATE_REFERENCE",
@@ -314,135 +341,160 @@ pub fn validate(all: &[Value], space: &str) -> CoreResult<()> {
                     );
                 }
                 for id in ids {
-                    let tx = target(id, "transaction")?;
-                    if live(a)
-                        && (!live(tx)
-                            || tx["accountId"] != a["accountId"]
-                            || string(&tx["date"])? > string(&a["statementDate"])?
-                            || tx["clearance"] != "reconciled"
-                            || !reconciled.insert(string(id)?))
+                    let tx_aggregate = target(id, AggregateKind::Transaction)?;
+                    let Aggregate::Transaction(tx) = tx_aggregate else {
+                        return Err(INVALID);
+                    };
+                    if a.is_live()
+                        && (!tx_aggregate.is_live()
+                            || tx.account_id != reconciliation.account_id
+                            || tx.date > reconciliation.statement_date
+                            || tx.clearance != Clearance::Reconciled
+                            || !reconciled.insert(id))
                     {
                         return Err(INVALID);
                     }
                 }
             }
-            "importBatch" => {
-                import_batch(a)?;
-                target(&a["accountId"], "account")?;
-                for row in array(&a["rows"])? {
-                    for (field, ty) in [("categoryId", "category"), ("payeeId", "payee")] {
-                        if let Some(id) = row["candidate"].get(field) {
-                            target(id, ty)?;
+            Aggregate::ImportBatch(batch) => {
+                typed_import_batch(batch)?;
+                target(&batch.account_id, AggregateKind::Account)?;
+                for row in batch.rows.as_slice() {
+                    if let Some(candidate) = &row.candidate {
+                        if let Some(id) = &candidate.category_id {
+                            target(id, AggregateKind::Category)?;
+                        }
+                        if let Some(id) = &candidate.payee_id {
+                            target(id, AggregateKind::Payee)?;
                         }
                     }
                 }
             }
-            "importFingerprint" => {
-                target(&a["accountId"], "account")?;
-                target(&a["transactionId"], "transaction")?;
-                let batch = target(&a["importId"], "importBatch")?;
-                if batch["accountId"] != a["accountId"]
-                    || !array(&batch["committedRows"])?.contains(&a["sourceRow"])
+            Aggregate::ImportFingerprint(fingerprint) => {
+                target(&fingerprint.account_id, AggregateKind::Account)?;
+                target(&fingerprint.transaction_id, AggregateKind::Transaction)?;
+                let Aggregate::ImportBatch(batch) =
+                    target(&fingerprint.import_id, AggregateKind::ImportBatch)?
+                else {
+                    return Err(INVALID);
+                };
+                if batch.account_id != fingerprint.account_id
+                    || !batch.committed_rows.contains(&fingerprint.source_row)
                 {
                     return Err(INVALID);
                 }
             }
-            "rule" => {
-                rule(a)?;
-                for action in array(&a["actions"])? {
-                    if action["field"] != "clearance" {
-                        target(
-                            &action["value"],
-                            if action["field"] == "categoryId" {
-                                "category"
-                            } else {
-                                "payee"
-                            },
-                        )?;
+            Aggregate::Rule(rule) => {
+                typed_rule(rule)?;
+                for action in rule.actions.as_slice() {
+                    match action {
+                        RuleAction::CategoryId(id) => {
+                            target(id, AggregateKind::Category)?;
+                        }
+                        RuleAction::PayeeId(id) => {
+                            target(id, AggregateKind::Payee)?;
+                        }
+                        RuleAction::Clearance(_) => {}
                     }
                 }
             }
-            "schedule" => {
-                if let Some(end) = a.get("endDate")
-                    && string(end)? < string(&a["startDate"])?
+            Aggregate::Schedule(schedule) => {
+                if schedule
+                    .end_date
+                    .as_ref()
+                    .is_some_and(|end| end < &schedule.start_date)
                 {
                     return failure("INVALID_COMMAND", "Das Enddatum liegt vor dem Startdatum.");
                 }
-                transaction(&a["template"])?;
-                let t = &a["template"];
-                if t["kind"] != "normal"
-                    || t["clearance"] == "reconciled"
-                    || t.get("transferId").is_some()
+                let t = &schedule.template;
+                transaction_fields(t.kind, t.amount, &t.splits, t.transfer_id.as_ref())?;
+                if t.kind != TransactionKind::Normal
+                    || t.clearance == Clearance::Reconciled
+                    || t.transfer_id.is_some()
                 {
                     return Err(INVALID);
                 }
-                target(&t["accountId"], "account")?;
-                if let Some(id) = t.get("payeeId") {
-                    target(id, "payee")?;
+                target(&t.account_id, AggregateKind::Account)?;
+                if let Some(id) = &t.payee_id {
+                    target(id, AggregateKind::Payee)?;
                 }
-                for split in array(&t["splits"])? {
-                    target(&split["categoryId"], "category")?;
+                for split in &t.splits {
+                    target(&split.category_id, AggregateKind::Category)?;
                 }
             }
-            "scheduleOccurrence" => {
-                target(&a["scheduleId"], "schedule")?;
-                if a["state"] == "confirmed" {
-                    if target(&a["transactionId"], "transaction")?["scheduleOccurrenceId"]
-                        != a["id"]
-                    {
+            Aggregate::ScheduleOccurrence(occurrence) => {
+                target(&occurrence.schedule_id, AggregateKind::Schedule)?;
+                if occurrence.state == OccurrenceState::Confirmed {
+                    let id = occurrence.transaction_id.as_ref().ok_or(INVALID)?;
+                    let Aggregate::Transaction(tx) = target(id, AggregateKind::Transaction)? else {
+                        return Err(INVALID);
+                    };
+                    if tx.schedule_occurrence_id.as_ref() != Some(&occurrence.id) {
                         return Err(INVALID);
                     }
-                } else if a.get("transactionId").is_some() {
+                } else if occurrence.transaction_id.is_some() {
                     return Err(INVALID);
                 }
             }
-            _ => {}
+            Aggregate::Account(_)
+            | Aggregate::FinancialRevision(_)
+            | Aggregate::CategoryGroup(_)
+            | Aggregate::ImportMapping(_) => {}
         }
     }
     for a in all {
-        if kind(a) == "transaction"
-            && live(a)
-            && a["clearance"] == "reconciled"
-            && !reconciled.contains(string(&a["id"])?)
+        if let Aggregate::Transaction(tx) = a
+            && a.is_live()
+            && tx.clearance == Clearance::Reconciled
+            && !reconciled.contains(&tx.id)
         {
             return Err(INVALID);
         }
     }
-    let projections = projections::rebuild(all)?;
-    let mut total = 0;
-    for balance in array(&projections["accountBalances"])? {
-        total = projections::add(
-            total,
-            integer(&balance["balance"])?,
-            "Der Gesamtkontostand überschreitet den sicheren Centbereich.",
-        )?;
+    let balances = projections::typed_balances(all)?;
+    projections::typed_consumption(all)?;
+    let mut total = MoneyCents::new(0)?;
+    for balance in balances {
+        total = total.checked_add(balance.balance).map_err(|(code, _)| {
+            (
+                code,
+                "Der Gesamtkontostand überschreitet den sicheren Centbereich.",
+            )
+        })?;
     }
-    let mut months = Vec::<(String, Vec<Value>)>::new();
+    let mut months = Vec::<(&str, Vec<Aggregate>)>::new();
     let mut index = BTreeMap::new();
-    for a in all.iter().filter(|a| kind(a) == "transaction" && live(a)) {
-        let key = &string(&a["date"])?[..7];
-        let n = *index.entry(key.to_string()).or_insert_with(|| {
-            months.push((key.to_string(), vec![]));
-            months.len() - 1
-        });
-        months[n].1.push(a.clone());
+    for a in all {
+        if let Aggregate::Transaction(tx) = a
+            && a.is_live()
+        {
+            let key = &tx.date.as_str()[..7];
+            let n = *index.entry(key).or_insert_with(|| {
+                months.push((key, vec![]));
+                months.len() - 1
+            });
+            months[n].1.push(a.clone());
+        }
     }
     for (_, txs) in months {
-        let mut sum = 0;
-        for tx in &txs {
-            sum = projections::add(
-                sum,
-                integer(&tx["amount"])?,
-                "Die Monatssumme überschreitet den sicheren Centbereich.",
-            )?;
+        let mut sum = MoneyCents::new(0)?;
+        for a in &txs {
+            if let Aggregate::Transaction(tx) = a {
+                sum = sum.checked_add(tx.amount).map_err(|(code, _)| {
+                    (
+                        code,
+                        "Die Monatssumme überschreitet den sicheren Centbereich.",
+                    )
+                })?;
+            }
         }
-        let mut month: Vec<_> = all
+        let mut month = all
             .iter()
-            .filter(|a| kind(a) != "transaction")
+            .filter(|a| a.kind() != AggregateKind::Transaction)
             .cloned()
-            .collect();
+            .collect::<Vec<_>>();
         month.extend(txs);
-        projections::consumption(&month)?;
+        projections::typed_consumption(&month)?;
     }
     Ok(())
 }
@@ -521,4 +573,83 @@ pub fn project_json(input: &str) -> String {
             json!({"contractVersion":1,"status":"projected","projections":projections::rebuild(all)?}),
         )
     })())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{models::Aggregate, scalars::EntityId};
+    fn state(name: &str) -> (String, Vec<Aggregate>) {
+        let cases: Vec<Value> =
+            serde_json::from_str(include_str!("../tests/fixtures/contract-catalog.json")).unwrap();
+        let request = &cases.iter().find(|case| case["name"] == name).unwrap()["request"];
+        (
+            request["spaceId"].as_str().unwrap().to_owned(),
+            request["aggregates"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(Aggregate::from_wire)
+                .collect::<CoreResult<_>>()
+                .unwrap(),
+        )
+    }
+    #[test]
+    fn typed_state_requires_references_in_the_current_space() {
+        let (space, mut all) = state("Bestandsprüfung validate: F01");
+        assert!(typed_validate(&all, &space).is_ok());
+        let account = all
+            .iter()
+            .position(|a| matches!(a, Aggregate::Account(_)))
+            .unwrap();
+        if let Aggregate::Account(a) = &mut all[account] {
+            a.space_id = EntityId::new("40000000-0000-4000-8000-000000000099".to_owned()).unwrap();
+        }
+        assert_eq!(typed_validate(&all, &space).unwrap_err(), INVALID);
+        let (space, mut all) = state("Bestandsprüfung validate: F01");
+        all.retain(|a| !matches!(a, Aggregate::Category(_)));
+        assert_eq!(typed_validate(&all, &space).unwrap_err(), INVALID);
+    }
+    #[test]
+    fn typed_reconciliation_and_transfer_keep_both_sides_consistent() {
+        let (space, mut all) = state("Bestandsprüfung validate: Abgleich");
+        assert!(typed_validate(&all, &space).is_ok());
+        for a in &mut all {
+            if let Aggregate::Reconciliation(a) = a {
+                a.transaction_ids =
+                    crate::scalars::NonEmptyVec::new(vec![
+                        a.transaction_ids.as_slice()[0].clone();
+                        2
+                    ])
+                    .unwrap();
+            }
+        }
+        assert_eq!(
+            typed_validate(&all, &space).unwrap_err().0,
+            "DUPLICATE_REFERENCE"
+        );
+        let (space, mut all) = state("Bestandsprüfung validate: F03 historisches Konto");
+        assert!(typed_validate(&all, &space).is_ok());
+        let id = all
+            .iter()
+            .find_map(|a| {
+                if let Aggregate::Transfer(t) = a {
+                    Some(t.source_transaction_id.clone())
+                } else {
+                    None
+                }
+            })
+            .unwrap();
+        for a in &mut all {
+            if let Aggregate::Transaction(tx) = a
+                && tx.id == id
+            {
+                tx.amount = crate::scalars::MoneyCents::new(tx.amount.cents() + 1).unwrap();
+            }
+        }
+        assert_eq!(
+            typed_validate(&all, &space).unwrap_err().1,
+            "Die Umbuchungsseiten müssen entgegengesetzte Beträge, Konten und dasselbe Datum besitzen."
+        );
+    }
 }

@@ -6,7 +6,7 @@ use crate::{
     models::{Aggregate, GroupKind, Transaction, TransactionKind},
     scalars::{EntityId, MoneyCents},
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{cmp::Ordering, collections::BTreeMap};
 pub fn uuid_order(a: &str, b: &str) -> Ordering {
@@ -25,28 +25,29 @@ pub fn add(a: i64, b: i64, message: &'static str) -> CoreResult<i64> {
 fn sum(a: MoneyCents, b: MoneyCents, message: &'static str) -> CoreResult<MoneyCents> {
     a.checked_add(b).map_err(|(code, _)| (code, message))
 }
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct AccountBalance {
     pub account_id: EntityId,
     pub balance: MoneyCents,
 }
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CategoryConsumption {
     pub category_id: EntityId,
     pub group_kind: GroupKind,
     pub amount: MoneyCents,
 }
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct Consumption {
     pub income: MoneyCents,
     pub expense: MoneyCents,
     pub net: MoneyCents,
     pub categories: Vec<CategoryConsumption>,
 }
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ProjectionSet {
     pub account_balances: Vec<AccountBalance>,
     pub consumption: Consumption,

@@ -2,106 +2,113 @@
 //! Cachewerte werden ausschließlich gegen dieselben Fachprojektionen verglichen.
 use crate::{
     CoreResult,
-    aggregate_schema::{INVALID, array, integer, kind, string},
-    projections,
+    aggregate_schema::INVALID,
+    models::{Aggregate, AggregateKind},
+    projections::{self, Consumption},
+    scalars::{EntityId, MoneyCents, present},
 };
+use serde::Deserialize;
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct CachedAccountBalance {
+    #[serde(default, deserialize_with = "present")]
+    account_id: Option<EntityId>,
+    balance: MoneyCents,
+}
+// Äußere Storagefelder bleiben Verantwortung des Speichervertrags. Hier werden
+// ausschließlich die vorhandenen Projektionsarten und deren Payloads geprüft.
+#[derive(Deserialize)]
+#[serde(tag = "kind", rename_all = "camelCase")]
+enum Cache {
+    Balance {
+        key: EntityId,
+        payload: MoneyCents,
+    },
+    AccountBalance {
+        key: EntityId,
+        payload: CachedAccountBalance,
+    },
+    Consumption {
+        key: String,
+        payload: Consumption,
+    },
+}
 pub fn validate(all: &[Value], cached: &[Value]) -> CoreResult<()> {
-    let expected = projections::rebuild(all)?;
-    let balances: BTreeMap<&str, i64> = array(&expected["accountBalances"])?
+    let all = all
         .iter()
-        .map(|a| Ok((string(&a["accountId"])?, integer(&a["balance"])?)))
-        .collect::<CoreResult<_>>()?;
-    let accounts: BTreeSet<&str> = all
+        .map(Aggregate::from_wire)
+        .collect::<CoreResult<Vec<_>>>()?;
+    let expected_balances = projections::typed_balances(&all)?;
+    let balances = expected_balances
         .iter()
-        .filter(|a| kind(a) == "account")
-        .map(|a| string(&a["id"]))
-        .collect::<CoreResult<_>>()?;
+        .map(|a| (&a.account_id, a.balance))
+        .collect::<BTreeMap<_, _>>();
+    let consumption = projections::typed_consumption(&all)?;
+    let accounts = all
+        .iter()
+        .filter(|a| a.kind() == AggregateKind::Account)
+        .map(Aggregate::id)
+        .collect::<BTreeSet<_>>();
+    let zero = MoneyCents::new(0)?;
     for cache in cached {
-        let key = string(&cache["key"])?;
-        let payload = &cache["payload"];
-        match cache["kind"].as_str().unwrap_or("") {
-            "balance" => {
-                if !accounts.contains(key)
-                    || integer(payload)? != balances.get(key).copied().unwrap_or(0)
+        let cache: Cache = serde_json::from_value(cache.clone()).map_err(|_| INVALID)?;
+        match cache {
+            Cache::Balance { key, payload } => {
+                if !accounts.contains(&key)
+                    || payload != balances.get(&key).copied().unwrap_or(zero)
                 {
                     return Err(INVALID);
                 }
             }
-            "accountBalance" => {
-                if !accounts.contains(key)
-                    || payload.as_object().is_none_or(|o| {
-                        o.keys()
-                            .any(|k| !["accountId", "balance"].contains(&k.as_str()))
-                    })
-                    || integer(&payload["balance"])? != balances.get(key).copied().unwrap_or(0)
-                    || payload
-                        .get("accountId")
-                        .is_some_and(|id| id.as_str() != Some(key))
+            Cache::AccountBalance { key, payload } => {
+                if !accounts.contains(&key)
+                    || payload.balance != balances.get(&key).copied().unwrap_or(zero)
+                    || payload.account_id.as_ref().is_some_and(|id| id != &key)
                 {
                     return Err(INVALID);
                 }
             }
-            "consumption" => {
-                if payload.as_object().is_none_or(|o| {
-                    o.len() != 4
-                        || o.keys().any(|k| {
-                            !["income", "expense", "net", "categories"].contains(&k.as_str())
-                        })
-                }) {
-                    return Err(INVALID);
-                }
+            Cache::Consumption { key, payload } => {
+                let month;
                 let current = if key == "all" {
-                    expected["consumption"].clone()
+                    &consumption
                 } else {
-                    crate::calendar::parse_year_month(key).map_err(|_| INVALID)?;
-                    let month = all
+                    crate::calendar::parse_year_month(&key).map_err(|_| INVALID)?;
+                    let all = all
                         .iter()
-                        .filter(|a| {
-                            kind(a) != "transaction"
-                                || a["date"].as_str().is_some_and(|d| d.starts_with(key))
+                        .filter(|a| match a {
+                            Aggregate::Transaction(tx) => tx.date.as_str().starts_with(&key),
+                            _ => true,
                         })
                         .cloned()
                         .collect::<Vec<_>>();
-                    projections::consumption(&month)?
+                    month = projections::typed_consumption(&all)?;
+                    &month
                 };
-                for field in ["income", "expense", "net"] {
-                    if integer(&payload[field])? != integer(&current[field])? {
-                        return Err(INVALID);
-                    }
-                }
-                let actual = array(&payload["categories"])?;
-                let expected = array(&current["categories"])?;
-                if actual.len() != expected.len() {
+                if payload.income != current.income
+                    || payload.expense != current.expense
+                    || payload.net != current.net
+                    || payload.categories.len() != current.categories.len()
+                {
                     return Err(INVALID);
                 }
                 let mut seen = BTreeSet::new();
-                for row in actual {
-                    if row.as_object().is_none_or(|o| {
-                        o.len() != 3
-                            || o.keys().any(|k| {
-                                !["categoryId", "groupKind", "amount"].contains(&k.as_str())
-                            })
-                    }) {
+                for row in &payload.categories {
+                    if !seen.insert(&row.category_id) {
                         return Err(INVALID);
                     }
-                    let id = string(&row["categoryId"])?;
-                    if !seen.insert(id) {
-                        return Err(INVALID);
-                    }
-                    let target = expected
+                    let target = current
+                        .categories
                         .iter()
-                        .find(|a| a["categoryId"] == id)
+                        .find(|a| a.category_id == row.category_id)
                         .ok_or(INVALID)?;
-                    if row["groupKind"] != target["groupKind"]
-                        || integer(&row["amount"])? != integer(&target["amount"])?
-                    {
+                    if row.group_kind != target.group_kind || row.amount != target.amount {
                         return Err(INVALID);
                     }
                 }
             }
-            _ => return Err(INVALID),
         }
     }
     Ok(())
@@ -110,9 +117,9 @@ pub fn validate(all: &[Value], cached: &[Value]) -> CoreResult<()> {
 pub fn cache_json(input: &str) -> String {
     crate::output((|| {
         let v = crate::decode(input)?;
-        let all = array(&v["aggregates"])?;
-        crate::state_validation::validate(all, string(&v["spaceId"])?)?;
-        validate(all, array(&v["projections"])?)?;
+        let all = crate::aggregate_schema::array(&v["aggregates"])?;
+        crate::state_validation::validate(all, crate::aggregate_schema::string(&v["spaceId"])?)?;
+        validate(all, crate::aggregate_schema::array(&v["projections"])?)?;
         Ok(serde_json::json!({"contractVersion":1,"status":"valid"}))
     })())
 }

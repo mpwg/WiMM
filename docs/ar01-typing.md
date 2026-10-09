@@ -10,24 +10,26 @@ Die stringbasierte Formfeldliste ist aus dem Laufzeitvalidator entfernt. Ihre ge
 
 Konto- und Verbrauchsprojektionen verwenden intern ausschließlich typisierte Aggregate, Ergebnisse und Centoperationen. Stabile Buchungs-/Kategorie-/Kontoreihenfolge und Fehlertexte bleiben erhalten. Stammdaten-/Buchungsnormalisierung und Prüfungen für Splits, Regelbedingungen und Importzeilen verwenden die neuen Typen. Buchungen und Dauerzahlungsvorlagen teilen dieselbe Prüfung ihrer Buchungsfelder, ohne fiktive Aggregate zu konstruieren.
 
+Ein weiterer geprüfter Abschnitt stellt die vollständige historische Bestandsvalidierung und Cacheprüfung um. Nach der Grenzdeserialisierung verwenden Bereich/Chronologie, Referenzarten, Transferpaare, Abgleiche, Importfingerprints, Regeln und Dauerzahlungsverknüpfungen direkt Rust-Felder. Konto-, Verbrauchs- und Monatssummen verwenden dieselben typisierten Projektionen und sicheren Centtypen. Die Cacheprüfung deserialisiert bestehende Payloads in typisierte Werte; sie erhält die optionalen Konto-IDs und die von der Reihenfolge unabhängige Kategorieprüfung.
+
 ## Kompatibilität und Grenzen
 
 Binding- und Fachschemaversion bleiben eins. UUID-Schreibweise, Zeitstempelpräzision, Tombstones sowie Unterschied zwischen fehlenden Feldern und vorhandenem `null` bleiben erhalten. Nur das erforderliche Kandidatenfeld der Importzeile darf ausdrücklich `null` sein. Importmappings bleiben gemäß bestehendem Vertrag opake JSON-Payloads; ihre Struktur wird hier nicht verschärft. Äquivalente JSON-Zahlformen werden an der Grenze in sichere Ganzzahlen umgewandelt; Geldberechnungen verwenden ausschließlich Integer.
 
-Die verbleibenden Befehlsabläufe, Gegenbefehle, vollständigen Querreferenz-/Revisionsprüfungen und Teile der Automatisierung verwenden noch dynamische Daten. Ihre Übergangsadapter deserialisieren Modelle und serialisieren Ergebnisse; JSON ist dadurch noch nicht ausschließlich die äußere Bindinggrenze. Insbesondere ist noch kein begrenzter Ansichtsport oder optimierter Bereichslesevorgang aus AR07 umgesetzt. Neue Funktionalität und Datenmigrationen sind nicht Bestandteil dieses Abschnitts.
+Die verbleibenden Befehlsabläufe, Gegenbefehle, Mutationsreferenz-/Revisionsprüfungen und Teile der Automatisierung verwenden noch dynamische Daten. Ihre Übergangsadapter deserialisieren Modelle und serialisieren Ergebnisse; JSON ist dadurch noch nicht ausschließlich die äußere Bindinggrenze. Insbesondere ist noch kein begrenzter Ansichtsport oder optimierter Bereichslesevorgang aus AR07 umgesetzt. Neue Funktionalität und Datenmigrationen sind nicht Bestandteil dieses Abschnitts.
 
 ## Kriterienmatrix
 
 | Kriterium aus #115 | Status | Aktueller Beleg |
 | --- | --- | --- |
-| Alle Handler arbeiten typisiert; unmögliche Feldkombinationen nicht frei konstruierbar | offen | Formmodelle, skalare Konstruktoren, Basisprojektionen und Teilprüfungen vorhanden; verbleibende dynamische Abläufe siehe Abschnittsgrenze |
+| Alle Handler arbeiten typisiert; unmögliche Feldkombinationen nicht frei konstruierbar | offen | Formmodelle, skalare Konstruktoren, Basisprojektionen, Cacheprüfung und historische Bestandsvalidierung vorhanden; verbleibende dynamische Abläufe siehe Abschnittsgrenze |
 | Bestehender positiver/negativer K04-Katalog nativ, WASM, Swift und Kotlin unverändert | erfüllt | `pnpm test:core:bindings`: je 479 Fälle in Rust nativ, Swift/UniFFI, Kotlin/UniFFI, WASM/Node und tatsächlichem Chromium/WASM |
 | Kein ORM/UI/HTTP/Storage im Kern; unsafe-Verbot unverändert | erfüllt | `pnpm check:core`: Paket-/Root-/Workspace-Grenzen, Rustfmt, Clippy mit Warnungen als Fehler, native Workspace-Assertions |
 | README des Abschnitts aktuell | erfüllt | [Rust-Fachkern-README](../crates/finance-core/README.md): neue Modelle, native Prüfungen und verbleibende Übergangsgrenze beschrieben |
 
 Prüfumgebung: aktive Arbeitskopie auf macOS arm64; synthetischer gesperrter Fachkatalog ohne echte Finanz-/Schlüsseldaten. Eigene native Rust-Assertions prüfen zusätzlich skalare Grenzen, Formmutationen, Nullable-/Abwesenheitssemantik, F01 (110.000 Cent Kontostand, 20.000 Einnahmen/10.000 Ausgaben), Teilrückerstattung, Tombstones, stabile Reihenfolge, Zwischenwertüberlauf und Splitfehler. Die Befehle verändern keine Sollfixtures.
 
-Lokale Logs: `test-results/architecture-implementation/ar01-model-core.log` und `ar01-model-bindings.log`. Veröffentlichter Commit und rückgelesene Belege stehen in #115. Keine native Tauri-GUI-, Firefox-, WebKit-, physische Geräte- oder neue Persistenzabnahme wird aus diesem Fachbindingabschnitt abgeleitet.
+Lokale Abschnittslogs: `test-results/architecture-implementation/ar01-model-core.log` und `ar01-model-bindings.log`; erneute vollständige Prüfung nach der Bestands-/Cacheumstellung in `ar01-state-core.log` und `ar01-state-bindings.log`. Zwei zusätzliche direkte Rusttests prüfen am typisierten Bestand fremde Bereiche, fehlende Kategorien, doppelte Abgleichreferenzen und ein beschädigtes Transferpaar. Veröffentlichte Commits und rückgelesene Belege stehen in #115. Keine native Tauri-GUI-, Firefox-, WebKit-, physische Geräte- oder neue Persistenzabnahme wird aus diesem Fachbindingabschnitt abgeleitet.
 
 ## Fortsetzung
 
