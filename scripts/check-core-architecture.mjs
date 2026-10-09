@@ -4,8 +4,10 @@ import { execFileSync } from 'node:child_process';
 const metadata = JSON.parse(execFileSync('cargo', ['metadata', '--locked', '--format-version=1'], { encoding: 'utf8' }));
 const core = metadata.packages.find((entry) => entry.name === 'wimm-finance-core');
 if (!core) throw new Error('Der eigenständige Rust-Fachkern fehlt.');
-const pureDependencies = new Set(['serde', 'serde_json', 'uuid', 'chrono', 'time', 'unicode-normalization', 'num-bigint', 'num-traits', 'schemars']);
-for (const dependency of core.dependencies) if (!pureDependencies.has(dependency.name)) throw new Error(`Der Fachkern darf ${dependency.name} nicht importieren.`);
+const pureDependencies = new Set(['serde', 'serde_json', 'uuid', 'chrono', 'time', 'unicode-normalization', 'num-bigint', 'num-traits', 'schemars', 'wimm-finance-types']);
+const types = metadata.packages.find((entry) => entry.name === 'wimm-finance-types');
+if (!types) throw new Error('Die gemeinsame plattformfreie Rust-Typquelle fehlt.');
+for (const dependency of [...core.dependencies, ...types.dependencies]) if (!pureDependencies.has(dependency.name)) throw new Error(`Der Fachkern darf ${dependency.name} nicht importieren.`);
 console.log('Rust-Fachkern ohne UI-/Tauri-/Datenbank-/HTTP-Abhängigkeit geprüft.');
 
 const ownTargets = metadata.packages.filter((entry) => metadata.workspace_members.includes(entry.id)).flatMap((entry) => entry.targets.map((target) => target.src_path));

@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 use std::{fs, path::Path};
 fn exports() -> Vec<(&'static str, String)> {
-    use wimm_finance_core::schema;
+    use wimm_finance_types::schema;
     [
         ("private-aggregate.schema.json", schema::aggregate()),
         ("private-command.schema.json", schema::command()),

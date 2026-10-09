@@ -12,6 +12,8 @@ Bis zur jeweils geprüften Aktivierung bleibt der vorhandene Adapter maßgeblich
 
 Die Namen noch nicht implementierter Crates beschreiben Rollen, keine angeblich vorhandenen Pakete.
 
+Die private Rust-Typquelle ist jetzt `wimm-finance-types`; `wimm-finance-core` reexportiert kompatible Modulpfade und enthält weiterhin Fachhandler/Projektionen/CAS-/Referenzregeln. Beide sind plattformfrei und haben keine UI-/HTTP-/ORM-/Speicherabhängigkeit. Diese Quelltrennung setzt die Rolle Rust-Fachverträge um; vollständige Sprach-/Modulabnahme bleibt AR02.
+
 | Komponente | Verantwortung | Zulässige Abhängigkeiten |
 | --- | --- | --- |
 | Rust-Fachverträge | Sichere Geld-/Datums-/ID-/Revisionstypen, Befehle, Ergebnisse, Versionen | Plattformfreie Serialisierung/Schemawerkzeuge |

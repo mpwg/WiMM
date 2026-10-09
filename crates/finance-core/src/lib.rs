@@ -4,7 +4,6 @@
 #![forbid(unsafe_code)]
 use serde::Deserialize;
 use serde_json::{Value, json};
-use uuid::Uuid;
 mod aggregate_schema;
 mod automation;
 mod automation_commands;
@@ -40,7 +39,7 @@ pub mod schema;
 #[cfg(feature = "contract-probe")]
 pub use primitive_probe::primitive_json;
 
-const MAX_SAFE: i64 = 9_007_199_254_740_991;
+const MAX_SAFE: i64 = wimm_finance_types::MAX_SAFE;
 
 pub type CoreResult<T> = Result<T, (&'static str, &'static str)>;
 fn rejection(code: &str, message: &str) -> Value {
@@ -91,21 +90,7 @@ fn output(result: CoreResult<Value>) -> String {
     .to_string()
 }
 fn valid_id(value: &str) -> bool {
-    let b = value.as_bytes();
-    b.len() == 36
-        && b.iter().enumerate().all(|(n, c)| {
-            if [8, 13, 18, 23].contains(&n) {
-                *c == b'-'
-            } else {
-                c.is_ascii_hexdigit()
-            }
-        })
-        && Uuid::parse_str(value).is_ok_and(|id| {
-            id.is_nil()
-                || id == Uuid::max()
-                || (id.get_variant() == uuid::Variant::RFC4122
-                    && (1..=8).contains(&id.get_version_num()))
-        })
+    wimm_finance_types::valid_id(value)
 }
 
 #[derive(Deserialize)]

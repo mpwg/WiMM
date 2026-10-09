@@ -1941,7 +1941,7 @@ name = "wimm-contract-schema"
 version = "0.0.0"
 dependencies = [
  "serde_json",
- "wimm-finance-core",
+ "wimm-finance-types",
 ]
 
 [[package]]
@@ -1989,10 +1989,19 @@ dependencies = [
 name = "wimm-finance-core"
 version = "0.0.0"
 dependencies = [
- "schemars",
  "serde",
  "serde_json",
  "unicode-normalization",
+ "wimm-finance-types",
+]
+
+[[package]]
+name = "wimm-finance-types"
+version = "0.0.0"
+dependencies = [
+ "schemars",
+ "serde",
+ "serde_json",
  "uuid",
 ]
 

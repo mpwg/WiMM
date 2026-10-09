@@ -75,6 +75,8 @@ K06 konkretisiert diese Portgrundlage für die vollständige öffentliche Verwal
 
 Typisierte Rust-Newtypes/tagged unions sind Quelle für Fach-, Anwendungs- und generierte Sprachtypen/Formschemas. Private Fachverträge, öffentliche Serverhüllen und ORMmodels bleiben getrennt. Die etablierte Generierung muss safe nutzbar, reproduzierbar und auf Drift prüfbar sein. Unbekannte Version/Format scheitert vor Mutation; der vorhandene V1-Vertrag wird nicht still erweitert.
 
+Die vollständige bestehende private Rust-Formquelle liegt in `wimm-finance-types`, unabhängig von Fachhandlern und Plattformadaptern. Der Kern reexportiert die bisherigen Modulpfade. Geschützte Werte und Serde-/Schemaformen bleiben unverändert; fachliche CAS-/Referenz-/Projektions-/Befehlsregeln verbleiben im Kern. Öffentliche Server- und lokale Speicherquellen bleiben getrennt von diesen privaten Finanzformen.
+
 Die Rust-Anwendung besitzt Profil-/Bereichskontext, Historie und Commitpipeline; Bindings rufen Anwendungsaktionen auf und abonnieren versionierte Zustandsereignisse. Native Runtime bzw. Browserworker hält den vollständigen aktuellen Mutationsbestand. Ansichtsports liefern begrenzte stabile Seiten und fachlich berechnete Summen; keine UI-/SQL-Fachberechnung. Projektionscache bindet Ausgangsrevision und Projektionsversion; stale Cache wird kontrolliert neu aufgebaut.
 
 ## Lokale Commitidentität und strukturierte Ergebnisse
