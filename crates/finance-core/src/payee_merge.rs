@@ -8,12 +8,7 @@ use crate::{
     scalars::{EntityId, NonEmptyText, Revision},
     state_validation,
 };
-use serde_json::Value;
 use std::collections::BTreeSet;
-pub fn execute(decoded: Value) -> CoreResult<Value> {
-    let request: Request = serde_json::from_value(decoded).map_err(|_| COMMAND_ERROR)?;
-    command_contracts::to_wire(execute_typed(request)?)
-}
 pub(crate) fn execute_typed(request: Request) -> CoreResult<ChangeSet> {
     request.check_versions()?;
     let Command::PayeeMerge(cmd) = &request.command else {

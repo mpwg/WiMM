@@ -10,7 +10,6 @@ use crate::{
     scalars::{EntityId, Revision},
     typed_financial,
 };
-use serde_json::Value;
 use std::collections::BTreeMap;
 fn needed<'a>(
     current: &BTreeMap<&EntityId, &'a Aggregate>,
@@ -35,10 +34,6 @@ fn normalize(a: &Aggregate) -> CoreResult<Transaction> {
         ));
     };
     typed_financial::normalize(a.clone())
-}
-pub fn execute(decoded: Value) -> CoreResult<Value> {
-    let request: Request = serde_json::from_value(decoded).map_err(|_| COMMAND_ERROR)?;
-    command_contracts::to_wire(execute_typed(request)?)
 }
 pub(crate) fn execute_typed(request: Request) -> CoreResult<command_contracts::ChangeSet> {
     request.check_versions()?;

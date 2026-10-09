@@ -2,7 +2,6 @@
 //! Erste Stammdatenhandler mit vollständigen Revisionsübergängen; keine Persistenz.
 use crate::{CoreResult, aggregate_schema, state_validation};
 use serde::Deserialize;
-use serde_json::Value;
 use std::collections::BTreeSet;
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -76,12 +75,13 @@ pub(crate) fn normalize_typed(
     }
     Ok(a)
 }
-pub fn execute(decoded: Value) -> CoreResult<Value> {
+pub(crate) fn execute_typed(
+    request: crate::command_contracts::Request,
+) -> CoreResult<crate::command_contracts::ChangeSet> {
     use crate::{
-        command_contracts::{self, COMMAND_ERROR, Request},
+        command_contracts::{self, COMMAND_ERROR},
         models::{Aggregate, AggregateKind, CategorySystem, Command},
     };
-    let request: Request = serde_json::from_value(decoded).map_err(|_| COMMAND_ERROR)?;
     request.check_versions()?;
     let current = request.current();
     if current.len() != request.aggregates.len() {
@@ -213,9 +213,5 @@ pub fn execute(decoded: Value) -> CoreResult<Value> {
         ));
     }
     command_contracts::transition(&a, &request.space_id, &expected, &current)?;
-    command_contracts::to_wire(request.changed(
-        command_type,
-        vec![a],
-        request.expected_revisions.clone(),
-    ))
+    Ok(request.changed(command_type, vec![a], request.expected_revisions.clone()))
 }

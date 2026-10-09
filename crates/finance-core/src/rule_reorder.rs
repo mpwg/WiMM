@@ -22,6 +22,36 @@ struct Boundary {
 }
 pub(crate) fn execute(decoded: Value) -> CoreResult<Value> {
     let request: Boundary = serde_json::from_value(decoded).map_err(|_| COMMAND_ERROR)?;
+    command_contracts::to_wire(execute_boundary(request)?)
+}
+pub(crate) fn execute_typed(request: crate::command_contracts::Request) -> CoreResult<ChangeSet> {
+    execute_boundary(Boundary {
+        contract_version: request.contract_version,
+        domain_schema_version: request.domain_schema_version,
+        space_id: request.space_id.as_str().to_owned(),
+        aggregates: request.aggregates,
+        command: request.command,
+        expected_revisions: request
+            .expected_revisions
+            .into_iter()
+            .map(|expectation| crate::master_commands::Expectation {
+                id: expectation.id.as_str().to_owned(),
+                expected_revision: expectation.expected_revision.value(),
+            })
+            .collect(),
+        context: crate::master_commands::Context {
+            operation_id: request.context.operation_id.as_str().to_owned(),
+            occurred_at: request.context.occurred_at.as_str().to_owned(),
+            generated_ids: request
+                .context
+                .generated_ids
+                .into_iter()
+                .map(|id| id.as_str().to_owned())
+                .collect(),
+        },
+    })
+}
+fn execute_boundary(request: Boundary) -> CoreResult<ChangeSet> {
     if request.contract_version != 1
         || request.domain_schema_version != 1
         || !crate::valid_id(&request.space_id)
@@ -123,7 +153,7 @@ pub(crate) fn execute(decoded: Value) -> CoreResult<Value> {
             expected_revision: Revision::new(revision)?,
         });
     }
-    command_contracts::to_wire(ChangeSet {
+    Ok(ChangeSet {
         space_id: space,
         command_type: "rule.reorder".to_owned(),
         operation_id: context.operation_id,

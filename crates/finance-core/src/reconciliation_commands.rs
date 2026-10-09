@@ -10,7 +10,6 @@ use crate::{
     scalars::{EntityId, MoneyCents, Revision, StoredRevision},
     typed_financial,
 };
-use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 fn read<'a>(
     current: &BTreeMap<&EntityId, &'a Aggregate>,
@@ -40,10 +39,6 @@ fn add_expected(expected: &mut Vec<Expectation>, a: &Aggregate) -> CoreResult<()
         });
     }
     Ok(())
-}
-pub fn execute(decoded: Value) -> CoreResult<Value> {
-    let request: Request = serde_json::from_value(decoded).map_err(|_| COMMAND_ERROR)?;
-    command_contracts::to_wire(execute_typed(request, None)?)
 }
 pub(crate) fn execute_typed(
     request: Request,

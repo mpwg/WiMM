@@ -6,7 +6,6 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 mod aggregate_schema;
 mod automation;
-mod automation_commands;
 pub mod command_contracts;
 mod inverse;
 mod typed_automation;
@@ -16,7 +15,6 @@ mod typed_automation_commands;
 mod v1_shape_reference;
 pub use inverse::reverse_json;
 pub mod calendar;
-mod financial_commands;
 mod master_commands;
 mod payee_merge;
 pub mod projection_cache;
@@ -184,59 +182,60 @@ pub fn execute_json(input: &str) -> String {
         }
         aggregate_schema::command(&decoded["command"])
             .map_err(|_| ("INVALID_COMMAND", "Der Fachbefehl ist ungültig."))?;
-        if [
-            "rule.save",
-            "rule.delete",
-            "schedule.save",
-            "schedule.confirm",
-            "schedule.skip",
-            "importMapping.save",
-            "importBatch.save",
-            "import.commit",
-        ]
-        .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
-        {
-            return automation_commands::execute(decoded);
+        // V1-Regelreihenfolge erhält ihre besondere Generatorfehlerpriorität.
+        if decoded["command"]["commandType"] == "rule.reorder" {
+            return rule_reorder::execute(decoded);
         }
-        if decoded["command"]["commandType"] == "payee.merge" {
-            return payee_merge::execute(decoded);
-        }
-        if ["reconciliation.confirm", "reconciliation.unlock"]
-            .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
-        {
-            return reconciliation_commands::execute(decoded);
-        }
-        if ["transfer.save", "transfer.delete"]
-            .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
-        {
-            return transfer_commands::execute(decoded);
-        }
-        if decoded["command"]["commandType"] == "account.save"
-            && decoded["command"]["aggregates"]
-                .as_array()
-                .is_some_and(|a| a.len() == 2)
-        {
-            return financial_commands::execute(decoded);
-        }
-        if ["transaction.save", "transaction.delete"]
-            .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
-        {
-            return financial_commands::execute(decoded);
-        }
-        if [
-            "account.save",
-            "account.archive",
-            "categoryGroup.save",
-            "category.save",
-            "category.archive",
-            "payee.save",
-        ]
-        .contains(&decoded["command"]["commandType"].as_str().unwrap_or(""))
-        {
-            return master_commands::execute(decoded);
-        }
-        rule_reorder::execute(decoded)
+        let request =
+            serde_json::from_value(decoded).map_err(|_| command_contracts::COMMAND_ERROR)?;
+        execute(request)?.to_wire()
     })())
+}
+
+/// Gemeinsamer typisierter Einstieg für Sprachbindings; keine JSON-Rekonstruktion.
+pub fn execute(
+    request: command_contracts::Request,
+) -> CoreResult<command_contracts::CommandResult> {
+    use command_contracts::CommandResult;
+    use models::Command;
+    if request.contract_version != 1 || request.domain_schema_version != 1 {
+        return Err((
+            "UPDATE_REQUIRED",
+            "Der Enginevertrag wird nicht unterstützt.",
+        ));
+    }
+    match &request.command {
+        Command::RuleSave(_)
+        | Command::RuleDelete(_)
+        | Command::ScheduleSave(_)
+        | Command::ScheduleConfirm(_)
+        | Command::ScheduleSkip(_)
+        | Command::ImportMappingSave(_)
+        | Command::ImportBatchSave(_)
+        | Command::ImportCommit(_) => typed_automation_commands::execute(request),
+        Command::PayeeMerge(_) => payee_merge::execute_typed(request).map(CommandResult::Changed),
+        Command::ReconciliationConfirm(_) | Command::ReconciliationUnlock(_) => {
+            reconciliation_commands::execute_typed(request, None).map(CommandResult::Changed)
+        }
+        Command::TransferSave(_) | Command::TransferDelete(_) => {
+            transfer_commands::execute_typed(request).map(CommandResult::Changed)
+        }
+        Command::AccountSave(command) if command.aggregates.as_slice().len() == 2 => {
+            typed_financial::execute(request).map(CommandResult::Changed)
+        }
+        Command::TransactionSave(_) | Command::TransactionDelete(_) => {
+            typed_financial::execute(request).map(CommandResult::Changed)
+        }
+        Command::AccountSave(_)
+        | Command::AccountArchive(_)
+        | Command::CategoryGroupSave(_)
+        | Command::CategorySave(_)
+        | Command::CategoryArchive(_)
+        | Command::PayeeSave(_) => {
+            master_commands::execute_typed(request).map(CommandResult::Changed)
+        }
+        Command::RuleReorder(_) => rule_reorder::execute_typed(request).map(CommandResult::Changed),
+    }
 }
 
 /// Nur Technikharness: vollständige JSON-Felder verlustfrei über die Bindings transportieren.
