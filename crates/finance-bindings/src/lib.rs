@@ -91,3 +91,20 @@ pub fn cache_json(request: String) -> String {
 
 mod application_v2;
 pub use application_v2::prepare_application_v2;
+
+mod runtime_bridge;
+#[cfg(feature = "native")]
+mod runtime_native;
+#[cfg(feature = "native")]
+pub use runtime_native::{NativeRuntimeHost, RuntimePortError, RuntimeSessionV2};
+
+#[cfg(all(feature = "wasm", not(feature = "native")))]
+mod runtime_wasm;
+#[cfg(all(feature = "wasm", not(feature = "native")))]
+pub use runtime_wasm::RuntimeSessionV2;
+
+#[cfg(feature = "contract-probe")]
+mod runtime_probe;
+
+#[cfg(all(feature = "native", feature = "contract-probe"))]
+pub use runtime_probe::run_stateful_runtime_probe;

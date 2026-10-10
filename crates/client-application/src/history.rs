@@ -9,7 +9,11 @@ use wimm_finance_types::{
     models::Aggregate,
     reverse_contracts::{ReverseRequest, ReverseTarget},
 };
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 pub enum Direction {
     Undo,
     Redo,

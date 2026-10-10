@@ -460,7 +460,13 @@ fileprivate final class UniffiHandleMap<T>: @unchecked Sendable {
 
 
 // Public interface members begin here.
-
+// Magic number for the Rust proxy to call using the same mechanism as every other method,
+// to free the callback once it's dropped by Rust.
+private let IDX_CALLBACK_FREE: Int32 = 0
+// Callback return codes
+private let UNIFFI_CALLBACK_SUCCESS: Int32 = 0
+private let UNIFFI_CALLBACK_ERROR: Int32 = 1
+private let UNIFFI_CALLBACK_UNEXPECTED_ERROR: Int32 = 2
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -490,6 +496,30 @@ fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
     }
 
     public static func write(_ value: Int64, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterBool : FfiConverter {
+    typealias FfiType = Int8
+    typealias SwiftType = Bool
+
+    public static func lift(_ value: Int8) throws -> Bool {
+        return value != 0
+    }
+
+    public static func lower(_ value: Bool) -> Int8 {
+        return value ? 1 : 0
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Bool {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Bool, into buf: inout [UInt8]) {
         writeInt(&buf, lower(value))
     }
 }
@@ -539,6 +569,177 @@ fileprivate struct FfiConverterString: FfiConverter {
         writeBytes(&buf, value.utf8)
     }
 }
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterData: FfiConverterRustBuffer {
+    typealias SwiftType = Data
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Data {
+        let len: Int32 = try readInt(&buf)
+        return Data(try readBytes(&buf, count: Int(len)))
+    }
+
+    public static func write(_ value: Data, into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        writeBytes(&buf, value)
+    }
+}
+
+
+
+
+public protocol RuntimeSessionV2Protocol: AnyObject, Sendable {
+
+    func invoke(input: RuntimeRequestV2) throws  -> RuntimeEventV2
+
+    func page(offset: UInt32, limit: UInt32) throws  -> RuntimePageV2
+
+    func shutdown() throws  -> RuntimeEventV2
+
+}
+open class RuntimeSessionV2: RuntimeSessionV2Protocol, @unchecked Sendable {
+    fileprivate let handle: UInt64
+
+    /// Used to instantiate a [FFIObject] without an actual handle, for fakes in tests, mostly.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public struct NoHandle {
+        public init() {}
+    }
+
+    // TODO: We'd like this to be `private` but for Swifty reasons,
+    // we can't implement `FfiConverter` without making this `required` and we can't
+    // make it `required` without making it `public`.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    required public init(unsafeFromHandle handle: UInt64) {
+        self.handle = handle
+    }
+
+    // This constructor can be used to instantiate a fake object.
+    // - Parameter noHandle: Placeholder value so we can have a constructor separate from the default empty one that may be implemented for classes extending [FFIObject].
+    //
+    // - Warning:
+    //     Any object instantiated with this constructor cannot be passed to an actual Rust-backed object. Since there isn't a backing handle the FFI lower functions will crash.
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public init(noHandle: NoHandle) {
+        self.handle = 0
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public func uniffiCloneHandle() -> UInt64 {
+        return try! rustCall { uniffi_wimm_core_bindings_fn_clone_runtimesessionv2(self.handle, $0) }
+    }
+public convenience init(context: CommitContext, mode: AreaMode, host: NativeRuntimeHost) {
+    let handle =
+        try! rustCall() {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_constructor_runtimesessionv2_new(
+        FfiConverterTypeCommitContext_lower(context),
+        FfiConverterTypeAreaMode_lower(mode),
+        FfiConverterCallbackInterfaceNativeRuntimeHost_lower(host),uniffiCallStatus
+    )
+}
+    self.init(unsafeFromHandle: handle)
+}
+
+    deinit {
+        if handle == 0 {
+            // Mock objects have handle=0 don't try to free them
+            return
+        }
+
+        try! rustCall { uniffi_wimm_core_bindings_fn_free_runtimesessionv2(handle, $0) }
+    }
+
+
+
+
+open func invoke(input: RuntimeRequestV2)throws  -> RuntimeEventV2  {
+    return try  FfiConverterTypeRuntimeEventV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_method_runtimesessionv2_invoke(
+            self.uniffiCloneHandle(),
+        FfiConverterTypeRuntimeRequestV2_lower(input),uniffiCallStatus
+    )
+})
+}
+
+open func page(offset: UInt32, limit: UInt32)throws  -> RuntimePageV2  {
+    return try  FfiConverterTypeRuntimePageV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_method_runtimesessionv2_page(
+            self.uniffiCloneHandle(),
+        FfiConverterUInt32.lower(offset),
+        FfiConverterUInt32.lower(limit),uniffiCallStatus
+    )
+})
+}
+
+open func shutdown()throws  -> RuntimeEventV2  {
+    return try  FfiConverterTypeRuntimeEventV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
+        uniffiCallStatus in
+    uniffi_wimm_core_bindings_fn_method_runtimesessionv2_shutdown(
+            self.uniffiCloneHandle(),uniffiCallStatus
+    )
+})
+}
+
+
+
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimeSessionV2: FfiConverter {
+    typealias FfiType = UInt64
+    typealias SwiftType = RuntimeSessionV2
+
+    public static func lift(_ handle: UInt64) throws -> RuntimeSessionV2 {
+        return RuntimeSessionV2(unsafeFromHandle: handle)
+    }
+
+    public static func lower(_ value: RuntimeSessionV2) -> UInt64 {
+        return value.uniffiCloneHandle()
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeSessionV2 {
+        let handle: UInt64 = try readInt(&buf)
+        return try lift(handle)
+    }
+
+    public static func write(_ value: RuntimeSessionV2, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeSessionV2_lift(_ handle: UInt64) throws -> RuntimeSessionV2 {
+    return try FfiConverterTypeRuntimeSessionV2.lift(handle)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeSessionV2_lower(_ value: RuntimeSessionV2) -> UInt64 {
+    return FfiConverterTypeRuntimeSessionV2.lower(value)
+}
+
+
 
 
 public struct MoneyRequestV2: Equatable, Hashable {
@@ -737,6 +938,454 @@ public func FfiConverterTypeMoneyStatusV2_lower(_ value: MoneyStatusV2) -> RustB
 }
 
 
+
+public
+enum RuntimePortError: Swift.Error, Equatable, Hashable, Foundation.LocalizedError {
+
+
+
+    case Failed
+
+
+
+
+
+
+    public var errorDescription: String? {
+        String(reflecting: self)
+    }
+
+}
+
+#if compiler(>=6)
+extension RuntimePortError: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimePortError: FfiConverterRustBuffer {
+    typealias SwiftType = RuntimePortError
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimePortError {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+
+
+
+        case 1: return .Failed
+
+         default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: RuntimePortError, into buf: inout [UInt8]) {
+        switch value {
+
+
+
+
+
+        case .Failed:
+            writeInt(&buf, Int32(1))
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimePortError_lift(_ buf: RustBuffer) throws -> RuntimePortError {
+    return try FfiConverterTypeRuntimePortError.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimePortError_lower(_ value: RuntimePortError) -> RustBuffer {
+    return FfiConverterTypeRuntimePortError.lower(value)
+}
+
+
+
+
+public protocol NativeRuntimeHost: AnyObject, Sendable {
+
+    func load(context: CommitContext) throws  -> RuntimeSnapshotV2
+
+    func commit(request: LocalCommitRequest, context: CommitContext, cancelled: Bool) throws  -> RuntimeCommitResultV2
+
+    func lookup(identity: LocalOperationIdentity) throws  -> LocalCommitReceipt?
+
+    func journalLoad() throws  -> Data
+
+    func journalSave(bytes: Data) throws  -> Bool
+
+    func journalClear(bytes: Data) throws  -> Bool
+
+    func seal(request: LocalCommitRequest) throws  -> Data
+
+    func unseal(bytes: Data) throws  -> LocalCommitRequest
+
+    func current() throws  -> CommitContext
+
+    func cancelled() throws  -> Bool
+
+}
+
+
+// Put the implementation in a struct so we don't pollute the top-level namespace
+fileprivate struct UniffiCallbackInterfaceNativeRuntimeHost {
+
+    // Create the VTable using a series of closures.
+    // Swift automatically converts these into C callback functions.
+    //
+    // Store the vtable directly.
+    static let vtable: UniffiVTableCallbackInterfaceNativeRuntimeHost = UniffiVTableCallbackInterfaceNativeRuntimeHost(
+        uniffiFree: { (uniffiHandle: UInt64) -> () in
+            do {
+                try FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.remove(handle: uniffiHandle)
+            } catch {
+                print("Uniffi callback interface NativeRuntimeHost: handle missing in uniffiFree")
+            }
+        },
+        uniffiClone: { (uniffiHandle: UInt64) -> UInt64 in
+            do {
+                return try FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.clone(handle: uniffiHandle)
+            } catch {
+                fatalError("Uniffi callback interface NativeRuntimeHost: handle missing in uniffiClone")
+            }
+        },
+        load: { (
+            uniffiHandle: UInt64,
+            context: RustBuffer,
+            uniffiOutReturn: UnsafeMutablePointer<RustBuffer>,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> RuntimeSnapshotV2 in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return try uniffiObj.load(
+                     context: try FfiConverterTypeCommitContext_lift(context)
+                )
+            }
+
+
+            let writeReturn = { uniffiOutReturn.pointee = FfiConverterTypeRuntimeSnapshotV2_lower($0) }
+            uniffiTraitInterfaceCallWithError(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn,
+                lowerError: FfiConverterTypeRuntimePortError_lower
+            )
+        },
+        commit: { (
+            uniffiHandle: UInt64,
+            request: RustBuffer,
+            context: RustBuffer,
+            cancelled: Int8,
+            uniffiOutReturn: UnsafeMutablePointer<RustBuffer>,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> RuntimeCommitResultV2 in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return try uniffiObj.commit(
+                     request: try FfiConverterTypeLocalCommitRequest_lift(request),
+                     context: try FfiConverterTypeCommitContext_lift(context),
+                     cancelled: try FfiConverterBool.lift(cancelled)
+                )
+            }
+
+
+            let writeReturn = { uniffiOutReturn.pointee = FfiConverterTypeRuntimeCommitResultV2_lower($0) }
+            uniffiTraitInterfaceCallWithError(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn,
+                lowerError: FfiConverterTypeRuntimePortError_lower
+            )
+        },
+        lookup: { (
+            uniffiHandle: UInt64,
+            identity: RustBuffer,
+            uniffiOutReturn: UnsafeMutablePointer<RustBuffer>,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> LocalCommitReceipt? in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return try uniffiObj.lookup(
+                     identity: try FfiConverterTypeLocalOperationIdentity_lift(identity)
+                )
+            }
+
+
+            let writeReturn = { uniffiOutReturn.pointee = FfiConverterOptionTypeLocalCommitReceipt.lower($0) }
+            uniffiTraitInterfaceCallWithError(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn,
+                lowerError: FfiConverterTypeRuntimePortError_lower
+            )
+        },
+        journalLoad: { (
+            uniffiHandle: UInt64,
+            uniffiOutReturn: UnsafeMutablePointer<RustBuffer>,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> Data in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return try uniffiObj.journalLoad(
+                )
+            }
+
+
+            let writeReturn = { uniffiOutReturn.pointee = FfiConverterData.lower($0) }
+            uniffiTraitInterfaceCallWithError(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn,
+                lowerError: FfiConverterTypeRuntimePortError_lower
+            )
+        },
+        journalSave: { (
+            uniffiHandle: UInt64,
+            bytes: RustBuffer,
+            uniffiOutReturn: UnsafeMutablePointer<Int8>,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> Bool in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return try uniffiObj.journalSave(
+                     bytes: try FfiConverterData.lift(bytes)
+                )
+            }
+
+
+            let writeReturn = { uniffiOutReturn.pointee = FfiConverterBool.lower($0) }
+            uniffiTraitInterfaceCallWithError(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn,
+                lowerError: FfiConverterTypeRuntimePortError_lower
+            )
+        },
+        journalClear: { (
+            uniffiHandle: UInt64,
+            bytes: RustBuffer,
+            uniffiOutReturn: UnsafeMutablePointer<Int8>,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> Bool in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return try uniffiObj.journalClear(
+                     bytes: try FfiConverterData.lift(bytes)
+                )
+            }
+
+
+            let writeReturn = { uniffiOutReturn.pointee = FfiConverterBool.lower($0) }
+            uniffiTraitInterfaceCallWithError(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn,
+                lowerError: FfiConverterTypeRuntimePortError_lower
+            )
+        },
+        seal: { (
+            uniffiHandle: UInt64,
+            request: RustBuffer,
+            uniffiOutReturn: UnsafeMutablePointer<RustBuffer>,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> Data in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return try uniffiObj.seal(
+                     request: try FfiConverterTypeLocalCommitRequest_lift(request)
+                )
+            }
+
+
+            let writeReturn = { uniffiOutReturn.pointee = FfiConverterData.lower($0) }
+            uniffiTraitInterfaceCallWithError(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn,
+                lowerError: FfiConverterTypeRuntimePortError_lower
+            )
+        },
+        unseal: { (
+            uniffiHandle: UInt64,
+            bytes: RustBuffer,
+            uniffiOutReturn: UnsafeMutablePointer<RustBuffer>,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> LocalCommitRequest in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return try uniffiObj.unseal(
+                     bytes: try FfiConverterData.lift(bytes)
+                )
+            }
+
+
+            let writeReturn = { uniffiOutReturn.pointee = FfiConverterTypeLocalCommitRequest_lower($0) }
+            uniffiTraitInterfaceCallWithError(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn,
+                lowerError: FfiConverterTypeRuntimePortError_lower
+            )
+        },
+        current: { (
+            uniffiHandle: UInt64,
+            uniffiOutReturn: UnsafeMutablePointer<RustBuffer>,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> CommitContext in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return try uniffiObj.current(
+                )
+            }
+
+
+            let writeReturn = { uniffiOutReturn.pointee = FfiConverterTypeCommitContext_lower($0) }
+            uniffiTraitInterfaceCallWithError(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn,
+                lowerError: FfiConverterTypeRuntimePortError_lower
+            )
+        },
+        cancelled: { (
+            uniffiHandle: UInt64,
+            uniffiOutReturn: UnsafeMutablePointer<Int8>,
+            uniffiCallStatus: UnsafeMutablePointer<RustCallStatus>
+        ) in
+            let makeCall = {
+                () throws -> Bool in
+                guard let uniffiObj = try? FfiConverterCallbackInterfaceNativeRuntimeHost.handleMap.get(handle: uniffiHandle) else {
+                    throw UniffiInternalError.unexpectedStaleHandle
+                }
+                return try uniffiObj.cancelled(
+                )
+            }
+
+
+            let writeReturn = { uniffiOutReturn.pointee = FfiConverterBool.lower($0) }
+            uniffiTraitInterfaceCallWithError(
+                callStatus: uniffiCallStatus,
+                makeCall: makeCall,
+                writeReturn: writeReturn,
+                lowerError: FfiConverterTypeRuntimePortError_lower
+            )
+        }
+    )
+
+    // Rust stores this pointer for future callback invocations, so it must live
+    // for the process lifetime (not just for the init function call).
+    //
+    // `nonisolated(unsafe)` is needed under Swift 6 strict concurrency.
+    // This is safe because the pointee is initialized once during static init
+    // and never mutated by either side of the FFI.  Its fields are C function pointers.
+    nonisolated(unsafe) static let vtablePtr: UnsafePointer<UniffiVTableCallbackInterfaceNativeRuntimeHost> = {
+        let ptr = UnsafeMutablePointer<UniffiVTableCallbackInterfaceNativeRuntimeHost>.allocate(capacity: 1)
+        ptr.initialize(to: vtable)
+        return UnsafePointer(ptr)
+    }()
+}
+
+private func uniffiCallbackInitNativeRuntimeHost() {
+    uniffi_wimm_core_bindings_fn_init_callback_vtable_nativeruntimehost(UniffiCallbackInterfaceNativeRuntimeHost.vtablePtr)
+}
+
+// FfiConverter protocol for callback interfaces
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterCallbackInterfaceNativeRuntimeHost {
+    fileprivate static let handleMap = UniffiHandleMap<NativeRuntimeHost>()
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+extension FfiConverterCallbackInterfaceNativeRuntimeHost : FfiConverter {
+    typealias SwiftType = NativeRuntimeHost
+    typealias FfiType = UInt64
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lift(_ handle: UInt64) throws -> SwiftType {
+        try handleMap.get(handle: handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        let handle: UInt64 = try readInt(&buf)
+        return try lift(handle)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func lower(_ v: SwiftType) -> UInt64 {
+        return handleMap.insert(obj: v)
+    }
+
+#if swift(>=5.8)
+    @_documentation(visibility: private)
+#endif
+    public static func write(_ v: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(v))
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceNativeRuntimeHost_lift(_ handle: UInt64) throws -> NativeRuntimeHost {
+    return try FfiConverterCallbackInterfaceNativeRuntimeHost.lift(handle)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterCallbackInterfaceNativeRuntimeHost_lower(_ v: NativeRuntimeHost) -> UInt64 {
+    return FfiConverterCallbackInterfaceNativeRuntimeHost.lower(v)
+}
+
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
@@ -780,6 +1429,30 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterString.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeLocalCommitReceipt: FfiConverterRustBuffer {
+    typealias SwiftType = LocalCommitReceipt?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeLocalCommitReceipt.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeLocalCommitReceipt.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -1001,7 +1674,50 @@ private let initializationResult: InitializationResult = {
     if (uniffi_wimm_core_bindings_checksum_func_calculate_money_v2() != 822) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_invoke() != 6032) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_page() != 65476) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_shutdown() != 4485) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_constructor_runtimesessionv2_new() != 45158) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_load() != 57046) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_commit() != 18697) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_lookup() != 22888) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_load() != 14645) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_save() != 11558) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_clear() != 51525) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_seal() != 6790) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_unseal() != 3363) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_current() != 14976) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_cancelled() != 56104) {
+        return InitializationResult.apiChecksumMismatch
+    }
 
+    uniffiCallbackInitNativeRuntimeHost()
     uniffiEnsureWimmClientApplicationInitialized()
     uniffiEnsureWimmFinanceTypesInitialized()
     uniffiEnsureWimmLocalContractsInitialized()

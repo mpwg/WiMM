@@ -30,8 +30,14 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
+import org.wimm.localcontracts.FfiConverterTypeLocalCommitReceipt
 import org.wimm.localcontracts.FfiConverterTypeLocalCommitRequest
+import org.wimm.localcontracts.FfiConverterTypeLocalOperationIdentity
+import org.wimm.localcontracts.FfiConverterTypeStorageFailure
+import org.wimm.localcontracts.LocalCommitReceipt
 import org.wimm.localcontracts.LocalCommitRequest
+import org.wimm.localcontracts.LocalOperationIdentity
+import org.wimm.localcontracts.StorageFailure
 import org.wimm.privatecontracts.Aggregate
 import org.wimm.privatecontracts.Command
 import org.wimm.privatecontracts.Context
@@ -48,7 +54,10 @@ import org.wimm.privatecontracts.FfiConverterTypeRevision
 import org.wimm.privatecontracts.ReverseTarget
 import org.wimm.privatecontracts.ReverseTargets
 import org.wimm.privatecontracts.Revision
+import org.wimm.localcontracts.RustBuffer as RustBufferLocalCommitReceipt
 import org.wimm.localcontracts.RustBuffer as RustBufferLocalCommitRequest
+import org.wimm.localcontracts.RustBuffer as RustBufferLocalOperationIdentity
+import org.wimm.localcontracts.RustBuffer as RustBufferStorageFailure
 import org.wimm.privatecontracts.RustBuffer as RustBufferAggregate
 import org.wimm.privatecontracts.RustBuffer as RustBufferCommand
 import org.wimm.privatecontracts.RustBuffer as RustBufferContext
@@ -979,6 +988,29 @@ public object FfiConverterLong: FfiConverter<Long, Long> {
 /**
  * @suppress
  */
+public object FfiConverterBoolean: FfiConverter<Boolean, Byte> {
+    override fun lift(value: Byte): Boolean {
+        return value.toInt() != 0
+    }
+
+    override fun read(buf: ByteBuffer): Boolean {
+        return lift(buf.get())
+    }
+
+    override fun lower(value: Boolean): Byte {
+        return if (value) 1.toByte() else 0.toByte()
+    }
+
+    override fun allocationSize(value: Boolean) = 1UL
+
+    override fun write(value: Boolean, buf: ByteBuffer) {
+        buf.put(lower(value))
+    }
+}
+
+/**
+ * @suppress
+ */
 public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
     // Note: we don't inherit from FfiConverterRustBuffer, because we use a
     // special encoding when lowering/lifting.  We can use `RustBuffer.len` to
@@ -1257,6 +1289,193 @@ public object FfiConverterTypeCommitContext: FfiConverterRustBuffer<CommitContex
 
 
 
+data class RuntimeEventV2 (
+    var `contractVersion`: kotlin.UInt
+    ,
+    var `context`: CommitContext
+    ,
+    var `canUndo`: kotlin.Boolean
+    ,
+    var `canRedo`: kotlin.Boolean
+    ,
+    var `result`: RuntimeResultV2
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRuntimeEventV2: FfiConverterRustBuffer<RuntimeEventV2> {
+    override fun read(buf: ByteBuffer): RuntimeEventV2 {
+        return RuntimeEventV2(
+            FfiConverterUInt.read(buf),
+            FfiConverterTypeCommitContext.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterTypeRuntimeResultV2.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: RuntimeEventV2) = (
+            FfiConverterUInt.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeCommitContext.allocationSize(value.`context`) +
+            FfiConverterBoolean.allocationSize(value.`canUndo`) +
+            FfiConverterBoolean.allocationSize(value.`canRedo`) +
+            FfiConverterTypeRuntimeResultV2.allocationSize(value.`result`)
+    )
+
+    override fun write(value: RuntimeEventV2, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`contractVersion`, buf)
+            FfiConverterTypeCommitContext.write(value.`context`, buf)
+            FfiConverterBoolean.write(value.`canUndo`, buf)
+            FfiConverterBoolean.write(value.`canRedo`, buf)
+            FfiConverterTypeRuntimeResultV2.write(value.`result`, buf)
+    }
+}
+
+
+
+data class RuntimePageV2 (
+    var `contractVersion`: kotlin.UInt
+    ,
+    var `context`: CommitContext
+    ,
+    var `offset`: kotlin.UInt
+    ,
+    var `aggregates`: List<Aggregate>
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRuntimePageV2: FfiConverterRustBuffer<RuntimePageV2> {
+    override fun read(buf: ByteBuffer): RuntimePageV2 {
+        return RuntimePageV2(
+            FfiConverterUInt.read(buf),
+            FfiConverterTypeCommitContext.read(buf),
+            FfiConverterUInt.read(buf),
+            FfiConverterSequenceTypeAggregate.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: RuntimePageV2) = (
+            FfiConverterUInt.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeCommitContext.allocationSize(value.`context`) +
+            FfiConverterUInt.allocationSize(value.`offset`) +
+            FfiConverterSequenceTypeAggregate.allocationSize(value.`aggregates`)
+    )
+
+    override fun write(value: RuntimePageV2, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`contractVersion`, buf)
+            FfiConverterTypeCommitContext.write(value.`context`, buf)
+            FfiConverterUInt.write(value.`offset`, buf)
+            FfiConverterSequenceTypeAggregate.write(value.`aggregates`, buf)
+    }
+}
+
+
+
+data class RuntimeRequestV2 (
+    var `contractVersion`: kotlin.UInt
+    ,
+    var `domainSchemaVersion`: kotlin.UInt
+    ,
+    var `action`: RuntimeActionV2
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRuntimeRequestV2: FfiConverterRustBuffer<RuntimeRequestV2> {
+    override fun read(buf: ByteBuffer): RuntimeRequestV2 {
+        return RuntimeRequestV2(
+            FfiConverterUInt.read(buf),
+            FfiConverterUInt.read(buf),
+            FfiConverterTypeRuntimeActionV2.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: RuntimeRequestV2) = (
+            FfiConverterUInt.allocationSize(value.`contractVersion`) +
+            FfiConverterUInt.allocationSize(value.`domainSchemaVersion`) +
+            FfiConverterTypeRuntimeActionV2.allocationSize(value.`action`)
+    )
+
+    override fun write(value: RuntimeRequestV2, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`contractVersion`, buf)
+            FfiConverterUInt.write(value.`domainSchemaVersion`, buf)
+            FfiConverterTypeRuntimeActionV2.write(value.`action`, buf)
+    }
+}
+
+
+
+data class RuntimeSnapshotV2 (
+    var `contractVersion`: kotlin.UInt
+    ,
+    var `context`: CommitContext
+    ,
+    var `aggregates`: List<Aggregate>
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRuntimeSnapshotV2: FfiConverterRustBuffer<RuntimeSnapshotV2> {
+    override fun read(buf: ByteBuffer): RuntimeSnapshotV2 {
+        return RuntimeSnapshotV2(
+            FfiConverterUInt.read(buf),
+            FfiConverterTypeCommitContext.read(buf),
+            FfiConverterSequenceTypeAggregate.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: RuntimeSnapshotV2) = (
+            FfiConverterUInt.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeCommitContext.allocationSize(value.`context`) +
+            FfiConverterSequenceTypeAggregate.allocationSize(value.`aggregates`)
+    )
+
+    override fun write(value: RuntimeSnapshotV2, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`contractVersion`, buf)
+            FfiConverterTypeCommitContext.write(value.`context`, buf)
+            FfiConverterSequenceTypeAggregate.write(value.`aggregates`, buf)
+    }
+}
+
+
+
 sealed class ApplicationActionV2 {
 
     data class Command(
@@ -1527,6 +1746,497 @@ public object FfiConverterTypeAreaMode: FfiConverterRustBuffer<AreaMode> {
 
     override fun write(value: AreaMode, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+
+enum class Direction {
+
+    UNDO,
+    REDO;
+
+
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeDirection: FfiConverterRustBuffer<Direction> {
+    override fun read(buf: ByteBuffer) = try {
+        Direction.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: Direction) = 4UL
+
+    override fun write(value: Direction, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+sealed class RuntimeActionV2 {
+
+    object Load : RuntimeActionV2()
+
+
+    data class Execute(
+        val `command`: org.wimm.privatecontracts.Command,
+        val `expectedRevisions`: List<org.wimm.privatecontracts.Expectation>,
+        val `operation`: org.wimm.privatecontracts.Context) : RuntimeActionV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class History(
+        val `direction`: org.wimm.application.Direction,
+        val `operation`: org.wimm.privatecontracts.Context) : RuntimeActionV2()
+
+    {
+
+
+        companion object
+    }
+
+    object Resolve : RuntimeActionV2()
+
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRuntimeActionV2 : FfiConverterRustBuffer<RuntimeActionV2>{
+    override fun read(buf: ByteBuffer): RuntimeActionV2 {
+        return when(buf.getInt()) {
+            1 -> RuntimeActionV2.Load
+            2 -> RuntimeActionV2.Execute(
+                FfiConverterTypeCommand.read(buf),
+                FfiConverterSequenceTypeExpectation.read(buf),
+                FfiConverterTypeContext.read(buf),
+                )
+            3 -> RuntimeActionV2.History(
+                FfiConverterTypeDirection.read(buf),
+                FfiConverterTypeContext.read(buf),
+                )
+            4 -> RuntimeActionV2.Resolve
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: RuntimeActionV2): ULong = when(value) {
+        is RuntimeActionV2.Load -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is RuntimeActionV2.Execute -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeCommand.allocationSize(value.`command`)
+                + FfiConverterSequenceTypeExpectation.allocationSize(value.`expectedRevisions`)
+                + FfiConverterTypeContext.allocationSize(value.`operation`)
+            )
+        }
+        is RuntimeActionV2.History -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeDirection.allocationSize(value.`direction`)
+                + FfiConverterTypeContext.allocationSize(value.`operation`)
+            )
+        }
+        is RuntimeActionV2.Resolve -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: RuntimeActionV2, buf: ByteBuffer) {
+        when(value) {
+            is RuntimeActionV2.Load -> {
+                buf.putInt(1)
+                Unit
+            }
+            is RuntimeActionV2.Execute -> {
+                buf.putInt(2)
+                FfiConverterTypeCommand.write(value.`command`, buf)
+                FfiConverterSequenceTypeExpectation.write(value.`expectedRevisions`, buf)
+                FfiConverterTypeContext.write(value.`operation`, buf)
+                Unit
+            }
+            is RuntimeActionV2.History -> {
+                buf.putInt(3)
+                FfiConverterTypeDirection.write(value.`direction`, buf)
+                FfiConverterTypeContext.write(value.`operation`, buf)
+                Unit
+            }
+            is RuntimeActionV2.Resolve -> {
+                buf.putInt(4)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+sealed class RuntimeCommitResultV2 {
+
+    data class Committed(
+        val `receipt`: org.wimm.localcontracts.LocalCommitReceipt) : RuntimeCommitResultV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class NotCommitted(
+        val `error`: org.wimm.localcontracts.StorageFailure) : RuntimeCommitResultV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Unknown(
+        val `identity`: org.wimm.localcontracts.LocalOperationIdentity) : RuntimeCommitResultV2()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRuntimeCommitResultV2 : FfiConverterRustBuffer<RuntimeCommitResultV2>{
+    override fun read(buf: ByteBuffer): RuntimeCommitResultV2 {
+        return when(buf.getInt()) {
+            1 -> RuntimeCommitResultV2.Committed(
+                FfiConverterTypeLocalCommitReceipt.read(buf),
+                )
+            2 -> RuntimeCommitResultV2.NotCommitted(
+                FfiConverterTypeStorageFailure.read(buf),
+                )
+            3 -> RuntimeCommitResultV2.Unknown(
+                FfiConverterTypeLocalOperationIdentity.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: RuntimeCommitResultV2): ULong = when(value) {
+        is RuntimeCommitResultV2.Committed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeLocalCommitReceipt.allocationSize(value.`receipt`)
+            )
+        }
+        is RuntimeCommitResultV2.NotCommitted -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeStorageFailure.allocationSize(value.`error`)
+            )
+        }
+        is RuntimeCommitResultV2.Unknown -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeLocalOperationIdentity.allocationSize(value.`identity`)
+            )
+        }
+    }
+
+    override fun write(value: RuntimeCommitResultV2, buf: ByteBuffer) {
+        when(value) {
+            is RuntimeCommitResultV2.Committed -> {
+                buf.putInt(1)
+                FfiConverterTypeLocalCommitReceipt.write(value.`receipt`, buf)
+                Unit
+            }
+            is RuntimeCommitResultV2.NotCommitted -> {
+                buf.putInt(2)
+                FfiConverterTypeStorageFailure.write(value.`error`, buf)
+                Unit
+            }
+            is RuntimeCommitResultV2.Unknown -> {
+                buf.putInt(3)
+                FfiConverterTypeLocalOperationIdentity.write(value.`identity`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+}
+
+
+
+
+
+sealed class RuntimeResultV2 {
+
+    object State : RuntimeResultV2()
+
+
+    data class Committed(
+        val `context`: org.wimm.application.CommitContext,
+        val `receipt`: LocalCommitReceipt,
+        val `current`: kotlin.Boolean) : RuntimeResultV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class NotCommitted(
+        val `error`: org.wimm.localcontracts.StorageFailure) : RuntimeResultV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class ReadFailed(
+        val `error`: org.wimm.localcontracts.StorageFailure) : RuntimeResultV2()
+
+    {
+
+
+        companion object
+    }
+
+    object Unknown : RuntimeResultV2()
+
+
+    object Busy : RuntimeResultV2()
+
+
+    object ScopeChanged : RuntimeResultV2()
+
+
+    object Idle : RuntimeResultV2()
+
+
+    object Closed : RuntimeResultV2()
+
+
+    data class Rejected(
+        val `code`: org.wimm.application.ApplicationFailureCode,
+        val `financeCode`: kotlin.String?) : RuntimeResultV2()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRuntimeResultV2 : FfiConverterRustBuffer<RuntimeResultV2>{
+    override fun read(buf: ByteBuffer): RuntimeResultV2 {
+        return when(buf.getInt()) {
+            1 -> RuntimeResultV2.State
+            2 -> RuntimeResultV2.Committed(
+                FfiConverterTypeCommitContext.read(buf),
+                FfiConverterTypeLocalCommitReceipt.read(buf),
+                FfiConverterBoolean.read(buf),
+                )
+            3 -> RuntimeResultV2.NotCommitted(
+                FfiConverterTypeStorageFailure.read(buf),
+                )
+            4 -> RuntimeResultV2.ReadFailed(
+                FfiConverterTypeStorageFailure.read(buf),
+                )
+            5 -> RuntimeResultV2.Unknown
+            6 -> RuntimeResultV2.Busy
+            7 -> RuntimeResultV2.ScopeChanged
+            8 -> RuntimeResultV2.Idle
+            9 -> RuntimeResultV2.Closed
+            10 -> RuntimeResultV2.Rejected(
+                FfiConverterTypeApplicationFailureCode.read(buf),
+                FfiConverterOptionalString.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: RuntimeResultV2): ULong = when(value) {
+        is RuntimeResultV2.State -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is RuntimeResultV2.Committed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeCommitContext.allocationSize(value.`context`)
+                + FfiConverterTypeLocalCommitReceipt.allocationSize(value.`receipt`)
+                + FfiConverterBoolean.allocationSize(value.`current`)
+            )
+        }
+        is RuntimeResultV2.NotCommitted -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeStorageFailure.allocationSize(value.`error`)
+            )
+        }
+        is RuntimeResultV2.ReadFailed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeStorageFailure.allocationSize(value.`error`)
+            )
+        }
+        is RuntimeResultV2.Unknown -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is RuntimeResultV2.Busy -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is RuntimeResultV2.ScopeChanged -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is RuntimeResultV2.Idle -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is RuntimeResultV2.Closed -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+            )
+        }
+        is RuntimeResultV2.Rejected -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeApplicationFailureCode.allocationSize(value.`code`)
+                + FfiConverterOptionalString.allocationSize(value.`financeCode`)
+            )
+        }
+    }
+
+    override fun write(value: RuntimeResultV2, buf: ByteBuffer) {
+        when(value) {
+            is RuntimeResultV2.State -> {
+                buf.putInt(1)
+                Unit
+            }
+            is RuntimeResultV2.Committed -> {
+                buf.putInt(2)
+                FfiConverterTypeCommitContext.write(value.`context`, buf)
+                FfiConverterTypeLocalCommitReceipt.write(value.`receipt`, buf)
+                FfiConverterBoolean.write(value.`current`, buf)
+                Unit
+            }
+            is RuntimeResultV2.NotCommitted -> {
+                buf.putInt(3)
+                FfiConverterTypeStorageFailure.write(value.`error`, buf)
+                Unit
+            }
+            is RuntimeResultV2.ReadFailed -> {
+                buf.putInt(4)
+                FfiConverterTypeStorageFailure.write(value.`error`, buf)
+                Unit
+            }
+            is RuntimeResultV2.Unknown -> {
+                buf.putInt(5)
+                Unit
+            }
+            is RuntimeResultV2.Busy -> {
+                buf.putInt(6)
+                Unit
+            }
+            is RuntimeResultV2.ScopeChanged -> {
+                buf.putInt(7)
+                Unit
+            }
+            is RuntimeResultV2.Idle -> {
+                buf.putInt(8)
+                Unit
+            }
+            is RuntimeResultV2.Closed -> {
+                buf.putInt(9)
+                Unit
+            }
+            is RuntimeResultV2.Rejected -> {
+                buf.putInt(10)
+                FfiConverterTypeApplicationFailureCode.write(value.`code`, buf)
+                FfiConverterOptionalString.write(value.`financeCode`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 }
 

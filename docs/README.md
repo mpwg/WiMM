@@ -6,7 +6,7 @@ Stand: 9. Oktober 2026. Das bestätigte Ziel ist die [gemeinsame Rust-Architektu
 
 [Aufgaben](tasks.md) ist die einzige Quelle für Implementierungsfreigaben und zusammengefassten Paketstatus. Review/Bereinigung sind abgeschlossen; anschließend ist die geordnete Architekturumsetzung aus #114 einschließlich Machbarkeitsprototypen ausdrücklich beauftragt. Erster Abschnitt ist DAL01/#106. Neue P6–P11-Produktfunktionen und Releases bleiben getrennt. Der Bestand verwendet noch TypeScript-Controller, IndexedDB/rusqlite und einen Fastify-Stub; das Ziel ist nicht als bereits umgesetzt zu lesen.
 
-Aktuelle Abschnittsbelege: [DAL01-Machbarkeit](dal01-proof.md) und [AR01-Typisierung](ar01-typing.md), [AR03-Fehlergrenzen](ar03-errors.md), [AR11-Architekturgrenzen](architecture-checks/README.md), [AR08-Kryptoports](../crates/client-crypto/README.md), [DAL02-Vertragsreferenz](dal02-contracts.md), [AR04-Persistenzabschnitt](ar04-local-receipts.md). Sie unterscheiden geprüfte Teilumsetzung und noch offene Gesamtabnahme.
+Aktuelle Abschnittsbelege: [DAL01-Machbarkeit](dal01-proof.md) und [AR01-Typisierung](ar01-typing.md), [AR03-Fehlergrenzen](ar03-errors.md), [AR11-Architekturgrenzen](architecture-checks/README.md), [AR08-Kryptoports](../crates/client-crypto/README.md), [DAL02-Vertragsreferenz](dal02-contracts.md), [AR04-Persistenzabschnitt](ar04-local-receipts.md), [AR05-Runtimegrundlage](ar05-runtime-foundation.md). Sie unterscheiden geprüfte Teilumsetzung und noch offene Gesamtabnahme.
 
 ## Lesereihenfolge
 

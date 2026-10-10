@@ -12,9 +12,11 @@ contract-schema = ["wimm-client-application/contract-schema", "dep:schemars", "w
 default = ["native"]
 native = ["wimm-client-application/native-bindings", "wimm-local-contracts/native-bindings", "wimm-public-contracts/native-bindings", "dep:uniffi", "wimm-finance-types/native-bindings"]
 wasm = ["wimm-client-application/wasm-bindings", "wimm-contract-primitives/wasm-data", "wimm-local-contracts/wasm-bindings", "wimm-public-contracts/wasm-bindings", "dep:wasm-bindgen", "dep:tsify", "dep:js-sys", "wimm-finance-types/wasm-bindings"]
-contract-probe = ["wimm-finance-core/contract-probe"]
+contract-probe = ["dep:wimm-client-crypto","wimm-finance-core/contract-probe"]
 
 [dependencies]
+sha2 = "=0.11.0"
+wimm-client-crypto = { path = "../client-crypto", optional = true }
 wimm-client-application = { path = "../client-application" }
 schemars = { version = "=1.2.2", optional = true }
 wimm-contract-primitives = { path = "../contract-primitives" }
@@ -31,3 +33,12 @@ js-sys = { version = "=0.3.106", optional = true }
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+wimm-local-dal = { path = "../local-dal", features = ["sqlite"] }
+wimm-client-crypto = { path = "../client-crypto" }
+
+[[bin]]
+name = "wimm-stateful-probe"
+path = "src/bin/stateful-probe.rs"
+required-features = ["native", "contract-probe"]

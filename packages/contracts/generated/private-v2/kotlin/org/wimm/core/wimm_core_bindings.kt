@@ -30,19 +30,40 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 import org.wimm.application.ApplicationPreparationV2
 import org.wimm.application.ApplicationRequestV2
+import org.wimm.application.AreaMode
+import org.wimm.application.CommitContext
 import org.wimm.application.FfiConverterTypeApplicationPreparationV2
 import org.wimm.application.FfiConverterTypeApplicationRequestV2
+import org.wimm.application.FfiConverterTypeAreaMode
+import org.wimm.application.FfiConverterTypeCommitContext
+import org.wimm.application.FfiConverterTypeRuntimeCommitResultV2
+import org.wimm.application.FfiConverterTypeRuntimeEventV2
+import org.wimm.application.FfiConverterTypeRuntimePageV2
+import org.wimm.application.FfiConverterTypeRuntimeRequestV2
+import org.wimm.application.FfiConverterTypeRuntimeSnapshotV2
+import org.wimm.application.RuntimeCommitResultV2
+import org.wimm.application.RuntimeEventV2
+import org.wimm.application.RuntimePageV2
+import org.wimm.application.RuntimeRequestV2
+import org.wimm.application.RuntimeSnapshotV2
+import org.wimm.localcontracts.FfiConverterTypeLocalCommitReceipt
+import org.wimm.localcontracts.FfiConverterTypeLocalCommitRequest
 import org.wimm.localcontracts.FfiConverterTypeLocalContractError
 import org.wimm.localcontracts.FfiConverterTypeLocalFormOutcome
+import org.wimm.localcontracts.FfiConverterTypeLocalOperationIdentity
 import org.wimm.localcontracts.FfiConverterTypeLocalPortRequestV2
 import org.wimm.localcontracts.FfiConverterTypeLocalSnapshot
 import org.wimm.localcontracts.FfiConverterTypeSnapshotOutcomeV2
 import org.wimm.localcontracts.FfiConverterTypeStorageFailure
 import org.wimm.localcontracts.FfiConverterTypeStorageMigrationPlan
+import org.wimm.localcontracts.LocalCommitReceipt
+import org.wimm.localcontracts.LocalCommitRequest
 import org.wimm.localcontracts.LocalContractException
 import org.wimm.localcontracts.LocalFormOutcome
+import org.wimm.localcontracts.LocalOperationIdentity
 import org.wimm.localcontracts.LocalPortRequestV2
 import org.wimm.localcontracts.LocalSnapshot
 import org.wimm.localcontracts.SnapshotOutcomeV2
@@ -78,8 +99,18 @@ import org.wimm.publiccontracts.PublicValidationOutcome
 import org.wimm.publiccontracts.SignedKeyRoster
 import org.wimm.application.RustBuffer as RustBufferApplicationPreparationV2
 import org.wimm.application.RustBuffer as RustBufferApplicationRequestV2
+import org.wimm.application.RustBuffer as RustBufferAreaMode
+import org.wimm.application.RustBuffer as RustBufferCommitContext
+import org.wimm.application.RustBuffer as RustBufferRuntimeCommitResultV2
+import org.wimm.application.RustBuffer as RustBufferRuntimeEventV2
+import org.wimm.application.RustBuffer as RustBufferRuntimePageV2
+import org.wimm.application.RustBuffer as RustBufferRuntimeRequestV2
+import org.wimm.application.RustBuffer as RustBufferRuntimeSnapshotV2
+import org.wimm.localcontracts.RustBuffer as RustBufferLocalCommitReceipt
+import org.wimm.localcontracts.RustBuffer as RustBufferLocalCommitRequest
 import org.wimm.localcontracts.RustBuffer as RustBufferLocalContractError
 import org.wimm.localcontracts.RustBuffer as RustBufferLocalFormOutcome
+import org.wimm.localcontracts.RustBuffer as RustBufferLocalOperationIdentity
 import org.wimm.localcontracts.RustBuffer as RustBufferLocalPortRequestV2
 import org.wimm.localcontracts.RustBuffer as RustBufferLocalSnapshot
 import org.wimm.localcontracts.RustBuffer as RustBufferSnapshotOutcomeV2
@@ -718,6 +749,82 @@ internal open class UniffiForeignFutureResultVoid(
 internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureResultVoid.UniffiByValue,)
 }
+internal interface UniffiCallbackInterfaceNativeRuntimeHostMethod0 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`context`: RustBufferCommitContext.ByValue,`uniffiOutReturn`: RustBufferRuntimeSnapshotV2,uniffiCallStatus: UniffiRustCallStatus,)
+}
+internal interface UniffiCallbackInterfaceNativeRuntimeHostMethod1 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`request`: RustBufferLocalCommitRequest.ByValue,`context`: RustBufferCommitContext.ByValue,`cancelled`: Byte,`uniffiOutReturn`: RustBufferRuntimeCommitResultV2,uniffiCallStatus: UniffiRustCallStatus,)
+}
+internal interface UniffiCallbackInterfaceNativeRuntimeHostMethod2 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`identity`: RustBufferLocalOperationIdentity.ByValue,`uniffiOutReturn`: RustBuffer,uniffiCallStatus: UniffiRustCallStatus,)
+}
+internal interface UniffiCallbackInterfaceNativeRuntimeHostMethod3 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`uniffiOutReturn`: RustBuffer,uniffiCallStatus: UniffiRustCallStatus,)
+}
+internal interface UniffiCallbackInterfaceNativeRuntimeHostMethod4 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`bytes`: RustBuffer.ByValue,`uniffiOutReturn`: ByteByReference,uniffiCallStatus: UniffiRustCallStatus,)
+}
+internal interface UniffiCallbackInterfaceNativeRuntimeHostMethod5 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`bytes`: RustBuffer.ByValue,`uniffiOutReturn`: ByteByReference,uniffiCallStatus: UniffiRustCallStatus,)
+}
+internal interface UniffiCallbackInterfaceNativeRuntimeHostMethod6 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`request`: RustBufferLocalCommitRequest.ByValue,`uniffiOutReturn`: RustBuffer,uniffiCallStatus: UniffiRustCallStatus,)
+}
+internal interface UniffiCallbackInterfaceNativeRuntimeHostMethod7 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`bytes`: RustBuffer.ByValue,`uniffiOutReturn`: RustBufferLocalCommitRequest,uniffiCallStatus: UniffiRustCallStatus,)
+}
+internal interface UniffiCallbackInterfaceNativeRuntimeHostMethod8 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`uniffiOutReturn`: RustBufferCommitContext,uniffiCallStatus: UniffiRustCallStatus,)
+}
+internal interface UniffiCallbackInterfaceNativeRuntimeHostMethod9 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`uniffiOutReturn`: ByteByReference,uniffiCallStatus: UniffiRustCallStatus,)
+}
+@Structure.FieldOrder("uniffiFree", "uniffiClone", "load", "commit", "lookup", "journalLoad", "journalSave", "journalClear", "seal", "unseal", "current", "cancelled")
+internal open class UniffiVTableCallbackInterfaceNativeRuntimeHost(
+    @JvmField internal var `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+    @JvmField internal var `uniffiClone`: UniffiCallbackInterfaceClone? = null,
+    @JvmField internal var `load`: UniffiCallbackInterfaceNativeRuntimeHostMethod0? = null,
+    @JvmField internal var `commit`: UniffiCallbackInterfaceNativeRuntimeHostMethod1? = null,
+    @JvmField internal var `lookup`: UniffiCallbackInterfaceNativeRuntimeHostMethod2? = null,
+    @JvmField internal var `journalLoad`: UniffiCallbackInterfaceNativeRuntimeHostMethod3? = null,
+    @JvmField internal var `journalSave`: UniffiCallbackInterfaceNativeRuntimeHostMethod4? = null,
+    @JvmField internal var `journalClear`: UniffiCallbackInterfaceNativeRuntimeHostMethod5? = null,
+    @JvmField internal var `seal`: UniffiCallbackInterfaceNativeRuntimeHostMethod6? = null,
+    @JvmField internal var `unseal`: UniffiCallbackInterfaceNativeRuntimeHostMethod7? = null,
+    @JvmField internal var `current`: UniffiCallbackInterfaceNativeRuntimeHostMethod8? = null,
+    @JvmField internal var `cancelled`: UniffiCallbackInterfaceNativeRuntimeHostMethod9? = null,
+) : Structure() {
+    class UniffiByValue(
+        `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+        `uniffiClone`: UniffiCallbackInterfaceClone? = null,
+        `load`: UniffiCallbackInterfaceNativeRuntimeHostMethod0? = null,
+        `commit`: UniffiCallbackInterfaceNativeRuntimeHostMethod1? = null,
+        `lookup`: UniffiCallbackInterfaceNativeRuntimeHostMethod2? = null,
+        `journalLoad`: UniffiCallbackInterfaceNativeRuntimeHostMethod3? = null,
+        `journalSave`: UniffiCallbackInterfaceNativeRuntimeHostMethod4? = null,
+        `journalClear`: UniffiCallbackInterfaceNativeRuntimeHostMethod5? = null,
+        `seal`: UniffiCallbackInterfaceNativeRuntimeHostMethod6? = null,
+        `unseal`: UniffiCallbackInterfaceNativeRuntimeHostMethod7? = null,
+        `current`: UniffiCallbackInterfaceNativeRuntimeHostMethod8? = null,
+        `cancelled`: UniffiCallbackInterfaceNativeRuntimeHostMethod9? = null,
+    ): UniffiVTableCallbackInterfaceNativeRuntimeHost(`uniffiFree`,`uniffiClone`,`load`,`commit`,`lookup`,`journalLoad`,`journalSave`,`journalClear`,`seal`,`unseal`,`current`,`cancelled`,), Structure.ByValue
+
+   internal fun uniffiSetValue(other: UniffiVTableCallbackInterfaceNativeRuntimeHost) {
+        `uniffiFree` = other.`uniffiFree`
+        `uniffiClone` = other.`uniffiClone`
+        `load` = other.`load`
+        `commit` = other.`commit`
+        `lookup` = other.`lookup`
+        `journalLoad` = other.`journalLoad`
+        `journalSave` = other.`journalSave`
+        `journalClear` = other.`journalClear`
+        `seal` = other.`seal`
+        `unseal` = other.`unseal`
+        `current` = other.`current`
+        `cancelled` = other.`cancelled`
+    }
+
+}
 
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
@@ -779,6 +886,34 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_wimm_core_bindings_checksum_func_calculate_money_v2(
     ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_invoke(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_page(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_shutdown(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_constructor_runtimesessionv2_new(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_load(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_commit(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_lookup(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_load(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_save(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_clear(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_seal(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_unseal(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_current(
+    ): Int
+    external fun uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_cancelled(
+    ): Int
     external fun ffi_wimm_core_bindings_uniffi_contract_version(
     ): Int
 
@@ -787,9 +922,15 @@ internal object IntegrityCheckingUniffiLib {
 
 internal object UniffiLib {
 
+    // The Cleaner for the whole library
+    internal val CLEANER: UniffiCleaner by lazy {
+        UniffiCleaner.create()
+    }
+
 
     init {
         Native.register(UniffiLib::class.java, findLibraryName(componentName = "wimm_core_bindings"))
+        uniffiCallbackInterfaceNativeRuntimeHost.register(this)
         org.wimm.application.uniffiEnsureInitialized()
         org.wimm.localcontracts.uniffiEnsureInitialized()
         org.wimm.privatecontracts.uniffiEnsureInitialized()
@@ -798,6 +939,20 @@ internal object UniffiLib {
     }
 
     internal fun ensureInitialized() = Unit
+    external fun uniffi_wimm_core_bindings_fn_clone_runtimesessionv2(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    ): Long
+    external fun uniffi_wimm_core_bindings_fn_free_runtimesessionv2(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    ): Unit
+    external fun uniffi_wimm_core_bindings_fn_constructor_runtimesessionv2_new(`context`: RustBufferCommitContext.ByValue,`mode`: RustBufferAreaMode.ByValue,`host`: Long,uniffi_out_err: UniffiRustCallStatus,
+    ): Long
+    external fun uniffi_wimm_core_bindings_fn_method_runtimesessionv2_invoke(`ptr`: Long,`input`: RustBufferRuntimeRequestV2.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBufferRuntimeEventV2.ByValue
+    external fun uniffi_wimm_core_bindings_fn_method_runtimesessionv2_page(`ptr`: Long,`offset`: Int,`limit`: Int,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBufferRuntimePageV2.ByValue
+    external fun uniffi_wimm_core_bindings_fn_method_runtimesessionv2_shutdown(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus,
+    ): RustBufferRuntimeEventV2.ByValue
+    external fun uniffi_wimm_core_bindings_fn_init_callback_vtable_nativeruntimehost(`vtable`: UniffiVTableCallbackInterfaceNativeRuntimeHost,
+    ): Unit
     external fun uniffi_wimm_core_bindings_fn_func_calculate_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
     external fun uniffi_wimm_core_bindings_fn_func_execute_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
@@ -1007,6 +1162,48 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_wimm_core_bindings_checksum_func_calculate_money_v2() and 0xFFFF) != 822) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_invoke() and 0xFFFF) != 6032) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_page() and 0xFFFF) != 65476) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_shutdown() and 0xFFFF) != 4485) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_constructor_runtimesessionv2_new() and 0xFFFF) != 45158) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_load() and 0xFFFF) != 57046) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_commit() and 0xFFFF) != 18697) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_lookup() and 0xFFFF) != 22888) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_load() and 0xFFFF) != 14645) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_save() and 0xFFFF) != 11558) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_clear() and 0xFFFF) != 51525) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_seal() and 0xFFFF) != 6790) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_unseal() and 0xFFFF) != 3363) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_current() and 0xFFFF) != 14976) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_cancelled() and 0xFFFF) != 56104) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
 }
 
 /**
@@ -1098,7 +1295,102 @@ object UniffiWithHandle
  *
  * @suppress
  * */
-object NoHandle
+object NoHandle// Magic number for the Rust proxy to call using the same mechanism as every other method,
+// to free the callback once it's dropped by Rust.
+internal const val IDX_CALLBACK_FREE = 0
+// Callback return codes
+internal const val UNIFFI_CALLBACK_SUCCESS = 0
+internal const val UNIFFI_CALLBACK_ERROR = 1
+internal const val UNIFFI_CALLBACK_UNEXPECTED_ERROR = 2
+
+/**
+ * @suppress
+ */
+public abstract class FfiConverterCallbackInterface<CallbackInterface: Any>: FfiConverter<CallbackInterface, Long> {
+    internal val handleMap = UniffiHandleMap<CallbackInterface>()
+
+    internal fun drop(handle: Long) {
+        handleMap.remove(handle)
+    }
+
+    override fun lift(value: Long): CallbackInterface {
+        return handleMap.get(value)
+    }
+
+    override fun read(buf: ByteBuffer) = lift(buf.getLong())
+
+    override fun lower(value: CallbackInterface) = handleMap.insert(value)
+
+    override fun allocationSize(value: CallbackInterface) = 8UL
+
+    override fun write(value: CallbackInterface, buf: ByteBuffer) {
+        buf.putLong(lower(value))
+    }
+}
+/**
+ * The cleaner interface for Object finalization code to run.
+ * This is the entry point to any implementation that we're using.
+ *
+ * The cleaner registers objects and returns cleanables, so now we are
+ * defining a `UniffiCleaner` with a `UniffiClenaer.Cleanable` to abstract the
+ * different implmentations available at compile time.
+ *
+ * @suppress
+ */
+interface UniffiCleaner {
+    interface Cleanable {
+        fun clean()
+    }
+
+    fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable
+
+    companion object
+}
+
+// The fallback Jna cleaner, which is available for both Android, and the JVM.
+private class UniffiJnaCleaner : UniffiCleaner {
+    private val cleaner = com.sun.jna.internal.Cleaner.getCleaner()
+
+    override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
+        UniffiJnaCleanable(cleaner.register(value, cleanUpTask))
+}
+
+private class UniffiJnaCleanable(
+    private val cleanable: com.sun.jna.internal.Cleaner.Cleanable,
+) : UniffiCleaner.Cleanable {
+    override fun clean() = cleanable.clean()
+}
+
+
+// We decide at uniffi binding generation time whether we were
+// using Android or not.
+// There are further runtime checks to chose the correct implementation
+// of the cleaner.
+private fun UniffiCleaner.Companion.create(): UniffiCleaner =
+    try {
+        // For safety's sake: if the library hasn't been run in android_cleaner = true
+        // mode, but is being run on Android, then we still need to think about
+        // Android API versions.
+        // So we check if java.lang.ref.Cleaner is there, and use that…
+        java.lang.Class.forName("java.lang.ref.Cleaner")
+        JavaLangRefCleaner()
+    } catch (e: ClassNotFoundException) {
+        // … otherwise, fallback to the JNA cleaner.
+        UniffiJnaCleaner()
+    }
+
+private class JavaLangRefCleaner : UniffiCleaner {
+    val cleaner = java.lang.ref.Cleaner.create()
+
+    override fun register(value: Any, cleanUpTask: Runnable): UniffiCleaner.Cleanable =
+        JavaLangRefCleanable(cleaner.register(value, cleanUpTask))
+}
+
+private class JavaLangRefCleanable(
+    val cleanable: java.lang.ref.Cleaner.Cleanable
+) : UniffiCleaner.Cleanable {
+    override fun clean() = cleanable.clean()
+}
 
 /**
  * @suppress
@@ -1143,6 +1435,29 @@ public object FfiConverterLong: FfiConverter<Long, Long> {
 
     override fun write(value: Long, buf: ByteBuffer) {
         buf.putLong(value)
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterBoolean: FfiConverter<Boolean, Byte> {
+    override fun lift(value: Byte): Boolean {
+        return value.toInt() != 0
+    }
+
+    override fun read(buf: ByteBuffer): Boolean {
+        return lift(buf.get())
+    }
+
+    override fun lower(value: Boolean): Byte {
+        return if (value) 1.toByte() else 0.toByte()
+    }
+
+    override fun allocationSize(value: Boolean) = 1UL
+
+    override fun write(value: Boolean, buf: ByteBuffer) {
+        buf.put(lower(value))
     }
 }
 
@@ -1200,6 +1515,327 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
         val byteBuf = toUtf8(value)
         buf.putInt(byteBuf.limit())
         buf.put(byteBuf)
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
+    override fun read(buf: ByteBuffer): ByteArray {
+        val len = buf.getInt()
+        val byteArr = ByteArray(len)
+        buf.get(byteArr)
+        return byteArr
+    }
+    override fun allocationSize(value: ByteArray): ULong {
+        return 4UL + value.size.toULong()
+    }
+    override fun write(value: ByteArray, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        buf.put(value)
+    }
+}
+
+
+// This template implements a class for working with a Rust struct via a handle
+// to the live Rust struct on the other side of the FFI.
+//
+// There's some subtlety here, because we have to be careful not to operate on a Rust
+// struct after it has been dropped, and because we must expose a public API for freeing
+// theq Kotlin wrapper object in lieu of reliable finalizers. The core requirements are:
+//
+//   * Each instance holds an opaque handle to the underlying Rust struct.
+//     Method calls need to read this handle from the object's state and pass it in to
+//     the Rust FFI.
+//
+//   * When an instance is no longer needed, its handle should be passed to a
+//     special destructor function provided by the Rust FFI, which will drop the
+//     underlying Rust struct.
+//
+//   * Given an instance, calling code is expected to call the special
+//     `destroy` method in order to free it after use, either by calling it explicitly
+//     or by using a higher-level helper like the `use` method. Failing to do so risks
+//     leaking the underlying Rust struct.
+//
+//   * We can't assume that calling code will do the right thing, and must be prepared
+//     to handle Kotlin method calls executing concurrently with or even after a call to
+//     `destroy`, and to handle multiple (possibly concurrent!) calls to `destroy`.
+//
+//   * We must never allow Rust code to operate on the underlying Rust struct after
+//     the destructor has been called, and must never call the destructor more than once.
+//     Doing so may trigger memory unsafety.
+//
+//   * To mitigate many of the risks of leaking memory and use-after-free unsafety, a `Cleaner`
+//     is implemented to call the destructor when the Kotlin object becomes unreachable.
+//     This is done in a background thread. This is not a panacea, and client code should be aware that
+//      1. the thread may starve if some there are objects that have poorly performing
+//     `drop` methods or do significant work in their `drop` methods.
+//      2. the thread is shared across the whole library. This can be tuned by using `android_cleaner = true`,
+//         or `android = true` in the [`kotlin` section of the `uniffi.toml` file](https://mozilla.github.io/uniffi-rs/kotlin/configuration.html).
+//
+// If we try to implement this with mutual exclusion on access to the handle, there is the
+// possibility of a race between a method call and a concurrent call to `destroy`:
+//
+//    * Thread A starts a method call, reads the value of the handle, but is interrupted
+//      before it can pass the handle over the FFI to Rust.
+//    * Thread B calls `destroy` and frees the underlying Rust struct.
+//    * Thread A resumes, passing the already-read handle value to Rust and triggering
+//      a use-after-free.
+//
+// One possible solution would be to use a `ReadWriteLock`, with each method call taking
+// a read lock (and thus allowed to run concurrently) and the special `destroy` method
+// taking a write lock (and thus blocking on live method calls). However, we aim not to
+// generate methods with any hidden blocking semantics, and a `destroy` method that might
+// block if called incorrectly seems to meet that bar.
+//
+// So, we achieve our goals by giving each instance an associated `AtomicLong` counter to track
+// the number of in-flight method calls, and an `AtomicBoolean` flag to indicate whether `destroy`
+// has been called. These are updated according to the following rules:
+//
+//    * The initial value of the counter is 1, indicating a live object with no in-flight calls.
+//      The initial value for the flag is false.
+//
+//    * At the start of each method call, we atomically check the counter.
+//      If it is 0 then the underlying Rust struct has already been destroyed and the call is aborted.
+//      If it is nonzero them we atomically increment it by 1 and proceed with the method call.
+//
+//    * At the end of each method call, we atomically decrement and check the counter.
+//      If it has reached zero then we destroy the underlying Rust struct.
+//
+//    * When `destroy` is called, we atomically flip the flag from false to true.
+//      If the flag was already true we silently fail.
+//      Otherwise we atomically decrement and check the counter.
+//      If it has reached zero then we destroy the underlying Rust struct.
+//
+// Astute readers may observe that this all sounds very similar to the way that Rust's `Arc<T>` works,
+// and indeed it is, with the addition of a flag to guard against multiple calls to `destroy`.
+//
+// The overall effect is that the underlying Rust struct is destroyed only when `destroy` has been
+// called *and* all in-flight method calls have completed, avoiding violating any of the expectations
+// of the underlying Rust code.
+//
+// This makes a cleaner a better alternative to _not_ calling `destroy()` as
+// and when the object is finished with, but the abstraction is not perfect: if the Rust object's `drop`
+// method is slow, and/or there are many objects to cleanup, and it's on a low end Android device, then the cleaner
+// thread may be starved, and the app will leak memory.
+//
+// In this case, `destroy`ing manually may be a better solution.
+//
+// The cleaner can live side by side with the manual calling of `destroy`. In the order of responsiveness, uniffi objects
+// with Rust peers are reclaimed:
+//
+// 1. By calling the `destroy` method of the object, which calls `rustObject.free()`. If that doesn't happen:
+// 2. When the object becomes unreachable, AND the Cleaner thread gets to call `rustObject.free()`. If the thread is starved then:
+// 3. The memory is reclaimed when the process terminates.
+//
+// [1] https://stackoverflow.com/questions/24376768/can-java-finalize-an-object-when-it-is-still-in-scope/24380219
+//
+
+
+public interface RuntimeSessionV2Interface {
+
+    fun `invoke`(`input`: RuntimeRequestV2): RuntimeEventV2
+
+    fun `page`(`offset`: kotlin.UInt, `limit`: kotlin.UInt): RuntimePageV2
+
+    fun `shutdown`(): RuntimeEventV2
+
+    companion object
+}
+
+open class RuntimeSessionV2: Disposable, AutoCloseable, RuntimeSessionV2Interface
+{
+
+    @Suppress("UNUSED_PARAMETER")
+    /**
+     * @suppress
+     */
+    constructor(withHandle: UniffiWithHandle, handle: Long) {
+        this.handle = handle
+        this.cleanable = UniffiLib.CLEANER.register(this, UniffiCleanAction(handle))
+    }
+
+    /**
+     * @suppress
+     *
+     * This constructor can be used to instantiate a fake object. Only used for tests. Any
+     * attempt to actually use an object constructed this way will fail as there is no
+     * connected Rust object.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    constructor(noHandle: NoHandle) {
+        this.handle = 0
+        this.cleanable = null
+    }
+    constructor(`context`: CommitContext, `mode`: AreaMode, `host`: NativeRuntimeHost) :
+        this(UniffiWithHandle,
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_constructor_runtimesessionv2_new(
+
+
+        FfiConverterTypeCommitContext.lower(`context`),
+        FfiConverterTypeAreaMode.lower(`mode`),
+        FfiConverterTypeNativeRuntimeHost.lower(`host`),_status)
+}
+    )
+
+    protected val handle: Long
+    protected val cleanable: UniffiCleaner.Cleanable?
+
+    private val wasDestroyed = AtomicBoolean(false)
+    private val callCounter = AtomicLong(1)
+
+    /**
+     * Whether the current object has been destroyed and its reference is gone in the Rust side.
+     */
+    val uniffiIsDestroyed: Boolean get() = wasDestroyed.get()
+
+    override fun destroy() {
+        // Only allow a single call to this method.
+        // TODO: maybe we should log a warning if called more than once?
+        if (this.wasDestroyed.compareAndSet(false, true)) {
+            // This decrement always matches the initial count of 1 given at creation time.
+            if (this.callCounter.decrementAndGet() == 0L) {
+                cleanable?.clean()
+            }
+        }
+    }
+
+    @Synchronized
+    override fun close() {
+        this.destroy()
+    }
+
+    internal inline fun <R> callWithHandle(block: (handle: Long) -> R): R {
+        // Check and increment the call counter, to keep the object alive.
+        // This needs a compare-and-set retry loop in case of concurrent updates.
+        do {
+            val c = this.callCounter.get()
+            if (c == 0L) {
+                throw IllegalStateException("${this.javaClass.simpleName} object has already been destroyed")
+            }
+            if (c == Long.MAX_VALUE) {
+                throw IllegalStateException("${this.javaClass.simpleName} call counter would overflow")
+            }
+        } while (! this.callCounter.compareAndSet(c, c + 1L))
+        // Now we can safely do the method call without the handle being freed concurrently.
+        try {
+            return block(this.uniffiCloneHandle())
+        } finally {
+            // This decrement always matches the increment we performed above.
+            if (this.callCounter.decrementAndGet() == 0L) {
+                cleanable?.clean()
+            }
+        }
+    }
+
+    // Use a static inner class instead of a closure so as not to accidentally
+    // capture `this` as part of the cleanable's action.
+    private class UniffiCleanAction(private val handle: Long) : Runnable {
+        override fun run() {
+            if (handle == 0.toLong()) {
+                // Fake object created with `NoHandle`, don't try to free.
+                return;
+            }
+            uniffiRustCall { status ->
+                UniffiLib.uniffi_wimm_core_bindings_fn_free_runtimesessionv2(handle, status)
+            }
+        }
+    }
+
+    /**
+     * @suppress
+     */
+    fun uniffiCloneHandle(): Long {
+        if (handle == 0.toLong()) {
+            throw InternalException("uniffiCloneHandle() called on NoHandle object");
+        }
+        return uniffiRustCall() { status ->
+            UniffiLib.uniffi_wimm_core_bindings_fn_clone_runtimesessionv2(handle, status)
+        }
+    }
+
+
+    @Throws(ContractException::class)override fun `invoke`(`input`: RuntimeRequestV2): RuntimeEventV2 {
+            return FfiConverterTypeRuntimeEventV2.lift(
+    callWithHandle {
+    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_method_runtimesessionv2_invoke(
+        it,
+
+        FfiConverterTypeRuntimeRequestV2.lower(`input`),_status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(ContractException::class)override fun `page`(`offset`: kotlin.UInt, `limit`: kotlin.UInt): RuntimePageV2 {
+            return FfiConverterTypeRuntimePageV2.lift(
+    callWithHandle {
+    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_method_runtimesessionv2_page(
+        it,
+
+        FfiConverterUInt.lower(`offset`),
+        FfiConverterUInt.lower(`limit`),_status)
+}
+    }
+    )
+    }
+
+
+
+    @Throws(ContractException::class)override fun `shutdown`(): RuntimeEventV2 {
+            return FfiConverterTypeRuntimeEventV2.lift(
+    callWithHandle {
+    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
+    UniffiLib.uniffi_wimm_core_bindings_fn_method_runtimesessionv2_shutdown(
+        it,
+        _status)
+}
+    }
+    )
+    }
+
+
+
+
+
+
+
+
+
+    /**
+     * @suppress
+     */
+    companion object
+
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRuntimeSessionV2: FfiConverter<RuntimeSessionV2, Long> {
+    override fun lower(value: RuntimeSessionV2): Long {
+        return value.uniffiCloneHandle()
+    }
+
+    override fun lift(value: Long): RuntimeSessionV2 {
+        return RuntimeSessionV2(UniffiWithHandle, value)
+    }
+
+    override fun read(buf: ByteBuffer): RuntimeSessionV2 {
+        return lift(buf.getLong())
+    }
+
+    override fun allocationSize(value: RuntimeSessionV2) = 8UL
+
+    override fun write(value: RuntimeSessionV2, buf: ByteBuffer) {
+        buf.putLong(lower(value))
     }
 }
 
@@ -1344,6 +1980,306 @@ public object FfiConverterTypeMoneyStatusV2: FfiConverterRustBuffer<MoneyStatusV
 
 
 
+
+sealed class RuntimePortException: kotlin.Exception() {
+
+    class Failed(
+        ) : RuntimePortException() {
+        override val message
+            get() = ""
+    }
+
+
+
+
+
+    companion object ErrorHandler : UniffiRustCallStatusErrorHandler<RuntimePortException> {
+        override fun lift(error_buf: RustBuffer.ByValue): RuntimePortException = FfiConverterTypeRuntimePortError.lift(error_buf)
+    }
+
+
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRuntimePortError : FfiConverterRustBuffer<RuntimePortException> {
+    override fun read(buf: ByteBuffer): RuntimePortException {
+
+
+        return when(buf.getInt()) {
+            1 -> RuntimePortException.Failed()
+            else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: RuntimePortException): ULong {
+        return when(value) {
+            is RuntimePortException.Failed -> (
+                // Add the size for the Int that specifies the variant plus the size needed for all fields
+                4UL
+            )
+        }
+    }
+
+    override fun write(value: RuntimePortException, buf: ByteBuffer) {
+        when(value) {
+            is RuntimePortException.Failed -> {
+                buf.putInt(1)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
+    }
+
+}
+
+
+
+
+
+public interface NativeRuntimeHost {
+
+    fun `load`(`context`: CommitContext): RuntimeSnapshotV2
+
+    fun `commit`(`request`: LocalCommitRequest, `context`: CommitContext, `cancelled`: kotlin.Boolean): RuntimeCommitResultV2
+
+    fun `lookup`(`identity`: LocalOperationIdentity): LocalCommitReceipt?
+
+    fun `journalLoad`(): kotlin.ByteArray
+
+    fun `journalSave`(`bytes`: kotlin.ByteArray): kotlin.Boolean
+
+    fun `journalClear`(`bytes`: kotlin.ByteArray): kotlin.Boolean
+
+    fun `seal`(`request`: LocalCommitRequest): kotlin.ByteArray
+
+    fun `unseal`(`bytes`: kotlin.ByteArray): LocalCommitRequest
+
+    fun `current`(): CommitContext
+
+    fun `cancelled`(): kotlin.Boolean
+
+    companion object
+}
+
+
+
+// Put the implementation in an object so we don't pollute the top-level namespace
+internal object uniffiCallbackInterfaceNativeRuntimeHost {
+    internal object `load`: UniffiCallbackInterfaceNativeRuntimeHostMethod0 {
+        override fun callback(`uniffiHandle`: Long,`context`: RustBufferCommitContext.ByValue,`uniffiOutReturn`: RustBufferRuntimeSnapshotV2,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeNativeRuntimeHost.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`load`(
+                    FfiConverterTypeCommitContext.lift(`context`),
+                )
+            }
+            val writeReturn = { value: RuntimeSnapshotV2 -> uniffiOutReturn.setValue(FfiConverterTypeRuntimeSnapshotV2.lower(value)) }
+            uniffiTraitInterfaceCallWithError(
+                uniffiCallStatus,
+                makeCall,
+                writeReturn,
+                { e: RuntimePortException -> FfiConverterTypeRuntimePortError.lower(e) }
+            )
+        }
+    }
+    internal object `commit`: UniffiCallbackInterfaceNativeRuntimeHostMethod1 {
+        override fun callback(`uniffiHandle`: Long,`request`: RustBufferLocalCommitRequest.ByValue,`context`: RustBufferCommitContext.ByValue,`cancelled`: Byte,`uniffiOutReturn`: RustBufferRuntimeCommitResultV2,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeNativeRuntimeHost.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`commit`(
+                    FfiConverterTypeLocalCommitRequest.lift(`request`),
+                    FfiConverterTypeCommitContext.lift(`context`),
+                    FfiConverterBoolean.lift(`cancelled`),
+                )
+            }
+            val writeReturn = { value: RuntimeCommitResultV2 -> uniffiOutReturn.setValue(FfiConverterTypeRuntimeCommitResultV2.lower(value)) }
+            uniffiTraitInterfaceCallWithError(
+                uniffiCallStatus,
+                makeCall,
+                writeReturn,
+                { e: RuntimePortException -> FfiConverterTypeRuntimePortError.lower(e) }
+            )
+        }
+    }
+    internal object `lookup`: UniffiCallbackInterfaceNativeRuntimeHostMethod2 {
+        override fun callback(`uniffiHandle`: Long,`identity`: RustBufferLocalOperationIdentity.ByValue,`uniffiOutReturn`: RustBuffer,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeNativeRuntimeHost.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`lookup`(
+                    FfiConverterTypeLocalOperationIdentity.lift(`identity`),
+                )
+            }
+            val writeReturn = { value: LocalCommitReceipt? -> uniffiOutReturn.setValue(FfiConverterOptionalTypeLocalCommitReceipt.lower(value)) }
+            uniffiTraitInterfaceCallWithError(
+                uniffiCallStatus,
+                makeCall,
+                writeReturn,
+                { e: RuntimePortException -> FfiConverterTypeRuntimePortError.lower(e) }
+            )
+        }
+    }
+    internal object `journalLoad`: UniffiCallbackInterfaceNativeRuntimeHostMethod3 {
+        override fun callback(`uniffiHandle`: Long,`uniffiOutReturn`: RustBuffer,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeNativeRuntimeHost.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`journalLoad`(
+                )
+            }
+            val writeReturn = { value: kotlin.ByteArray -> uniffiOutReturn.setValue(FfiConverterByteArray.lower(value)) }
+            uniffiTraitInterfaceCallWithError(
+                uniffiCallStatus,
+                makeCall,
+                writeReturn,
+                { e: RuntimePortException -> FfiConverterTypeRuntimePortError.lower(e) }
+            )
+        }
+    }
+    internal object `journalSave`: UniffiCallbackInterfaceNativeRuntimeHostMethod4 {
+        override fun callback(`uniffiHandle`: Long,`bytes`: RustBuffer.ByValue,`uniffiOutReturn`: ByteByReference,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeNativeRuntimeHost.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`journalSave`(
+                    FfiConverterByteArray.lift(`bytes`),
+                )
+            }
+            val writeReturn = { value: kotlin.Boolean -> uniffiOutReturn.setValue(FfiConverterBoolean.lower(value)) }
+            uniffiTraitInterfaceCallWithError(
+                uniffiCallStatus,
+                makeCall,
+                writeReturn,
+                { e: RuntimePortException -> FfiConverterTypeRuntimePortError.lower(e) }
+            )
+        }
+    }
+    internal object `journalClear`: UniffiCallbackInterfaceNativeRuntimeHostMethod5 {
+        override fun callback(`uniffiHandle`: Long,`bytes`: RustBuffer.ByValue,`uniffiOutReturn`: ByteByReference,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeNativeRuntimeHost.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`journalClear`(
+                    FfiConverterByteArray.lift(`bytes`),
+                )
+            }
+            val writeReturn = { value: kotlin.Boolean -> uniffiOutReturn.setValue(FfiConverterBoolean.lower(value)) }
+            uniffiTraitInterfaceCallWithError(
+                uniffiCallStatus,
+                makeCall,
+                writeReturn,
+                { e: RuntimePortException -> FfiConverterTypeRuntimePortError.lower(e) }
+            )
+        }
+    }
+    internal object `seal`: UniffiCallbackInterfaceNativeRuntimeHostMethod6 {
+        override fun callback(`uniffiHandle`: Long,`request`: RustBufferLocalCommitRequest.ByValue,`uniffiOutReturn`: RustBuffer,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeNativeRuntimeHost.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`seal`(
+                    FfiConverterTypeLocalCommitRequest.lift(`request`),
+                )
+            }
+            val writeReturn = { value: kotlin.ByteArray -> uniffiOutReturn.setValue(FfiConverterByteArray.lower(value)) }
+            uniffiTraitInterfaceCallWithError(
+                uniffiCallStatus,
+                makeCall,
+                writeReturn,
+                { e: RuntimePortException -> FfiConverterTypeRuntimePortError.lower(e) }
+            )
+        }
+    }
+    internal object `unseal`: UniffiCallbackInterfaceNativeRuntimeHostMethod7 {
+        override fun callback(`uniffiHandle`: Long,`bytes`: RustBuffer.ByValue,`uniffiOutReturn`: RustBufferLocalCommitRequest,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeNativeRuntimeHost.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`unseal`(
+                    FfiConverterByteArray.lift(`bytes`),
+                )
+            }
+            val writeReturn = { value: LocalCommitRequest -> uniffiOutReturn.setValue(FfiConverterTypeLocalCommitRequest.lower(value)) }
+            uniffiTraitInterfaceCallWithError(
+                uniffiCallStatus,
+                makeCall,
+                writeReturn,
+                { e: RuntimePortException -> FfiConverterTypeRuntimePortError.lower(e) }
+            )
+        }
+    }
+    internal object `current`: UniffiCallbackInterfaceNativeRuntimeHostMethod8 {
+        override fun callback(`uniffiHandle`: Long,`uniffiOutReturn`: RustBufferCommitContext,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeNativeRuntimeHost.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`current`(
+                )
+            }
+            val writeReturn = { value: CommitContext -> uniffiOutReturn.setValue(FfiConverterTypeCommitContext.lower(value)) }
+            uniffiTraitInterfaceCallWithError(
+                uniffiCallStatus,
+                makeCall,
+                writeReturn,
+                { e: RuntimePortException -> FfiConverterTypeRuntimePortError.lower(e) }
+            )
+        }
+    }
+    internal object `cancelled`: UniffiCallbackInterfaceNativeRuntimeHostMethod9 {
+        override fun callback(`uniffiHandle`: Long,`uniffiOutReturn`: ByteByReference,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeNativeRuntimeHost.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`cancelled`(
+                )
+            }
+            val writeReturn = { value: kotlin.Boolean -> uniffiOutReturn.setValue(FfiConverterBoolean.lower(value)) }
+            uniffiTraitInterfaceCallWithError(
+                uniffiCallStatus,
+                makeCall,
+                writeReturn,
+                { e: RuntimePortException -> FfiConverterTypeRuntimePortError.lower(e) }
+            )
+        }
+    }
+
+    internal object uniffiFree: UniffiCallbackInterfaceFree {
+        override fun callback(handle: Long) {
+            FfiConverterTypeNativeRuntimeHost.handleMap.remove(handle)
+        }
+    }
+
+    internal object uniffiClone: UniffiCallbackInterfaceClone {
+        override fun callback(handle: Long): Long {
+            return FfiConverterTypeNativeRuntimeHost.handleMap.clone(handle)
+        }
+    }
+
+    internal var vtable = UniffiVTableCallbackInterfaceNativeRuntimeHost.UniffiByValue(
+        uniffiFree,
+        uniffiClone,
+        `load`,
+        `commit`,
+        `lookup`,
+        `journalLoad`,
+        `journalSave`,
+        `journalClear`,
+        `seal`,
+        `unseal`,
+        `current`,
+        `cancelled`,
+    )
+
+    // Registers the foreign callback with the Rust side.
+    // This method is generated for each callback interface.
+    internal fun register(lib: UniffiLib) {
+        lib.uniffi_wimm_core_bindings_fn_init_callback_vtable_nativeruntimehost(vtable)
+    }
+}
+
+/**
+ * The ffiConverter which transforms the Callbacks in to handles to pass to Rust.
+ *
+ * @suppress
+ */
+public object FfiConverterTypeNativeRuntimeHost: FfiConverterCallbackInterface<NativeRuntimeHost>()
+
+
+
+
 /**
  * @suppress
  */
@@ -1404,6 +2340,58 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
         }
     }
 }
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeLocalCommitReceipt: FfiConverterRustBuffer<LocalCommitReceipt?> {
+    override fun read(buf: ByteBuffer): LocalCommitReceipt? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeLocalCommitReceipt.read(buf)
+    }
+
+    override fun allocationSize(value: LocalCommitReceipt?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeLocalCommitReceipt.allocationSize(value)
+        }
+    }
+
+    override fun write(value: LocalCommitReceipt?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeLocalCommitReceipt.write(value, buf)
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

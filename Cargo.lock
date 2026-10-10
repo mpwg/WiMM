@@ -2386,14 +2386,17 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
+ "sha2",
  "tsify",
  "uniffi",
  "wasm-bindgen",
  "wimm-client-application",
+ "wimm-client-crypto",
  "wimm-contract-primitives",
  "wimm-finance-core",
  "wimm-finance-types",
  "wimm-local-contracts",
+ "wimm-local-dal",
  "wimm-public-contracts",
 ]
 

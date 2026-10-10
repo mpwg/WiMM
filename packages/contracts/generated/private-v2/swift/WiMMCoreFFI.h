@@ -243,6 +243,129 @@ typedef void (*UniffiForeignFutureCompleteVoid)(uint64_t, UniffiForeignFutureRes
     );
 
 #endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD0
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD0
+typedef void (*UniffiCallbackInterfaceNativeRuntimeHostMethod0)(uint64_t, RustBuffer, RustBuffer* _Nonnull,
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD1
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD1
+typedef void (*UniffiCallbackInterfaceNativeRuntimeHostMethod1)(uint64_t, RustBuffer, RustBuffer, int8_t, RustBuffer* _Nonnull,
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD2
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD2
+typedef void (*UniffiCallbackInterfaceNativeRuntimeHostMethod2)(uint64_t, RustBuffer, RustBuffer* _Nonnull,
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD3
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD3
+typedef void (*UniffiCallbackInterfaceNativeRuntimeHostMethod3)(uint64_t, RustBuffer* _Nonnull,
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD4
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD4
+typedef void (*UniffiCallbackInterfaceNativeRuntimeHostMethod4)(uint64_t, RustBuffer, int8_t* _Nonnull,
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD5
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD5
+typedef void (*UniffiCallbackInterfaceNativeRuntimeHostMethod5)(uint64_t, RustBuffer, int8_t* _Nonnull,
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD6
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD6
+typedef void (*UniffiCallbackInterfaceNativeRuntimeHostMethod6)(uint64_t, RustBuffer, RustBuffer* _Nonnull,
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD7
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD7
+typedef void (*UniffiCallbackInterfaceNativeRuntimeHostMethod7)(uint64_t, RustBuffer, RustBuffer* _Nonnull,
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD8
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD8
+typedef void (*UniffiCallbackInterfaceNativeRuntimeHostMethod8)(uint64_t, RustBuffer* _Nonnull,
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD9
+#define UNIFFI_FFIDEF_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST_METHOD9
+typedef void (*UniffiCallbackInterfaceNativeRuntimeHostMethod9)(uint64_t, int8_t* _Nonnull,
+        RustCallStatus *_Nonnull uniffiCallStatus
+    );
+
+#endif
+#ifndef UNIFFI_FFIDEF_V_TABLE_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST
+#define UNIFFI_FFIDEF_V_TABLE_CALLBACK_INTERFACE_NATIVE_RUNTIME_HOST
+typedef struct UniffiVTableCallbackInterfaceNativeRuntimeHost {
+    UniffiCallbackInterfaceFree _Nonnull uniffiFree;
+    UniffiCallbackInterfaceClone _Nonnull uniffiClone;
+    UniffiCallbackInterfaceNativeRuntimeHostMethod0 _Nonnull load;
+    UniffiCallbackInterfaceNativeRuntimeHostMethod1 _Nonnull commit;
+    UniffiCallbackInterfaceNativeRuntimeHostMethod2 _Nonnull lookup;
+    UniffiCallbackInterfaceNativeRuntimeHostMethod3 _Nonnull journalLoad;
+    UniffiCallbackInterfaceNativeRuntimeHostMethod4 _Nonnull journalSave;
+    UniffiCallbackInterfaceNativeRuntimeHostMethod5 _Nonnull journalClear;
+    UniffiCallbackInterfaceNativeRuntimeHostMethod6 _Nonnull seal;
+    UniffiCallbackInterfaceNativeRuntimeHostMethod7 _Nonnull unseal;
+    UniffiCallbackInterfaceNativeRuntimeHostMethod8 _Nonnull current;
+    UniffiCallbackInterfaceNativeRuntimeHostMethod9 _Nonnull cancelled;
+} UniffiVTableCallbackInterfaceNativeRuntimeHost;
+
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_CLONE_RUNTIMESESSIONV2
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_CLONE_RUNTIMESESSIONV2
+uint64_t uniffi_wimm_core_bindings_fn_clone_runtimesessionv2(uint64_t handle, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_FREE_RUNTIMESESSIONV2
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_FREE_RUNTIMESESSIONV2
+void uniffi_wimm_core_bindings_fn_free_runtimesessionv2(uint64_t handle, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_CONSTRUCTOR_RUNTIMESESSIONV2_NEW
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_CONSTRUCTOR_RUNTIMESESSIONV2_NEW
+uint64_t uniffi_wimm_core_bindings_fn_constructor_runtimesessionv2_new(RustBuffer context, RustBuffer mode, uint64_t host, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_METHOD_RUNTIMESESSIONV2_INVOKE
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_METHOD_RUNTIMESESSIONV2_INVOKE
+RustBuffer uniffi_wimm_core_bindings_fn_method_runtimesessionv2_invoke(uint64_t ptr, RustBuffer input, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_METHOD_RUNTIMESESSIONV2_PAGE
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_METHOD_RUNTIMESESSIONV2_PAGE
+RustBuffer uniffi_wimm_core_bindings_fn_method_runtimesessionv2_page(uint64_t ptr, uint32_t offset, uint32_t limit, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_METHOD_RUNTIMESESSIONV2_SHUTDOWN
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_METHOD_RUNTIMESESSIONV2_SHUTDOWN
+RustBuffer uniffi_wimm_core_bindings_fn_method_runtimesessionv2_shutdown(uint64_t ptr, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_INIT_CALLBACK_VTABLE_NATIVERUNTIMEHOST
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_INIT_CALLBACK_VTABLE_NATIVERUNTIMEHOST
+void uniffi_wimm_core_bindings_fn_init_callback_vtable_nativeruntimehost(const UniffiVTableCallbackInterfaceNativeRuntimeHost* _Nonnull vtable
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_FUNC_CALCULATE_JSON
 #define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_FN_FUNC_CALCULATE_JSON
 RustBuffer uniffi_wimm_core_bindings_fn_func_calculate_json(RustBuffer request, RustCallStatus *_Nonnull out_status
@@ -698,6 +821,90 @@ uint16_t uniffi_wimm_core_bindings_checksum_func_validate_v2(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_FUNC_CALCULATE_MONEY_V2
 #define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_FUNC_CALCULATE_MONEY_V2
 uint16_t uniffi_wimm_core_bindings_checksum_func_calculate_money_v2(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_RUNTIMESESSIONV2_INVOKE
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_RUNTIMESESSIONV2_INVOKE
+uint16_t uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_invoke(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_RUNTIMESESSIONV2_PAGE
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_RUNTIMESESSIONV2_PAGE
+uint16_t uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_page(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_RUNTIMESESSIONV2_SHUTDOWN
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_RUNTIMESESSIONV2_SHUTDOWN
+uint16_t uniffi_wimm_core_bindings_checksum_method_runtimesessionv2_shutdown(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_CONSTRUCTOR_RUNTIMESESSIONV2_NEW
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_CONSTRUCTOR_RUNTIMESESSIONV2_NEW
+uint16_t uniffi_wimm_core_bindings_checksum_constructor_runtimesessionv2_new(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_LOAD
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_LOAD
+uint16_t uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_load(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_COMMIT
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_COMMIT
+uint16_t uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_commit(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_LOOKUP
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_LOOKUP
+uint16_t uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_lookup(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_JOURNAL_LOAD
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_JOURNAL_LOAD
+uint16_t uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_load(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_JOURNAL_SAVE
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_JOURNAL_SAVE
+uint16_t uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_save(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_JOURNAL_CLEAR
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_JOURNAL_CLEAR
+uint16_t uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_journal_clear(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_SEAL
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_SEAL
+uint16_t uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_seal(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_UNSEAL
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_UNSEAL
+uint16_t uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_unseal(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_CURRENT
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_CURRENT
+uint16_t uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_current(void
+
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_CANCELLED
+#define UNIFFI_FFIDEF_UNIFFI_WIMM_CORE_BINDINGS_CHECKSUM_METHOD_NATIVERUNTIMEHOST_CANCELLED
+uint16_t uniffi_wimm_core_bindings_checksum_method_nativeruntimehost_cancelled(void
 
 );
 #endif

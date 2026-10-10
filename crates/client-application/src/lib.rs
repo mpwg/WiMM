@@ -228,3 +228,5 @@ pub mod api;
 pub mod recovery;
 
 pub mod runtime;
+
+pub mod runtime_contracts;

@@ -1,5 +1,20 @@
 /* tslint:disable */
 /* eslint-disable */
+
+export interface RuntimeHostV2 {
+    load(context: CommitContext): RuntimeSnapshotV2;
+    commit(request: LocalCommitRequest, context: CommitContext, cancelled: boolean): RuntimeCommitResultV2;
+    lookup(identity: LocalOperationIdentity): LocalCommitReceipt | null;
+    journalLoad(): number[];
+    journalSave(bytes: number[]): boolean;
+    journalClear(bytes: number[]): boolean;
+    seal(request: LocalCommitRequest): number[];
+    unseal(bytes: number[]): LocalCommitRequest;
+    current(): CommitContext;
+    cancelled(): boolean;
+}
+
+
 /**
  * Formgrenzen werden auch bei nativer Konstruktion erzwungen.
  */
@@ -619,6 +634,33 @@ export interface RuleRequest {
     candidate: ImportCandidate;
 }
 
+export interface RuntimeEventV2 {
+    contractVersion: number;
+    context: CommitContext;
+    canUndo: boolean;
+    canRedo: boolean;
+    result: RuntimeResultV2;
+}
+
+export interface RuntimePageV2 {
+    contractVersion: number;
+    context: CommitContext;
+    offset: number;
+    aggregates: Aggregate[];
+}
+
+export interface RuntimeRequestV2 {
+    contractVersion: number;
+    domainSchemaVersion: number;
+    action: RuntimeActionV2;
+}
+
+export interface RuntimeSnapshotV2 {
+    contractVersion: number;
+    context: CommitContext;
+    aggregates: Aggregate[];
+}
+
 export interface SaveCommand {
     aggregates: NonEmptyVec<Aggregate>;
 }
@@ -854,6 +896,8 @@ export type ContractError = { contractVersion: number; code: string; detail: str
 
 export type CryptoSuite = "XCHACHA20_POLY1305_IETF_ED25519_V1";
 
+export type Direction = "undo" | "redo";
+
 export type DomainSchemaVersion = number;
 
 export type EngineBindingVersion = number;
@@ -940,6 +984,12 @@ export type Role = "admin" | "member" | "viewer";
 
 export type RuleAction = { field: "categoryId"; value: EntityId } | { field: "payeeId"; value: EntityId } | { field: "clearance"; value: ImportClearance };
 
+export type RuntimeActionV2 = { actionType: "load" } | { actionType: "execute"; command: Command; expectedRevisions: Expectation[]; operation: Context } | { actionType: "history"; direction: Direction; operation: Context } | { actionType: "resolve" };
+
+export type RuntimeCommitResultV2 = { status: "committed"; receipt: LocalCommitReceipt } | { status: "notCommitted"; error: StorageFailure } | { status: "unknown"; identity: LocalOperationIdentity };
+
+export type RuntimeResultV2 = { status: "state" } | { status: "committed"; context: CommitContext; receipt: LocalCommitReceipt; current: boolean } | { status: "notCommitted"; error: StorageFailure } | { status: "readFailed"; error: StorageFailure } | { status: "unknown" } | { status: "busy" } | { status: "scopeChanged" } | { status: "idle" } | { status: "closed" } | { status: "rejected"; code: ApplicationFailureCode; financeCode: string | null };
+
 export type ServerPersistenceCode = "REVISION_CONFLICT" | "QUOTA" | "WRITE_FAILED" | "UPDATE_REQUIRED" | "EPOCH_MISMATCH" | "OPERATION_ID_REUSED" | "CANCELLED" | "RESOURCE_UNAVAILABLE";
 
 export type SnapshotDomainVersion = number;
@@ -998,6 +1048,15 @@ export enum MoneyStatusV2 {
     Rejected = 1,
 }
 
+export class RuntimeSessionV2 {
+    free(): void;
+    [Symbol.dispose](): void;
+    invoke(input: RuntimeRequestV2): RuntimeEventV2;
+    constructor(context: CommitContext, mode: AreaMode, host: RuntimeHostV2);
+    page(offset: number, limit: number): RuntimePageV2;
+    shutdown(): RuntimeEventV2;
+}
+
 export function calculate_json(request: string): string;
 
 export function calculate_money_v2(request: MoneyRequestV2): MoneyResultV2;
@@ -1043,6 +1102,7 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_moneyrequestv2_free: (a: number, b: number) => void;
     readonly __wbg_moneyresultv2_free: (a: number, b: number) => void;
+    readonly __wbg_runtimesessionv2_free: (a: number, b: number) => void;
     readonly calculate_json: (a: number, b: number) => [number, number];
     readonly calculate_money_v2: (a: number) => number;
     readonly calculate_v2: (a: any) => [number, number, number];
@@ -1065,6 +1125,10 @@ export interface InitOutput {
     readonly reverse_v2: (a: any) => [number, number, number];
     readonly roundtrip_local_snapshot_v2: (a: any) => [number, number, number];
     readonly roundtrip_storage_failure_v2: (a: any) => [number, number, number];
+    readonly runtimesessionv2_invoke: (a: number, b: any) => [number, number, number];
+    readonly runtimesessionv2_new: (a: any, b: any, c: any) => [number, number, number];
+    readonly runtimesessionv2_page: (a: number, b: number, c: number) => [number, number, number];
+    readonly runtimesessionv2_shutdown: (a: number) => [number, number, number];
     readonly validate_json: (a: number, b: number) => [number, number];
     readonly validate_local_migration_form_v2: (a: any) => [number, number, number];
     readonly validate_local_port_form_v2: (a: any) => [number, number, number];

@@ -497,6 +497,30 @@ fileprivate struct FfiConverterInt64: FfiConverterPrimitive {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterBool : FfiConverter {
+    typealias FfiType = Int8
+    typealias SwiftType = Bool
+
+    public static func lift(_ value: Int8) throws -> Bool {
+        return value != 0
+    }
+
+    public static func lower(_ value: Bool) -> Int8 {
+        return value ? 1 : 0
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Bool {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Bool, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterString: FfiConverter {
     typealias SwiftType = String
     typealias FfiType = RustBuffer
@@ -813,6 +837,250 @@ public func FfiConverterTypeCommitContext_lower(_ value: CommitContext) -> RustB
 }
 
 
+public struct RuntimeEventV2: Equatable, Hashable {
+    public var contractVersion: UInt32
+    public var context: CommitContext
+    public var canUndo: Bool
+    public var canRedo: Bool
+    public var result: RuntimeResultV2
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: UInt32, context: CommitContext, canUndo: Bool, canRedo: Bool, result: RuntimeResultV2) {
+        self.contractVersion = contractVersion
+        self.context = context
+        self.canUndo = canUndo
+        self.canRedo = canRedo
+        self.result = result
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension RuntimeEventV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimeEventV2: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeEventV2 {
+        return
+            try RuntimeEventV2(
+                contractVersion: FfiConverterUInt32.read(from: &buf),
+                context: FfiConverterTypeCommitContext.read(from: &buf),
+                canUndo: FfiConverterBool.read(from: &buf),
+                canRedo: FfiConverterBool.read(from: &buf),
+                result: FfiConverterTypeRuntimeResultV2.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: RuntimeEventV2, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.contractVersion, into: &buf)
+        FfiConverterTypeCommitContext.write(value.context, into: &buf)
+        FfiConverterBool.write(value.canUndo, into: &buf)
+        FfiConverterBool.write(value.canRedo, into: &buf)
+        FfiConverterTypeRuntimeResultV2.write(value.result, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeEventV2_lift(_ buf: RustBuffer) throws -> RuntimeEventV2 {
+    return try FfiConverterTypeRuntimeEventV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeEventV2_lower(_ value: RuntimeEventV2) -> RustBuffer {
+    return FfiConverterTypeRuntimeEventV2.lower(value)
+}
+
+
+public struct RuntimePageV2: Equatable, Hashable {
+    public var contractVersion: UInt32
+    public var context: CommitContext
+    public var offset: UInt32
+    public var aggregates: [Aggregate]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: UInt32, context: CommitContext, offset: UInt32, aggregates: [Aggregate]) {
+        self.contractVersion = contractVersion
+        self.context = context
+        self.offset = offset
+        self.aggregates = aggregates
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension RuntimePageV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimePageV2: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimePageV2 {
+        return
+            try RuntimePageV2(
+                contractVersion: FfiConverterUInt32.read(from: &buf),
+                context: FfiConverterTypeCommitContext.read(from: &buf),
+                offset: FfiConverterUInt32.read(from: &buf),
+                aggregates: FfiConverterSequenceTypeAggregate.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: RuntimePageV2, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.contractVersion, into: &buf)
+        FfiConverterTypeCommitContext.write(value.context, into: &buf)
+        FfiConverterUInt32.write(value.offset, into: &buf)
+        FfiConverterSequenceTypeAggregate.write(value.aggregates, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimePageV2_lift(_ buf: RustBuffer) throws -> RuntimePageV2 {
+    return try FfiConverterTypeRuntimePageV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimePageV2_lower(_ value: RuntimePageV2) -> RustBuffer {
+    return FfiConverterTypeRuntimePageV2.lower(value)
+}
+
+
+public struct RuntimeRequestV2: Equatable, Hashable {
+    public var contractVersion: UInt32
+    public var domainSchemaVersion: UInt32
+    public var action: RuntimeActionV2
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: UInt32, domainSchemaVersion: UInt32, action: RuntimeActionV2) {
+        self.contractVersion = contractVersion
+        self.domainSchemaVersion = domainSchemaVersion
+        self.action = action
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension RuntimeRequestV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimeRequestV2: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeRequestV2 {
+        return
+            try RuntimeRequestV2(
+                contractVersion: FfiConverterUInt32.read(from: &buf),
+                domainSchemaVersion: FfiConverterUInt32.read(from: &buf),
+                action: FfiConverterTypeRuntimeActionV2.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: RuntimeRequestV2, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.contractVersion, into: &buf)
+        FfiConverterUInt32.write(value.domainSchemaVersion, into: &buf)
+        FfiConverterTypeRuntimeActionV2.write(value.action, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeRequestV2_lift(_ buf: RustBuffer) throws -> RuntimeRequestV2 {
+    return try FfiConverterTypeRuntimeRequestV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeRequestV2_lower(_ value: RuntimeRequestV2) -> RustBuffer {
+    return FfiConverterTypeRuntimeRequestV2.lower(value)
+}
+
+
+public struct RuntimeSnapshotV2: Equatable, Hashable {
+    public var contractVersion: UInt32
+    public var context: CommitContext
+    public var aggregates: [Aggregate]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: UInt32, context: CommitContext, aggregates: [Aggregate]) {
+        self.contractVersion = contractVersion
+        self.context = context
+        self.aggregates = aggregates
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension RuntimeSnapshotV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimeSnapshotV2: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeSnapshotV2 {
+        return
+            try RuntimeSnapshotV2(
+                contractVersion: FfiConverterUInt32.read(from: &buf),
+                context: FfiConverterTypeCommitContext.read(from: &buf),
+                aggregates: FfiConverterSequenceTypeAggregate.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: RuntimeSnapshotV2, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.contractVersion, into: &buf)
+        FfiConverterTypeCommitContext.write(value.context, into: &buf)
+        FfiConverterSequenceTypeAggregate.write(value.aggregates, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeSnapshotV2_lift(_ buf: RustBuffer) throws -> RuntimeSnapshotV2 {
+    return try FfiConverterTypeRuntimeSnapshotV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeSnapshotV2_lower(_ value: RuntimeSnapshotV2) -> RustBuffer {
+    return FfiConverterTypeRuntimeSnapshotV2.lower(value)
+}
+
+
 
 public enum ApplicationActionV2: Equatable, Hashable {
 
@@ -1120,6 +1388,380 @@ public func FfiConverterTypeAreaMode_lift(_ buf: RustBuffer) throws -> AreaMode 
 #endif
 public func FfiConverterTypeAreaMode_lower(_ value: AreaMode) -> RustBuffer {
     return FfiConverterTypeAreaMode.lower(value)
+}
+
+
+
+
+public enum Direction: Equatable, Hashable {
+
+    case undo
+    case redo
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension Direction: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeDirection: FfiConverterRustBuffer {
+    typealias SwiftType = Direction
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Direction {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .undo
+
+        case 2: return .redo
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: Direction, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case .undo:
+            writeInt(&buf, Int32(1))
+
+
+        case .redo:
+            writeInt(&buf, Int32(2))
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDirection_lift(_ buf: RustBuffer) throws -> Direction {
+    return try FfiConverterTypeDirection.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeDirection_lower(_ value: Direction) -> RustBuffer {
+    return FfiConverterTypeDirection.lower(value)
+}
+
+
+
+
+public enum RuntimeActionV2: Equatable, Hashable {
+
+    case load
+    case execute(command: Command, expectedRevisions: [Expectation], operation: Context
+    )
+    case history(direction: Direction, operation: Context
+    )
+    case resolve
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension RuntimeActionV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimeActionV2: FfiConverterRustBuffer {
+    typealias SwiftType = RuntimeActionV2
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeActionV2 {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .load
+
+        case 2: return .execute(command: try FfiConverterTypeCommand.read(from: &buf), expectedRevisions: try FfiConverterSequenceTypeExpectation.read(from: &buf), operation: try FfiConverterTypeContext.read(from: &buf)
+        )
+
+        case 3: return .history(direction: try FfiConverterTypeDirection.read(from: &buf), operation: try FfiConverterTypeContext.read(from: &buf)
+        )
+
+        case 4: return .resolve
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: RuntimeActionV2, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case .load:
+            writeInt(&buf, Int32(1))
+
+
+        case let .execute(command,expectedRevisions,operation):
+            writeInt(&buf, Int32(2))
+            FfiConverterTypeCommand.write(command, into: &buf)
+            FfiConverterSequenceTypeExpectation.write(expectedRevisions, into: &buf)
+            FfiConverterTypeContext.write(operation, into: &buf)
+
+
+        case let .history(direction,operation):
+            writeInt(&buf, Int32(3))
+            FfiConverterTypeDirection.write(direction, into: &buf)
+            FfiConverterTypeContext.write(operation, into: &buf)
+
+
+        case .resolve:
+            writeInt(&buf, Int32(4))
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeActionV2_lift(_ buf: RustBuffer) throws -> RuntimeActionV2 {
+    return try FfiConverterTypeRuntimeActionV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeActionV2_lower(_ value: RuntimeActionV2) -> RustBuffer {
+    return FfiConverterTypeRuntimeActionV2.lower(value)
+}
+
+
+
+
+public enum RuntimeCommitResultV2: Equatable, Hashable {
+
+    case committed(receipt: LocalCommitReceipt
+    )
+    case notCommitted(error: StorageFailure
+    )
+    case unknown(identity: LocalOperationIdentity
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension RuntimeCommitResultV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimeCommitResultV2: FfiConverterRustBuffer {
+    typealias SwiftType = RuntimeCommitResultV2
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeCommitResultV2 {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .committed(receipt: try FfiConverterTypeLocalCommitReceipt.read(from: &buf)
+        )
+
+        case 2: return .notCommitted(error: try FfiConverterTypeStorageFailure.read(from: &buf)
+        )
+
+        case 3: return .unknown(identity: try FfiConverterTypeLocalOperationIdentity.read(from: &buf)
+        )
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: RuntimeCommitResultV2, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case let .committed(receipt):
+            writeInt(&buf, Int32(1))
+            FfiConverterTypeLocalCommitReceipt.write(receipt, into: &buf)
+
+
+        case let .notCommitted(error):
+            writeInt(&buf, Int32(2))
+            FfiConverterTypeStorageFailure.write(error, into: &buf)
+
+
+        case let .unknown(identity):
+            writeInt(&buf, Int32(3))
+            FfiConverterTypeLocalOperationIdentity.write(identity, into: &buf)
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeCommitResultV2_lift(_ buf: RustBuffer) throws -> RuntimeCommitResultV2 {
+    return try FfiConverterTypeRuntimeCommitResultV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeCommitResultV2_lower(_ value: RuntimeCommitResultV2) -> RustBuffer {
+    return FfiConverterTypeRuntimeCommitResultV2.lower(value)
+}
+
+
+
+
+public enum RuntimeResultV2: Equatable, Hashable {
+
+    case state
+    case committed(context: CommitContext, receipt: LocalCommitReceipt, current: Bool
+    )
+    case notCommitted(error: StorageFailure
+    )
+    case readFailed(error: StorageFailure
+    )
+    case unknown
+    case busy
+    case scopeChanged
+    case idle
+    case closed
+    case rejected(code: ApplicationFailureCode, financeCode: String?
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension RuntimeResultV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeRuntimeResultV2: FfiConverterRustBuffer {
+    typealias SwiftType = RuntimeResultV2
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> RuntimeResultV2 {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .state
+
+        case 2: return .committed(context: try FfiConverterTypeCommitContext.read(from: &buf), receipt: try FfiConverterTypeLocalCommitReceipt.read(from: &buf), current: try FfiConverterBool.read(from: &buf)
+        )
+
+        case 3: return .notCommitted(error: try FfiConverterTypeStorageFailure.read(from: &buf)
+        )
+
+        case 4: return .readFailed(error: try FfiConverterTypeStorageFailure.read(from: &buf)
+        )
+
+        case 5: return .unknown
+
+        case 6: return .busy
+
+        case 7: return .scopeChanged
+
+        case 8: return .idle
+
+        case 9: return .closed
+
+        case 10: return .rejected(code: try FfiConverterTypeApplicationFailureCode.read(from: &buf), financeCode: try FfiConverterOptionString.read(from: &buf)
+        )
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: RuntimeResultV2, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case .state:
+            writeInt(&buf, Int32(1))
+
+
+        case let .committed(context,receipt,current):
+            writeInt(&buf, Int32(2))
+            FfiConverterTypeCommitContext.write(context, into: &buf)
+            FfiConverterTypeLocalCommitReceipt.write(receipt, into: &buf)
+            FfiConverterBool.write(current, into: &buf)
+
+
+        case let .notCommitted(error):
+            writeInt(&buf, Int32(3))
+            FfiConverterTypeStorageFailure.write(error, into: &buf)
+
+
+        case let .readFailed(error):
+            writeInt(&buf, Int32(4))
+            FfiConverterTypeStorageFailure.write(error, into: &buf)
+
+
+        case .unknown:
+            writeInt(&buf, Int32(5))
+
+
+        case .busy:
+            writeInt(&buf, Int32(6))
+
+
+        case .scopeChanged:
+            writeInt(&buf, Int32(7))
+
+
+        case .idle:
+            writeInt(&buf, Int32(8))
+
+
+        case .closed:
+            writeInt(&buf, Int32(9))
+
+
+        case let .rejected(code,financeCode):
+            writeInt(&buf, Int32(10))
+            FfiConverterTypeApplicationFailureCode.write(code, into: &buf)
+            FfiConverterOptionString.write(financeCode, into: &buf)
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeResultV2_lift(_ buf: RustBuffer) throws -> RuntimeResultV2 {
+    return try FfiConverterTypeRuntimeResultV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeRuntimeResultV2_lower(_ value: RuntimeResultV2) -> RustBuffer {
+    return FfiConverterTypeRuntimeResultV2.lower(value)
 }
 
 

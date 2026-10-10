@@ -1,0 +1,385 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RuntimeEventV2",
+  "type": "object",
+  "properties": {
+    "canRedo": {
+      "type": "boolean"
+    },
+    "canUndo": {
+      "type": "boolean"
+    },
+    "context": {
+      "$ref": "#/$defs/CommitContext"
+    },
+    "contractVersion": {
+      "$ref": "#/$defs/ApplicationBindingVersion"
+    },
+    "result": {
+      "$ref": "#/$defs/RuntimeResultV2"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "contractVersion",
+    "context",
+    "canUndo",
+    "canRedo",
+    "result"
+  ],
+  "$defs": {
+    "ApplicationBindingVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "ApplicationFailureCode": {
+      "type": "string",
+      "enum": [
+        "UPDATE_REQUIRED",
+        "SCOPE_CHANGED",
+        "WRONG_AREA",
+        "INVALID_STATE",
+        "FINANCE_REJECTED"
+      ]
+    },
+    "CommitContext": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "generation": {
+          "$ref": "#/$defs/Revision"
+        },
+        "profileId": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "profileRevision": {
+          "$ref": "#/$defs/Revision"
+        },
+        "sessionGeneration": {
+          "$ref": "#/$defs/Revision"
+        },
+        "spaceId": {
+          "$ref": "#/$defs/EntityId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "profileId",
+        "spaceId",
+        "epoch",
+        "profileRevision",
+        "sessionGeneration",
+        "generation"
+      ]
+    },
+    "CommittedRevision": {
+      "type": "object",
+      "properties": {
+        "handle": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "revision": {
+          "$ref": "#/$defs/StoredRevision"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "handle",
+        "revision"
+      ]
+    },
+    "EntityId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    },
+    "FailureCommitState": {
+      "type": "string",
+      "enum": [
+        "notCommitted",
+        "unknown"
+      ]
+    },
+    "FileHash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "LocalCommitReceipt": {
+      "type": "object",
+      "properties": {
+        "committedRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommittedRevision"
+          }
+        },
+        "contentHash": {
+          "$ref": "#/$defs/FileHash"
+        },
+        "identity": {
+          "$ref": "#/$defs/LocalOperationIdentity"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "contentHash",
+        "committedRevisions"
+      ]
+    },
+    "LocalOperationContractVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "LocalOperationIdentity": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "operationContractVersion": {
+          "$ref": "#/$defs/LocalOperationContractVersion"
+        },
+        "operationId": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "profileId": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "spaceId": {
+          "$ref": "#/$defs/EntityId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "operationContractVersion",
+        "profileId",
+        "spaceId",
+        "epoch",
+        "operationId"
+      ]
+    },
+    "PublicBindingVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "RequiredNullableFinanceCode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "Revision": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 0
+    },
+    "RuntimeResultV2": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "state"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "context": {
+              "$ref": "#/$defs/CommitContext"
+            },
+            "current": {
+              "type": "boolean"
+            },
+            "receipt": {
+              "$ref": "#/$defs/LocalCommitReceipt"
+            },
+            "status": {
+              "type": "string",
+              "const": "committed"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "context",
+            "receipt",
+            "current"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "error": {
+              "$ref": "#/$defs/StorageFailure"
+            },
+            "status": {
+              "type": "string",
+              "const": "notCommitted"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "error"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "error": {
+              "$ref": "#/$defs/StorageFailure"
+            },
+            "status": {
+              "type": "string",
+              "const": "readFailed"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "error"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "busy"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "scopeChanged"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "idle"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "const": "closed"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "code": {
+              "$ref": "#/$defs/ApplicationFailureCode"
+            },
+            "financeCode": {
+              "$ref": "#/$defs/RequiredNullableFinanceCode"
+            },
+            "status": {
+              "type": "string",
+              "const": "rejected"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "code",
+            "financeCode"
+          ]
+        }
+      ]
+    },
+    "StorageFailure": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/StorageFailureCode"
+        },
+        "commitState": {
+          "$ref": "#/$defs/FailureCommitState"
+        },
+        "contractVersion": {
+          "$ref": "#/$defs/PublicBindingVersion"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "contractVersion",
+        "code",
+        "commitState"
+      ]
+    },
+    "StorageFailureCode": {
+      "type": "string",
+      "enum": [
+        "REVISION_CONFLICT",
+        "QUOTA",
+        "RESOURCE_UNAVAILABLE",
+        "WRITE_FAILED",
+        "UPDATE_REQUIRED",
+        "EPOCH_MISMATCH",
+        "CANCELLED",
+        "COMMIT_UNKNOWN",
+        "INVALID_RESPONSE",
+        "OPERATION_ID_REUSED"
+      ]
+    },
+    "StoredRevision": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 1
+    }
+  }
+}

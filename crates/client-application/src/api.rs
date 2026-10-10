@@ -193,7 +193,7 @@ pub fn prepare_application_v2(input: ApplicationRequestV2) -> ApplicationPrepara
     }
 }
 #[cfg(feature = "contract-schema")]
-struct BindingVersionSchema;
+pub(crate) struct BindingVersionSchema;
 #[cfg(feature = "contract-schema")]
 impl schemars::JsonSchema for BindingVersionSchema {
     fn schema_name() -> std::borrow::Cow<'static, str> {
@@ -204,7 +204,7 @@ impl schemars::JsonSchema for BindingVersionSchema {
     }
 }
 #[cfg(feature = "contract-schema")]
-struct DomainVersionSchema;
+pub(crate) struct DomainVersionSchema;
 #[cfg(feature = "contract-schema")]
 impl schemars::JsonSchema for DomainVersionSchema {
     fn schema_name() -> std::borrow::Cow<'static, str> {
@@ -216,7 +216,7 @@ impl schemars::JsonSchema for DomainVersionSchema {
 }
 
 #[cfg(feature = "contract-schema")]
-struct RequiredNullableFinanceCode;
+pub(crate) struct RequiredNullableFinanceCode;
 #[cfg(feature = "contract-schema")]
 impl schemars::JsonSchema for RequiredNullableFinanceCode {
     fn schema_name() -> std::borrow::Cow<'static, str> {

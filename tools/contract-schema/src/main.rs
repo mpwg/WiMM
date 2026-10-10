@@ -269,6 +269,28 @@ fn application_exports() -> Vec<(&'static str, String)> {
     use wimm_client_application::api::{ApplicationPreparationV2, ApplicationRequestV2};
     let data = [
         (
+            "runtime-request.schema.json",
+            schemars::schema_for!(wimm_client_application::runtime_contracts::RuntimeRequestV2),
+        ),
+        (
+            "runtime-event.schema.json",
+            schemars::schema_for!(wimm_client_application::runtime_contracts::RuntimeEventV2),
+        ),
+        (
+            "runtime-page.schema.json",
+            schemars::schema_for!(wimm_client_application::runtime_contracts::RuntimePageV2),
+        ),
+        (
+            "runtime-snapshot.schema.json",
+            schemars::schema_for!(wimm_client_application::runtime_contracts::RuntimeSnapshotV2),
+        ),
+        (
+            "runtime-commit.schema.json",
+            schemars::schema_for!(
+                wimm_client_application::runtime_contracts::RuntimeCommitResultV2
+            ),
+        ),
+        (
             "application-request.schema.json",
             schemars::schema_for!(ApplicationRequestV2),
         ),

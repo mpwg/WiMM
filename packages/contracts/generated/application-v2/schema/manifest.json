@@ -10,6 +10,11 @@
     }
   ],
   "files": [
+    "runtime-request.schema.json",
+    "runtime-event.schema.json",
+    "runtime-page.schema.json",
+    "runtime-snapshot.schema.json",
+    "runtime-commit.schema.json",
     "application-request.schema.json",
     "application-preparation.schema.json"
   ],
