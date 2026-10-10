@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import {expect,test,type Page} from '@playwright/test';
-import {createVault} from '../helpers/local.js';
+import {createVault,createCategory,book,unlock} from '../helpers/local.js';
 import {createAccount,navigate} from '../helpers/ui.js';
 declare global{interface Window{readonly persistenceCalls:number}}
 const origin='http://127.0.0.1:5189';
@@ -24,4 +24,24 @@ test('Fehlende Persistenz-API wird in echter Weboberfläche getrennt angezeigt (
 });
 test('Persistenz-API-Fehler erzeugt keinen vermeintlichen Erfolg (kontrollierte API-Simulation)',async({page})=>{
  await page.addInitScript(()=>{navigator.storage.persist=async()=>{throw new DOMException('Synthetischer API-Fehler','SecurityError');};});await createVault(page);await expect(page.locator('[data-persistence-status=error]')).toBeVisible();await createAccount(page,'Synthetischer Bestand nach API-Fehler','5');expect((await records(page) as unknown[]).length).toBeGreaterThan(0);
+});
+
+test('Tatsächlicher OPFS-Quotafehler in der PWA erhält den vollständigen Buchungsentwurf und dauerhaften Originalbestand',async({page,context})=>{
+ await createVault(page);await createAccount(page,'Synthetisches Quotakonto');await createCategory(page,'Synthetische Quotakategorie');
+ const before=await records(page);const note='Ausschließlich synthetischer Originalentwurf. '.repeat(8192);
+ const dialog=await book(page,'-12,34',note,'Synthetisches Quotakonto','Synthetische Quotakategorie');
+ const selectedAccount=await dialog.getByRole('combobox',{name:'Konto',exact:true}).inputValue();const selectedCategory=await dialog.getByRole('combobox',{name:'Kategorie',exact:true}).inputValue();
+ const usage=await page.evaluate(async()=>(await navigator.storage.estimate()).usage);expect(typeof usage).toBe('number');
+ const session=await context.newCDPSession(page);await session.send('Storage.overrideQuotaForOrigin',{origin,quotaSize:usage!+4096});
+ try{
+  await dialog.getByRole('button',{name:'Lokal speichern',exact:true}).click();
+  await expect(dialog.getByRole('alert')).toBeVisible();
+  await expect(dialog.getByLabel('Betrag',{exact:true})).toHaveValue('12,34');await expect(dialog.getByLabel('Datum',{exact:true})).toHaveValue('2026-10-04');await expect(dialog.getByLabel('Notiz',{exact:true})).toHaveValue(note);
+  await expect(dialog.getByRole('combobox',{name:'Konto',exact:true})).toHaveValue(selectedAccount);await expect(dialog.getByRole('combobox',{name:'Kategorie',exact:true})).toHaveValue(selectedCategory);
+  await expect(page.getByText('Lokal gespeichert.',{exact:true})).toHaveCount(0);
+ }finally{await session.send('Storage.overrideQuotaForOrigin',{origin});await session.detach();}
+ await page.reload();await unlock(page);expect(await records(page)).toEqual(before);
+ // Erst nach tatsächlicher Originalprüfung bewusst dieselbe gültige Eingabe erneut bestätigen; kein automatischer Retry.
+ const again=await book(page,'-12,34',note,'Synthetisches Quotakonto','Synthetische Quotakategorie');await again.getByRole('button',{name:'Lokal speichern',exact:true}).click();await expect(again).toHaveCount(0);
+ expect((await records(page)).filter(entry=>entry.aggregateType==='transaction'&&'note' in entry&&entry.note===note.trim())).toHaveLength(1);
 });
