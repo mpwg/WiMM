@@ -55,12 +55,12 @@ if (await adapter.readAggregate(accountId) === undefined) {
   }
   await adapter.applyAtomicBatch({ expectedRevisions: [], aggregates: initial.map(toStoredAggregate), outbox: performanceFixture ? Array.from({ length: 1000 }, (_, index) => ({ operationId:id(200000+index),spaceId,expectedRevisions:[],dependsOn:[],state:'blocked' as const,retryCount:0,createdAt:meta(0).createdAt,draft:{syntheticSharedExpenseLoad:true,id:id(200000+index),amount:100,source:'private_advance',reimbursementSource:'household',categoryId,shares:[{participantId:id(300000),amount:50},{participantId:id(300001),amount:50}]} })) : [], projections: [] });
 }
-let mode = 'normal'; let release: (() => void) | undefined;
+let mode = 'normal'; let release: (() => void) | undefined; let releaseRequested=false;
 let coldListPaintedAt: number | undefined;
 const storage: WorkspaceStorage = {
   query: (query) => adapter.query(query),
   applyAtomicBatch: async (batch) => {
-    if (mode === 'delay') await new Promise<void>((resolve) => { release = resolve; });
+    if (mode === 'delay') await new Promise<void>((resolve) => { release=()=>{release=undefined;releaseRequested=false;resolve();};if(releaseRequested)release(); });
     if (mode === 'quota') throw new DOMException('QuotaExceededError', 'QuotaExceededError');
     if (mode === 'disk') throw new StorageFailureError('QUOTA', 'notCommitted');
     if (mode === 'native-disk') throw new StorageFailureError('QUOTA', 'notCommitted');
@@ -78,7 +78,7 @@ declare global { interface Window { workspaceTest: {
 } } }
 window.workspaceTest = {
   coldListPaintedAt: () => coldListPaintedAt,
-  mode(value) { mode = value; }, release() { release?.(); }, read: () => adapter.query({ spaceId }),
+  mode(value) { mode=value;if(value==='delay')releaseRequested=false; }, release() { if(release===undefined)releaseRequested=true;else release(); }, read: () => adapter.query({ spaceId }),
   async fixture() {
     const aggregates = await adapter.query({ spaceId });
     const sharedExpenseLoad=(await adapter.loadPending(spaceId)).filter(entry=>typeof entry.draft==='object'&&entry.draft!==null&&'syntheticSharedExpenseLoad' in entry.draft&&entry.draft.syntheticSharedExpenseLoad===true).length;

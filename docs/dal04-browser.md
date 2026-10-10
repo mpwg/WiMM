@@ -167,3 +167,16 @@ Aktuelle Chromium-Prüfung auf realer Rust-/SQLite-/OPFS: Web kalt 1.393,5 ms, w
 Breite Workspace-Regressionsprüfung: zunächst 116 erfolgreich, acht Importfälle scheitern am übergebenen Parserfeld currency. [#152](https://github.com/mpwg/WiMM/issues/152): AutomationModel bildet den Fachkandidaten jetzt explizit aus Vertragsfeldern; Parser-/Originalvorschau bleibt erhalten, Rust-Unknownfieldguard unverändert. Zusätzliche Anwendungsassertion prüft Feldtrennung/Originalerhaltung; 26 Anwendungsfälle, Typecheck/Lint erfolgreich. Gezielter P5-Lauf danach 25 erfolgreich, drei offen: zwei Mehrtabfälle am tatsächlich einzigen Writer [#153](https://github.com/mpwg/WiMM/issues/153) und Web-Großimport mit 99.999 gespeicherten Zeilen [#154](https://github.com/mpwg/WiMM/issues/154). Desktop-Großimport besteht; keine Ursache oder stabile Abnahme aus dem einzelnen Gegenlauf behaupten. Keine Assertions/Fristen abgewählt oder finanziellen Orakel umgeschrieben.
 
 Diese Paket-/Regressionsdeltas verhindern vollständige #109-/#152-Abnahme; der Abschnitt bleibt zunächst lokal, damit aktive vollständige CI fertigläuft und vor erneutem Push die tatsächlichen Integrationsdeltas bearbeitet werden.
+
+## Persistenz-Prüfleser und robuste kontrollierte Testfreigabe
+
+[#155](https://github.com/mpwg/WiMM/issues/155): Persistenztests lesen den aktuellen Konto-Bestand über denselben produktiven BrowserSqliteStorageAdapter wie die App. Dynamischer Testimport benutzt das vorhandene Modul und damit dieselbe profilgebundene Verbindung; temporärer Reader erhöht Referenzbesitz und schließt ihn anschließend. Kein neuer Worker hinter dem eigenen gehaltenen Lock, keine erzeugte Legacydatenbank oder echte Finanzdaten in Diagnosen. Vier tatsächliche Chromium-Fälle erfolgreich: StorageManager-Ablehnung/Freigabe sowie ausdrücklich getrennte Simulation fehlender/fehlerhafter API. Alle bisherigen Callcounts, UIzustände und Originaldatenassertionen unverändert.
+
+[#154](https://github.com/mpwg/WiMM/issues/154) eingegrenzt: isolierter vorhandener 99.999-Zeilen-Fall bereits erfolgreich; die kontrollierte Testfreigabe konnte unter paralleler Last vor Registrierung des Verzögerungscallbacks eintreffen und verlorengehen. Testgate merkt nun eine frühe Freigabe bis zur tatsächlichen Pause. Keine Änderung produktiver Import-/SQL-/Commitlogik, kein vorgezogener Erfolg, Datensatzverkleinerung oder verlängerte Frist. Derselbe echte Worker-/Rust-OPFS-/Bedienbarkeits-/100er-Gruppen-/Fortschrittsfall anschließend sechsfach (Web/Desktopfrontend je drei, zwei parallele Testprozesse) erfolgreich. Das ist keine allgemeine Importleistungsabnahme oder native Desktopprüfung.
+
+```sh
+pnpm test:storage:persistence
+pnpm exec playwright test --config tests/workspace/config.ts tests/workspace/p5.spec.ts --grep 'Großimport' --repeat-each 3 --workers 2
+```
+
+Aktuelle Typecheck-/Lintprüfung erfolgreich. CI-Nachprüfung steht für beide Deltas weiter aus; #109/#153 produktive Mehrtabintegration unverändert offen, keine abgeschwächte gleichzeitige Gruppenassertion oder alternative Datenbank.

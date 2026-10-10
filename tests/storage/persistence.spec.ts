@@ -5,10 +5,13 @@ import {createAccount,navigate} from '../helpers/ui.js';
 declare global{interface Window{readonly persistenceCalls:number}}
 const origin='http://127.0.0.1:5189';
 async function instrument(page:Page){await page.addInitScript(()=>{const native=navigator.storage.persist.bind(navigator.storage);let calls=0;Object.defineProperty(window,'persistenceCalls',{get:()=>calls});navigator.storage.persist=async()=>{calls++;return native();};});}
-async function records(page:Page){return page.evaluate(async()=>{
- const profile=JSON.parse(localStorage.getItem('wimm/local-profile/v1')!) as {profileId:string};
- return new Promise<unknown>((resolve,reject)=>{const request=indexedDB.open(`wimm-ui-${profile.profileId}`);request.onerror=()=>reject(new Error('Synthetischer Testbestand fehlt'));request.onsuccess=()=>{const db=request.result;const tx=db.transaction(['aggregates'],'readonly');const read=tx.objectStore('aggregates').getAll();read.onsuccess=()=>resolve(read.result);tx.oncomplete=()=>db.close();tx.onabort=()=>reject(new Error('Synthetischer Testbestand nicht lesbar'));};});
-});}
+const storageModule='/@fs'+process.cwd()+'/packages/browser-adapters/src/sqlite-storage.ts';
+async function records(page:Page){return page.evaluate(async url=>{
+ const profile=JSON.parse(localStorage.getItem('wimm/local-profile/v1')!) as {profileId:string;selectedAreaId:string};
+ const {BrowserSqliteStorageAdapter}=await import(/* @vite-ignore */ url) as typeof import('../../packages/browser-adapters/src/sqlite-storage.js');
+ const storage=new BrowserSqliteStorageAdapter(profile.profileId);
+ try{return await storage.query({spaceId:profile.selectedAreaId});}finally{await storage.close();}
+},storageModule);}
 test('Webeinstieg fragt die echte StorageManager-Persistenz an und zeigt deren tatsächliche Ablehnung',async({page})=>{
  await instrument(page);await createVault(page);await expect(page.locator('[data-persistence-status=denied]')).toBeVisible();expect(await page.evaluate(()=>navigator.storage.persisted())).toBe(false);expect(await page.evaluate(()=>window.persistenceCalls)).toBe(1);
  await createAccount(page,'Synthetisches Persistenzkonto','10');const before=await records(page);await page.getByRole('button',{name:'Dauerhafte Speicherung erneut anfragen'}).click();await expect(page.locator('[data-persistence-status=denied]')).toBeVisible();expect(await records(page)).toEqual(before);
