@@ -1,68 +1,53 @@
 # AR04 — Dauerhafte lokale Commitreceipts
 
-Stand: 10. Oktober 2026. [AR04 #118](https://github.com/mpwg/WiMM/issues/118) ist in Arbeit; Voraussetzungen #116/#117/#107 erfüllt. Dieser Snapshot beschreibt den geprüften ersten Persistenzabschnitt, keine vollständige AR04- oder Produktabnahme.
+Stand: 10. Oktober 2026. [AR04 #118](https://github.com/mpwg/WiMM/issues/118) vollständig als Commit-/Receipt-/Sicherungsabschnitt abgenommen und als COMPLETED geschlossen, Beschreibung/Schließungsgrund rückgelesen, auf [290f6e3](https://github.com/mpwg/WiMM/commit/290f6e3c74e2068adf70b4735dc72a88ecf6de62). Voraussetzungen #116/#117/#107 erfüllt. [Verträge](core-contracts.md), ADR-055 in [Entscheidungen](decisions.md), [Adapter-README](../crates/local-dal/README.md).
 
-## Implementierter Abschnitt
+## Kriterienmatrix
 
-`wimm-local-dal::sqlite_commit::SqliteCommitStore` implementiert den versionierten Rust-LocalCommitPort mit SQLite/Diesel. Aggregate, unveränderte Originaloutbox, vorbereitete Projektionen und Receipt werden in derselben unmittelbaren SQLite-Transaktion geschrieben. Diesel 2.3.13, SeaQuery 1.0.2, native libsqlite3-sys 0.38.2, sqlite-wasm-rs 0.5.5 und OPFS-SAH-Pool 0.2.0 sind exakt die bereits geprüften gesperrten DAL01-Versionen; keine neue Fremdversion. Standardfeature bleibt die plattformfreie Memoryreferenz; `sqlite` aktiviert denselben echten SQLite-Code nativ und WASM. Es gibt keinen stillen Persistenzfallback.
+| Kriterium #118 | Tatsächliche Umsetzung und Abnahme |
+| --- | --- |
+| Antwortverlust/Prozessneustart: genau ein Write und ursprüngliches Ergebnis | Profil-/Bereichs-/Epochenschlüssel und vollständiger Requestinhalt binden das Receipt. Aggregate, Originaloutbox, vorbereitete Projektionen und Receipt in derselben unmittelbaren SQLite-Transaktion. Native CLI-Prozessneustart und vollständige Browserprozessneustarts finden dasselbe Receipt; identische Wiederholung erhöht keine Revision und verdoppelt weder Outbox noch Projektionen |
+| Inhaltsabweichung, Scope und Rollback | Andere Inhalte derselben Identität -> OPERATION_ID_REUSED. CAS und Profil-/Bereichs-/Epochenbindung, Originaldrafts und vollständiger vierteiliger Rollback tatsächlich geprüft. Beschädigtes bekanntes Receipt ergibt unknown, keinen Wiederholungswrite und keine falsche notCommitted-Antwort |
+| Commitgewissheit und verspäteter Abbruch | CancellableLocalCommitPort für Memory/SQLite. Beobachter ausschließlich im synthetischen Prüffeature an tatsächlichen Transaktionsgrenzen. Abbruch vor COMMIT -> notCommitted/CANCELLED und Rollback; nach tatsächlichem COMMIT -> committed. Bekannte identische Wiederholung bleibt trotz Abbruchsignal bestätigt; verlorene Zustellung bleibt unknown und verlangt Ergebnisabfrage |
+| Registriertes gesichertes kompatibles Schema, native/Browserkonformität | Öffnen erzeugt/migriert kein Schema. Registrierte Initialerzeugung eins nur in leerer DB; vorhandene fremde Tabellen/unsupported Journale bleiben geschützt. Neue versionierte private Checkpointform eins enthält vollständigen unterstützten Datenstand und ursprüngliche Receipts. Verschlüsseltes dauerhaft gespeichertes/rückgelesenes Original vor Restore, tatsächliche Fach-/Cacheprüfung, vollständiger Checkpoint-CAS und atomarer Ersatz. Native und drei echte OPFS-Browser bestehen dieselben Restore-/Abbruch-/Persistenzfälle; alte Snapshot-/Export-/Crypto-/Bindingformen unverändert |
 
-Öffnen erzeugt kein Schema. `initialize_area` erzeugt ausdrücklich nur das registrierte initiale Schema eins in einer leeren Datenbank, mit Profilbindung und Bereichsepoche. Fremde vorhandene Tabellen werden nicht übernommen oder überschrieben. Das Journal akzeptiert ausschließlich die bekannte Nummer/Profilbindung; unbekannte Versionen verhindern Writes. Es wird keine bestehende IndexedDB-/rusqlite-Datenbank migriert oder produktiv umgeschaltet. Destruktive Bestandsmigration/Sicherung bleibt gesondert nachzuweisen.
+## Implementierung und Aufbewahrung
 
-Die vollständige Operationsidentität und der unveränderte typisierte Request binden das Receipt; gleiche Identität/Inhalt liefert das ursprüngliche Ergebnis, Inhaltsabweichung wird abgewiesen. CAS, Bereichs-/Profil-/Epochenbindung, doppelte Einträge und atomare Fehler sind getrennte Guards. Datenbank-/Commit-/Rollbackfehler werden konservativ als unknown behandelt; kein Text-/Regexvergleich oder SQL-/Pfad-/Payloaddetail im Fehler. Die tatsächliche Ergebnisabfrage läuft auch nach einer neuen nativen Verbindung oder einem neuen Prozess.
+`SqliteCommitStore` implementiert den typisierten Rust-LocalCommitPort mit Diesel 2.3.13 und SeaQuery 1.0.2, nativ libsqlite3-sys 0.38.2 sowie sqlite-wasm-rs 0.5.5/OPFS-SAH-Pool 0.2.0. Exakt die gesperrten DAL01-Versionen; keine neue Fremdversion. Das normale `sqlite`-Feature verwendet denselben tatsächlichen Code nativ/WASM. Memory bleibt eine ausdrücklich flüchtige Referenz, kein stiller Persistenzfallback.
 
-## Aufbewahrung und Epochen
+Receipts werden nicht automatisch gelöscht. Historische Identitäten und Ergebnisse bleiben abfragbar; bei bekannter unveränderter Wiederholung wird zunächst das ursprüngliche Receipt ermittelt. Neue unbekannte Writes müssen zur aktuellen autorisierten Epoche passen. [Bestandsdelta #135](https://github.com/mpwg/WiMM/issues/135) korrigierte die frühere umgekehrte Prüfpriorität. Der DAL berechnet keine Finanzwerte; vollständige Fach-/Cacheprüfung wird vom Client/Fachkern injiziert.
 
-Receipts werden nicht automatisch gelöscht. Bekannte historische Receipts bleiben unter ursprünglichem Profil/Bereich/Epoche/ID abfragbar. Eine unveränderte Wiederholung einer bekannten Operation liefert das ursprüngliche committed-Ergebnis auch nach geändertem Epochencheckpoint und schreibt nichts erneut; eine neue unbekannte Operation mit veralteter Epoche wird abgewiesen. Dieses Verhalten wurde während AR04 in der Memoryreferenz korrigiert, [Bestandsdelta #135](https://github.com/mpwg/WiMM/issues/135).
+`LocalCommitCheckpoint` besitzt Checkpointversion eins und physische Schemaversion eins. Er enthält den konsistenten Bereichsdatenstand plus vollständige ursprüngliche Request-/Receipteinträge, einschließlich historischer Epochen. Dieses private DAL-Verfahren erweitert keine alten Nutzerexporte oder Serverreceipts. Der erste Commitstore unterstützt noch keine bestätigten/Syncdaten und weist entsprechende Checkpoints ausdrücklich ab. Kein stilles Auslassen solcher Daten.
 
-Ein zukünftiger gesicherter Restore muss Receiptbestand und Inhaltsbindung zusammen mit dem atomaren Datenstand erhalten. Fremde Profil-/Bereichsreceipts dürfen nicht übernommen werden; neue Writes verwenden ausschließlich die autorisierte aktuelle Epoche. Alte Snapshot-/Exportformen enthalten noch keinen dauerhaften Receiptbestand und dürfen nicht still als vollständige neue DB-Sicherung verwendet werden. Der native Test verändert allein den technischen Epochencheckpoint und beweist Receiptaufbewahrung; er ist ausdrücklich keine vollständige Restore-/E2EE-/Backupabnahme.
+`backup_checkpoint` prüft den Datenstand über den tatsächlichen Fachkern, schützt ihn über `SnapshotProtectionPort<LocalCommitCheckpoint>` und verlangt dauerhafte Speicherung sowie bytegleiches Rücklesen über BackupReadPort. Vor Restore binden Backupreceipt und Checkpointhash das komplette Original. Entschlüsselter Zielstand wird strukturell/fachlich geprüft; die neue Epoche wird vom autorisierten Client vorbereitet. Unter derselben SQLite-Transaktion wird der vollständige Ausgangscheckpoint einschließlich Receipts erneut verglichen. Historische Receipts werden erhalten, kollidierende Inhalte abgewiesen. Fehlende Sicherung, falscher Schlüssel/Scope, Backup-/Validierungsfehler, Abbruch, konkurrierender Write oder Fehler nach Datenersatz erhält den Originalbestand.
 
 ## Tatsächliche Prüfungen
 
-Aktive CachyOS-Arbeitskopie, Linux x86_64, Rust 1.99.0. Synthetische gemeinsame Eingabe in `crates/local-dal/tests/fixtures/receipt-request.json`.
-
-```sh
-cargo test --locked -p wimm-local-dal --all-features
-cargo clippy --locked -p wimm-local-dal --all-targets --all-features -- -D warnings
-pnpm test:storage:receipts
-pnpm test:target:architecture
-pnpm check:rust-format
-```
-
-- Elf tatsächliche native Memorytests und sechs echte native SQLitefälle: vollständiger Transaktionsrollback vor Receiptschreiben, Antwortverlust mit Wiedereröffnung, tatsächlicher Prozessneustart, Idempotenz/Inhaltsabweichung, Scope-/CAS-/Versionsguards, Öffnen ohne Schemaänderung und erhaltene historische Receipts nach Epochencheckpointwechsel. Beschädigte bekannte Receipts ergeben unknown und verhindern sowohl einen zweiten Write als auch eine falsche notCommitted-Antwort.
-- Derselbe Rust-DAL wurde tatsächlich für WASM gebaut und über einen ausdrücklich synthetischen Prüfadapter mit echter OPFS-/SQLite-Verbindung in einem Worker ausgeführt. Keine produktive neue JSON-ABI aus diesem Prüfadapter; die Anwendung verwendet den typisierten Rust-Port.
-- Chromium und Firefox: je vier tatsächliche Fälle mit dauerhaften Browserprofilen, Antwortverlust/gleiches Receipt, vierteiliger Rollback, Scope/CAS und vollständiger Browserprozessneustart. Acht Fälle erfolgreich, keine Skips.
-- WebKit: vier Fälle vor der Testseite wegen fehlender Hostbibliotheken nicht ausgeführt. ICU 74.2 wurde aus dem SHA256-geprüften AUR-Paket gebaut; das signaturgeprüfte Arch-Flite 2.2 enthält nicht alle von diesem Playwright-WebKit erwarteten Sprachbibliotheken. Die isolierte Laufzeitprüfung mit beiden Paketen behebt ICU, lässt WebKit konkret weiterhin offen. Keine Majorversionssymlinks, Prüfgrenzenlockerung oder umetikettierte Firefoxfälle. Der unabhängige [Ubuntu-DAL-Job auf 34094b4](https://github.com/mpwg/WiMM/actions/runs/38031346187/job/114152813736) ist tatsächlich erfolgreich: sechs native SQLitefälle und zwölf echte OPFS-/Receiptfälle in Chromium/Firefox/WebKit, einschließlich vollständiger Browserprozessneustarts. Jobzustand und vollständiges Joblog rückgelesen; derselbe Job besteht zusätzlich die unveränderten fünf nativen/15 Browser-DAL01-Fälle. Die lokale WebKit-Umgebungsgrenze bleibt lokal bestehen. Beim ersten erfolgreichen Lauf entstehen wegen retain-on-failure keine Browsertraceartefakte; die Folgekonfiguration speichert deshalb einen maschinenlesbaren JSONreport auch für erfolgreiche Läufe.
-- Zielabhängigkeitsprüfung, strenges Allfeature-Clippy, Vertrags-Typecheck, Oxc und Whitespaceprüfung bestanden. Die native AR11-Prüfkette aktiviert nun das registrierte `receipt-probe`-Feature, damit echte SQLtests nicht hinter Default-Memorytests verschwinden.
-
-Ein breiter zusätzlicher `pnpm check:ci`-Versuch scheiterte am bestehenden separaten Tauri-Rustfmt-Befund [#134](https://github.com/mpwg/WiMM/issues/134); kein vollständiges grünes CI daraus behauptet. Ausschließlich Zeilenumbrüche auf 233d1a0 korrigiert, strenge Formatprüfung anschließend erfolgreich.
-
-## Abschlussgrenze
-
-#118 bleibt offen für vollständige gesicherte Schema-/Receiptbackup-/Restore-Kompatibilität und den verlangten Nachweis der Abbruchsemantik. Keine Produktumschaltung, keine vollständige Implementierung aller SQLite-Storage-/Index-/Migrationsports und keine #108/#109-/Gesamtarchitektur-/P6–P11-/Releaseabnahme aus diesem Abschnitt. Fortschritt und alle verbleibenden Kriterien ausschließlich in #118.
-
-Der separate [Ubuntu-Leistungsjob desselben Commits](https://github.com/mpwg/WiMM/actions/runs/38031346187/job/114152813867) ist fehlgeschlagen: Web kalt 2.463,0 ms statt unter 2.000 ms, Desktop-Frontend kalt 1.429,8 ms. Warme Reaktionen innerhalb Grenzen. Neuer aktueller Befund [#136](https://github.com/mpwg/WiMM/issues/136); keine Ursachenzuordnung zum nicht produktiv angeschlossenen Rust-DAL aus diesem Einzelvergleich und keine Gesamt-CI-Freigabe aus dem erfolgreichen DAL-Job.
-
-## Vollständiger Folgeabschnitt — lokale Abnahme am 10. Oktober 2026
-
-Neue private `LocalCommitCheckpoint`-Form eins mit physischer Schemaversion eins bewahrt konsistenten Datenstand und ursprüngliche Request-/Receipteinträge. Bestehende Snapshot-/Export-/Crypto-/Bindingdimensionen bleiben unverändert. Der erste Commitstore weist bestätigte/Syncdaten ausdrücklich ab; diese werden bis zum vollständigen DAL-Ausbau nicht still verworfen. ADR-055 beschreibt die technische Konkretisierung.
-
-`backup_checkpoint` prüft den tatsächlichen Fach-/Cachestand über den injizierten Fachkern, verschlüsselt über den vorhandenen SnapshotProtectionPort und verlangt dauerhaftes Speichern und bytegleiches Rücklesen durch BackupReadPort. Vor destruktivem Restore müssen Receiptmetadaten und gesamter Checkpointhash zum Original passen. Der aktuelle SQLite-Stand wird einschließlich Receiptbestand unter derselben Transaktion erneut verglichen. Restore verwendet ausschließlich die vorbereitete Clientepoche, erhält bekannte historische Receipts und weist Inhaltskollisionen/fremde Bereiche ab. Fehler und Abbruch rollen alle Datenänderungen zurück. Keine Klartext-Sicherungsdatei oder produktive Speicherumschaltung.
-
-Tatsächliche native Abnahme: elf Memorytests, sechs SQLite-Receiptfälle und vier zusätzliche SQLite-Abbruch-/Backup-/Restore-/Schemafälle. Darin mehrere negative Unterfälle: fehlende Ausgangssicherung, Backupfehler, falscher Schlüssel, manipuliertes Chiffrat, fremdes Profil, ungültiger Finanzcache, Abbruch, Fehler nach tatsächlichem Datenersatz, konkurrierender Write zwischen Sicherung/Restore und unsupported/fremdes Schema. Native Tests verschlüsseln mit der tatsächlichen bestehenden Rust/libsodium-Implementierung, speichern Chiffrat in einer echten Datei und rufen sync_all vor Rücklesen auf. Finanzvalidierung bleibt ausschließlich im tatsächlich injizierten Rust-Fachkern.
-
-Chromium/Firefox lokal: je sieben echte SQLite/WASM-/OPFS-Fälle mit dauerhaften Browserprofilen, unabhängigem Rust-Cryptomodul und tatsächlichem OPFS-SyncAccessHandle für verschlüsselte Ausgangssicherung (write/flush/read). Nach Restore wird die Verbindung neu geöffnet; ursprüngliche Receipts bleiben unverändert auffindbar. Vor COMMIT beobachteter Abbruch erzeugt notCommitted/CANCELLED und Rollback; nach tatsächlichem COMMIT beobachteter Abbruch bleibt committed. Verspäteter Abbruch bei bekannter Wiederholung deutet das ursprüngliche Ergebnis nicht um. Ein unabhängiger vollständiger Drei-Browser-Lauf folgt nach Veröffentlichung, bis dahin kein neuer lokaler WebKitbeleg.
-
-Native Checkpoint-Serde-/Versions-/Scope-/Receiptkorrelationsguards und ein ergänzender AJV-Schematest bestehen. Neue drei Formschemas und Swift-/Kotlin-/TS-Datenmodelle aus Rust generiert; vorhandene Swift/Kotlin-Portorakel tatsächlich erneut ausgeführt. Relationale Guards und Inhaltshashprüfung bleiben zusätzlich zum Standardschema Pflicht.
-
-Reproduktion:
+Aktive CachyOS/Linux-x86_64-Arbeitskopie, Rust 1.99.0. Gemeinsame synthetische Eingabe `crates/local-dal/tests/fixtures/receipt-request.json`. Keine realen Finanzdaten oder Schlüssel in Fixtures/Logs.
 
 ```sh
 cargo test --locked -p wimm-local-dal --all-features
 cargo test --locked -p wimm-local-contracts
+cargo clippy --locked -p wimm-local-dal -p wimm-local-contracts --all-targets --all-features -- -D warnings
 pnpm test:storage:receipts
 pnpm test:contracts:ports:native
 pnpm test:contracts:local
 pnpm check:contracts:generated
+pnpm test:target:architecture
+pnpm check:rust-format
 ```
 
-Zusätzlicher CI-Befund [#137](https://github.com/mpwg/WiMM/issues/137): Tsify-Deklarationscustomsections wurden abhängig von der Codegen-Aufteilung teilweise verworfen. Der Vertragsgenerator baut WASM nun ausdrücklich mit einem gemeinsamen Codegen-Unit, erfasst vollständige unveränderte Rust-Deklarationen und erhält die strenge byteweise/negative Driftprüfung. Kein Entfernen zusätzlicher Typen, Abschwächen von unsafe/Warnungen oder Ändern von Golden-Katalogen. Lokale Generierung und Checkmodus bestanden; unabhängiger Ubuntu-Nachweis folgt. Die normale Produkt-Runtime-Buildkonfiguration wird dadurch nicht global geändert.
+- Elf tatsächliche Memorytests, sechs native SQLite-Receiptfälle und vier zusätzliche native SQLite-Abbruch-/Backup-/Restore-/Schemafälle. Negative Unterfälle: fehlende Originaldatei, fehlgeschlagenes Backup, falscher Schlüssel, manipuliertes Chiffrat, falscher Profilkontext, ungültiger Finanzcache, Abbruch, Fehler nach tatsächlichem Datenersatz, konkurrierender Write und unsupported/fremdes Schema. Native Tests verwenden die bestehende tatsächliche Rust/libsodium-Implementierung und eine echte Datei mit sync_all/Rücklesen; keine Klartext-Sicherungsdatei.
+- Lokal je sieben Chromium-/Firefox-Fälle: echte SQLite/WASM/OPFS-Verbindung in einem Worker, separates tatsächliches Rust-Cryptomodul und OPFS-SyncAccessHandle für verschlüsselte Sicherung mit write/flush/read. Native und WASM-Fachprüfungen stammen aus demselben Rust-Kern. Keine Finanzrechnung in JS/SQL. Native Feld-/Scope-/Receiptkorrelationsassertions plus AJV-Formvergleich bestanden; drei neue Schemas und Sprachdatenmodelle reproduzierbar erzeugt. Vorhandene tatsächliche Swift/Kotlin-Portorakel erneut erfolgreich.
+- [Unabhängiger Ubuntu-DAL-Job 114159975858](https://github.com/mpwg/WiMM/actions/runs/38033806558/job/114159975858) auf 290f6e3 tatsächlich SUCCESS: elf Memory-/vier SQLite-Checkpoint-/sechs SQLite-Receiptfälle plus **alle 21 Chromium-/Firefox-/WebKitfälle**. Vollständiges Joblog und JSONreport aus `dal01-native-browser-belege` abgerufen/rückgelesen: expected 21, skipped 0, unexpected 0, flaky 0. Derselbe Job besteht zusätzlich unveränderte fünf native/15 Browser-DAL01-Fälle. Neue unabhängige Prozess-/Verbindungsfälle sind echte Datenbankbelege.
+- Root-/Allfeature-Clippy/unsafe, 41 positive/negative Architekturvalidatorfälle und 111 tatsächliche native Assertions über 14 Pflichtcrates, Schema-/Sprachgenerierung einschließlich negativer Quellendrift, Oxc, Vertrags-Typecheck, Format, Dokumentationsvalidator und Whitespaceprüfung bestanden.
+
+Lokales WebKit benötigt auf CachyOS zusätzliche, im Arch-Flite-Paket nicht vollständig enthaltene Kompatibilitätsbibliotheken. Diese lokale Grenze bleibt konkret bestehen; der aktuelle echte Ubuntu-WebKit-Nachweis wird nicht als lokal ausgeführter Fall umetikettiert. ICU 74.2 wurde aus SHA256-geprüftem Paket gebaut, Arch-Flite signaturgeprüft; keine Majorversionssymlinks oder gelockerte Prüfung.
+
+## Grenzen und getrennte Folgearbeit
+
+Diese Abnahme betrifft die erste gemeinsame Commit-/Receipt-/Sicherungsgrundlage, keine produktive Speicheraktivierung. Vollständige Storage-/Bestätigungs-/Sync-/Indexports, IndexedDB-/rusqlite-Migration, Geräte-/GUI-/Server-SQL- und Leistungsabnahmen bleiben #108/#109 und den weiteren Issues zugeordnet. Kein neuer P10-Gesamtexport, keine P6–P11-/Release-/Gesamtarchitekturabnahme. Nächstes Paket nach unveränderter Folge #114: [AR05 #119](https://github.com/mpwg/WiMM/issues/119).
+
+Zusätzlicher Generatorbefund [#137](https://github.com/mpwg/WiMM/issues/137): maschinenabhängige Tsify-Customsection-Teilmengen werden im Vertragsgenerator durch einen gemeinsamen WASM-Codegen-Unit verhindert, vollständige Deklarationen erhalten. Strenge byteweise/negative Drift- und unsafe-/Warnsperren bleiben erhalten. Produktbuildkonfiguration nicht global geändert; Unabhängiger Ubuntu-Generatorcheck auf 290f6e3 tatsächlich bestanden, #137 als COMPLETED geschlossen und vollständig rückgelesen. Die Gesamtprüfung scheitert erst später am separaten #138 (fehlender Standalone-WASM-Ergebnisordner), keine Gesamt-CI-Freigabe.
+
+[Leistungsdelta #136](https://github.com/mpwg/WiMM/issues/136) bleibt separat offen. Der frühere Job auf 34094b4 meldete Web kalt 2.463,0 ms statt unter 2.000 ms; der separate aktuelle Leistungslauf auf 290f6e3 ist grün, ohne Änderung am produktiven Startpfad. Ein Einzelgreen ist keine belegte Korrektur der Schwankung. Keine Gesamt-CI-Freigabe aus dem erfolgreichen DAL-Job; die weitere Ubuntu-Gesamtprüfung ist separat zu bewerten.

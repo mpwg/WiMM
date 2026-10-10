@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import './warnings-as-errors.mjs';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
@@ -26,6 +26,7 @@ for (const scenario of cases) {
 }
 assert.equal(jsonRejections, 1);
 const results = { runtime: 'tatsächliches typisiertes WASM/Node', catalogOracles: cases.length, wasmBoundaryCalls: cases.length - jsonRejections, malformedJsonBeforeObjectBoundary: jsonRejections };
+await mkdir('test-results/typed-state-bindings',{recursive:true});
 await writeFile('test-results/typed-state-bindings/wasm-results.json', JSON.stringify(results, null, 2) + '\n');
 console.log(JSON.stringify(results));
 if (!process.argv.includes('--node-only')) {
