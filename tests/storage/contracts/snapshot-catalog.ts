@@ -17,7 +17,7 @@ export function equal(left: unknown, right: unknown): boolean {
 export function normalized(snapshot: LocalSnapshot): LocalSnapshot {
   return { ...snapshot, aggregates: snapshot.aggregates.toSorted((a, b) => a.id.localeCompare(b.id)), confirmed: snapshot.confirmed.toSorted((a, b) => a.aggregate.id.localeCompare(b.aggregate.id)), pending: snapshot.pending.toSorted((a, b) => a.operationId.localeCompare(b.operationId)), projections: snapshot.projections.toSorted((a, b) => `${a.kind}:${a.key}`.localeCompare(`${b.kind}:${b.key}`)) };
 }
-export function p5Snapshot(): LocalSnapshot {
+export function p5Snapshot(storageSchemaVersion: 1 | 2 = 1): LocalSnapshot {
   const account = { ...meta(10), aggregateType: 'account' as const, name: 'Synthetisches Quellkonto', type: 'checking' as const, onBudget: true, archived: false };
   const second = { ...account, ...meta(11), name: 'Späteres Buchungskonto' };
   const group = { ...meta(12), aggregateType: 'categoryGroup' as const, name: 'Ausgaben', kind: 'expense' as const, sortOrder: 0, archived: false };
@@ -38,9 +38,10 @@ export function p5Snapshot(): LocalSnapshot {
   const aggregates: readonly P2Aggregate[] = [skipped, partial, account, second, group, category, payee, schedule, occurrence, transaction, batch, fingerprint, mapping, rule, deleted];
   // Fachlich veraltete Entwürfe sind Originaldaten; sie dürfen nicht automatisch angewandt werden.
   const draft = { commandType: 'transaction.save', spaceId, aggregates: [{ ...transaction, amount: -101 }], originalInput: { amount: '-1,01', note: 'Unbestätigter Originalentwurf' } };
-  return { storageSchemaVersion: 1, domainSchemaVersion: 1, profileId, spaceId, epoch, aggregates: aggregates.map(toStoredAggregate), confirmed: aggregates.map((aggregate) => ({ spaceId, epoch, aggregate: toStoredAggregate(aggregate) })), pending: ['queued', 'sending', 'accepted', 'conflict', 'blocked', 'forbidden', 'invalid'].map((state, i) => ({ operationId: id(70 + i), spaceId, expectedRevisions: [{ handle: transaction.id, expectedRevision: 1 }], dependsOn: i === 0 ? [] : [id(70)], state: state as LocalSnapshot['pending'][number]['state'], draft, retryCount: i })), projections: [{ spaceId, kind: 'balance', key: account.id, payload: 0 }, { spaceId, kind: 'accountBalance', key: second.id, payload: { balance: -100 } }, { spaceId, kind: 'consumption', key: '2026-10', payload: { income: 0, expense: 100, net: -100, categories: [{ categoryId: category.id, groupKind: 'expense', amount: -100 }] } }], syncState: { profileId, spaceId, epoch, cursor: '42' } };
+  return { storageSchemaVersion, domainSchemaVersion: 1, profileId, spaceId, epoch, aggregates: aggregates.map(toStoredAggregate), confirmed: aggregates.map((aggregate) => ({ spaceId, epoch, aggregate: toStoredAggregate(aggregate) })), pending: ['queued', 'sending', 'accepted', 'conflict', 'blocked', 'forbidden', 'invalid'].map((state, i) => ({ operationId: id(70 + i), spaceId, expectedRevisions: [{ handle: transaction.id, expectedRevision: 1 }], dependsOn: i === 0 ? [] : [id(70)], state: state as LocalSnapshot['pending'][number]['state'], draft, retryCount: i })), projections: [{ spaceId, kind: 'balance', key: account.id, payload: 0 }, { spaceId, kind: 'accountBalance', key: second.id, payload: { balance: -100 } }, { spaceId, kind: 'consumption', key: '2026-10', payload: { income: 0, expense: 100, net: -100, categories: [{ categoryId: category.id, groupKind: 'expense', amount: -100 }] } }], syncState: { profileId, spaceId, epoch, cursor: '42' } };
 }
-export interface SnapshotFixture { readonly storage: LocalStorageAdapter; forProfile(profile: UUID): LocalStorageAdapter; restart(): Promise<LocalStorageAdapter>; close(): Promise<void> }
+export interface SnapshotFixture {
+  storageSchemaVersion?: 1 | 2; readonly storage: LocalStorageAdapter; forProfile(profile: UUID): LocalStorageAdapter; restart(): Promise<LocalStorageAdapter>; close(): Promise<void> }
 export const snapshotCases = ['lokal-leer', 'p5-entwürfe-neustart', 'negative-inhalte', 'profil-bereich-handles'] as const;
 export type SnapshotCase = typeof snapshotCases[number];
 export async function runSnapshotCase(scenario: SnapshotCase, fixture: SnapshotFixture): Promise<void> {
@@ -59,7 +60,7 @@ export async function runSnapshotCase(scenario: SnapshotCase, fixture: SnapshotF
       check(equal(before, await storage.exportSnapshot(spaceId)), 'Leerer Roundtrip verändert Metadaten.');
       return;
     }
-    const original = p5Snapshot();
+    const original = p5Snapshot(fixture.storageSchemaVersion);
     await service.replaceEncryptedSnapshot(protector, await protector.seal(original));
     const before = normalized(await storage.exportSnapshot(spaceId));
     check(equal(before, normalized(original)), 'P5-Bestand/Entwürfe wurden beim Restore verändert.');

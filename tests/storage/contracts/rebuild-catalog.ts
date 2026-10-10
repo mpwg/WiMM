@@ -9,8 +9,8 @@ export interface RebuildFixture extends SnapshotFixture {
 function check(value: boolean, message: string): asserts value { if (!value) throw new Error(message); }
 const now = '2026-10-08T10:00:00Z';
 const meta = (n: number) => ({ id: id(n), handle: id(n), spaceId, revision: 1, createdAt: now, updatedAt: now });
-export function financeSnapshot(): LocalSnapshot {
-  const p5 = p5Snapshot();
+export function financeSnapshot(storageSchemaVersion: 1 | 2 = 1): LocalSnapshot {
+  const p5 = p5Snapshot(storageSchemaVersion);
   const base = p5.aggregates.filter((entry) => ['account', 'categoryGroup', 'category', 'payee'].includes(entry.aggregateType));
   const incomeGroup = { ...meta(26), aggregateType: 'categoryGroup' as const, name: 'Einnahmen', kind: 'income' as const, archived: false, sortOrder: 1 };
   const incomeCategory = { ...meta(27), aggregateType: 'category' as const, name: 'Einkommen', groupId: incomeGroup.id, archived: false, sortOrder: 1 };
@@ -35,7 +35,7 @@ export const rebuildCases = ['neuaufbau-finanzwerte', 'neuaufbau-schreibrollback
 export type RebuildCase = typeof rebuildCases[number];
 export async function runRebuildCase(scenario: RebuildCase, fixture: RebuildFixture): Promise<void> {
   let storage = fixture.storage;
-  const original = financeSnapshot();
+  const original = financeSnapshot(fixture.storageSchemaVersion);
   try {
     await storage.replaceSnapshot(original);
     if (scenario === 'neuaufbau-finanzwerte') {

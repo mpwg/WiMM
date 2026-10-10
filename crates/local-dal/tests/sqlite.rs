@@ -4,8 +4,9 @@
 mod support;
 use diesel::{connection::SimpleConnection, prelude::*};
 use support::*;
+use wimm_local_contracts::checkpoint_v2::LocalCheckpointV2;
 use wimm_local_contracts::{persistence_errors::StorageFailureCode, storage::*};
-use wimm_local_dal::legacy_sqlite::LegacySqliteStore;
+use wimm_local_dal::sqlite::SqliteStore;
 
 #[derive(QueryableByName)]
 struct Payload {
@@ -13,12 +14,12 @@ struct Payload {
     payload: String,
 }
 fn fixture(path: &std::path::Path) -> SqliteConnection {
+    SqliteStore::initialize_empty_file(path).unwrap();
+    let mut writer = SqliteWriter::open(path, id(1), CoreValidator).unwrap();
+    writer.initialize_area(&id(2), &id(3)).unwrap();
+    drop(writer);
     let mut db = SqliteConnection::establish(path.to_str().unwrap()).unwrap();
-    db.batch_execute(include_str!("fixtures/legacy-schema.sql"))
-        .unwrap();
-    db.batch_execute("INSERT INTO storage_meta VALUES ('storageSchemaVersion','1');")
-        .unwrap();
-    // Vorhandene V1-Datenbank ohne Fachversionszeile; vollständige synthetische Fachmodelle.
+    // Vollständiges aktuelles Schema; ausschließlich synthetische Fachmodelle.
     let r = request(30, 1);
     let a = &r.batch.aggregates[0];
     let pending = &r.batch.outbox[0];
@@ -61,14 +62,6 @@ fn fixture(path: &std::path::Path) -> SqliteConnection {
         .bind::<diesel::sql_types::Text, _>(serde_json::to_string(projection).unwrap())
         .execute(&mut db)
         .unwrap();
-    diesel::sql_query("INSERT INTO storage_meta VALUES (?,?)")
-        .bind::<diesel::sql_types::Text, _>(format!(
-            "localEpoch:{}",
-            serde_json::json!([id(1).as_str(), id(2).as_str()])
-        ))
-        .bind::<diesel::sql_types::Text, _>(id(3).as_str())
-        .execute(&mut db)
-        .unwrap();
     db
 }
 #[test]
@@ -77,9 +70,9 @@ fn opens_existing_native_file_without_schema_or_data_change_and_reopens() {
     drop(fixture(&file));
     let original = std::fs::read(&file).unwrap();
     for _ in 0..2 {
-        let db = LegacySqliteStore::open(&file, id(1)).unwrap();
+        let db = SqliteStore::open(&file, id(1)).unwrap();
         let s = db.export_snapshot(&id(2)).unwrap();
-        assert_eq!(s.storage_schema_version.value(), 1);
+        assert_eq!(s.storage_schema_version.value(), 2);
         assert_eq!(s.epoch, id(3));
         assert!(s.sync_state.is_none());
         assert_eq!(s.aggregates.len(), 1);
@@ -104,7 +97,7 @@ fn opens_existing_native_file_without_schema_or_data_change_and_reopens() {
             serde_json::to_value(&s.aggregates[0]).unwrap()
         );
         assert!(
-            LegacySqliteStore::open(&file, id(90))
+            SqliteStore::open(&file, id(90))
                 .unwrap()
                 .read_aggregate(&id(4))
                 .unwrap()
@@ -116,12 +109,12 @@ fn opens_existing_native_file_without_schema_or_data_change_and_reopens() {
 #[test]
 fn missing_unknown_and_incomplete_migrated_files_are_never_created_or_repaired() {
     let file = path("legacy-missing");
-    assert!(LegacySqliteStore::open(&file, id(1)).is_err());
+    assert!(SqliteStore::open(&file, id(1)).is_err());
     assert!(!file.exists());
     for sql in [
         "UPDATE storage_meta SET value='99' WHERE key='storageSchemaVersion'",
         "UPDATE storage_meta SET value='2' WHERE key='storageSchemaVersion'",
-        "INSERT INTO storage_meta VALUES ('domainSchemaVersion','2')",
+        "UPDATE storage_meta SET value='2' WHERE key='domainSchemaVersion'",
     ] {
         let file = path("legacy-version");
         let mut db = fixture(&file);
@@ -129,7 +122,7 @@ fn missing_unknown_and_incomplete_migrated_files_are_never_created_or_repaired()
         drop(db);
         let before = std::fs::read(&file).unwrap();
         assert_eq!(
-            LegacySqliteStore::open(&file, id(1)).err().unwrap().code,
+            SqliteStore::open(&file, id(1)).err().unwrap().code,
             StorageFailureCode::UpdateRequired
         );
         assert_eq!(std::fs::read(&file).unwrap(), before);
@@ -148,7 +141,7 @@ fn mismatched_metadata_is_rejected_without_rewriting_originals() {
         c.batch_execute(sql).unwrap();
         drop(c);
         let before = std::fs::read(&file).unwrap();
-        let db = LegacySqliteStore::open(&file, id(1)).unwrap();
+        let db = SqliteStore::open(&file, id(1)).unwrap();
         assert_eq!(
             db.export_snapshot(&id(2)).unwrap_err().code,
             StorageFailureCode::InvalidResponse
@@ -169,7 +162,7 @@ fn real_concurrent_writer_preserves_separate_confirmed_local_pending_and_cursor_
         serde_json::from_str::<serde_json::Value>(&originals[0].payload).unwrap(),
         serde_json::to_value(&request(30, 1).batch.outbox[0]).unwrap()
     );
-    let reader = LegacySqliteStore::open(&file, id(1)).unwrap();
+    let reader = SqliteStore::open(&file, id(1)).unwrap();
     writer
         .batch_execute("BEGIN IMMEDIATE; DELETE FROM outbox;")
         .unwrap();
@@ -209,7 +202,7 @@ fn child_process_reads_original_native_snapshot() {
     let Some(file) = std::env::var_os("WIMM_DAL03_READ_FILE") else {
         return;
     };
-    let db = LegacySqliteStore::open(std::path::Path::new(&file), id(1)).unwrap();
+    let db = SqliteStore::open(std::path::Path::new(&file), id(1)).unwrap();
     let snapshot = db.export_snapshot(&id(2)).unwrap();
     assert_eq!(snapshot.epoch, id(3));
     assert_eq!(
@@ -250,7 +243,7 @@ fn versions_are_revalidated_after_opening_without_mutation() {
     let file = path("legacy-revalidate");
     let mut writer = fixture(&file);
     writer.batch_execute("PRAGMA journal_mode=WAL").unwrap();
-    let reader = LegacySqliteStore::open(&file, id(1)).unwrap();
+    let reader = SqliteStore::open(&file, id(1)).unwrap();
     assert!(reader.read_aggregate(&id(4)).unwrap().is_some());
     writer
         .batch_execute("UPDATE storage_meta SET value='99' WHERE key='storageSchemaVersion'")
@@ -266,7 +259,7 @@ fn versions_are_revalidated_after_opening_without_mutation() {
 }
 
 use wimm_local_contracts::{commit::SnapshotValidationPort, storage_port::LocalStoragePort};
-use wimm_local_dal::legacy_sqlite::LegacySqliteWriter;
+use wimm_local_dal::sqlite::SqliteWriter;
 struct CoreValidator;
 impl SnapshotValidationPort for CoreValidator {
     fn validate(
@@ -308,7 +301,7 @@ impl SnapshotValidationPort for CoreValidator {
             .map_err(|_| invalid())
     }
 }
-fn snapshot_value(db: &LegacySqliteWriter<CoreValidator>) -> serde_json::Value {
+fn snapshot_value(db: &SqliteWriter<CoreValidator>) -> serde_json::Value {
     serde_json::to_value(db.export_snapshot(&id(2)).unwrap()).unwrap()
 }
 fn sync_page(revision: u32) -> SyncPage {
@@ -333,7 +326,7 @@ fn sync_page(revision: u32) -> SyncPage {
 fn all_eleven_orm_storage_ports_preserve_separate_data_and_real_restart() {
     let file = path("legacy-ports");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let original = db.export_snapshot(&id(2)).unwrap();
     db.replace_snapshot(original.clone()).unwrap();
     assert_eq!(snapshot_value(&db), serde_json::to_value(original).unwrap());
@@ -395,7 +388,7 @@ fn all_eleven_orm_storage_ports_preserve_separate_data_and_real_restart() {
     .unwrap();
     let final_state = snapshot_value(&db);
     drop(db);
-    let reopened = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let reopened = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     assert_eq!(snapshot_value(&reopened), final_state);
     assert_eq!(
         reopened.get_sync_state(&id(2)).unwrap().unwrap().cursor,
@@ -406,7 +399,7 @@ fn all_eleven_orm_storage_ports_preserve_separate_data_and_real_restart() {
 fn orm_batch_rolls_back_after_actual_aggregate_and_outbox_writes() {
     let file = path("legacy-batch-rollback");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let before = snapshot_value(&db);
     let mut batch = request(31, 2).batch;
     batch.projections.push(batch.projections[0].clone());
@@ -426,8 +419,8 @@ fn orm_batch_rolls_back_after_actual_aggregate_and_outbox_writes() {
 fn competing_orm_connections_enforce_stale_cas_without_partial_outbox() {
     let file = path("legacy-cas");
     drop(fixture(&file));
-    let mut first = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    let mut second = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut first = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut second = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     first.apply_atomic_batch(request(31, 2).batch).unwrap();
     let before = snapshot_value(&first);
     assert_eq!(
@@ -444,7 +437,7 @@ fn competing_orm_connections_enforce_stale_cas_without_partial_outbox() {
 fn orm_sync_page_rolls_back_confirmations_pending_removal_and_cursor_together() {
     let file = path("legacy-sync-rollback");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let before = snapshot_value(&db);
     let mut page = sync_page(2);
     page.projections.push(page.projections[0].clone());
@@ -479,7 +472,7 @@ fn orm_sync_page_rolls_back_confirmations_pending_removal_and_cursor_together() 
 fn snapshot_and_projection_replacement_require_actual_core_validation_and_original_cas() {
     let file = path("legacy-replace");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let before = snapshot_value(&db);
     let mut s = db.export_snapshot(&id(2)).unwrap();
     s.projections[0] = serde_json::from_value(
@@ -513,7 +506,7 @@ fn snapshot_and_projection_replacement_require_actual_core_validation_and_origin
 fn actual_sqlite_abort_after_snapshot_deletion_preserves_complete_original() {
     let file = path("legacy-replace-db-error");
     let mut raw = fixture(&file);
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let before = snapshot_value(&db);
     let mut s = db.export_snapshot(&id(2)).unwrap();
     raw.batch_execute("CREATE TRIGGER synthetic_abort BEFORE INSERT ON confirmed BEGIN SELECT RAISE(ABORT,'synthetic-private-text'); END;").unwrap();
@@ -530,7 +523,7 @@ fn actual_sqlite_abort_after_snapshot_deletion_preserves_complete_original() {
     drop(raw);
     assert_eq!(
         serde_json::to_value(
-            LegacySqliteStore::open(&file, id(1))
+            SqliteStore::open(&file, id(1))
                 .unwrap()
                 .export_snapshot(&id(2))
                 .unwrap()
@@ -543,7 +536,7 @@ fn actual_sqlite_abort_after_snapshot_deletion_preserves_complete_original() {
 fn orm_area_initialization_and_empty_ports_never_invent_server_cursor() {
     let file = path("legacy-empty");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(90), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(90), CoreValidator).unwrap();
     assert!(
         db.query(AggregateQuery { space_id: id(2) })
             .unwrap()
@@ -558,7 +551,7 @@ fn orm_area_initialization_and_empty_ports_never_invent_server_cursor() {
     assert!(s.sync_state.is_none());
     db.replace_snapshot(s).unwrap();
     assert_eq!(
-        LegacySqliteStore::open(&file, id(1))
+        SqliteStore::open(&file, id(1))
             .unwrap()
             .export_snapshot(&id(2))
             .unwrap()
@@ -587,8 +580,8 @@ fn first_account_with_financial_anchor(account: u32) -> AtomicBatch {
 fn shared_financial_anchor_serializes_even_independent_first_accounts() {
     let file = path("legacy-financial-cas");
     drop(fixture(&file));
-    let mut first = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    let mut second = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut first = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut second = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     first
         .apply_atomic_batch(first_account_with_financial_anchor(60))
         .unwrap();
@@ -627,7 +620,7 @@ fn foreign_pending_collision_after_aggregate_write_rolls_back_without_moving_ori
         .bind::<diesel::sql_types::Text, _>(serde_json::to_string(&p).unwrap())
         .execute(&mut raw)
         .unwrap();
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let before = snapshot_value(&db);
     assert_eq!(
         db.apply_atomic_batch(request(31, 2).batch)
@@ -727,138 +720,13 @@ impl BackupReadPort for NativeBackup {
         std::fs::read(self.directory.join(r.backup_id.as_str())).map_err(|_| invalid())
     }
 }
-fn protected_backup(
-    s: &LocalSnapshot,
-    p: &NativeProtection,
-    b: &NativeBackup,
-) -> EncryptedBackupReceipt {
-    use sha2::{Digest, Sha256};
-    let hash = Sha256::digest(serde_json::to_vec(s).unwrap())
-        .iter()
-        .map(|v| format!("{v:02x}"))
-        .collect::<String>();
-    b.persist(EncryptedBackupRequest {
-        profile_id: LocalId::new(s.profile_id.as_str().into()).unwrap(),
-        space_id: LocalId::new(s.space_id.as_str().into()).unwrap(),
-        epoch: LocalId::new(s.epoch.as_str().into()).unwrap(),
-        snapshot_hash: LocalHash::new(hash).unwrap(),
-        ciphertext: p.seal(s.clone()).unwrap(),
-    })
-    .unwrap()
-}
-fn migrate_commit(db: &mut LegacySqliteWriter<CoreValidator>) {
-    let s = db.export_snapshot(&id(2)).unwrap();
-    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
-    let b = NativeBackup::new();
-    let r = protected_backup(&s, &p, &b);
-    db.enable_commit_schema(vec![s], &[r], &p, &b, &NeverCancel)
-        .unwrap();
-}
+
 #[derive(QueryableByName)]
 struct Count {
     #[diesel(sql_type=diesel::sql_types::BigInt)]
     count: i64,
 }
-fn extension_tables(c: &mut SqliteConnection) -> i64 {
-    diesel::sql_query("SELECT count(*) AS count FROM sqlite_master WHERE name IN ('wimm_native_schema','wimm_native_receipts','wimm_native_recovery')").get_result::<Count>(c).unwrap().count
-}
-#[test]
-fn registered_dsl_extension_requires_real_encrypted_backup_and_preserves_all_scopes() {
-    let file = path("native-migration");
-    let mut raw = fixture(&file);
-    let mut first = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    let mut other = LegacySqliteWriter::open(&file, id(90), CoreValidator).unwrap();
-    other.initialize_area(&id(91), &id(92)).unwrap();
-    let original = first.export_snapshot(&id(2)).unwrap();
-    let foreign = other.export_snapshot(&id(91)).unwrap();
-    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
-    let b = NativeBackup::new();
-    let r = protected_backup(&original, &p, &b);
-    let foreign_receipt = protected_backup(&foreign, &p, &b);
-    assert_eq!(
-        first
-            .enable_commit_schema(
-                vec![original.clone()],
-                std::slice::from_ref(&r),
-                &p,
-                &b,
-                &NeverCancel
-            )
-            .unwrap_err()
-            .code,
-        StorageFailureCode::RevisionConflict
-    );
-    assert_eq!(extension_tables(&mut raw), 0);
-    first
-        .enable_commit_schema(
-            vec![original.clone(), foreign.clone()],
-            &[r, foreign_receipt],
-            &p,
-            &b,
-            &NeverCancel,
-        )
-        .unwrap();
-    assert_eq!(extension_tables(&mut raw), 3);
-    let physical: Payload = diesel::sql_query(
-        "SELECT value AS payload FROM storage_meta WHERE key='storageSchemaVersion'",
-    )
-    .get_result(&mut raw)
-    .unwrap();
-    assert_eq!(physical.payload, "4");
-    let version: Payload = diesel::sql_query("SELECT sqlite_version() AS payload")
-        .get_result(&mut raw)
-        .unwrap();
-    eprintln!("DAL03 SQLite-Version: {}", version.payload);
-    assert_eq!(
-        snapshot_value(&first),
-        serde_json::to_value(original.clone()).unwrap()
-    );
-    assert_eq!(
-        serde_json::to_value(other.export_snapshot(&id(91)).unwrap()).unwrap(),
-        serde_json::to_value(foreign).unwrap()
-    );
-    let r = protected_backup(&original, &p, &b);
-    assert_eq!(
-        first
-            .enable_commit_schema(vec![original], &[r], &p, &b, &NeverCancel)
-            .unwrap_err()
-            .code,
-        StorageFailureCode::UpdateRequired
-    );
-}
-#[test]
-fn backup_tampering_wrong_key_missing_file_and_stale_original_never_install_schema() {
-    for fault in ["missing", "cipher", "key", "stale"] {
-        let file = path("native-backup-rejection");
-        let mut raw = fixture(&file);
-        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-        let original = db.export_snapshot(&id(2)).unwrap();
-        let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
-        let b = NativeBackup::new();
-        let r = protected_backup(&original, &p, &b);
-        let selected = if fault == "key" {
-            NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[99; 32]).unwrap())
-        } else {
-            NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap())
-        };
-        if fault == "missing" {
-            std::fs::remove_file(b.directory.join(r.backup_id.as_str())).unwrap();
-        }
-        if fault == "cipher" {
-            std::fs::write(b.directory.join(r.backup_id.as_str()), b"corrupt").unwrap();
-        }
-        if fault == "stale" {
-            db.apply_atomic_batch(request(31, 2).batch).unwrap();
-        }
-        let before = snapshot_value(&db);
-        assert!(
-            db.enable_commit_schema(vec![original], &[r], &selected, &b, &NeverCancel)
-                .is_err()
-        );
-        assert_eq!(extension_tables(&mut raw), 0);
-        assert_eq!(snapshot_value(&db), before);
-    }
-}
+
 struct CancelAt {
     at: u32,
     calls: std::cell::Cell<u32>,
@@ -870,43 +738,13 @@ impl CancellationPort for CancelAt {
         n >= self.at
     }
 }
-#[test]
-fn cancellation_after_actual_registered_ddl_rolls_back_schema_and_journal() {
-    let file = path("native-migration-cancel");
-    let mut raw = fixture(&file);
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    let s = db.export_snapshot(&id(2)).unwrap();
-    let before = snapshot_value(&db);
-    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
-    let b = NativeBackup::new();
-    let r = protected_backup(&s, &p, &b);
-    let cancel = CancelAt {
-        at: 4,
-        calls: std::cell::Cell::new(0),
-    };
-    assert_eq!(
-        db.enable_commit_schema(vec![s], &[r], &p, &b, &cancel)
-            .unwrap_err()
-            .code,
-        StorageFailureCode::Cancelled
-    );
-    assert_eq!(cancel.calls.get(), 4);
-    assert_eq!(extension_tables(&mut raw), 0);
-    assert_eq!(snapshot_value(&db), before);
-    migrate_commit(&mut db);
-    assert_eq!(extension_tables(&mut raw), 3);
-}
+
 #[test]
 fn native_receipts_bind_original_hash_and_survive_reopen_without_repeat_write() {
     use wimm_persistence_contracts::CommitOutcome;
     let file = path("native-integrated-receipt");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    assert!(matches!(
-        db.commit(request(31, 2)),
-        CommitOutcome::NotCommitted { .. }
-    ));
-    migrate_commit(&mut db);
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let r = request(31, 2);
     let receipt = match db.commit(r.clone()) {
         CommitOutcome::Committed { value } => value,
@@ -914,7 +752,7 @@ fn native_receipts_bind_original_hash_and_survive_reopen_without_repeat_write() 
     };
     let after = snapshot_value(&db);
     drop(db);
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     assert_eq!(
         serde_json::to_value(db.lookup_result(&r.identity).unwrap()).unwrap(),
         serde_json::to_value(&receipt).unwrap()
@@ -954,8 +792,7 @@ fn sqlite_receipt_abort_rolls_back_financial_write_and_preserves_private_recover
     use wimm_persistence_contracts::CommitOutcome;
     let file = path("native-receipt-failure");
     let mut raw = fixture(&file);
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     db.save_recovery_if_absent(b"synthetic-encrypted-journal")
         .unwrap();
     let before = snapshot_value(&db);
@@ -976,8 +813,7 @@ fn sqlite_receipt_abort_rolls_back_financial_write_and_preserves_private_recover
 fn native_private_recovery_is_durable_profile_bound_and_cas_protected() {
     let file = path("native-recovery");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let key = wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap();
     let original = serde_json::to_vec(&request(31, 2)).unwrap();
     let sealed =
@@ -997,8 +833,8 @@ fn native_private_recovery_is_durable_profile_bound_and_cas_protected() {
         StorageFailureCode::RevisionConflict
     );
     drop(db);
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    let other = LegacySqliteWriter::open(&file, id(90), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let other = SqliteWriter::open(&file, id(90), CoreValidator).unwrap();
     assert!(other.load_recovery().unwrap().is_none());
     assert_eq!(db.load_recovery().unwrap().unwrap(), encrypted);
     assert_eq!(
@@ -1034,8 +870,7 @@ fn integrated_commit_cancellation_preserves_original_but_never_revokes_known_rec
     use wimm_persistence_contracts::CommitOutcome;
     let file = path("native-commit-cancel");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let before = snapshot_value(&db);
     let r = request(31, 2);
     for at in [1, 2, 3] {
@@ -1069,7 +904,7 @@ fn child_process_resolves_integrated_receipt_and_private_ciphertext() {
     let Some(file) = std::env::var_os("WIMM_DAL03_RECEIPT_FILE") else {
         return;
     };
-    let db = LegacySqliteWriter::open(std::path::Path::new(&file), id(1), CoreValidator).unwrap();
+    let db = SqliteWriter::open(std::path::Path::new(&file), id(1), CoreValidator).unwrap();
     let request = request(31, 2);
     let receipt = db.lookup_result(&request.identity).unwrap().unwrap();
     assert_eq!(
@@ -1095,8 +930,7 @@ fn integrated_receipt_and_encrypted_original_survive_actual_process_restart() {
     use wimm_persistence_contracts::CommitOutcome;
     let file = path("native-integrated-process");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let original = request(31, 2);
     let key = wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap();
     let sealed = wimm_client_crypto::encrypt(
@@ -1134,25 +968,28 @@ fn integrated_receipt_and_encrypted_original_survive_actual_process_restart() {
     assert!(String::from_utf8_lossy(&output.stdout).contains("1 passed"));
 }
 #[test]
-fn corrupt_or_future_extension_headers_never_allow_receipt_or_journal_writes() {
+fn unsupported_or_corrupt_current_schema_never_allows_receipt_or_journal_writes() {
     for sql in [
-        "UPDATE wimm_native_schema SET version=99",
-        "UPDATE wimm_native_schema SET backups='[]'",
-        "UPDATE wimm_native_schema SET original_version=99",
-        "UPDATE storage_meta SET value='1' WHERE key='storageSchemaVersion'",
+        "UPDATE storage_meta SET value='4' WHERE key='storageSchemaVersion'",
+        "UPDATE storage_meta SET value='1' WHERE key='snapshotSchemaVersion'",
+        "DELETE FROM storage_meta WHERE key LIKE 'localWriteEpoch:%'",
+        "DROP INDEX transactions_by_account_date; CREATE INDEX transactions_by_account_date ON aggregates(handle)",
     ] {
-        let file = path("native-header");
-        let mut raw = fixture(&file);
-        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-        migrate_commit(&mut db);
+        let file = path("current-corrupt-schema");
+        drop(fixture(&file));
+        let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+        let mut raw = SqliteConnection::establish(file.to_str().unwrap()).unwrap();
         raw.batch_execute(sql).unwrap();
-        assert!(db.save_recovery_if_absent(b"opaque").is_err());
-        assert!(db.lookup_result(&request(31, 2).identity).is_err());
-        assert!(LegacySqliteStore::open(&file, id(1)).is_err());
+        drop(raw);
+        let before = std::fs::read(&file).unwrap();
+        assert!(db.ensure_runtime_schema().is_err());
+        assert!(
+            db.save_recovery_if_absent(b"synthetic-opaque-ticket")
+                .is_err()
+        );
+        assert_eq!(std::fs::read(&file).unwrap(), before);
     }
 }
-
-use wimm_local_contracts::checkpoint_v2::LocalCheckpointV2;
 impl SnapshotProtectionPort<LocalCheckpointV2> for NativeProtection {
     type Error = wimm_local_contracts::persistence_errors::StorageFailure;
     fn seal(&self, value: LocalCheckpointV2) -> Result<Vec<u8>, Self::Error> {
@@ -1171,8 +1008,7 @@ fn complete_checkpoint_preserves_confirmations_cursor_receipts_and_private_recov
     use wimm_persistence_contracts::CommitOutcome;
     let file = path("native-complete-checkpoint");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let r = request(31, 2);
     assert!(matches!(
         db.commit(r.clone()),
@@ -1194,7 +1030,7 @@ fn complete_checkpoint_preserves_confirmations_cursor_receipts_and_private_recov
     db.save_recovery_if_absent(&recovery).unwrap();
     let checkpoint = db.checkpoint_v2(&id(2)).unwrap();
     assert_eq!(checkpoint.checkpoint_version, 2);
-    assert_eq!(checkpoint.physical_schema_version, 4);
+    assert_eq!(checkpoint.physical_schema_version, 5);
     assert_eq!(checkpoint.snapshot.confirmed.len(), 1);
     assert_eq!(checkpoint.operations.len(), 1);
     assert_eq!(checkpoint.recovery.as_ref().unwrap(), &recovery);
@@ -1210,7 +1046,7 @@ fn complete_checkpoint_preserves_confirmations_cursor_receipts_and_private_recov
         serde_json::to_value(&checkpoint).unwrap()
     );
     drop(db);
-    let reopened = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let reopened = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     assert_eq!(
         serde_json::to_value(reopened.checkpoint_v2(&id(2)).unwrap()).unwrap(),
         serde_json::to_value(&checkpoint).unwrap()
@@ -1228,13 +1064,17 @@ fn complete_checkpoint_structural_negatives_and_corrupt_receipts_are_rejected() 
     use wimm_local_contracts::Validate;
     let file = path("native-checkpoint-negative");
     let mut raw = fixture(&file);
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     db.commit(request(31, 2));
     let original = db.checkpoint_v2(&id(2)).unwrap();
     for field in ["checkpointVersion", "physicalSchemaVersion"] {
         let mut bad = serde_json::to_value(&original).unwrap();
         bad[field] = 99.into();
+        assert!(serde_json::from_value::<LocalCheckpointV2>(bad).is_err());
+    }
+    for version in [1, 2, 3, 4] {
+        let mut bad = serde_json::to_value(&original).unwrap();
+        bad["physicalSchemaVersion"] = version.into();
         assert!(serde_json::from_value::<LocalCheckpointV2>(bad).is_err());
     }
     for field in ["recovery", "extra"] {
@@ -1272,8 +1112,7 @@ impl BackupReadPort for AlteredBackup {
 fn full_checkpoint_backup_requires_actual_byte_identical_readback_without_mutation() {
     let file = path("native-checkpoint-readback");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
+    let db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let before = serde_json::to_value(db.checkpoint_v2(&id(2)).unwrap()).unwrap();
     let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
     let bad = AlteredBackup(NativeBackup::new());
@@ -1288,7 +1127,7 @@ fn full_checkpoint_backup_requires_actual_byte_identical_readback_without_mutati
 }
 
 use wimm_local_contracts::checkpoint_v2::LocalCheckpointRestoreV2;
-fn checkpoint_value(db: &LegacySqliteWriter<CoreValidator>) -> serde_json::Value {
+fn checkpoint_value(db: &SqliteWriter<CoreValidator>) -> serde_json::Value {
     serde_json::to_value(db.checkpoint_v2(&id(2)).unwrap()).unwrap()
 }
 #[test]
@@ -1296,8 +1135,7 @@ fn connected_restore_rotates_only_local_write_epoch_and_retains_all_historical_r
     use wimm_persistence_contracts::CommitOutcome;
     let file = path("native-connected-restore");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     assert!(matches!(
         db.commit(request(31, 2)),
         CommitOutcome::Committed { .. }
@@ -1349,7 +1187,7 @@ fn connected_restore_rotates_only_local_write_epoch_and_retains_all_historical_r
     next.identity.epoch = id(99);
     assert!(matches!(db.commit(next), CommitOutcome::Committed { .. }));
     drop(db);
-    let mut reopened = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut reopened = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     assert_eq!(reopened.initialize_area(&id(2), &id(80)).unwrap(), id(99));
     assert_eq!(
         reopened
@@ -1366,8 +1204,7 @@ fn full_restore_cas_covers_receipts_and_profile_wide_private_recovery() {
     for change in ["commit", "journal"] {
         let file = path("native-restore-cas");
         drop(fixture(&file));
-        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-        migrate_commit(&mut db);
+        let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
         let expected = db.checkpoint_v2(&id(2)).unwrap();
         let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
         let b = NativeBackup::new();
@@ -1403,8 +1240,7 @@ fn full_restore_cas_covers_receipts_and_profile_wide_private_recovery() {
 fn full_restore_preserves_unresolved_original_and_rejects_conflicting_recovery() {
     let file = path("native-restore-journal");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let old = db.checkpoint_v2(&id(2)).unwrap();
     db.save_recovery_if_absent(b"synthetic-opaque-current")
         .unwrap();
@@ -1454,8 +1290,7 @@ fn full_restore_abort_after_deletion_rolls_back_local_epoch_server_state_and_rec
     for injected in [false, true] {
         let file = path("native-full-restore-rollback");
         let mut raw = fixture(&file);
-        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-        migrate_commit(&mut db);
+        let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
         db.commit(request(31, 2));
         let original = db.checkpoint_v2(&id(2)).unwrap();
         let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
@@ -1494,8 +1329,7 @@ fn standalone_restore_rotates_local_snapshot_epoch_without_fabricated_sync_curso
     let file = path("native-standalone-restore");
     let mut raw = fixture(&file);
     raw.batch_execute("DELETE FROM confirmed").unwrap();
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let original = db.checkpoint_v2(&id(2)).unwrap();
     let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
     let b = NativeBackup::new();
@@ -1518,60 +1352,13 @@ fn standalone_restore_rotates_local_snapshot_epoch_without_fabricated_sync_curso
     assert!(result.snapshot.sync_state.is_none());
     assert!(result.snapshot.confirmed.is_empty());
 }
-#[test]
-fn physical_three_upgrade_preserves_receipts_recovery_and_requires_full_original_backup() {
-    let file = path("native-three-upgrade");
-    let mut raw = fixture(&file);
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
-    db.commit(request(31, 2));
-    db.save_recovery_if_absent(b"synthetic-opaque-original")
-        .unwrap();
-    // Tatsächlich früherer registrierter physischer Stand drei, ohne getrennten lokalen Marker.
-    raw.batch_execute("UPDATE storage_meta SET value='3' WHERE key='storageSchemaVersion'; DELETE FROM storage_meta WHERE key LIKE 'localWriteEpoch:%'; UPDATE wimm_native_schema SET version=1;").unwrap();
-    let original = db.checkpoint_v2(&id(2)).unwrap();
-    assert_eq!(original.physical_schema_version, 3);
-    assert!(db.apply_atomic_batch(request(32, 3).batch).is_err());
-    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
-    let b = NativeBackup::new();
-    let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
-    let cancel = CancelAt {
-        at: 2,
-        calls: std::cell::Cell::new(0),
-    };
-    assert_eq!(
-        db.upgrade_local_epoch_schema(
-            vec![original.clone()],
-            std::slice::from_ref(&proof),
-            &p,
-            &b,
-            &cancel
-        )
-        .unwrap_err()
-        .code,
-        StorageFailureCode::Cancelled
-    );
-    assert_eq!(
-        checkpoint_value(&db),
-        serde_json::to_value(&original).unwrap()
-    );
-    db.upgrade_local_epoch_schema(vec![original.clone()], &[proof], &p, &b, &NeverCancel)
-        .unwrap();
-    let mut expected = original;
-    expected.physical_schema_version = 4;
-    assert_eq!(
-        checkpoint_value(&db),
-        serde_json::to_value(expected).unwrap()
-    );
-}
 
 #[test]
 fn full_restore_missing_backup_wrong_key_bad_scope_hash_and_version_preserve_original() {
     for fault in ["missing", "key", "hash", "scope", "version", "sameEpoch"] {
         let file = path("native-restore-input-negative");
         drop(fixture(&file));
-        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-        migrate_commit(&mut db);
+        let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
         db.commit(request(31, 2));
         let expected = db.checkpoint_v2(&id(2)).unwrap();
         let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
@@ -1620,27 +1407,9 @@ fn full_restore_missing_backup_wrong_key_bad_scope_hash_and_version_preserve_ori
 use wimm_finance_types::scalars::{FinanceDate, UtcTimestamp};
 use wimm_local_contracts::index_ports::*;
 fn indexed_fixture(file: &std::path::Path) -> SqliteConnection {
-    drop(fixture(file));
-    let mut db = LegacySqliteWriter::open(file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
-    let before = db.checkpoint_v2(&id(2)).unwrap();
-    let protection =
-        NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
-    let backups = NativeBackup::new();
-    let receipt = db
-        .backup_checkpoint_v2(&id(2), &protection, &backups)
-        .unwrap();
-    db.migrate_indexes(
-        vec![before],
-        &[receipt],
-        &protection,
-        &backups,
-        &NeverCancel,
-    )
-    .unwrap();
-    drop(db);
-    SqliteConnection::establish(file.to_str().unwrap()).unwrap()
+    fixture(file)
 }
+
 fn indexed_transaction(n: u32, date: &str, deleted: bool) -> StoredAggregate {
     let mut value = serde_json::json!({"id":id(n),"handle":id(n),"spaceId":id(2),"revision":1,"aggregateType":"transaction","createdAt":"2026-10-10T00:00:00Z","updatedAt":"2026-10-10T00:00:00Z","date":date,"accountId":id(4),"amount":-1001,"kind":"normal","clearance":"uncleared","splits":[{"id":id(n+1000),"categoryId":id(17),"amount":-1001}],"importReference":"Quelle β"});
     if deleted {
@@ -1660,7 +1429,7 @@ fn index_batch(rows: Vec<StoredAggregate>) -> AtomicBatch {
 fn orm_index_queries_use_real_account_category_import_indexes_and_cursor_boundaries() {
     let file = path("native-orm-index");
     drop(indexed_fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     db.apply_atomic_batch(index_batch(vec![
         indexed_transaction(11, "2026-10-10", false),
         indexed_transaction(12, "2026-10-11", false),
@@ -1739,11 +1508,11 @@ fn orm_index_queries_use_real_account_category_import_indexes_and_cursor_boundar
 fn orm_pending_and_import_source_queries_preserve_scope_order_limits_and_tombstones() {
     let file = path("native-orm-secondary");
     drop(indexed_fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let mut first = request(31, 1).batch.outbox.remove(0);
     first.created_at = Some(UtcTimestamp::new("2026-10-11T00:00:00Z".into()).unwrap());
     let mut second = request(32, 1).batch.outbox.remove(0);
-    second.draft.0 = serde_json::json!({"occurredAt":"2026-10-10T00:00:00Z"});
+    second.created_at = Some(UtcTimestamp::new("2026-10-10T00:00:00Z".into()).unwrap());
     let mut batch = index_batch(vec![indexed_transaction(40, "2026-10-10", false)]);
     batch.outbox = vec![first, second.clone()];
     let fingerprint = serde_json::json!({"id":id(41),"handle":id(41),"spaceId":id(2),"revision":1,"aggregateType":"importFingerprint","createdAt":"2026-10-10T00:00:00Z","updatedAt":"2026-10-10T00:00:00Z","accountId":id(4),"parserSource":"csv","fingerprint":"synthetisch","transactionId":id(40),"importId":id(42),"sourceRow":1,"externalId":"row-1"});
@@ -1791,7 +1560,7 @@ fn orm_pending_and_import_source_queries_preserve_scope_order_limits_and_tombsto
             "{plans:?}"
         );
     }
-    let foreign = LegacySqliteWriter::open(&file, id(90), CoreValidator).unwrap();
+    let foreign = SqliteWriter::open(&file, id(90), CoreValidator).unwrap();
     assert!(foreign.query_imported(q.clone()).unwrap().is_empty());
     db.apply_atomic_batch(index_batch(vec![indexed_transaction(
         40,
@@ -1802,10 +1571,14 @@ fn orm_pending_and_import_source_queries_preserve_scope_order_limits_and_tombsto
     assert!(db.query_imported(q).unwrap().is_empty());
 }
 #[test]
-fn orm_index_queries_reject_missing_registered_index_version_and_invalid_limits() {
+fn orm_index_queries_reject_missing_current_index_and_invalid_limits() {
     let file = path("native-orm-unindexed");
     drop(fixture(&file));
-    let db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut raw = SqliteConnection::establish(file.to_str().unwrap()).unwrap();
+    raw.batch_execute("DROP INDEX outbox_by_state_created")
+        .unwrap();
+    drop(raw);
     let q = PendingIndexQuery {
         space_id: id(2),
         state: PendingState::Queued,
@@ -1828,124 +1601,19 @@ fn orm_index_queries_reject_missing_registered_index_version_and_invalid_limits(
         );
     }
 }
-#[test]
-fn registered_seaquery_index_step_preserves_full_checkpoint_and_uses_actual_indexes() {
-    let file = path("native-dsl-index-step");
-    drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
-    db.commit(request(31, 2));
-    db.save_recovery_if_absent(b"synthetic-opaque-original")
-        .unwrap();
-    let before = db.checkpoint_v2(&id(2)).unwrap();
-    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
-    let b = NativeBackup::new();
-    let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
-    db.migrate_indexes(vec![before.clone()], &[proof], &p, &b, &NeverCancel)
-        .unwrap();
-    let mut expected = before;
-    expected.snapshot.storage_schema_version = SnapshotStorageVersion::new(2).unwrap();
-    assert_eq!(
-        checkpoint_value(&db),
-        serde_json::to_value(expected).unwrap()
-    );
-    db.apply_atomic_batch(index_batch(vec![indexed_transaction(
-        40,
-        "2026-10-10",
-        false,
-    )]))
-    .unwrap();
-    assert_eq!(
-        db.query_transactions(TransactionIndexQuery {
-            space_id: id(2),
-            kind: ReferenceKind::Category,
-            reference: id(17).as_str().into(),
-            from_date: None,
-            through_date: None,
-            after: None,
-            limit: 1
-        })
-        .unwrap()[0]
-            .handle,
-        id(40)
-    );
-    #[cfg(feature = "receipt-probe")]
-    assert!(
-        db.take_index_query_plans()
-            .iter()
-            .any(|p| p.contains("transactions_by_category_date"))
-    );
-    drop(db);
-    let db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    assert!(db.load_recovery().unwrap().is_some());
-    assert!(
-        db.lookup_result(&request(31, 2).identity)
-            .unwrap()
-            .is_some()
-    );
-    assert_eq!(
-        db.query_transactions(TransactionIndexQuery {
-            space_id: id(2),
-            kind: ReferenceKind::Account,
-            reference: id(4).as_str().into(),
-            from_date: None,
-            through_date: None,
-            after: None,
-            limit: 1
-        })
-        .unwrap()
-        .len(),
-        1
-    );
-}
-#[test]
-fn index_dsl_step_cancellation_backup_failure_and_stale_original_never_leave_partial_indexes() {
-    for mode in ["cancel", "backup", "stale", "collision"] {
-        let file = path("native-dsl-index-rollback");
-        let mut raw = fixture(&file);
-        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-        migrate_commit(&mut db);
-        let expected = db.checkpoint_v2(&id(2)).unwrap();
-        let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
-        let b = NativeBackup::new();
-        let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
-        if mode == "backup" {
-            std::fs::remove_file(b.directory.join(proof.backup_id.as_str())).unwrap();
-        }
-        if mode == "stale" {
-            db.save_recovery_if_absent(b"synthetic-new-reference")
-                .unwrap();
-        }
-        if mode == "collision" {
-            raw.batch_execute("CREATE INDEX transactions_by_category_date ON outbox(profile_id)")
-                .unwrap();
-        }
-        let before = checkpoint_value(&db);
-        let cancel = CancelAt {
-            at: if mode == "cancel" { 3 } else { 99 },
-            calls: std::cell::Cell::new(0),
-        };
-        assert!(
-            db.migrate_indexes(vec![expected], &[proof], &p, &b, &cancel)
-                .is_err()
-        );
-        assert_eq!(checkpoint_value(&db), before);
-        let count:Count=diesel::sql_query("SELECT count(*) AS count FROM sqlite_master WHERE name IN ('transaction_categories','storage_migrations','transactions_by_account_date')").get_result(&mut raw).unwrap();
-        assert_eq!(count.count, 0);
-    }
-}
+
 #[test]
 fn real_fifty_thousand_row_orm_pages_keep_late_cursor_bound_and_under_existing_query_budget() {
     let file = path("native-orm-50000");
     drop(indexed_fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let rows = (10_000..60_000)
         .map(|n| indexed_transaction(n, "2026-10-10", false))
         .collect::<Vec<_>>();
     db.apply_atomic_batch(index_batch(rows)).unwrap();
     drop(db);
     let started = std::time::Instant::now();
-    let db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let q = TransactionIndexQuery {
         space_id: id(2),
         kind: ReferenceKind::Account,
@@ -1995,22 +1663,20 @@ fn real_fifty_thousand_row_orm_pages_keep_late_cursor_bound_and_under_existing_q
     );
 }
 #[test]
-fn explicit_initial_dsl_schema_matches_legacy_format_and_never_reinitializes_data() {
+fn complete_current_initial_dsl_schema_never_reinitializes_existing_data() {
     let file = path("native-initial-dsl");
-    LegacySqliteStore::initialize_empty_file(&file).unwrap();
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    SqliteStore::initialize_empty_file(&file).unwrap();
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     assert_eq!(db.initialize_area(&id(2), &id(3)).unwrap(), id(3));
     db.apply_atomic_batch(request(30, 1).batch).unwrap();
     drop(db);
     let before = std::fs::read(&file).unwrap();
     assert_eq!(
-        LegacySqliteStore::initialize_empty_file(&file)
-            .unwrap_err()
-            .code,
+        SqliteStore::initialize_empty_file(&file).unwrap_err().code,
         StorageFailureCode::UpdateRequired
     );
     assert_eq!(std::fs::read(&file).unwrap(), before);
-    let reopened = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let reopened = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     assert_eq!(
         reopened.export_snapshot(&id(2)).unwrap().aggregates.len(),
         1
@@ -2020,7 +1686,7 @@ fn explicit_initial_dsl_schema_matches_legacy_format_and_never_reinitializes_dat
 fn unknown_projection_form_is_rejected_without_changing_actual_sqlite_snapshot() {
     let file = path("native-unknown-cache");
     drop(fixture(&file));
-    let db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
     let before = serde_json::to_value(db.export_snapshot(&id(2)).unwrap()).unwrap();
     let invalid =
         serde_json::json!({"spaceId":id(2),"kind":"obsolete-cache","key":"old","payload":123});
@@ -2029,4 +1695,63 @@ fn unknown_projection_form_is_rejected_without_changing_actual_sqlite_snapshot()
         serde_json::to_value(db.export_snapshot(&id(2)).unwrap()).unwrap(),
         before
     );
+}
+
+#[test]
+fn cancellation_after_initial_ddl_rolls_back_every_table_and_allows_explicit_fresh_retry() {
+    let file = path("current-initial-cancel");
+    let cancel = CancelAt {
+        calls: std::cell::Cell::new(0),
+        at: 3,
+    };
+    assert_eq!(
+        SqliteStore::initialize_empty_file_cancellable(&file, &cancel)
+            .unwrap_err()
+            .code,
+        StorageFailureCode::Cancelled
+    );
+    let mut raw = SqliteConnection::establish(file.to_str().unwrap()).unwrap();
+    let count: Count =
+        diesel::sql_query("SELECT count(*) AS count FROM sqlite_master WHERE type='table'")
+            .get_result(&mut raw)
+            .unwrap();
+    assert_eq!(count.count, 0);
+    drop(raw);
+    SqliteStore::initialize_empty_file(&file).unwrap();
+    let db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    db.ensure_runtime_schema().unwrap();
+    assert!(db.load_recovery().unwrap().is_none());
+}
+
+#[cfg(feature = "receipt-probe")]
+#[test]
+fn actual_current_sqlite_disk_full_rolls_back_batch_without_receipt_or_private_diagnostics() {
+    use wimm_persistence_contracts::CommitOutcome;
+    let file = path("current-disk-full");
+    drop(fixture(&file));
+    let mut db = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let before = checkpoint_value(&db);
+    db.limit_to_current_page_count_for_probe().unwrap();
+    let mut r = request(31, 2);
+    r.batch.outbox[0].draft =
+        LegacyJson(serde_json::json!({"original":"synthetic-private-original".repeat(3000)}));
+    let result = db.commit(r.clone());
+    assert!(
+        matches!(&result,CommitOutcome::Unknown{identity} if serde_json::to_value(identity).unwrap()==serde_json::to_value(&r.identity).unwrap())
+    );
+    assert!(!serde_json::to_string(&result).unwrap().contains("private"));
+    // Ein tatsächlicher Pagerfehler kann die Diesel-Verbindung unbenutzbar machen.
+    // Erst eine neu geöffnete Verbindung darf den dauerhaften Ausgangsstand bestätigen.
+    if let Err(error) = db.lookup_result(&r.identity) {
+        assert_eq!(error.code, StorageFailureCode::ResourceUnavailable);
+        assert!(!serde_json::to_string(&error).unwrap().contains("private"));
+    }
+    drop(db);
+    let mut reopened = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    assert_eq!(checkpoint_value(&reopened), before);
+    assert!(reopened.lookup_result(&r.identity).unwrap().is_none());
+    assert!(matches!(
+        reopened.commit(r),
+        CommitOutcome::Committed { .. }
+    ));
 }

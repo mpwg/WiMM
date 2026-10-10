@@ -10,7 +10,7 @@ pub mod sqlite_commit;
 pub mod receipt_probe;
 
 #[cfg(feature = "sqlite")]
-pub mod legacy_sqlite;
+pub mod sqlite;
 
 #[cfg(all(feature = "sqlite", not(target_family = "wasm")))]
 pub mod sqlite_backup;

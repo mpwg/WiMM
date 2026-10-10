@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! ORM-Zugriff auf das unveränderte native Tauri-Bestandsschema.
-//! Öffnen und Lesen erzeugen keine Tabellen, Migrationen oder Finanzwrites.
+//! Gemeinsamer ORM-Zugriff auf ausschließlich das vollständige aktuelle SQLite-Schema.
+//! Öffnen und Lesen erzeugen keine Tabellen oder Finanzwrites; keine historischen Upgradepfade.
 #[cfg(not(target_family = "wasm"))]
 use diesel::connection::SimpleConnection;
 use diesel::prelude::*;
@@ -14,9 +14,7 @@ diesel::table! { confirmed (profile_id, handle) { profile_id -> Text, handle -> 
 diesel::table! { outbox (profile_id, operation_id) { profile_id -> Text, operation_id -> Text, space_id -> Text, state -> Text, payload -> Text, } }
 diesel::table! { projections (profile_id, space_id, projection_kind, projection_key) { profile_id -> Text, space_id -> Text, projection_kind -> Text, projection_key -> Text, payload -> Text, } }
 diesel::table! { sync_state (profile_id, space_id) { profile_id -> Text, space_id -> Text, epoch -> Text, cursor -> Text, } }
-diesel::table! { storage_migrations (number) { number -> Integer, } }
-diesel::table! { wimm_native_schema (version) { version -> Integer, original_version -> Integer, backups -> Text, } }
-diesel::table! { sqlite_master (name) { name -> Text, #[sql_name="type"] type_ -> Text, } }
+diesel::table! { sqlite_master (name) { name -> Text, #[sql_name="type"] type_ -> Text, sql -> Nullable<Text>, } }
 
 fn invalid() -> StorageFailure {
     StorageFailure::unknown(StorageFailureCode::InvalidResponse)
@@ -40,12 +38,12 @@ impl From<StorageFailure> for ReadError {
     }
 }
 
-/// Profilgebundene Verbindung; die produktive Ablösung benötigt auch die Schreib-/Migrationsports.
-pub struct LegacySqliteStore {
+/// Profilgebundene Verbindung auf demselben Schema wie der atomare Writer.
+pub struct SqliteStore {
     connection: RefCell<SqliteConnection>,
     profile: EntityId,
 }
-impl LegacySqliteStore {
+impl SqliteStore {
     /// Öffnet ausschließlich eine existierende Datei. Unbekannte Versionen werden abgewiesen.
     #[cfg(not(target_family = "wasm"))]
     pub fn open(path: &std::path::Path, profile: EntityId) -> Result<Self, StorageFailure> {
@@ -218,7 +216,7 @@ fn snapshot_with_projections(
         })
         .transpose()?;
     let epoch_key = format!(
-        "localEpoch:{}",
+        "serverEpoch:{}",
         serde_json::json!([profile.as_str(), space.as_str()])
     );
     let local: Option<String> = storage_meta::table
@@ -266,93 +264,112 @@ fn aggregate(
     Ok(row)
 }
 fn supported(c: &mut SqliteConnection) -> Result<u32, ReadError> {
-    let meta: bool = diesel::select(diesel::dsl::exists(
+    let reject = || ReadError(StorageFailure::unknown(StorageFailureCode::UpdateRequired));
+    let exists: bool = diesel::select(diesel::dsl::exists(
         sqlite_master::table
-            .filter(sqlite_master::type_.eq("table"))
-            .filter(sqlite_master::name.eq("storage_meta")),
+            .filter(sqlite_master::name.eq("storage_meta"))
+            .filter(sqlite_master::type_.eq("table")),
     ))
     .get_result(c)?;
-    if !meta {
-        return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into());
+    if !exists {
+        return Err(reject());
     }
-    let storage: Option<String> = storage_meta::table
-        .find("storageSchemaVersion")
-        .select(storage_meta::value)
-        .first(c)
-        .optional()?;
-    let domain: Option<String> = storage_meta::table
-        .find("domainSchemaVersion")
-        .select(storage_meta::value)
-        .first(c)
-        .optional()?;
-    let version = match storage.as_deref() {
-        Some("1") => 1,
-        Some("2") => 2,
-        Some("3" | "4") => {
-            writer::receipts::read_schema(c)?;
-            let original: i32 = wimm_native_schema::table
-                .select(wimm_native_schema::original_version)
-                .first(c)?;
-            match original {
-                1 => 1,
-                2 => 2,
-                _ => return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into()),
-            }
-        }
-        _ => return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into()),
-    };
-    if !matches!(storage.as_deref(), Some("3" | "4")) {
-        let extension: i64 = sqlite_master::table
-            .filter(sqlite_master::name.eq_any([
-                "wimm_native_schema",
-                "wimm_native_receipts",
-                "wimm_native_recovery",
-                "wimm_native_receipts_by_area",
-            ]))
-            .count()
-            .get_result(c)?;
-        if extension != 0 {
-            return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into());
+    for (key, expected) in [
+        ("storageSchemaVersion", schema::PHYSICAL_VERSION.to_string()),
+        ("domainSchemaVersion", "1".into()),
+        (
+            "snapshotSchemaVersion",
+            schema::SNAPSHOT_VERSION.to_string(),
+        ),
+    ] {
+        let actual: Option<String> = storage_meta::table
+            .find(key)
+            .select(storage_meta::value)
+            .first(c)
+            .optional()?;
+        if actual.as_deref() != Some(expected.as_str()) {
+            return Err(reject());
         }
     }
-    if domain.as_deref().is_some_and(|d| d != "1") {
-        return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into());
-    }
-    if version == 2 {
-        let journal: bool = diesel::select(diesel::dsl::exists(
-            sqlite_master::table
-                .filter(sqlite_master::type_.eq("table"))
-                .filter(sqlite_master::name.eq("storage_migrations")),
+    let expected = schema::statements();
+    let actual: Vec<(String, String, Option<String>)> = sqlite_master::table
+        .filter(sqlite_master::name.eq_any(expected.iter().map(|s| s.0.as_str())))
+        .select((
+            sqlite_master::name,
+            sqlite_master::type_,
+            sqlite_master::sql,
         ))
-        .get_result(c)?;
-        if !journal || domain.as_deref() != Some("1") {
-            return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into());
-        }
-        let number: Option<i32> = storage_migrations::table
-            .select(diesel::dsl::max(storage_migrations::number))
-            .first(c)?;
-        let indexes: i64 = sqlite_master::table
-            .filter(sqlite_master::type_.eq("index"))
-            .filter(sqlite_master::name.eq_any([
-                "transactions_by_account_date",
-                "transactions_by_category_date",
-                "transactions_by_import_reference",
-                "outbox_by_state_created",
-                "rules_by_order",
-                "occurrences_by_schedule_date",
-                "import_sources_by_external",
-            ]))
-            .count()
-            .get_result(c)?;
-        if number != Some(1) || indexes != 7 {
-            return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into());
+        .load(c)?;
+    if actual.len() != expected.len() {
+        return Err(reject());
+    }
+    for (name, kind, sql) in expected {
+        let record = actual.iter().find(|r| r.0 == name).ok_or_else(reject)?;
+        if record.1 != kind
+            || record
+                .2
+                .as_deref()
+                .map(|s| s.trim().trim_end_matches(';').trim_end())
+                != Some(sql.trim().trim_end_matches(';').trim_end())
+        {
+            return Err(reject());
         }
     }
-    Ok(version)
+    let tables: i64 = sqlite_master::table
+        .filter(sqlite_master::type_.eq("table"))
+        .filter(sqlite_master::name.not_like("sqlite_%"))
+        .count()
+        .get_result(c)?;
+    if tables
+        != schema::statements()
+            .iter()
+            .filter(|(_, kind, _)| kind == "table")
+            .count() as i64
+    {
+        return Err(reject());
+    }
+    let unknown: i64 = storage_meta::table
+        .filter(storage_meta::key.ne_all([
+            "storageSchemaVersion",
+            "domainSchemaVersion",
+            "snapshotSchemaVersion",
+        ]))
+        .filter(storage_meta::key.not_like("serverEpoch:%"))
+        .filter(storage_meta::key.not_like("localWriteEpoch:%"))
+        .count()
+        .get_result(c)?;
+    if unknown != 0 {
+        return Err(reject());
+    }
+    let epochs: Vec<(String, String)> = storage_meta::table
+        .filter(
+            storage_meta::key
+                .like("serverEpoch:%")
+                .or(storage_meta::key.like("localWriteEpoch:%")),
+        )
+        .select((storage_meta::key, storage_meta::value))
+        .load(c)?;
+    for (key, value) in &epochs {
+        EntityId::new(value.clone()).map_err(|_| reject())?;
+        let (scope, opposite) = if let Some(scope) = key.strip_prefix("serverEpoch:") {
+            (scope, format!("localWriteEpoch:{scope}"))
+        } else {
+            let scope = key.strip_prefix("localWriteEpoch:").ok_or_else(reject)?;
+            (scope, format!("serverEpoch:{scope}"))
+        };
+        let ids: [String; 2] = serde_json::from_str(scope).map_err(|_| reject())?;
+        for id in ids {
+            EntityId::new(id).map_err(|_| reject())?;
+        }
+        if !epochs.iter().any(|(key, _)| key == &opposite) {
+            return Err(reject());
+        }
+    }
+    Ok(schema::SNAPSHOT_VERSION)
 }
 
 mod writer;
-pub use writer::LegacySqliteWriter;
+pub use writer::SqliteWriter;
 
 fn read_confirmed(
     c: &mut SqliteConnection,
@@ -418,5 +435,4 @@ fn read_pending(
 
 mod index_queries;
 
-#[cfg(not(target_family = "wasm"))]
-mod initial_schema;
+mod schema;

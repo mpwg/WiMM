@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Vollständiger privater nativer Checkpoint; die vorhandene V1-Form bleibt unverändert.
+//! Vollständiger privater Checkpoint für das aktuelle native Schema, ohne historische Schemaformen.
 use crate::{Validate, checkpoint::LocalReceiptEntry, record, storage::*};
 use std::collections::BTreeSet;
 record!(LocalCheckpointV2 {
@@ -7,7 +7,7 @@ record!(LocalCheckpointV2 {
     #[cfg_attr(feature="contract-schema",schemars(with="CheckpointVersion2"))]
     checkpoint_version:u32,
     #[serde(deserialize_with="wimm_contract_primitives::unsigned32")]
-    #[cfg_attr(feature="contract-schema",schemars(with="PhysicalVersion3"))]
+    #[cfg_attr(feature="contract-schema",schemars(with="PhysicalVersion5"))]
     physical_schema_version:u32,
     snapshot:LocalSnapshot,
     local_write_epoch:wimm_finance_types::scalars::EntityId,
@@ -34,9 +34,7 @@ fn projection(p: &StoredProjection) -> (&wimm_finance_types::scalars::EntityId, 
 impl Validate for LocalCheckpointV2 {
     fn validate(&self) -> Result<(), &'static str> {
         let s = &self.snapshot;
-        if self.checkpoint_version != 2
-            || ![3, 4].contains(&self.physical_schema_version)
-            || !s.check_versions()
+        if self.checkpoint_version != 2 || self.physical_schema_version != 5 || !s.check_versions()
         {
             return Err("Nicht unterstützte vollständige Checkpointversion.");
         }
@@ -114,14 +112,14 @@ impl schemars::JsonSchema for CheckpointVersion2 {
     }
 }
 #[cfg(feature = "contract-schema")]
-struct PhysicalVersion3;
+struct PhysicalVersion5;
 #[cfg(feature = "contract-schema")]
-impl schemars::JsonSchema for PhysicalVersion3 {
+impl schemars::JsonSchema for PhysicalVersion5 {
     fn schema_name() -> std::borrow::Cow<'static, str> {
-        "LocalPhysicalVersions3And4".into()
+        "LocalPhysicalVersion5".into()
     }
     fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        schemars::json_schema!({"type":"integer","enum":[3,4]})
+        schemars::json_schema!({"type":"integer","const":5})
     }
 }
 

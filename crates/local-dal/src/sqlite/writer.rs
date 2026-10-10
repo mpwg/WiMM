@@ -26,7 +26,7 @@ fn projection_key(p: &StoredProjection) -> (&EntityId, &str, &str) {
 }
 fn epoch_key(profile: &EntityId, space: &EntityId) -> String {
     format!(
-        "localEpoch:{}",
+        "serverEpoch:{}",
         serde_json::json!([profile.as_str(), space.as_str()])
     )
 }
@@ -164,13 +164,13 @@ fn write_batch(
 }
 /// Jeder Write besitzt genau eine unmittelbare SQLite-Transaktion.
 /// Finanz-/Cacheprüfung beim Snapshot-/Projektionsersatz wird zwingend injiziert.
-pub struct LegacySqliteWriter<V> {
-    pub(super) store: LegacySqliteStore,
+pub struct SqliteWriter<V> {
+    pub(super) store: SqliteStore,
     validator: V,
     #[cfg(feature = "receipt-probe")]
     pub(super) query_plans: RefCell<Vec<String>>,
 }
-impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
+impl<V: SnapshotValidationPort> SqliteWriter<V> {
     #[cfg(not(target_family = "wasm"))]
     pub fn open(
         path: &std::path::Path,
@@ -178,7 +178,7 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
         validator: V,
     ) -> Result<Self, StorageFailure> {
         Ok(Self {
-            store: LegacySqliteStore::open_mode(path, profile, true)?,
+            store: SqliteStore::open_mode(path, profile, true)?,
             validator,
             #[cfg(feature = "receipt-probe")]
             query_plans: RefCell::new(Vec::new()),
@@ -188,20 +188,30 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
     pub fn take_index_query_plans(&self) -> Vec<String> {
         std::mem::take(&mut *self.query_plans.borrow_mut())
     }
-    /// Runtimewrites benötigen ausdrücklich den aktivierten physischen Stand vier.
+    /// Ausschließlich diagnostischer nativer Testport; begrenzt den realen SQLite-Pager auf die aktuelle Dateigröße.
+    #[cfg(all(feature = "receipt-probe", not(target_family = "wasm")))]
+    pub fn limit_to_current_page_count_for_probe(&mut self) -> Result<(), StorageFailure> {
+        #[derive(diesel::QueryableByName)]
+        struct Pages {
+            #[diesel(sql_type=diesel::sql_types::BigInt)]
+            page_count: i64,
+        }
+        let c = self.store.connection.get_mut();
+        let pages = diesel::sql_query("PRAGMA page_count")
+            .get_result::<Pages>(c)
+            .map_err(database)?
+            .page_count;
+        // SQLite-PRAGMAs besitzen keinen bindbaren DSL-Parameter; Wert kommt ausschließlich aus SQLite.
+        c.batch_execute(&format!("PRAGMA max_page_count={pages}"))
+            .map_err(database)
+    }
+    /// Runtimewrites benötigen ausschließlich das vollständige aktuelle Schema.
     pub fn ensure_runtime_schema(&self) -> Result<(), StorageFailure> {
         self.store
             .connection
             .borrow_mut()
             .transaction::<_, ReadError, _>(|c| {
                 supported(c)?;
-                let physical: String = storage_meta::table
-                    .find("storageSchemaVersion")
-                    .select(storage_meta::value)
-                    .first(c)?;
-                if physical != "4" {
-                    return Err(fail(StorageFailureCode::UpdateRequired));
-                }
                 Ok(())
             })
             .map_err(|e| e.0)
@@ -232,19 +242,12 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
             .get_mut()
             .immediate_transaction::<_, ReadError, _>(|c| {
                 supported(c)?;
-                let physical: String = storage_meta::table
-                    .find("storageSchemaVersion")
-                    .select(storage_meta::value)
-                    .first(c)?;
-                if physical == "3" {
-                    return Err(fail(StorageFailureCode::UpdateRequired));
-                }
                 work(c, profile, validator)
             })
             .map_err(|e| e.0)
     }
 }
-impl<V: SnapshotValidationPort> LocalStoragePort for LegacySqliteWriter<V> {
+impl<V: SnapshotValidationPort> LocalStoragePort for SqliteWriter<V> {
     type Error = StorageFailure;
     fn read_aggregate(&self, id: &EntityId) -> Result<Option<StoredAggregate>, StorageFailure> {
         self.store.read_aggregate(id)
@@ -312,19 +315,13 @@ impl<V: SnapshotValidationPort> LocalStoragePort for LegacySqliteWriter<V> {
         proposed: &EntityId,
     ) -> Result<EntityId, StorageFailure> {
         self.write(|c, profile, _| {
-            let physical: String = storage_meta::table
-                .find("storageSchemaVersion")
+            let write: Option<String> = storage_meta::table
+                .find(local_write_key(profile, space))
                 .select(storage_meta::value)
-                .first(c)?;
-            if physical == "4" {
-                let write: Option<String> = storage_meta::table
-                    .find(local_write_key(profile, space))
-                    .select(storage_meta::value)
-                    .first(c)
-                    .optional()?;
-                if let Some(epoch) = write {
-                    return EntityId::new(epoch).map_err(|_| invalid().into());
-                }
+                .first(c)
+                .optional()?;
+            if let Some(epoch) = write {
+                return EntityId::new(epoch).map_err(|_| invalid().into());
             }
             let local: Option<String> = storage_meta::table
                 .find(epoch_key(profile, space))
@@ -347,9 +344,7 @@ impl<V: SnapshotValidationPort> LocalStoragePort for LegacySqliteWriter<V> {
                 .map_err(|_| invalid())?
                 .unwrap_or_else(|| proposed.clone());
             write_epoch(c, profile, space, &epoch)?;
-            if physical == "4" {
-                write_local_epoch(c, profile, space, &epoch)?;
-            }
+            write_local_epoch(c, profile, space, &epoch)?;
             Ok(epoch)
         })
     }
@@ -577,13 +572,6 @@ fn local_write_epoch(
     profile: &EntityId,
     space: &EntityId,
 ) -> Result<EntityId, ReadError> {
-    let physical: String = storage_meta::table
-        .find("storageSchemaVersion")
-        .select(storage_meta::value)
-        .first(c)?;
-    if physical == "3" {
-        return Ok(snapshot(c, profile, space)?.epoch);
-    }
     let epoch: String = storage_meta::table
         .find(local_write_key(profile, space))
         .select(storage_meta::value)
@@ -730,5 +718,14 @@ fn replace_in_transaction(
             ))
             .execute(c)?;
     }
-    write_epoch(c, p, &s.space_id, &s.epoch)
+    write_epoch(c, p, &s.space_id, &s.epoch)?;
+    let local: Option<String> = storage_meta::table
+        .find(local_write_key(p, &s.space_id))
+        .select(storage_meta::value)
+        .first(c)
+        .optional()?;
+    if local.is_none() {
+        write_local_epoch(c, p, &s.space_id, &s.epoch)?;
+    }
+    Ok(())
 }

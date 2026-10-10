@@ -24,13 +24,13 @@ for (const change of ['neues-Aggregat', 'gleiche-Revision'] as const) {
   it(`SQLite-Neuaufbau weist veralteten vollständigen Lesestand ab: ${change}`, async () => {
     const fixture = await sqliteFixture();
     try {
-      await fixture.storage.replaceSnapshot(financeSnapshot());
-      const account = financeSnapshot().aggregates.find((entry) => entry.id === id(10))! as StoredAggregate & AccountAggregate;
+      await fixture.storage.replaceSnapshot(financeSnapshot(2));
+      const account = financeSnapshot(2).aggregates.find((entry) => entry.id === id(10))! as StoredAggregate & AccountAggregate;
       const changed = { ...account, ...(change === 'neues-Aggregat' ? { id: id(99), handle: id(99) } : {}), name: 'Konkurrierend geändert' };
       fixture.beforeNextRebuild!((storage) => storage.applyAtomicBatch({ expectedRevisions: [], aggregates: [changed], outbox: [], projections: [] }));
       await expect(fixture.storage.rebuildProjections(spaceId)).rejects.toBeInstanceOf(StorageRevisionConflictError);
       const snapshot = normalized(await fixture.storage.exportSnapshot(spaceId));
-      expect(snapshot.projections).toEqual(normalized(financeSnapshot()).projections);
+      expect(snapshot.projections).toEqual(normalized(financeSnapshot(2)).projections);
       expect((snapshot.aggregates.find((entry) => entry.id === (change === 'neues-Aggregat' ? id(99) : id(10))) as StoredAggregate & AccountAggregate).name).toBe('Konkurrierend geändert');
     } finally { await fixture.close(); }
   });
@@ -56,7 +56,7 @@ import type { LocalSnapshot } from '../../packages/storage/src/index.js';
 it('Native SQLite-Sicherung bewahrt echten verschlüsselten P5-Snapshot über Rust-Prozessneustart', async () => {
   const fixture = await sqliteFixture();
   try {
-    const snapshot = p5Snapshot();
+    const snapshot = p5Snapshot(2);
     await fixture.storage.replaceSnapshot(snapshot);
     const source = normalized(await fixture.storage.exportSnapshot(snapshot.spaceId));
     const protector = createEncryptedJsonSnapshotProtector<LocalSnapshot>(new Uint8Array(32).fill(7));
@@ -77,11 +77,9 @@ it('Native SQLite-Sicherung bewahrt echten verschlüsselten P5-Snapshot über Ru
   } finally { await fixture.close(); }
 }, 30_000);
 
-import { migrationCases,runMigrationCase } from './contracts/migration-catalog.js';
-for(const scenario of migrationCases){it(`Gesicherte SQLite-Vorwärtsmigration: ${scenario}`,async()=>{await expect(runMigrationCase(scenario,await sqliteFixture())).resolves.toBeUndefined();},30_000);}
 import {runIndexMaintenanceCase} from './contracts/migration-catalog.js';
 it('SQLite-Indizes bleiben bei Änderung, Tombstone, CAS-Fehler und Snapshotersatz atomar',async()=>{await expect(runIndexMaintenanceCase(await sqliteFixture())).resolves.toBeUndefined();},30_000);
 import {runIndexPerformanceCase} from './contracts/migration-catalog.js';
-it('50.000 Buchungen: gesicherte SQLite-Migration und tatsächliche Indexabfragen',async()=>{const metrics=await runIndexPerformanceCase(await sqliteFixture());expect(metrics.count).toBe(50_000);await (await import('node:fs/promises')).writeFile('test-results/migration-index-metrics-sqlite.json',JSON.stringify(metrics,null,2));},120_000);
+it('50.000 Buchungen: aktuelles SQLite-Schema und tatsächliche Indexabfragen',async()=>{const metrics=await runIndexPerformanceCase(await sqliteFixture());expect(metrics.count).toBe(50_000);await (await import('node:fs/promises')).writeFile('test-results/migration-index-metrics-sqlite.json',JSON.stringify(metrics,null,2));},120_000);
 import {runIndexProfileCase} from './contracts/migration-catalog.js';
-it('SQLite-Indexmigration und Abfragen bewahren fremde Profile mit denselben Handles',async()=>{await expect(runIndexProfileCase(await sqliteFixture())).resolves.toBeUndefined();},30_000);
+it('SQLite-Initialschema und Abfragen bewahren fremde Profile mit denselben Handles',async()=>{await expect(runIndexProfileCase(await sqliteFixture())).resolves.toBeUndefined();},30_000);

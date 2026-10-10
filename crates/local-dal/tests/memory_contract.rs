@@ -367,7 +367,7 @@ fn pending_and_import_source_queries_use_the_same_bounded_data_ports() {
     use wimm_local_contracts::index_ports::*;
     let mut db = fixture();
     let pending = |n: u32, at: &str| {
-        serde_json::from_value::<PendingOperation>(serde_json::json!({"operationId":id(n),"spaceId":id(2),"expectedRevisions":[],"dependsOn":[],"state":"queued","draft":{"occurredAt":at},"retryCount":0})).unwrap()
+        serde_json::from_value::<PendingOperation>(serde_json::json!({"operationId":id(n),"spaceId":id(2),"expectedRevisions":[],"dependsOn":[],"state":"queued","draft":{"original":"Synthetischer Originalentwurf"},"createdAt":at,"retryCount":0})).unwrap()
     };
     db.apply_atomic_batch(AtomicBatch {
         expected_revisions: vec![],

@@ -8,7 +8,8 @@ export interface MigrationFixture {
  storage:LocalStorageAdapter;
  forProfile(profileId:UUID):LocalStorageAdapter&{close?():Promise<void>};
  backups:EncryptedBackupPort & {read(receipt:EncryptedBackupReceipt):Promise<Uint8Array>};
- migration:LocalMigrationPort<LocalSnapshot>;
+ storageSchemaVersion?:1|2;
+ migration?:LocalMigrationPort<LocalSnapshot>;
  indices:LocalIndexQueryPort;
  restart():Promise<LocalStorageAdapter>;
  close():Promise<void>;
@@ -18,7 +19,7 @@ export const migrationCases=['vollständig-und-Neustart','konkurrierender-Origin
 function check(ok:boolean,message:string):asserts ok{if(!ok)throw new Error(message);}
 export async function runMigrationCase(scenario:typeof migrationCases[number],fixture:MigrationFixture):Promise<void>{
  try{
-  const snapshot=p5Snapshot();await fixture.storage.replaceSnapshot(snapshot);
+  const snapshot=p5Snapshot(fixture.storageSchemaVersion);await fixture.storage.replaceSnapshot(snapshot);
   const before=await fixture.storage.exportSnapshot(snapshot.spaceId);
   let cancelled=false,receipt:EncryptedBackupReceipt|undefined;
   const cancellation:CancellationPort={isCancelled:()=>cancelled,onCancel:()=>()=>{}};
@@ -34,7 +35,7 @@ export async function runMigrationCase(scenario:typeof migrationCases[number],fi
     }
     if(scenario==='Abbruch-nach-Sicherung')cancelled=true;
     return scenario==='falscher-Hashbeleg'?{...receipt,snapshotHash:'ZnJlbWQ'}:receipt;
-   }},migration:fixture.migration
+   }},migration:fixture.migration!
   });
   let failed=false;try{await coordinator.migrate(LOCAL_INDEX_MIGRATION_PLAN,cancellation);}catch{failed=true;}
   if(scenario==='vollständig-und-Neustart'){
@@ -47,7 +48,7 @@ export async function runMigrationCase(scenario:typeof migrationCases[number],fi
    check(equal(account.map(row=>row.id),[id(17)])&&equal(category.map(row=>row.id),[id(17)])&&equal(imported.map(row=>row.id),[id(17)]),'Sekundärreferenzen einschließlich Tombstones passen nicht');
    const restarted=await fixture.restart();check(equal(normalized(await restarted.exportSnapshot(snapshot.spaceId)),source),'Neustart verliert Migrationsstand');
    check(equal(normalized(await protector.unseal(await fixture.backups.read(receipt))),normalized(before)),'Originalsicherung nach Migration/Neustart unvollständig');
-   let repeated=false;try{await fixture.migration.migrate({plan:LOCAL_INDEX_MIGRATION_PLAN,expectedSnapshot:before,backup:receipt},cancellation);}catch{repeated=true;}check(repeated,'Alte Migrationsnummer wurde erneut akzeptiert');
+   let repeated=false;try{await fixture.migration!.migrate({plan:LOCAL_INDEX_MIGRATION_PLAN,expectedSnapshot:before,backup:receipt},cancellation);}catch{repeated=true;}check(repeated,'Alte Migrationsnummer wurde erneut akzeptiert');
   }else{
    check(failed,'Fehlerfall wurde als Migration bestätigt');
    const after=await fixture.storage.exportSnapshot(snapshot.spaceId);check(after.storageSchemaVersion===1,'Fehlerfall verändert Version');
@@ -61,10 +62,10 @@ export async function runMigrationCase(scenario:typeof migrationCases[number],fi
 
 export async function runIndexMaintenanceCase(fixture:MigrationFixture):Promise<void>{
  try{
-  const snapshot=p5Snapshot();await fixture.storage.replaceSnapshot(snapshot);
+  const snapshot=p5Snapshot(fixture.storageSchemaVersion);await fixture.storage.replaceSnapshot(snapshot);
   const protector=createEncryptedJsonSnapshotProtector<LocalSnapshot>(new Uint8Array(32).fill(7));
-  const coordinator=new LocalMigrationCoordinator(fixture.storage,snapshot.spaceId,[LOCAL_INDEX_MIGRATION],{protector,backups:fixture.backups,migration:fixture.migration,snapshotHash:migrationSnapshotHash});
-  await coordinator.migrate(LOCAL_INDEX_MIGRATION_PLAN,{isCancelled:()=>false,onCancel:()=>()=>{}});
+  const coordinator=new LocalMigrationCoordinator(fixture.storage,snapshot.spaceId,[LOCAL_INDEX_MIGRATION],{protector,backups:fixture.backups,migration:fixture.migration!,snapshotHash:migrationSnapshotHash});
+  if(fixture.storageSchemaVersion!==2)await coordinator.migrate(LOCAL_INDEX_MIGRATION_PLAN,{isCancelled:()=>false,onCancel:()=>()=>{}});
   const imported=await fixture.indices.queryImportedTransactions({spaceId:snapshot.spaceId,accountId:id(10),parserSource:'csv',externalId:'synthetische-externe-id',limit:100});check(equal(imported.map(row=>row.id),[id(17)]),'Externe Importquell-ID nicht indiziert');
   const original=snapshot.aggregates.find(row=>row.id===id(17))!;
   const changed={...original,revision:2,date:'2026-10-12',accountId:id(10),importReference:'geänderte-Quellreferenz'};
@@ -92,7 +93,7 @@ import {rebuildStoredProjections} from '../../../packages/storage/src/projection
 import type {TransactionAggregate} from '../../../packages/domain/src/index.js';
 export async function runIndexPerformanceCase(fixture:MigrationFixture):Promise<{count:number;coldFirstPageMs:number;accountP95Ms:number;categoryP95Ms:number;importP95Ms:number}>{
  try{
-  const initial=p5Snapshot(),template=initial.aggregates.find(row=>row.id===id(17))! as typeof initial.aggregates[number]&TransactionAggregate;
+  const initial=p5Snapshot(fixture.storageSchemaVersion),template=initial.aggregates.find(row=>row.id===id(17))! as typeof initial.aggregates[number]&TransactionAggregate;
   const accounts=Array.from({length:8},(_,index)=>({...initial.aggregates.find(row=>row.id===id(10))!,id:id(200+index),handle:id(200+index)}));
   const categories=Array.from({length:99},(_,index)=>({...initial.aggregates.find(row=>row.id===id(13))!,id:id(300+index),handle:id(300+index)}));
   const accountIds=[id(10),id(11),...accounts.map(row=>row.id)],categoryIds=[id(13),...categories.map(row=>row.id)];
@@ -101,7 +102,7 @@ export async function runIndexPerformanceCase(fixture:MigrationFixture):Promise<
   const snapshot={...initial,aggregates,projections:rebuildStoredProjections(aggregates,initial.spaceId,initial.projections)};
   await fixture.storage.replaceSnapshot(snapshot);
   const protector=createEncryptedJsonSnapshotProtector<LocalSnapshot>(new Uint8Array(32).fill(7));
-  await new LocalMigrationCoordinator(fixture.storage,snapshot.spaceId,[LOCAL_INDEX_MIGRATION],{protector,backups:fixture.backups,migration:fixture.migration,snapshotHash:migrationSnapshotHash}).migrate(LOCAL_INDEX_MIGRATION_PLAN,{isCancelled:()=>false,onCancel:()=>()=>{}});
+  if(fixture.storageSchemaVersion!==2)await new LocalMigrationCoordinator(fixture.storage,snapshot.spaceId,[LOCAL_INDEX_MIGRATION],{protector,backups:fixture.backups,migration:fixture.migration!,snapshotHash:migrationSnapshotHash}).migrate(LOCAL_INDEX_MIGRATION_PLAN,{isCancelled:()=>false,onCancel:()=>()=>{}});
   await fixture.restart();
   const cold=performance.now();const first=await fixture.indices.queryIndexedTransactions({spaceId:snapshot.spaceId,kind:'account',reference:id(10),limit:100});const coldFirstPageMs=performance.now()-cold;
   check(first.length===100,'Index liefert keine vollständige erste Seite');check(coldFirstPageMs<2000,'Kalte erste Indexseite überschreitet zwei Sekunden');
@@ -120,14 +121,14 @@ export async function runIndexPerformanceCase(fixture:MigrationFixture):Promise<
 export async function runIndexProfileCase(fixture:MigrationFixture):Promise<void>{
  let other:(LocalStorageAdapter&{close?():Promise<void>})|undefined;
  try{
-  const snapshot=p5Snapshot();await fixture.storage.replaceSnapshot(snapshot);
+  const snapshot=p5Snapshot(fixture.storageSchemaVersion);await fixture.storage.replaceSnapshot(snapshot);
   const foreignProfile=id(998);other=fixture.forProfile(foreignProfile);
   const foreign={...snapshot,profileId:foreignProfile,syncState:{...snapshot.syncState!,profileId:foreignProfile},aggregates:snapshot.aggregates.map(row=>row.id===id(17)?{...row,note:'Synthetischer fremder Profilinhalt',date:'2026-10-08'}:row)};
   await other.replaceSnapshot(foreign);const before=await other.exportSnapshot(foreign.spaceId);await other.close?.();
   const protector=createEncryptedJsonSnapshotProtector<LocalSnapshot>(new Uint8Array(32).fill(7));
-  await new LocalMigrationCoordinator(fixture.storage,snapshot.spaceId,[LOCAL_INDEX_MIGRATION],{protector,backups:fixture.backups,migration:fixture.migration,snapshotHash:migrationSnapshotHash}).migrate(LOCAL_INDEX_MIGRATION_PLAN,{isCancelled:()=>false,onCancel:()=>()=>{}});
+  if(fixture.storageSchemaVersion!==2)await new LocalMigrationCoordinator(fixture.storage,snapshot.spaceId,[LOCAL_INDEX_MIGRATION],{protector,backups:fixture.backups,migration:fixture.migration!,snapshotHash:migrationSnapshotHash}).migrate(LOCAL_INDEX_MIGRATION_PLAN,{isCancelled:()=>false,onCancel:()=>()=>{}});
   const own=await fixture.indices.queryIndexedTransactions({spaceId:snapshot.spaceId,kind:'category',reference:id(13),limit:100});
   check(own.length===1&&(own[0] as typeof snapshot.aggregates[number]&TransactionAggregate).date==='2026-10-09','Indexabfrage liefert fremden Profilbestand');
-  other=fixture.forProfile(foreignProfile);const after=await other.exportSnapshot(foreign.spaceId);check(equal(normalized({...after,storageSchemaVersion:1}),normalized(before)),'Indexmigration verändert fremde Profildaten');
+  other=fixture.forProfile(foreignProfile);const after=await other.exportSnapshot(foreign.spaceId);check(equal(normalized({...after,storageSchemaVersion:before.storageSchemaVersion}),normalized(before)),'Indexmigration verändert fremde Profildaten');
  }finally{await other?.close?.();await fixture.close();}
 }

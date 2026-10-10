@@ -16,7 +16,7 @@
       }
     },
     "physicalSchemaVersion": {
-      "$ref": "#/$defs/LocalPhysicalVersions3And4"
+      "$ref": "#/$defs/LocalPhysicalVersion5"
     },
     "recovery": {
       "type": "array",
@@ -458,12 +458,9 @@
         "operationId"
       ]
     },
-    "LocalPhysicalVersions3And4": {
+    "LocalPhysicalVersion5": {
       "type": "integer",
-      "enum": [
-        3,
-        4
-      ]
+      "const": 5
     },
     "LocalReceiptEntry": {
       "type": "object",

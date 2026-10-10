@@ -16,8 +16,6 @@ fn main() {
             "storage_rebuild_projections",
             "storage_persist_encrypted_backup",
             "storage_read_encrypted_backup",
-            "storage_migrate",
-            "storage_cancel_migration",
             "storage_query_indexed_transactions",
             "storage_query_indexed_pending",
             "storage_query_imported_transactions",

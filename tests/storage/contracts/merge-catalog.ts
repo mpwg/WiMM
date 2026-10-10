@@ -21,7 +21,7 @@ export async function runMergeCase(scenario: MergeCase, fixture: RebuildFixture)
   const initial: P2Aggregate[] = [account, group, category, source, target, transaction, deleted, { ...meta(2), aggregateType: 'financialRevision' }];
   if (transaction.clearance === 'reconciled') initial.push({ ...meta(118), aggregateType: 'reconciliation', accountId: account.id, statementDate: transaction.date, statementBalance: -100, transactionIds: [transaction.id] } as P2Aggregate);
   const projections = [{ spaceId, kind: 'accountBalance', key: account.id, payload: { balance: -100 } }, { spaceId, kind: 'balance', key: account.id, payload: -100 }];
-  const snapshot: LocalSnapshot = { storageSchemaVersion: 1, domainSchemaVersion: 1, profileId, spaceId, epoch, aggregates: initial.map(toStoredAggregate), confirmed: [], pending: [{ operationId: id(160), spaceId, expectedRevisions: [], dependsOn: [], state: 'blocked', draft: { originalInput: 'Originalentwurf' }, retryCount: 1 }], projections, syncState: { profileId, spaceId, epoch, cursor: '5' } };
+  const snapshot: LocalSnapshot = { storageSchemaVersion: fixture.storageSchemaVersion ?? 1, domainSchemaVersion: 1, profileId, spaceId, epoch, aggregates: initial.map(toStoredAggregate), confirmed: [], pending: [{ operationId: id(160), spaceId, expectedRevisions: [], dependsOn: [], state: 'blocked', draft: { originalInput: 'Originalentwurf' }, retryCount: 1 }], projections, syncState: { profileId, spaceId, epoch, cursor: '5' } };
   const service = new LocalAreaService(storage, spaceId, { connected: true });
   let counter = 200;
   const dependencies = { ids: { next: () => id(counter++) }, clock: { now: () => now } };

@@ -671,13 +671,6 @@ impl<V: SnapshotValidationPort> wimm_local_contracts::index_ports::LocalIndexQue
             p.created_at
                 .as_ref()
                 .map(|s| s.as_str().to_owned())
-                .or_else(|| {
-                    p.draft
-                        .0
-                        .get("occurredAt")
-                        .and_then(serde_json::Value::as_str)
-                        .map(str::to_owned)
-                })
                 .unwrap_or_default()
         };
         rows.sort_by(|a, b| {

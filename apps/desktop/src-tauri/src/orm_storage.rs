@@ -8,14 +8,14 @@ use std::{
 };
 use wimm_finance_types::scalars::EntityId;
 use wimm_local_contracts::{persistence_errors::*, storage::*, storage_port::LocalStoragePort};
-use wimm_local_dal::legacy_sqlite::{LegacySqliteStore, LegacySqliteWriter};
+use wimm_local_dal::sqlite::{SqliteStore, SqliteWriter};
 fn invalid() -> StorageFailure {
     StorageFailure::not_committed(StorageFailureCode::WriteFailed)
 }
 /// Datei liegt im vertrauenswürdigen App-Datenverzeichnis, niemals in einem UI-Kommandoparameter.
 pub struct OrmStorageState {
     path: PathBuf,
-    profiles: Mutex<BTreeMap<String, LegacySqliteWriter<CoreSnapshotValidator>>>,
+    profiles: Mutex<BTreeMap<String, SqliteWriter<CoreSnapshotValidator>>>,
 }
 impl OrmStorageState {
     pub fn open_existing(path: &Path) -> Result<Self, StorageFailure> {
@@ -30,13 +30,13 @@ impl OrmStorageState {
         })
     }
     pub fn initialize_new(path: &Path) -> Result<Self, StorageFailure> {
-        LegacySqliteStore::initialize_empty_file(path)?;
+        SqliteStore::initialize_empty_file(path)?;
         Self::open_existing(path)
     }
     pub(crate) fn with_profile<T>(
         &self,
         profile: &str,
-        run: impl FnOnce(&mut LegacySqliteWriter<CoreSnapshotValidator>) -> Result<T, StorageFailure>,
+        run: impl FnOnce(&mut SqliteWriter<CoreSnapshotValidator>) -> Result<T, StorageFailure>,
     ) -> Result<T, StorageFailure> {
         let id = EntityId::new(profile.into()).map_err(|_| invalid())?;
         let mut profiles = self
@@ -46,7 +46,7 @@ impl OrmStorageState {
         if !profiles.contains_key(profile) {
             profiles.insert(
                 profile.into(),
-                LegacySqliteWriter::open(&self.path, id, CoreSnapshotValidator).map_err(|e| {
+                SqliteWriter::open(&self.path, id, CoreSnapshotValidator).map_err(|e| {
                     if e.code == StorageFailureCode::UpdateRequired {
                         StorageFailure::not_committed(e.code)
                     } else {

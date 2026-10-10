@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Begrenzte ORM-Abfragen auf registrierten Bestandsindizes; kein Scan-/Backendfallback.
+//! Begrenzte ORM-Abfragen auf registrierten aktuellen Indizes; kein Scan-/Backendfallback.
 use super::*;
 use diesel::{
     dsl::sql,
@@ -21,7 +21,7 @@ fn required(c: &mut SqliteConnection) -> Result<(), ReadError> {
 fn invalid_query() -> StorageFailure {
     StorageFailure::not_committed(StorageFailureCode::WriteFailed)
 }
-impl<V: SnapshotValidationPort> LocalIndexQueryPort for writer::LegacySqliteWriter<V> {
+impl<V: SnapshotValidationPort> LocalIndexQueryPort for writer::SqliteWriter<V> {
     fn query_transactions(
         &self,
         q: TransactionIndexQuery,
@@ -142,21 +142,40 @@ impl<V: SnapshotValidationPort> LocalIndexQueryPort for writer::LegacySqliteWrit
     }
     fn query_pending(&self, q: PendingIndexQuery) -> Result<Vec<PendingOperation>, StorageFailure> {
         q.validate().map_err(|_| invalid_query())?;
-        self.store.connection.borrow_mut().transaction::<_,ReadError,_>(|c| {
-            required(c)?;let state=serde_json::to_value(q.state).map_err(|_|invalid())?;let state=state.as_str().ok_or_else(invalid)?;
-            // Fester CASE-Ausdruck ist exakt der registrierte Legacyindex; keine freie SQL-Eingabe.
-            let created=sql::<Text>("CASE WHEN json_type(payload,'$.createdAt')='text' THEN json_extract(payload,'$.createdAt') WHEN json_type(payload,'$.draft.occurredAt')='text' THEN json_extract(payload,'$.draft.occurredAt') ELSE '' END");
-            let select=outbox::table.filter(outbox::profile_id.eq(self.store.profile.as_str())).filter(outbox::space_id.eq(q.space_id.as_str())).filter(outbox::state.eq(state))
-                .order((created,outbox::operation_id)).limit(i64::from(q.limit)).select((outbox::operation_id,outbox::state,outbox::payload));
-            #[cfg(feature="receipt-probe")]
-            record_plan(c,&select,&self.query_plans)?;
-            let rows:Vec<(String,String,String)>=select.load(c)?;
-            rows.into_iter().map(|(id,state,value)| {
-                let row:PendingOperation=decode(&value)?;
-                let actual=serde_json::to_value(row.state).map_err(|_|invalid())?;
-                if row.operation_id.as_str()!=id || row.space_id!=q.space_id || actual.as_str()!=Some(state.as_str()) {return Err(invalid().into());}Ok(row)
-            }).collect()
-        }).map_err(|e|e.0)
+        self.store
+            .connection
+            .borrow_mut()
+            .transaction::<_, ReadError, _>(|c| {
+                required(c)?;
+                let state = serde_json::to_value(q.state).map_err(|_| invalid())?;
+                let state = state.as_str().ok_or_else(invalid)?;
+                // Fester CASE-Ausdruck ist exakt der registrierte aktuelle Index; keine freie SQL-Eingabe.
+                let created = sql::<Text>("COALESCE(json_extract(payload,'$.createdAt'),'')");
+                let select = outbox::table
+                    .filter(outbox::profile_id.eq(self.store.profile.as_str()))
+                    .filter(outbox::space_id.eq(q.space_id.as_str()))
+                    .filter(outbox::state.eq(state))
+                    .order((created, outbox::operation_id))
+                    .limit(i64::from(q.limit))
+                    .select((outbox::operation_id, outbox::state, outbox::payload));
+                #[cfg(feature = "receipt-probe")]
+                record_plan(c, &select, &self.query_plans)?;
+                let rows: Vec<(String, String, String)> = select.load(c)?;
+                rows.into_iter()
+                    .map(|(id, state, value)| {
+                        let row: PendingOperation = decode(&value)?;
+                        let actual = serde_json::to_value(row.state).map_err(|_| invalid())?;
+                        if row.operation_id.as_str() != id
+                            || row.space_id != q.space_id
+                            || actual.as_str() != Some(state.as_str())
+                        {
+                            return Err(invalid().into());
+                        }
+                        Ok(row)
+                    })
+                    .collect()
+            })
+            .map_err(|e| e.0)
     }
     fn query_imported(&self, q: ImportSourceQuery) -> Result<Vec<StoredAggregate>, StorageFailure> {
         q.validate().map_err(|_| invalid_query())?;

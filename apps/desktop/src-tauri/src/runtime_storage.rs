@@ -11,7 +11,7 @@ use wimm_client_application::{
 };
 use wimm_finance_core::{projection_cache, validate};
 use wimm_local_contracts::{commit::*, persistence_errors::*, storage::*, storage_port::*};
-use wimm_local_dal::legacy_sqlite::LegacySqliteWriter;
+use wimm_local_dal::sqlite::SqliteWriter;
 fn error(code: StorageFailureCode) -> StorageFailure {
     StorageFailure::unknown(code)
 }
@@ -55,7 +55,7 @@ impl SnapshotValidationPort for CoreSnapshotValidator {
 /// Mehrere Portansichten teilen genau einen profilgebundenen DAL, keinen zweiten Finanzwriter.
 #[derive(Clone)]
 pub struct NativeRuntimeStorage {
-    store: Arc<Mutex<LegacySqliteWriter<CoreSnapshotValidator>>>,
+    store: Arc<Mutex<SqliteWriter<CoreSnapshotValidator>>>,
     profile: wimm_finance_types::scalars::EntityId,
 }
 impl NativeRuntimeStorage {
@@ -64,7 +64,7 @@ impl NativeRuntimeStorage {
         path: &Path,
         profile: wimm_finance_types::scalars::EntityId,
     ) -> Result<Self, StorageFailure> {
-        let store = LegacySqliteWriter::open(path, profile.clone(), CoreSnapshotValidator)?;
+        let store = SqliteWriter::open(path, profile.clone(), CoreSnapshotValidator)?;
         store.ensure_runtime_schema()?;
         Ok(Self {
             store: Arc::new(Mutex::new(store)),

@@ -72,7 +72,7 @@ pub(super) fn hash(v: &LocalCheckpointV2) -> Result<String, ReadError> {
         .map(|b| format!("{b:02x}"))
         .collect())
 }
-impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
+impl<V: SnapshotValidationPort> SqliteWriter<V> {
     pub fn checkpoint_v2(&self, space: &EntityId) -> Result<LocalCheckpointV2, StorageFailure> {
         self.store
             .connection
@@ -128,7 +128,7 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
     }
 }
 
-impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
+impl<V: SnapshotValidationPort> SqliteWriter<V> {
     pub fn restore_checkpoint_v2(
         &mut self,
         request: wimm_local_contracts::checkpoint_v2::LocalCheckpointRestoreV2,
@@ -240,112 +240,5 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
             }
             Ok(())
         })
-    }
-}
-
-impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
-    /// Expliziter gesicherter Vorwärtsschritt vom früheren physischen Stand drei nach vier.
-    /// Originalreceipts, Recoverybytes und der ursprüngliche Aktivierungsbeleg bleiben erhalten.
-    pub fn upgrade_local_epoch_schema(
-        &mut self,
-        mut expected: Vec<LocalCheckpointV2>,
-        proofs: &[EncryptedBackupReceipt],
-        protection: &dyn SnapshotProtectionPort<LocalCheckpointV2, Error = StorageFailure>,
-        backup: &dyn BackupReadPort<Error = StorageFailure>,
-        cancel: &dyn CancellationPort,
-    ) -> Result<(), StorageFailure> {
-        if expected.is_empty() || expected.len() != proofs.len() {
-            return Err(StorageFailure::not_committed(
-                StorageFailureCode::InvalidResponse,
-            ));
-        }
-        for (value, proof) in expected.iter().zip(proofs) {
-            value.validate().map_err(|_| invalid())?;
-            self.validator.validate(&value.snapshot)?;
-            if value.physical_schema_version != 3
-                || proof.profile_id.as_str() != value.snapshot.profile_id.as_str()
-                || proof.space_id.as_str() != value.snapshot.space_id.as_str()
-                || proof.epoch.as_str() != value.snapshot.epoch.as_str()
-                || proof.snapshot_hash.as_str() != hash(value).map_err(|e| e.0)?
-            {
-                return Err(StorageFailure::not_committed(
-                    StorageFailureCode::InvalidResponse,
-                ));
-            }
-            let actual = protection.unseal(&backup.read(proof)?)?;
-            if text(&actual).map_err(|e| e.0)? != text(value).map_err(|e| e.0)? {
-                return Err(StorageFailure::not_committed(
-                    StorageFailureCode::RevisionConflict,
-                ));
-            }
-        }
-        expected.sort_by(|a, b| {
-            (a.snapshot.profile_id.as_str(), a.snapshot.space_id.as_str())
-                .cmp(&(b.snapshot.profile_id.as_str(), b.snapshot.space_id.as_str()))
-        });
-        self.store
-            .connection
-            .get_mut()
-            .immediate_transaction::<_, ReadError, _>(|c| {
-                supported(c)?;
-                let physical: String = storage_meta::table
-                    .find("storageSchemaVersion")
-                    .select(storage_meta::value)
-                    .first(c)?;
-                let keys: i64 = storage_meta::table
-                    .filter(storage_meta::key.like("localWriteEpoch:%"))
-                    .count()
-                    .get_result(c)?;
-                if physical != "3" || keys != 0 {
-                    return Err(fail(StorageFailureCode::UpdateRequired));
-                }
-                let mut current = Vec::new();
-                for s in migration::originals(c)? {
-                    current.push(capture(c, &s.profile_id, &s.space_id)?);
-                }
-                if text(&current)? != text(&expected)? {
-                    return Err(fail(StorageFailureCode::RevisionConflict));
-                }
-                if cancel.is_cancelled() {
-                    return Err(fail(StorageFailureCode::Cancelled));
-                }
-                for original in &expected {
-                    write_local_epoch(
-                        c,
-                        &original.snapshot.profile_id,
-                        &original.snapshot.space_id,
-                        &original.local_write_epoch,
-                    )?;
-                }
-                diesel::insert_into(storage_meta::table)
-                    .values((
-                        storage_meta::key.eq("localEpochMigrationBackups"),
-                        storage_meta::value.eq(text(proofs)?),
-                    ))
-                    .execute(c)?;
-                diesel::update(wimm_native_schema::table)
-                    .set(wimm_native_schema::version.eq(2))
-                    .execute(c)?;
-                diesel::update(storage_meta::table.find("storageSchemaVersion"))
-                    .set(storage_meta::value.eq("4"))
-                    .execute(c)?;
-                for original in &expected {
-                    let after = capture(
-                        c,
-                        &original.snapshot.profile_id,
-                        &original.snapshot.space_id,
-                    )?;
-                    let mut expected = original.clone();
-                    expected.physical_schema_version = 4;
-                    if text(&after)? != text(&expected)? {
-                        return Err(fail(StorageFailureCode::InvalidResponse));
-                    }
-                }
-                if cancel.is_cancelled() {
-                    return Err(fail(StorageFailureCode::Cancelled));
-                }
-                Ok(())
-            })
-            .map_err(|e| e.0)
     }
 }

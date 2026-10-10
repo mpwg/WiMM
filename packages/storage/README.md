@@ -10,9 +10,9 @@ Ein Beleg entsteht nach FULL-Commit und vollständigem Rücklesen. Backup-ID, Pr
 
 ## Gesicherte Vorwärtsmigration und Indexabfragen
 
-LOCAL_INDEX_MIGRATION_PLAN registriert Schritt 1 von Storage 1/Fachversion 1 nach Storage 2/Fachversion 1. LocalMigrationCoordinator verschlüsselt und bestätigt den Originalsnapshot vor dem Schritt. DesktopMigrationPort übergibt ausschließlich den festen Plan, den vollständigen Ausgangsstand und dessen JSON-Bytes; Rust prüft Hash, gespeicherten Beleg und Snapshot erneut innerhalb BEGIN IMMEDIATE. IndexedDbStorageAdapter.migrate verlangt eine injizierte MigrationBackupVerification, etwa createMigrationBackupVerifier aus application, und prüft den vollständigen Originalstand im expliziten Dexie-Upgrade. Ohne Sicherungsverifikation wird kein Upgrade ausgeführt. Beide Ports führen Indexaufbau, Versionsfortschritt und Journal atomar aus.
+Native SQLite verwendet unmittelbar das vollständige aktuelle Rust-DSL-Schema mit allen Referenzindizes. Der alte DesktopMigrationPort und seine Tauri-Kommandos sind entfernt. Unbekannte ältere native Dateiformen werden kontrolliert abgewiesen; es gibt keine Altdatenübernahme oder stille Reparatur. Aktuelle verschlüsselte Sicherung und Checkpoint/Restore bleiben erforderlich (ADR-060).
 
-Bekannte V1-/V2-Datenbanken öffnen ohne automatische Migration; unbekannte Versionen bleiben erhalten. IndexQueryPorts bieten begrenzte Seiten für Konto/Datum/ID, Splitkategorie/Datum, direkte Importreferenz, externe Importquell-ID und Outboxzustand/Reihenfolge. Fachänderungen und Referenzzeilen bleiben zusammen atomar. Alte Snapshots und unveränderte Originalentwürfe bleiben kompatibel. [Historischer Abnahmesnapshot für #82/#83](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70cf6ac6ff9bc28c4a9c4376e92/docs/handoffs/storage-index-migration-2026-10-09.md), ADR-048. Die Startkoordination der Anwendung folgt mit K05.
+Der noch zu ersetzende Browser-IndexedDB-Adapter enthält historische Indexmigrationen. Diese sind keine Zielanforderung und werden mit der tatsächlichen persistenten Browser-SQLite-Integration in #109/#146 entfernt. Native Indexprüfungen beginnen direkt auf dem vollständigen Schema; sie behaupten keine durchgeführte Migration. Begrenzte Konto-/Kategorie-/Import-/Pendingabfragen und atomare Referenzpflege bleiben auf beiden tatsächlichen Adaptern geprüft.
 
 ## Prüfung
 

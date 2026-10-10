@@ -10,76 +10,10 @@ use wimm_local_contracts::{
 use wimm_persistence_contracts::CommitOutcome;
 diesel::table! { wimm_native_receipts (identity) { identity -> Text, profile -> Text, space -> Text, request -> Text, receipt -> Text, } }
 diesel::table! { wimm_native_recovery (profile) { profile -> Text, ticket -> Binary, } }
-pub(in crate::legacy_sqlite) fn read_schema(c: &mut SqliteConnection) -> Result<(), ReadError> {
-    let exists: bool = diesel::select(diesel::dsl::exists(
-        sqlite_master::table
-            .filter(sqlite_master::type_.eq("table"))
-            .filter(sqlite_master::name.eq("wimm_native_schema")),
-    ))
-    .get_result(c)?;
-    if !exists {
-        return Err(fail(StorageFailureCode::UpdateRequired));
-    }
-    let objects: i64 = sqlite_master::table
-        .filter(sqlite_master::name.eq_any([
-            "wimm_native_schema",
-            "wimm_native_receipts",
-            "wimm_native_recovery",
-            "wimm_native_receipts_by_area",
-        ]))
-        .count()
-        .get_result(c)?;
-    if objects != 4 {
-        return Err(fail(StorageFailureCode::UpdateRequired));
-    }
-    let rows: Vec<(i32, String)> = wimm_native_schema::table
-        .select((wimm_native_schema::version, wimm_native_schema::backups))
-        .load(c)?;
-    let physical: Option<String> = storage_meta::table
-        .find("storageSchemaVersion")
-        .select(storage_meta::value)
-        .first(c)
-        .optional()?;
-    if rows.len() != 1
-        || !matches!(
-            (rows[0].0, physical.as_deref()),
-            (1, Some("3")) | (2, Some("4"))
-        )
-    {
-        return Err(fail(StorageFailureCode::UpdateRequired));
-    }
-    if physical.as_deref() == Some("4") {
-        let keys: Vec<String> = storage_meta::table
-            .filter(storage_meta::key.like("localEpoch:%"))
-            .select(storage_meta::key)
-            .load(c)?;
-        for key in keys {
-            let parts: [String; 2] = decode(key.strip_prefix("localEpoch:").ok_or_else(invalid)?)?;
-            let profile = EntityId::new(parts[0].clone()).map_err(|_| invalid())?;
-            let space = EntityId::new(parts[1].clone()).map_err(|_| invalid())?;
-            let epoch: Option<String> = storage_meta::table
-                .find(local_write_key(&profile, &space))
-                .select(storage_meta::value)
-                .first(c)
-                .optional()?;
-            if epoch.is_none() || epoch.is_some_and(|e| EntityId::new(e).is_err()) {
-                return Err(fail(StorageFailureCode::UpdateRequired));
-            }
-        }
-    }
-    let backups: Vec<wimm_local_contracts::models::EncryptedBackupReceipt> = decode(&rows[0].1)?;
-    if backups.is_empty()
-        || !unique(
-            backups
-                .iter()
-                .map(|r| (r.profile_id.as_str(), r.space_id.as_str())),
-        )
-        || backups.iter().any(|r| r.validate().is_err())
-    {
-        return Err(invalid().into());
-    }
-    Ok(())
+pub(in crate::sqlite) fn read_schema(c: &mut SqliteConnection) -> Result<(), ReadError> {
+    supported(c).map(|_| ())
 }
+
 fn receipt(original: &LocalCommitRequest) -> Result<LocalCommitReceipt, ReadError> {
     original
         .validate()
@@ -130,7 +64,7 @@ fn lookup(
     })
     .transpose()
 }
-impl<V: SnapshotValidationPort> LocalCommitPort for LegacySqliteWriter<V> {
+impl<V: SnapshotValidationPort> LocalCommitPort for SqliteWriter<V> {
     fn commit(&mut self, request: LocalCommitRequest) -> LocalCommitOutcome {
         self.commit_cancellable(request, &NeverCancel)
     }
@@ -155,7 +89,7 @@ impl<V: SnapshotValidationPort> LocalCommitPort for LegacySqliteWriter<V> {
             .map_err(|e| e.0)
     }
 }
-impl<V: SnapshotValidationPort> CancellableLocalCommitPort for LegacySqliteWriter<V> {
+impl<V: SnapshotValidationPort> CancellableLocalCommitPort for SqliteWriter<V> {
     fn commit_cancellable(
         &mut self,
         request: LocalCommitRequest,
@@ -241,7 +175,7 @@ impl<V: SnapshotValidationPort> CancellableLocalCommitPort for LegacySqliteWrite
         }
     }
 }
-impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
+impl<V: SnapshotValidationPort> SqliteWriter<V> {
     /// Private profilgebundene Recoverybytes; Inhaltsschutz/Originalprüfung liegt im Rust-Anwendungsport.
     pub fn load_recovery(&self) -> Result<Option<Vec<u8>>, StorageFailure> {
         self.store
@@ -302,8 +236,5 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
         })
     }
 }
-mod migration;
 
 mod checkpoint;
-
-mod index_migration;

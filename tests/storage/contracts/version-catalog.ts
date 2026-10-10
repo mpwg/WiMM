@@ -9,7 +9,7 @@ export const versionCases = ['storage', 'domain'] as const;
 export async function runVersionCase(kind: typeof versionCases[number], fixture: VersionFixture): Promise<void> {
   const storage = fixture.storage;
   try {
-    await storage.replaceSnapshot(p5Snapshot());
+    await storage.replaceSnapshot(p5Snapshot(fixture.storageSchemaVersion));
     const before = normalized(await storage.exportSnapshot(spaceId));
     await fixture.withSchemaVersion(kind, 999, async () => {
       const attempts = [() => storage.initializeArea(spaceId, epoch), () => storage.readAggregate(id(10)), () => storage.query({ spaceId }), () => storage.loadConfirmed(spaceId), () => storage.loadPending(spaceId), () => storage.getSyncState(spaceId), () => storage.exportSnapshot(spaceId), () => storage.applyAtomicBatch({ expectedRevisions: [], aggregates: [], outbox: [], projections: [] }), () => storage.saveSyncPage({ state: before.syncState!, confirmed: [], removeOperationIds: [], projections: [] }), () => storage.replaceSnapshot(before), () => storage.rebuildProjections(spaceId)];

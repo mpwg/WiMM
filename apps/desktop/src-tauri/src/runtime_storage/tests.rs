@@ -12,10 +12,8 @@ use wimm_finance_types::{
     scalars::*,
 };
 use wimm_local_contracts::{
-    checkpoint_v2::LocalCheckpointRestoreV2,
-    models::EncryptedBackupReceipt,
-    ports::EncryptedBackupRequest,
-    scalars::{LocalHash, LocalId},
+    checkpoint_v2::LocalCheckpointRestoreV2, models::EncryptedBackupReceipt,
+    ports::EncryptedBackupRequest, scalars::LocalId,
 };
 fn id(n: u32) -> EntityId {
     EntityId::new(format!("50000000-0000-4000-8000-{n:012}")).unwrap()
@@ -133,17 +131,9 @@ impl Rig {
         std::fs::create_dir_all(&folder).unwrap();
         let path = folder.join("state.sqlite3");
         // Tatsächlicher ORM-Schemaaufbau, ausschließlich synthetischer Testbestand.
-        wimm_local_dal::legacy_sqlite::LegacySqliteStore::initialize_empty_file(&path).unwrap();
-        assert_eq!(
-            NativeRuntimeStorage::open(&path, context.profile_id.clone())
-                .err()
-                .unwrap()
-                .code,
-            StorageFailureCode::UpdateRequired
-        );
+        wimm_local_dal::sqlite::SqliteStore::initialize_empty_file(&path).unwrap();
         let mut dal =
-            LegacySqliteWriter::open(&path, context.profile_id.clone(), CoreSnapshotValidator)
-                .unwrap();
+            SqliteWriter::open(&path, context.profile_id.clone(), CoreSnapshotValidator).unwrap();
         dal.initialize_area(&context.space_id, &context.epoch)
             .unwrap();
         dal.apply_atomic_batch(AtomicBatch {
@@ -174,23 +164,6 @@ impl Rig {
             folder,
             next: Cell::new(700),
         };
-        let original = dal.export_snapshot(&context.space_id).unwrap();
-        use sha2::{Digest, Sha256};
-        let hash = Sha256::digest(serde_json::to_vec(&original).unwrap())
-            .iter()
-            .map(|b| format!("{b:02x}"))
-            .collect::<String>();
-        let proof = backup
-            .persist(EncryptedBackupRequest {
-                profile_id: LocalId::new(context.profile_id.as_str().into()).unwrap(),
-                space_id: LocalId::new(context.space_id.as_str().into()).unwrap(),
-                epoch: LocalId::new(context.epoch.as_str().into()).unwrap(),
-                snapshot_hash: LocalHash::new(hash).unwrap(),
-                ciphertext: protection.seal(original.clone()).unwrap(),
-            })
-            .unwrap();
-        dal.enable_commit_schema(vec![original], &[proof], &protection, &backup, &NeverCancel)
-            .unwrap();
         drop(dal);
         let port = NativeRuntimeStorage::open(&path, context.profile_id.clone()).unwrap();
         Self {

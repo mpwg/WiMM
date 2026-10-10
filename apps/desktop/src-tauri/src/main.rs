@@ -6,7 +6,6 @@ use std::sync::Mutex;
 mod backups;
 #[cfg(test)]
 mod core_contract;
-mod migration;
 pub mod orm_storage;
 pub mod runtime_storage;
 mod storage_failure;
@@ -169,7 +168,6 @@ fn main() {
             }
             .map_err(std::io::Error::other)?;
             app.manage(backups::BackupState(Mutex::new(backup_connection)));
-            app.manage(migration::MigrationCancellationState::default());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -190,8 +188,6 @@ fn main() {
             orm_storage::orm_storage_rebuild_projections,
             backups::storage_persist_encrypted_backup,
             backups::storage_read_encrypted_backup,
-            migration::storage_migrate,
-            migration::storage_cancel_migration,
             orm_storage::orm_storage_query_indexed_transactions,
             orm_storage::orm_storage_query_indexed_pending,
             orm_storage::orm_storage_query_imported_transactions

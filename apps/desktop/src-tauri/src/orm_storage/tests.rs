@@ -35,11 +35,6 @@ fn contract_driver() {
                 let receipt: crate::backups::BackupReceipt = decode(&args["receipt"])?;
                 serde_json::to_value(backups.read(&receipt)?).map_err(|_| invalid())
             }
-            "storage_migrate" => {
-                let input: crate::migration::MigrationInput = decode(&args["input"])?;
-                crate::migration::migrate_orm(&state, &backups, input, || false)?;
-                Ok(Value::Null)
-            }
             "storage_query_indexed_transactions" => {
                 use wimm_local_contracts::index_ports::LocalIndexQueryPort;
                 state.with_profile(profile, |p| {
@@ -130,18 +125,26 @@ fn contract_driver() {
                 } else {
                     "storageSchemaVersion"
                 };
+                let original: String = raw
+                    .query_row(
+                        "SELECT value FROM storage_meta WHERE key=?1",
+                        [key],
+                        |row| row.get(0),
+                    )
+                    .unwrap();
                 raw.execute(
                     "UPDATE storage_meta SET value=?1 WHERE key=?2",
                     rusqlite::params![args["version"].as_str().unwrap(), key],
                 )
                 .unwrap();
-                Ok(Value::Null)
+                Ok(Value::String(original))
             }
             "test_projection_fault" => {
                 let raw = rusqlite::Connection::open(&path).unwrap();
-                raw.execute_batch("DROP TRIGGER IF EXISTS contract_projection_fault; DROP TABLE IF EXISTS contract_projection_writes;").unwrap();
+                raw.execute_batch("DROP TRIGGER IF EXISTS contract_projection_fault;")
+                    .unwrap();
                 if args["enabled"] == true {
-                    raw.execute_batch("CREATE TABLE contract_projection_writes(count INTEGER); INSERT INTO contract_projection_writes VALUES(0); CREATE TRIGGER contract_projection_fault BEFORE INSERT ON projections BEGIN UPDATE contract_projection_writes SET count=count+1; SELECT CASE WHEN (SELECT count FROM contract_projection_writes)>=2 THEN RAISE(ABORT,'synthetic') END; END;").unwrap();
+                    raw.execute_batch("CREATE TRIGGER contract_projection_fault BEFORE INSERT ON projections WHEN EXISTS(SELECT 1 FROM projections WHERE profile_id=new.profile_id AND space_id=new.space_id) BEGIN SELECT RAISE(ABORT,'synthetic'); END;").unwrap();
                 }
                 Ok(Value::Null)
             }
@@ -154,99 +157,6 @@ fn contract_driver() {
         println!("WIMM_CONTRACT:{response}");
         std::io::stdout().flush().unwrap();
     }
-}
-#[test]
-fn direct_native_orm_migration_asserts_backup_cas_cancellation_and_index_journal() {
-    use crate::{
-        backups::{BackupReceipt, EncryptedBackupReader},
-        migration::MigrationInput,
-    };
-    use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-    use sha2::{Digest, Sha256};
-    use wimm_local_contracts::index_ports::{LocalIndexQueryPort, PendingIndexQuery};
-    struct Reader(BackupReceipt);
-    impl EncryptedBackupReader for Reader {
-        fn read_ciphertext(&self, r: &BackupReceipt) -> Result<Vec<u8>, StorageFailure> {
-            if serde_json::to_value(&self.0).unwrap() == serde_json::to_value(r).unwrap() {
-                Ok(vec![0, 255, 1])
-            } else {
-                Err(invalid())
-            }
-        }
-    }
-    // Opake synthetische Cipherbytes prüfen hier nur den DAL-Rücklesebeleg;
-    // tatsächliche Verschlüsselung/Entschlüsselung läuft im gemeinsamen Katalog.
-    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../../../test-results/dal03/migrations");
-    std::fs::create_dir_all(&root).unwrap();
-    let path = root.join(format!(
-        "native-{}-{}.sqlite3",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ));
-    let state = OrmStorageState::initialize_new(&path).unwrap();
-    let profile = "10000000-0000-4000-8000-000000000001";
-    let space = EntityId::new("10000000-0000-4000-8000-000000000002".into()).unwrap();
-    let epoch = EntityId::new("10000000-0000-4000-8000-000000000003".into()).unwrap();
-    state
-        .with_profile(profile, |p| p.initialize_area(&space, &epoch))
-        .unwrap();
-    let source = state
-        .with_profile(profile, |p| p.export_snapshot(&space))
-        .unwrap();
-    let bytes = serde_json::to_vec(&source).unwrap();
-    let receipt: BackupReceipt = serde_json::from_value(serde_json::json!({
-        "backupId":"10000000-0000-4000-8000-000000000004",
-        "profileId":profile,"spaceId":space,"epoch":epoch,
-        "snapshotHash":URL_SAFE_NO_PAD.encode(Sha256::digest(&bytes))
-    }))
-    .unwrap();
-    let reader = Reader(receipt.clone());
-    let input = || {
-        serde_json::from_value::<MigrationInput>(serde_json::json!({"plan":{"expectedMigrationNumber":0,"from":{"storageSchemaVersion":1,"domainSchemaVersion":1},"steps":[{"number":1,"from":{"storageSchemaVersion":1,"domainSchemaVersion":1},"to":{"storageSchemaVersion":2,"domainSchemaVersion":1},"destructive":false}]},"expectedSnapshot":source,"snapshotBytes":bytes,"backup":receipt})).unwrap()
-    };
-    let calls = std::cell::Cell::new(0);
-    assert_eq!(
-        crate::migration::migrate_orm(&state, &reader, input(), || {
-            let n = calls.get() + 1;
-            calls.set(n);
-            n >= 3
-        })
-        .unwrap_err()
-        .code,
-        StorageFailureCode::Cancelled
-    );
-    assert_eq!(
-        state
-            .with_profile(profile, |p| p.export_snapshot(&space))
-            .unwrap()
-            .storage_schema_version
-            .value(),
-        1
-    );
-    crate::migration::migrate_orm(&state, &reader, input(), || false).unwrap();
-    assert_eq!(
-        state
-            .with_profile(profile, |p| p.export_snapshot(&space))
-            .unwrap()
-            .storage_schema_version
-            .value(),
-        2
-    );
-    assert!(crate::migration::migrate_orm(&state, &reader, input(), || false).is_err());
-    assert!(
-        state
-            .with_profile(profile, |p| p.query_pending(PendingIndexQuery {
-                space_id: space.clone(),
-                state: PendingState::Queued,
-                limit: 1
-            }))
-            .unwrap()
-            .is_empty()
-    );
 }
 #[test]
 fn generated_tauri_ipc_command_names_and_typed_orm_arguments_roundtrip() {
