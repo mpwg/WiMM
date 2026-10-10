@@ -47,6 +47,7 @@ pub struct PreparedCommit {
     context: CommitContext,
     request: LocalCommitRequest,
     change: ChangeSet,
+    before: Vec<wimm_finance_types::models::Aggregate>,
 }
 pub fn prepare_command(
     request: Request,
@@ -184,6 +185,7 @@ fn prepare_change(
     };
     Ok(PreparedCommit {
         context: started.clone(),
+        before: before.to_vec(),
         request: LocalCommitRequest {
             identity,
             batch: AtomicBatch {
@@ -209,3 +211,5 @@ impl PreparedCommit {
     }
 }
 pub mod dispatch;
+
+pub mod history;

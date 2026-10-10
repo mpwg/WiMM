@@ -118,7 +118,7 @@ fn committed(
     }
 }
 
-fn valid_receipt(prepared: &PreparedCommit, receipt: &LocalCommitReceipt) -> bool {
+pub(crate) fn valid_receipt(prepared: &PreparedCommit, receipt: &LocalCommitReceipt) -> bool {
     let Ok(bytes) = serde_json::to_vec(&prepared.request) else {
         return false;
     };
