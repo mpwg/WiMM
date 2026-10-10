@@ -134,6 +134,31 @@ fn run_exports(args: &[String], data: Vec<(&str, String)>) -> Result<(), String>
 }
 fn main() {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
+    if args == ["--probe-application-v2"] {
+        use std::io::BufRead;
+        for line in std::io::stdin().lock().lines() {
+            let text = line.expect("Lesbare synthetische Probe");
+            let result = match serde_json::from_str::<
+                wimm_client_application::api::ApplicationRequestV2,
+            >(&text)
+            {
+                Ok(input) => serde_json::to_value(
+                    wimm_client_application::api::prepare_application_v2(input),
+                )
+                .unwrap(),
+                Err(_) => serde_json::json!({"formError":true}),
+            };
+            println!("{}", result);
+        }
+        return;
+    }
+    if args.first().is_some_and(|a| a == "--application") {
+        if let Err(error) = run_exports(&args[1..], application_exports()) {
+            eprintln!("{error}");
+            std::process::exit(1);
+        }
+        return;
+    }
     if args.first().is_some_and(|a| a == "--local") {
         if let Err(error) = run_exports(&args[1..], local_exports()) {
             eprintln!("{error}");
@@ -233,6 +258,30 @@ fn public_exports() -> Vec<(&'static str, String)> {
         .map(|(name, schema)| (name, serde_json::to_string_pretty(&schema).unwrap() + "\n"))
         .collect::<Vec<_>>();
     let manifest = serde_json::json!({"scope":"public","bindingVersion":2,"protocolVersion":1,"files":exports.iter().map(|(name,_)|*name).collect::<Vec<_>>(),"requiresRustRelationalValidation":true,"exports":[{"name":"validate_public_operation_form_v2","request":"public-operation.schema.json","result":"public-form-outcome.schema.json","error":"public-binding-error.schema.json"},{"name":"validate_public_roster_form_v2","request":"public-signed-roster.schema.json","result":"public-form-outcome.schema.json","error":"public-binding-error.schema.json"}]});
+    exports.push((
+        "manifest.json",
+        serde_json::to_string_pretty(&manifest).unwrap() + "\n",
+    ));
+    exports
+}
+
+fn application_exports() -> Vec<(&'static str, String)> {
+    use wimm_client_application::api::{ApplicationPreparationV2, ApplicationRequestV2};
+    let data = [
+        (
+            "application-request.schema.json",
+            schemars::schema_for!(ApplicationRequestV2),
+        ),
+        (
+            "application-preparation.schema.json",
+            schemars::schema_for!(ApplicationPreparationV2),
+        ),
+    ];
+    let mut exports = data
+        .into_iter()
+        .map(|(name, schema)| (name, serde_json::to_string_pretty(&schema).unwrap() + "\n"))
+        .collect::<Vec<_>>();
+    let manifest = serde_json::json!({"scope":"application","bindingVersion":2,"domainSchemaVersion":1,"files":exports.iter().map(|(name,_)|*name).collect::<Vec<_>>(),"exports":[{"name":"prepare_application_v2","request":"application-request.schema.json","result":"application-preparation.schema.json","storageCommit":false}],"source":"wimm-client-application","productSwitch":false});
     exports.push((
         "manifest.json",
         serde_json::to_string_pretty(&manifest).unwrap() + "\n",

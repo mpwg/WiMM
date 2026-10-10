@@ -6,6 +6,8 @@ license.workspace = true
 publish = false
 
 [dependencies]
+schemars = { version = "=1.2.2" }
+wimm-client-application = { path = "../../crates/client-application", features = ["contract-schema"] }
 wimm-core-bindings = { path = "../../crates/finance-bindings", features = ["contract-schema"] }
 wimm-local-contracts = { path = "../../crates/local-contracts", features = ["contract-schema"] }
 wimm-public-contracts = { path = "../../crates/public-contracts", features = ["contract-schema"] }
