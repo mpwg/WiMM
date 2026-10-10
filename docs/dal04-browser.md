@@ -110,3 +110,20 @@ pnpm exec playwright test --config tests/browser-storage/config.ts --project chr
 ```
 
 Die neue vollständige Ubuntu-CI auf fcbef65 scheitert unabhängig an einer frühen AR05-Probeassertion für Abbruch/Writefehler. [#150](https://github.com/mpwg/WiMM/issues/150) führt Ursachen-/Umstellungsprüfung; die betroffene Probe ist ohnehin vollständig nach #146 zu entfernen. #148 bleibt bis aktueller gesamter CI offen. DAL01-/Receipt-/bisheriger Leistungsjob erfolgreich, keine Gesamtabnahme hieraus. Neue lokale Typecheck-/Lintprüfung bestanden; bei diesen reinen zusätzlichen Browsernachweisen blieb Rust-Produktcode unverändert.
+
+## AR05-Prüfpfad auf dem aktuellen DAL und unabhängige Netzabschaltung
+
+Der in #150 betroffene frühere sqlite_commit-Probetreiber wird von sämtlichen Clientanwendungs-Integrationstests nicht mehr importiert. Clientanwendung dev-dep verlangt nur sqlite, kein receipt-probe. Gemeinsamer Testconsumer delegiert Erzeugung/Öffnen/Lesen/Schreiben/Receiptlookup an denselben aktuellen SqliteWriter<CoreSnapshotValidator> wie die Plattformhosts. Keine eigene Schema-/SQLimplementierung oder Datenhaltung. Leere Erzeugung und bestehende Wiederöffnung sind explizit getrennt, einschließlich des zweiten Recoveryprozesses.
+
+Die bestehenden Abnahmefälle bleiben erhalten: Abbruch, CAS, Originalhash/Replay, Scopewechsel vor/nach tatsächlichen Writes und nach COMMIT, verlorene Antwort, gesicherte Wiederaufnahme, Historie und alle Fach-/Gegenbefehlsorakel. Testseitige Fehlerinjektion fügt dem kopierten Auftrag einen ungültigen letzten Handle hinzu; vorherige echte SQL-Aggregatwrites müssen im aktuellen DAL vollständig zurückrollen. Ein physischer Datenträgerfehler wird daraus nicht behauptet. Scopewechsel an der zweiten tatsächlichen Abbruchgrenze verlangt zusätzlich ein angelegtes nichtleeres SQLite-Rollbackjournal vor dem Callback. Antwortverlust wird ausschließlich nach einem tatsächlichen erfolgreichen ORM-Commit erzeugt. Keine produktiven Sonderports, neue Legacysperre oder Änderung der Commitgewissheit.
+
+Aktuell 38 native Clientanwendungs-Testeinträge einschließlich echter zusätzlicher Recovery-Childprozesse und Doctests erfolgreich; Clippy unverändert mit -D warnings. Vollständiger Application-Bindingpfad ebenfalls erfolgreich: Rust/WASM-Node, 387 gemeinsame Fälle, 382 tatsächliche Vorbereitungscalls, 140 vorbereitete Fälle und alle 22 Befehlsarten. Native SQLite-Assertions liegen im selben Pfad; sprachseitige Callbackfälle sind ergänzende synthetische Belege. Der frühere sporadische CI-Fehler ließ sich in 40 lokalen Wiederholungen nicht reproduzieren; daraus keinen bestandenen neuen CI-Lauf ableiten. #150/#148 bis neuer vollständiger CI offen.
+
+Unabhängiger Linux-Netztest: eigener Vite-Previewprozess für jeden Browser, vollständige Cache-/Datenvorbereitung, Ende des ersten Browserprozesses; anschließend den eigenen Previewprozess tatsächlich beenden und Nichterreichbarkeit der Origin bestätigen, bevor ein neuer Browserprozess mit identischem persistentem Profil startet. Keine Playwright-Offlineemulation, kein erfolgreicher Live-Serverzugriff. Chromium/Firefox/WebKit starten aus dem Cache mit Service-Worker-Kontrolle, identischem produktivem Konto und vollständig identischen synthetischen Originalentwürfen/Bestätigungen/Cursor; lokale Writes weiterhin erfolgreich. Alle drei bestanden.
+
+```sh
+node scripts/test-application-bindings.mjs
+WIMM_OFFLINE_STOP_SERVER=1 pnpm exec playwright test --config tests/browser-storage/offline.config.ts
+```
+
+Dieser zusätzliche Nachweis grenzt #149 ein: echte Servernichtereichbarkeit funktioniert auch in WebKit, dessen Playwright-Offlineemulation scheitert weiter. Navigator-onLine/echte physische Flugmodus-/iOS-/Safariabnahme bleiben davon getrennt; Ursache der Emulationsabweichung noch nicht abschließend belegt, Issue bleibt offen. Die ursprüngliche fehlgeschlagene Reproduktion bleibt erhalten; kein ersetzter Backendpfad oder Online-Warmstart als Kaltstart. Aktuelle Typecheck-/Lint-/Architekturprüfung grün; zwei Typfehler des nachträglich verschärften Quotatestfixtures (Readonly-Draft und DTO-Mutabilität) korrigiert, keine Speichersperre gelockert.

@@ -15,7 +15,9 @@ use std::{cell::RefCell, rc::Rc};
 use wimm_client_application::{dispatch::*, *};
 use wimm_finance_types::{command_contracts::Request, scalars::*};
 use wimm_local_contracts::{commit::*, persistence_errors::*, storage_port::CancellationPort};
-use wimm_local_dal::sqlite_commit::{CommitBoundary, SqliteCommitStore};
+#[path = "support/current_sqlite.rs"]
+mod current_sqlite;
+use current_sqlite::{CommitBoundary, CurrentSqlite};
 #[derive(Clone)]
 struct Scope(Rc<RefCell<CommitContext>>);
 impl CommitContextPort for Scope {
@@ -29,7 +31,7 @@ impl CancellationPort for Cancel {
         self.0
     }
 }
-fn fixture() -> (PreparedCommit, Scope, SqliteCommitStore, std::path::PathBuf) {
+fn fixture() -> (PreparedCommit, Scope, CurrentSqlite, std::path::PathBuf) {
     let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
         "../../finance-core/tests/fixtures/contract-catalog.json"
     ))
@@ -64,7 +66,7 @@ fn fixture() -> (PreparedCommit, Scope, SqliteCommitStore, std::path::PathBuf) {
             .unwrap()
             .as_nanos()
     ));
-    let mut db = SqliteCommitStore::open(&path, ctx.profile_id.clone()).unwrap();
+    let mut db = CurrentSqlite::create(&path, ctx.profile_id.clone()).unwrap();
     db.initialize_area(&ctx.space_id, &ctx.epoch).unwrap();
     (prepared, Scope(Rc::new(RefCell::new(ctx))), db, path)
 }
@@ -83,7 +85,7 @@ fn receipt(result: DispatchResult, expected_current: bool) -> LocalCommitReceipt
         _ => panic!("Erwartetes tatsächliches Receipt fehlt"),
     }
 }
-fn empty(db: &SqliteCommitStore, p: &PreparedCommit) {
+fn empty(db: &CurrentSqlite, p: &PreparedCommit) {
     for a in &p.request().batch.aggregates {
         assert!(db.read_aggregate(&a.handle).unwrap().is_none());
     }
@@ -104,7 +106,7 @@ fn real_sqlite_commit_restart_and_exact_replay_preserve_original() {
         true,
     );
     drop(db);
-    let mut reopened = SqliteCommitStore::open(&path, p.context().profile_id.clone()).unwrap();
+    let mut reopened = CurrentSqlite::open(&path, p.context().profile_id.clone()).unwrap();
     data_eq!(
         receipt(
             pipeline.dispatch(p.clone(), &mut reopened, &scope, &Cancel(false)),
@@ -127,7 +129,7 @@ fn real_sqlite_commit_restart_and_exact_replay_preserve_original() {
 #[test]
 fn lost_response_blocks_new_writes_and_resolves_original_after_profile_switch() {
     let (p, scope, mut db, path) = fixture();
-    db.inject_after_commit_response_loss();
+    db.lose_next_response();
     let mut pipeline = CommitPipeline::default();
     assert!(matches!(
         pipeline.dispatch(p.clone(), &mut db, &scope, &Cancel(false)),
@@ -140,7 +142,7 @@ fn lost_response_blocks_new_writes_and_resolves_original_after_profile_switch() 
     scope.0.borrow_mut().profile_id =
         EntityId::new("50000000-0000-4000-8000-000000000099".into()).unwrap();
     drop(db);
-    let reopened = SqliteCommitStore::open(&path, p.context().profile_id.clone()).unwrap();
+    let reopened = CurrentSqlite::open(&path, p.context().profile_id.clone()).unwrap();
     let actual = receipt(pipeline.resolve(&reopened, &scope), false);
     eq(&actual.identity, &p.request().identity);
     data_eq!(
@@ -210,7 +212,7 @@ fn cancellation_and_storage_failure_leave_no_partial_state() {
     for cancelled in [true, false] {
         let (p, scope, mut db, _) = fixture();
         if !cancelled {
-            db.inject_before_receipt_failure();
+            db.inject_write_failure();
         }
         match CommitPipeline::default().dispatch(p.clone(), &mut db, &scope, &Cancel(cancelled)) {
             DispatchResult::NotCommitted { error } => data_eq!(
@@ -221,7 +223,21 @@ fn cancellation_and_storage_failure_leave_no_partial_state() {
                     StorageFailureCode::WriteFailed
                 }
             ),
-            _ => panic!("Abbruch/Fehler muss sicher zurückrollen"),
+            DispatchResult::Unknown => {
+                panic!("Abbruch/Fehler muss sicher zurückrollen: unknown, cancelled={cancelled}")
+            }
+            DispatchResult::Committed { .. } => {
+                panic!("Abbruch/Fehler muss sicher zurückrollen: committed, cancelled={cancelled}")
+            }
+            DispatchResult::ScopeChanged => panic!(
+                "Abbruch/Fehler muss sicher zurückrollen: scopeChanged, cancelled={cancelled}"
+            ),
+            DispatchResult::Busy => {
+                panic!("Abbruch/Fehler muss sicher zurückrollen: busy, cancelled={cancelled}")
+            }
+            DispatchResult::Idle => {
+                panic!("Abbruch/Fehler muss sicher zurückrollen: idle, cancelled={cancelled}")
+            }
         }
         empty(&db, &p);
     }

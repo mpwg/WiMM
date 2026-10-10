@@ -23,6 +23,6 @@ wasm-bindings = ["dep:tsify", "dep:wasm-bindgen", "wimm-finance-types/wasm-bindi
 contract-schema = ["dep:schemars", "wimm-finance-types/contract-schema", "wimm-local-contracts/contract-schema"]
 [dev-dependencies]
 wimm-client-crypto = { path = "../client-crypto" }
-wimm-local-dal = { path = "../local-dal", features = ["receipt-probe"] }
+wimm-local-dal = { path = "../local-dal", features = ["sqlite"] }
 [lints]
 workspace = true

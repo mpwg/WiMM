@@ -3,7 +3,7 @@ import {expect,test as base,chromium,firefox,webkit} from '@playwright/test';
 import {mkdtemp} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {readFileSync} from 'node:fs';
-import type {LocalCommitRequest,RuntimeRequestV2} from '../../packages/browser-adapters/generated/sqlite/wimm_browser_runtime.js';
+import type {LocalCommitRequest,RuntimeRequestV2,LocalSnapshot as RustSnapshot} from '../../packages/browser-adapters/generated/sqlite/wimm_browser_runtime.js';
 import {randomUUID} from 'node:crypto';
 import {p5Snapshot,normalized} from '../storage/contracts/snapshot-catalog.js';
 const engines={chromium,firefox,webkit};
@@ -166,10 +166,10 @@ test('Tatsächliche Chromium-Originquota weist OPFS-Write ab und erhält vollst�
  await port(page,{method:'replaceSnapshot',snapshot:source});const before=await port(page,{method:'exportSnapshot',spaceId:source.spaceId});
  const usage=await page.evaluate(async()=>(await navigator.storage.estimate()).usage);expect(typeof usage).toBe('number');
  const session=await context.newCDPSession(page);const origin='http://127.0.0.1:4179';
- const enlarged=structuredClone(source);enlarged.pending[0]!.draft={syntheticPrivateNote:'x'.repeat(2*1024*1024)};
+ const enlarged={...source,pending:source.pending.map((entry,index)=>index===0?{...entry,draft:{syntheticPrivateNote:'x'.repeat(2*1024*1024)}}:entry)};
  await session.send('Storage.overrideQuotaForOrigin',{origin,quotaSize:usage!+4096});
  try{
-  const error=await page.evaluate(async command=>{try{await window.sqliteClient.port({contractVersion:2,command});return null;}catch(error){const failure=error as {code:string;commitState:string};return {code:failure.code,commitState:failure.commitState};}},{method:'replaceSnapshot',snapshot:enlarged});
+  const error=await page.evaluate(async command=>{try{await window.sqliteClient.port({contractVersion:2,command});return null;}catch(error){const failure=error as {code:string;commitState:string};return {code:failure.code,commitState:failure.commitState};}},{method:'replaceSnapshot' as const,snapshot:JSON.parse(JSON.stringify(enlarged)) as RustSnapshot});
   expect(error).not.toBeNull();expect(['WRITE_FAILED','RESOURCE_UNAVAILABLE','QUOTA','COMMIT_UNKNOWN']).toContain(error!.code);expect(['notCommitted','unknown']).toContain(error!.commitState);
  }finally{await session.send('Storage.overrideQuotaForOrigin',{origin});await session.detach();}
  await page.reload();await expect.poll(()=>page.evaluate(()=>window.sqliteStatus)).toBe('ready');

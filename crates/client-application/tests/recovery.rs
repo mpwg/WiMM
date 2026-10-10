@@ -7,7 +7,9 @@ use std::{
 use wimm_client_application::{dispatch::*, recovery::*, *};
 use wimm_finance_types::scalars::*;
 use wimm_local_contracts::{persistence_errors::*, storage_port::CancellationPort};
-use wimm_local_dal::sqlite_commit::SqliteCommitStore;
+#[path = "support/current_sqlite.rs"]
+mod current_sqlite;
+use current_sqlite::CurrentSqlite;
 struct Scope(CommitContext);
 impl CommitContextPort for Scope {
     fn current(&self) -> CommitContext {
@@ -98,7 +100,7 @@ fn root() -> PathBuf {
     std::fs::create_dir_all(&root).unwrap();
     root
 }
-fn fixture(root: &Path) -> (PreparedCommit, Scope, SqliteCommitStore, Journal) {
+fn fixture(root: &Path, fresh: bool) -> (PreparedCommit, Scope, CurrentSqlite, Journal) {
     let cases: Vec<serde_json::Value> = serde_json::from_str(include_str!(
         "../../finance-core/tests/fixtures/contract-catalog.json"
     ))
@@ -122,8 +124,12 @@ fn fixture(root: &Path) -> (PreparedCommit, Scope, SqliteCommitStore, Journal) {
     let p = prepare_command(r, &ctx, &ctx, AreaMode::Standalone)
         .unwrap()
         .unwrap();
-    let mut db =
-        SqliteCommitStore::open(&root.join("finance.sqlite3"), ctx.profile_id.clone()).unwrap();
+    let mut db = if fresh {
+        CurrentSqlite::create(&root.join("finance.sqlite3"), ctx.profile_id.clone())
+    } else {
+        CurrentSqlite::open(&root.join("finance.sqlite3"), ctx.profile_id.clone())
+    }
+    .unwrap();
     db.initialize_area(&ctx.space_id, &ctx.epoch).unwrap();
     (
         p,
@@ -142,9 +148,9 @@ fn fixture(root: &Path) -> (PreparedCommit, Scope, SqliteCommitStore, Journal) {
 fn restart_across_distinct_processes() {
     if let Ok(phase) = std::env::var("WIMM_RECOVERY_TEST_PHASE") {
         let root = PathBuf::from(std::env::var("WIMM_RECOVERY_TEST_ROOT").unwrap());
-        let (p, mut scope, mut db, mut journal) = fixture(&root);
+        let (p, mut scope, mut db, mut journal) = fixture(&root, phase == "write");
         if phase == "write" {
-            db.inject_after_commit_response_loss();
+            db.lose_next_response();
             assert!(matches!(
                 DurableCommitPipeline.dispatch(
                     p.clone(),
@@ -245,7 +251,7 @@ fn restart_across_distinct_processes() {
 #[test]
 fn journal_failure_or_corruption_never_starts_financial_write() {
     for corrupt in [false, true] {
-        let (p, scope, mut db, mut journal) = fixture(&root());
+        let (p, scope, mut db, mut journal) = fixture(&root(), true);
         if corrupt {
             std::fs::write(journal.path(), b"invalid ticket").unwrap();
         } else {
@@ -275,7 +281,7 @@ fn journal_failure_or_corruption_never_starts_financial_write() {
 }
 #[test]
 fn cleanup_failure_preserves_known_commit_and_blocks_until_original_receipt_resolution() {
-    let (p, scope, mut db, mut journal) = fixture(&root());
+    let (p, scope, mut db, mut journal) = fixture(&root(), true);
     journal.fail_clear = true;
     let mut pipeline = DurableCommitPipeline;
     assert!(matches!(
@@ -310,8 +316,8 @@ fn cleanup_failure_preserves_known_commit_and_blocks_until_original_receipt_reso
 }
 #[test]
 fn ticket_is_versioned_scope_bound_and_strict() {
-    let (p, scope, mut db, mut journal) = fixture(&root());
-    db.inject_after_commit_response_loss();
+    let (p, scope, mut db, mut journal) = fixture(&root(), true);
+    db.lose_next_response();
     assert!(matches!(
         DurableCommitPipeline.dispatch(
             p,
@@ -343,7 +349,7 @@ fn ticket_is_versioned_scope_bound_and_strict() {
 #[test]
 fn interrupted_before_financial_write_preserves_reference_and_remains_blocked_after_restart() {
     let root = root();
-    let (p, scope, mut db, mut journal) = fixture(&root);
+    let (p, scope, mut db, mut journal) = fixture(&root, true);
     journal.fail_after_save = true;
     assert!(matches!(
         DurableCommitPipeline.dispatch(
@@ -362,7 +368,7 @@ fn interrupted_before_financial_write_preserves_reference_and_remains_blocked_af
     }
     drop(db);
     drop(journal);
-    let (p, scope, mut db, mut journal) = fixture(&root);
+    let (p, scope, mut db, mut journal) = fixture(&root, false);
     assert!(matches!(
         DurableCommitPipeline.resume(&db, &mut journal, &Protect::new(), &scope),
         DispatchResult::Unknown
@@ -386,8 +392,8 @@ fn interrupted_before_financial_write_preserves_reference_and_remains_blocked_af
 #[test]
 fn wrong_key_or_modified_ciphertext_preserves_original_and_never_confirms_receipt() {
     for corrupt in [false, true] {
-        let (p, scope, mut db, mut journal) = fixture(&root());
-        db.inject_after_commit_response_loss();
+        let (p, scope, mut db, mut journal) = fixture(&root(), true);
+        db.lose_next_response();
         assert!(matches!(
             DurableCommitPipeline.dispatch(
                 p,

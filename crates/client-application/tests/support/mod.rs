@@ -4,7 +4,8 @@ use wimm_client_application::dispatch::*;
 use wimm_client_application::*;
 use wimm_finance_types::scalars::*;
 use wimm_local_contracts::{commit::*, storage::*, storage_port::CancellationPort};
-use wimm_local_dal::sqlite_commit::SqliteCommitStore;
+mod current_sqlite;
+use current_sqlite::CurrentSqlite;
 struct Scope(CommitContext);
 impl CommitContextPort for Scope {
     fn current(&self) -> CommitContext {
@@ -30,7 +31,7 @@ pub fn persist(prepared: PreparedCommit, before: &[wimm_finance_types::models::A
             .unwrap()
             .as_nanos()
     ));
-    let mut db = SqliteCommitStore::open(&path, ctx.profile_id.clone()).unwrap();
+    let mut db = CurrentSqlite::create(&path, ctx.profile_id.clone()).unwrap();
     db.initialize_area(&ctx.space_id, &ctx.epoch).unwrap();
     // Explizites synthetisches Testsetup: historischer Ausgangsbestand, keine produktive Importfunktion.
     let mut identity = prepared.request().identity.clone();
@@ -67,7 +68,7 @@ pub fn persist(prepared: PreparedCommit, before: &[wimm_finance_types::models::A
         DispatchResult::Committed { current: true, .. }
     ));
     drop(db);
-    let reopened = SqliteCommitStore::open(&path, ctx.profile_id).unwrap();
+    let reopened = CurrentSqlite::open(&path, ctx.profile_id).unwrap();
     assert!(
         reopened
             .lookup_result(&prepared.request().identity)

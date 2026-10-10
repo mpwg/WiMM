@@ -3,6 +3,10 @@ import {test,expect,chromium,firefox,webkit,type Page} from '@playwright/test';
 import {mkdtemp} from 'node:fs/promises';
 import {readdirSync} from 'node:fs';
 import {resolve} from 'node:path';
+import {spawn} from 'node:child_process';
+import {once} from 'node:events';
+import {createRequire} from 'node:module';
+import {dirname} from 'node:path';
 import {createAccount,navigate} from '../helpers/ui.js';
 import {p5Snapshot,normalized} from '../storage/contracts/snapshot-catalog.js';
 const origin='http://127.0.0.1:4180';
@@ -20,6 +24,17 @@ async function ports(page:Page,profileId:string,commands:Record<string,unknown>[
  }),{workerPath,profileId,commands});
 }
 test('Gebauter PWA-/Rust-DAL startet nach vollständigem Browserneustart offline mit Originaldaten und Entwürfen',async({browserName})=>{
+ const physical=process.env.WIMM_OFFLINE_STOP_SERVER==='1';
+ test.skip(physical&&process.platform!=='linux','Tatsächliche Prozessgruppenabschaltung in diesem Nachweis unter Linux.');
+ let stopServer:()=>Promise<void>=async()=>{};
+ if(physical){
+  const require=createRequire(resolve('package.json'));const cli=resolve(dirname(require.resolve('vite/package.json')),'bin/vite.js');
+  const child=spawn(process.execPath,[cli,'preview','--host','127.0.0.1','--port','4180','--strictPort'],{cwd:resolve('apps/web'),detached:true,stdio:['ignore','ignore','pipe']});
+  let previewDiagnostics='';child.stderr!.on('data',chunk=>{previewDiagnostics+=String(chunk);});
+  const exited=once(child,'exit');
+  stopServer=async()=>{if(child.exitCode===null&&child.signalCode===null){process.kill(-child.pid!,'SIGTERM');await exited;}};
+  try{await expect.poll(async()=>{if(child.exitCode!==null)throw new Error(`Previewstart fehlgeschlagen: ${previewDiagnostics}`);try{return (await fetch(origin)).status;}catch{return 0;}}).toBe(200);}catch(error){await stopServer();throw error;}
+ }
  const engines={chromium,firefox,webkit};const directory=await mkdtemp(resolve('test-results/dal04/offline-profile-'));
  let context=await engines[browserName].launchPersistentContext(directory,{headless:true});
  try{
@@ -36,7 +51,10 @@ test('Gebauter PWA-/Rust-DAL startet nach vollständigem Browserneustart offline
   await page.evaluate(async()=>{await navigator.serviceWorker.ready;});await page.reload();await expect.poll(()=>page.evaluate(()=>navigator.serviceWorker.controller!==null)).toBe(true);
   const cached=await page.evaluate(async()=>{const keys=await caches.keys();const name=keys.find(name=>name.startsWith('wimm-app-assets-'))!;return (await (await caches.open(name)).keys()).map(request=>new URL(request.url).pathname);});
   expect(cached).toContain(workerPath);expect(cached.some(path=>/wimm_browser_runtime_bg-.*\.wasm$/.test(path))).toBe(true);
-  await context.close();context=await engines[browserName].launchPersistentContext(directory,{headless:true});await context.setOffline(true);
+  await context.close();
+  if(physical){await stopServer();await expect.poll(async()=>{try{await fetch(origin);return false;}catch{return true;}}).toBe(true);}
+  context=await engines[browserName].launchPersistentContext(directory,{headless:true});
+  if(!physical)await context.setOffline(true);
   page=await context.newPage();
   const response=await page.goto(origin);expect(response?.status()).toBe(200);await expect(page).toHaveURL(`${origin}/`);
   await expect(page.getByRole('heading',{name:'Tresor entsperren'})).toBeVisible();
@@ -45,5 +63,5 @@ test('Gebauter PWA-/Rust-DAL startet nach vollständigem Browserneustart offline
   expect(after).toEqual(before.slice(1));expect(normalized((after[0] as {value:ReturnType<typeof p5Snapshot>}).value)).toEqual(normalized(fixture));
   await page.getByLabel('Entsperrpassphrase').fill(passphrase);await page.getByRole('button',{name:'Entsperren'}).click();await navigate(page,'Konten');await expect(page.getByRole('button',{name:'Synthetisches Offline-Prüfkonto',exact:true})).toBeVisible();
   await createAccount(page,'Auch offline gespeichert');await expect(page.getByRole('button',{name:'Auch offline gespeichert',exact:true})).toBeVisible();
- }finally{await context.close();}
+ }finally{await context.close();await stopServer();}
 });

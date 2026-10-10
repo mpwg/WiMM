@@ -7,7 +7,9 @@ use wimm_finance_types::{
     scalars::*,
 };
 use wimm_local_contracts::{commit::*, storage::*, storage_port::CancellationPort};
-use wimm_local_dal::sqlite_commit::SqliteCommitStore;
+#[path = "support/current_sqlite.rs"]
+mod current_sqlite;
+use current_sqlite::CurrentSqlite;
 struct Scope(CommitContext);
 impl CommitContextPort for Scope {
     fn current(&self) -> CommitContext {
@@ -22,7 +24,7 @@ impl CancellationPort for Continue {
 }
 struct Rig {
     scope: Scope,
-    db: SqliteCommitStore,
+    db: CurrentSqlite,
     state: Vec<Aggregate>,
     pipeline: CommitPipeline,
     initial: Request,
@@ -70,7 +72,7 @@ impl Rig {
                 .unwrap()
                 .as_nanos()
         ));
-        let mut db = SqliteCommitStore::open(&path, ctx.profile_id.clone()).unwrap();
+        let mut db = CurrentSqlite::create(&path, ctx.profile_id.clone()).unwrap();
         db.initialize_area(&ctx.space_id, &ctx.epoch).unwrap();
         let seed = LocalCommitRequest {
             identity: LocalOperationIdentity {
@@ -256,7 +258,7 @@ fn unknown_and_cancelled_commits_never_record_or_move_history() {
     let mut rig = Rig::new();
     let mut h = FinanceHistory::new(rig.scope.0.clone());
     let p = rig.save();
-    rig.db.inject_after_commit_response_loss();
+    rig.db.lose_next_response();
     let result = rig.dispatch(&p);
     assert_eq!(
         h.record(&p, &result, &rig.scope.0),
@@ -276,7 +278,7 @@ fn unknown_and_cancelled_commits_never_record_or_move_history() {
         )
         .unwrap()
         .unwrap();
-    rig.db.inject_before_receipt_failure();
+    rig.db.inject_write_failure();
     let result = rig.dispatch(movement.prepared());
     assert_eq!(
         h.accept_move(&movement, &result, &rig.scope.0),
@@ -373,7 +375,7 @@ fn unknown_move_resolves_same_receipt_without_changing_history_early() {
         )
         .unwrap()
         .unwrap();
-    rig.db.inject_after_commit_response_loss();
+    rig.db.lose_next_response();
     let result = rig.dispatch(movement.prepared());
     assert_eq!(
         h.accept_move(&movement, &result, &rig.scope.0),

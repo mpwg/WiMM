@@ -10,10 +10,11 @@ use wimm_finance_types::{
     scalars::*,
 };
 use wimm_local_contracts::{
-    checkpoint::LocalCheckpointPort, commit::*, persistence_errors::*, storage::*,
-    storage_port::CancellationPort,
+    commit::*, persistence_errors::*, storage::*, storage_port::CancellationPort,
 };
-use wimm_local_dal::sqlite_commit::{CommitBoundary, SqliteCommitStore};
+#[path = "support/current_sqlite.rs"]
+mod current_sqlite;
+use current_sqlite::{CommitBoundary, CurrentSqlite};
 #[path = "support/protection.rs"]
 mod protection;
 use protection::{Protect, failure};
@@ -39,7 +40,7 @@ impl RecoveryJournalPort for Journal {
     }
 }
 struct Reader {
-    db: Rc<RefCell<SqliteCommitStore>>,
+    db: Rc<RefCell<CurrentSqlite>>,
     calls: Cell<usize>,
     wrong_epoch: Cell<bool>,
     failed: Cell<bool>,
@@ -50,7 +51,7 @@ impl MutationReadPort for Reader {
         if self.failed.get() {
             return Err(failure());
         }
-        let state = self.db.borrow().checkpoint(&context.space_id)?.snapshot;
+        let state = self.db.borrow().snapshot(&context.space_id)?;
         let mut ctx = context.clone();
         ctx.profile_id = state.profile_id;
         ctx.space_id = state.space_id;
@@ -66,7 +67,7 @@ impl MutationReadPort for Reader {
     }
 }
 struct Writer {
-    db: Rc<RefCell<SqliteCommitStore>>,
+    db: Rc<RefCell<CurrentSqlite>>,
     calls: usize,
 }
 impl LocalCommitPort for Writer {
@@ -156,7 +157,7 @@ impl Rig {
                 .unwrap()
                 .as_nanos()
         ));
-        let mut db = SqliteCommitStore::open(&path, ctx.profile_id.clone()).unwrap();
+        let mut db = CurrentSqlite::create(&path, ctx.profile_id.clone()).unwrap();
         db.initialize_area(&ctx.space_id, &ctx.epoch).unwrap();
         let seed = LocalCommitRequest {
             identity: LocalOperationIdentity {
@@ -277,10 +278,7 @@ fn unknown_preserves_old_confirmed_view_and_history_until_same_receipt_resolves(
     let mut app = ClientRuntime::new(rig.ctx.clone(), AreaMode::Standalone);
     assert!(matches!(app.load(&rig.ports()), RuntimeOutcome::Unchanged));
     let before = app.page(&rig.scope, 0, 100).unwrap();
-    rig.writer
-        .db
-        .borrow_mut()
-        .inject_after_commit_response_loss();
+    rig.writer.db.borrow_mut().lose_next_response();
     assert!(matches!(
         rig.save(&mut app),
         RuntimeOutcome::Dispatch(DispatchResult::Unknown)
@@ -326,7 +324,7 @@ fn cancellation_and_rollback_keep_confirmed_state_and_no_history() {
         let before = app.page(&rig.scope, 0, 100).unwrap();
         rig.cancel.0.set(cancel);
         if !cancel {
-            rig.writer.db.borrow_mut().inject_before_receipt_failure();
+            rig.writer.db.borrow_mut().inject_write_failure();
         }
         assert!(matches!(
             rig.save(&mut app),
@@ -368,10 +366,7 @@ fn late_scope_change_retains_commit_certainty_but_does_not_update_view_or_histor
 fn runtime_restart_resolves_original_without_reconstructing_old_session_history() {
     let mut rig = Rig::new();
     let mut app = ClientRuntime::new(rig.ctx.clone(), AreaMode::Standalone);
-    rig.writer
-        .db
-        .borrow_mut()
-        .inject_after_commit_response_loss();
+    rig.writer.db.borrow_mut().lose_next_response();
     assert!(matches!(
         rig.save(&mut app),
         RuntimeOutcome::Dispatch(DispatchResult::Unknown)
@@ -432,10 +427,7 @@ fn unknown_history_move_resolves_once_and_keeps_stacks_unconfirmed_until_receipt
     let mut app = ClientRuntime::new(rig.ctx.clone(), AreaMode::Connected);
     committed(rig.save(&mut app), true);
     let before = app.page(&rig.scope, 0, 100).unwrap();
-    rig.writer
-        .db
-        .borrow_mut()
-        .inject_after_commit_response_loss();
+    rig.writer.db.borrow_mut().lose_next_response();
     assert!(matches!(
         app.move_history(Direction::Undo, operation(221), &mut rig.ports()),
         RuntimeOutcome::Dispatch(DispatchResult::Unknown)
