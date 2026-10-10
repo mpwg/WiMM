@@ -35,6 +35,19 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm exec playwright install --with-deps chromium
+      - name: Gesperrte Rust-/WASM-Buildvoraussetzungen einrichten
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes cmake clang llvm libssl-dev pkg-config build-essential
+          rustup show active-toolchain
+          pnpm check:rust-toolchain
+          rustup target add wasm32-unknown-unknown
+      - name: Rust-Artefakte cachen
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: . -> target
+      - name: Aktuelle Rust-Workerassets ohne Signaturdrift erzeugen
+        run: pnpm build:browser:runtime
       - name: Beide Leistungsfälle ohne gelockerte Grenze prüfen
         run: pnpm test:ui:performance
       - name: Messungen und Browserbelege sichern
