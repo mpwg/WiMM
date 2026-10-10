@@ -9,7 +9,7 @@ for(const [name,rule] of Object.entries(policy.rust).filter(([,rule])=>rule.nati
   for(const feature of rule.nativeAssertionFeatures??[])assert.ok(rule.features.includes(feature),`${name}: nicht registriertes natives Prüffeature ${feature}`);
   if(rule.nativeAssertionFeatures?.length)args.push('--features',rule.nativeAssertionFeatures.join(','));
   const result=spawnSync('cargo',args,{encoding:'utf8',maxBuffer:16*1024*1024});
-  assert.equal(result.status,0,result.stderr);assert.doesNotMatch(result.stderr,/(?:^|\n)warning(?:\[|:)/);
+  assert.equal(result.status,0,`${name}: native Rust-Prüfung fehlgeschlagen.\n${result.stdout}\n${result.stderr}`);assert.doesNotMatch(result.stderr,/(?:^|\n)warning(?:\[|:)/);
   const passed=[...result.stdout.matchAll(/test result: ok\. (\d+) passed;/g)].reduce((sum,m)=>sum+Number(m[1]),0);
   assert.ok(passed>0,`${name} benötigt tatsächlich bestandene native Assertions; ausgelassene/ignorierte Tests zählen nicht.`);
   results.push({crate:name,runtime:'native Rust',passed});console.log(`${name}: ${passed} tatsächliche native Tests bestanden.`);
