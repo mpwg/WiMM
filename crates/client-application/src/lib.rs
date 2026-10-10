@@ -10,7 +10,8 @@ use wimm_local_contracts::{
     commit::{LocalCommitRequest, LocalOperationIdentity},
     storage::*,
 };
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CommitContext {
     pub profile_id: EntityId,
     pub space_id: EntityId,
@@ -213,3 +214,5 @@ impl PreparedCommit {
 pub mod dispatch;
 
 pub mod history;
+
+pub mod recovery;

@@ -2328,6 +2328,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "wimm-client-crypto",
  "wimm-finance-core",
  "wimm-finance-types",
  "wimm-local-contracts",
