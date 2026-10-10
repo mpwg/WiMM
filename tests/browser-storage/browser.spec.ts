@@ -26,11 +26,13 @@ test('Aktueller ORM-/OPFS-Worker hält Epoche über Worker- und Seitenneustart',
  expect(await port(page,{method:'exportSnapshot',spaceId:id(2)})).toEqual(before);
  expect(await port(page,{method:'initializeArea',spaceId:id(2),proposedEpoch:id(99)})).toEqual(result);
 });
-test('Zweiter Tab wartet auf tatsächliche OPFS-Freigabe und öffnet denselben Stand',async({page,context})=>{
+test('Zweiter Tab benutzt denselben Owner und übernimmt erst nach tatsächlicher OPFS-Freigabe',async({page,context})=>{
  const profile=randomUUID();await ready(page,profile);await port(page,{method:'initializeArea',spaceId:id(2),proposedEpoch:id(3)});
  const other=await context.newPage();await other.goto(`/tests/browser-storage.html?profile=${profile}`);
- await expect.poll(()=>other.evaluate(()=>(window as unknown as {sqliteStatus:string}).sqliteStatus)).toBe('waiting');
+ await expect.poll(()=>other.evaluate(()=>(window as unknown as {sqliteStatus:string}).sqliteStatus)).toBe('ready');
+ expect(await other.evaluate(()=>window.sqliteClient.ownership)).toBe('follower');
  await page.evaluate(async()=>{await(window as unknown as {sqliteClient:{close():Promise<void>}}).sqliteClient.close();});
+ await expect.poll(()=>other.evaluate(()=>window.sqliteClient.ownership)).toBe('owner');
  await expect.poll(()=>other.evaluate(()=>(window as unknown as {sqliteStatus:string}).sqliteStatus)).toBe('ready');
  expect(await port(other,{method:'exportSnapshot',spaceId:id(2)})).toMatchObject({value:{epoch:id(3),storageSchemaVersion:2}});
 });
@@ -70,8 +72,9 @@ test('Aktuelle Rust-Receipts und stale CAS über Tabübergabe bleiben idempotent
  const commit=(page:import('@playwright/test').Page,input:LocalCommitRequest)=>page.evaluate(async input=>await window.sqliteClient.commit(input),input);
  const first=await commit(page,original);expect(first.status).toBe('committed');
  expect(await commit(page,original)).toEqual(first);
- const other=await context.newPage();await other.goto(`/tests/browser-storage.html?profile=${profile}`);await expect.poll(()=>other.evaluate(()=>window.sqliteStatus)).toBe('waiting');
- await page.evaluate(async()=>await window.sqliteClient.close());await expect.poll(()=>other.evaluate(()=>window.sqliteStatus)).toBe('ready');
+ const other=await context.newPage();await other.goto(`/tests/browser-storage.html?profile=${profile}`);await expect.poll(()=>other.evaluate(()=>window.sqliteStatus)).toBe('ready');
+ expect(await other.evaluate(()=>window.sqliteClient.ownership)).toBe('follower');
+ await page.evaluate(async()=>await window.sqliteClient.close());await expect.poll(()=>other.evaluate(()=>window.sqliteClient.ownership)).toBe('owner');await expect.poll(()=>other.evaluate(()=>window.sqliteStatus)).toBe('ready');
  expect(await commit(other,original)).toEqual(first);
  const stale=structuredClone(original);stale.identity.operationId=id(80);stale.batch.outbox[0]!.operationId=id(81);
  expect(await commit(other,stale)).toMatchObject({status:'notCommitted',error:{code:'REVISION_CONFLICT',commitState:'notCommitted'}});
@@ -189,4 +192,25 @@ test('Gemeinsame 26 Negativsnapshots werden unmittelbar von Rust/WASM abgewiesen
 
 test('Rust-Cachewerte entsprechen F01, Transfer, Erstattung und Tombstone nach tatsächlicher Wiederöffnung',async({page})=>{
  await ready(page,catalogProfile);await page.evaluate(async()=>await window.sqliteRebuildOracle());
+});
+
+test('Follower liest verschlüsselte lokale RPC-Daten; Peer-Schließung beendet keine andere Rust-Sitzung',async({page,context})=>{
+ const profile=randomUUID();await ready(page,profile);
+ const seed=p5Snapshot(2);const source=JSON.parse(JSON.stringify({...seed,profileId:profile,syncState:{...seed.syncState!,profileId:profile}})) as ReturnType<typeof p5Snapshot>;
+ await port(page,{method:'replaceSnapshot',snapshot:source});
+ await page.evaluate(profile=>{
+  const channel=new BroadcastChannel(`wimm:current-sqlite:v5:${profile}`);
+  (window as unknown as {rpcCapture:string[];rpcObserver:BroadcastChannel}).rpcCapture=[];(window as unknown as {rpcObserver:BroadcastChannel}).rpcObserver=channel;
+  channel.onmessage=event=>(window as unknown as {rpcCapture:string[]}).rpcCapture.push(JSON.stringify(event.data));
+ },profile);
+ const other=await context.newPage();await ready(other,profile);expect(await other.evaluate(()=>window.sqliteClient.ownership)).toBe('follower');
+ expect(await port(other,{method:'exportSnapshot',spaceId:source.spaceId})).toEqual(await port(page,{method:'exportSnapshot',spaceId:source.spaceId}));
+ const captured=await page.evaluate(()=>(window as unknown as {rpcCapture:string[]}).rpcCapture);
+ expect(captured.some(message=>message.includes('ciphertext'))).toBe(true);expect(captured.join('')).not.toContain('Originalnotiz');expect(captured.join('')).not.toContain('Unbestätigter Originalentwurf');
+ const scope={profileId:profile,spaceId:source.spaceId,epoch:source.epoch,profileRevision:1,sessionGeneration:1,generation:1};
+ for(const tab of [page,other])await tab.evaluate(async scope=>await window.sqliteClient.openRuntime({contractVersion:2,context:scope,mode:'connected',key:Array(32).fill(42) as number[]}),scope);
+ for(const tab of [page,other])expect((await tab.evaluate(async()=>await window.sqliteClient.runtime({contractVersion:2,domainSchemaVersion:1,action:{actionType:'load'}}))).result.status).toBe('state');
+ await other.evaluate(async()=>await window.sqliteClient.close());
+ expect((await page.evaluate(async()=>await window.sqliteClient.runtime({contractVersion:2,domainSchemaVersion:1,action:{actionType:'load'}}))).result.status).toBe('state');
+ await page.evaluate(()=>(window as unknown as {rpcObserver:BroadcastChannel}).rpcObserver.close());
 });

@@ -80,19 +80,25 @@ pub struct BrowserRuntimePage {
 #[wasm_bindgen]
 pub struct BrowserStorage {
     host: Option<StorageHost>,
-    application: Option<wimm_local_runtime::RuntimeSession>,
+    applications: wimm_local_runtime::RuntimeSessions,
     pool: OpfsSAHPoolUtil,
     backups: Option<wimm_local_dal::sqlite_backup::SqliteBackupStore>,
 }
 #[wasm_bindgen]
 impl BrowserStorage {
-    pub fn open_runtime(&mut self, input: tsify::Ts<BrowserRuntimeOpen>) -> Result<(), JsValue> {
+    pub fn open_runtime(
+        &mut self,
+        client: String,
+        input: tsify::Ts<BrowserRuntimeOpen>,
+    ) -> Result<(), JsValue> {
+        let client = EntityId::new(client)
+            .map_err(|_| js_error(failure(StorageFailureCode::InvalidResponse)))?;
         let input: BrowserRuntimeOpen = decode(input)?;
         let key = zeroize::Zeroizing::new(input.key);
         if input.contract_version != 2 {
             return Err(js_error(failure(StorageFailureCode::UpdateRequired)));
         }
-        if self.application.is_some() {
+        if self.applications.contains_key(&client) || self.applications.is_full() {
             return Err(js_error(failure(StorageFailureCode::InvalidResponse)));
         }
         let host = self.host()?;
@@ -103,42 +109,52 @@ impl BrowserStorage {
             wimm_client_crypto::SecretKey::from_bytes(&key)
                 .map_err(|_| js_error(failure(StorageFailureCode::InvalidResponse)))?,
         );
-        self.application = Some(
-            wimm_local_runtime::RuntimeSession::new(
-                input.context,
-                input.mode,
-                host.store.clone(),
-                protection,
-            )
-            .map_err(js_error)?,
-        );
+        let session = wimm_local_runtime::RuntimeSession::new(
+            input.context,
+            input.mode,
+            host.store.clone(),
+            protection,
+        )
+        .map_err(js_error)?;
+        self.applications
+            .insert(client, session)
+            .map_err(js_error)?;
         Ok(())
     }
     pub fn runtime(
         &mut self,
+        client: String,
         input: tsify::Ts<wimm_client_application::runtime_contracts::RuntimeRequestV2>,
     ) -> Result<tsify::Ts<wimm_client_application::runtime_contracts::RuntimeEventV2>, JsValue>
     {
+        let client = EntityId::new(client)
+            .map_err(|_| js_error(failure(StorageFailureCode::InvalidResponse)))?;
         let request = decode(input)?;
         let session = self
-            .application
-            .as_mut()
+            .applications
+            .get_mut(&client)
             .ok_or_else(|| js_error(failure(StorageFailureCode::ResourceUnavailable)))?;
         output(&session.invoke(request))
     }
     pub fn runtime_page(
         &self,
+        client: String,
         input: tsify::Ts<BrowserRuntimePage>,
     ) -> Result<tsify::Ts<wimm_client_application::runtime_contracts::RuntimePageV2>, JsValue> {
+        let client = EntityId::new(client)
+            .map_err(|_| js_error(failure(StorageFailureCode::InvalidResponse)))?;
         let input: BrowserRuntimePage = decode(input)?;
         let session = self
-            .application
-            .as_ref()
+            .applications
+            .get(&client)
             .ok_or_else(|| js_error(failure(StorageFailureCode::ResourceUnavailable)))?;
         output(&session.page(input.offset, input.limit).map_err(js_error)?)
     }
-    pub fn close_runtime(&mut self) {
-        self.application.take();
+    pub fn close_runtime(&mut self, client: String) -> Result<(), JsValue> {
+        let client = EntityId::new(client)
+            .map_err(|_| js_error(failure(StorageFailureCode::InvalidResponse)))?;
+        self.applications.remove(&client);
+        Ok(())
     }
     pub fn contract_version(&self) -> u32 {
         2
@@ -261,7 +277,7 @@ impl BrowserStorage {
     }
     pub fn close(&mut self) -> Result<(), JsValue> {
         // Erst SQLite schließen, danach die tatsächlichen SyncAccessHandles freigeben.
-        self.application.take();
+        self.applications.clear();
         self.host.take();
         self.backups.take();
         self.pool.pause_vfs().map_err(|_| {
@@ -322,7 +338,7 @@ pub async fn open_browser_storage(profile: String) -> Result<BrowserStorage, JsV
     .map_err(js_error)?;
     Ok(BrowserStorage {
         host: Some(host),
-        application: None,
+        applications: wimm_local_runtime::RuntimeSessions::default(),
         pool,
         backups: Some(backups),
     })

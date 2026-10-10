@@ -624,3 +624,51 @@ fn shared_session_versions_execute_and_bounded_page_use_real_sqlite_receipt() {
     assert!(!session.page(0, 100).unwrap().aggregates.is_empty());
     assert!(session.page(0, 101).is_err());
 }
+#[test]
+fn bounded_client_sessions_keep_independent_history_and_reject_duplicate_or_seventeenth_owner() {
+    let rig = Rig::new();
+    let mut sessions = RuntimeSessions::default();
+    let create = || {
+        RuntimeSession::new(
+            rig.context.clone(),
+            AreaMode::Connected,
+            rig.port.clone(),
+            RuntimeProtection::new(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap()),
+        )
+        .unwrap()
+    };
+    for n in 1..=16 {
+        sessions.insert(id(n), create()).unwrap();
+    }
+    assert!(sessions.is_full());
+    assert!(sessions.insert(id(17), create()).is_err());
+    assert!(sessions.insert(id(1), create()).is_err());
+    let action = wimm_client_application::runtime_contracts::RuntimeActionV2::Execute {
+        command: rig.request.command.clone(),
+        expected_revisions: rig.request.expected_revisions.clone(),
+        operation: rig.request.context.clone(),
+    };
+    let event = sessions.get_mut(&id(1)).unwrap().invoke(
+        wimm_client_application::runtime_contracts::RuntimeRequestV2 {
+            contract_version: 2,
+            domain_schema_version: 1,
+            action,
+        },
+    );
+    assert!(event.can_undo);
+    let other = sessions.get_mut(&id(2)).unwrap().invoke(
+        wimm_client_application::runtime_contracts::RuntimeRequestV2 {
+            contract_version: 2,
+            domain_schema_version: 1,
+            action: wimm_client_application::runtime_contracts::RuntimeActionV2::Load,
+        },
+    );
+    assert!(!other.can_undo && !other.can_redo);
+    sessions.remove(&id(1));
+    assert!(sessions.get(&id(1)).is_none());
+    assert!(sessions.get(&id(2)).is_some());
+    sessions.insert(id(17), create()).unwrap();
+    sessions.clear();
+    assert!(!sessions.is_full());
+    assert!(sessions.get(&id(2)).is_none());
+}

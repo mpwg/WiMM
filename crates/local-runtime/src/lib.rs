@@ -464,3 +464,45 @@ impl RuntimeSession {
         })
     }
 }
+
+/// Pro Client getrennte Schlüsselsitzung/Historie auf derselben SQLite-Verbindung.
+#[derive(Default)]
+pub struct RuntimeSessions {
+    sessions: std::collections::BTreeMap<wimm_finance_types::scalars::EntityId, RuntimeSession>,
+}
+impl RuntimeSessions {
+    pub fn insert(
+        &mut self,
+        id: wimm_finance_types::scalars::EntityId,
+        session: RuntimeSession,
+    ) -> Result<(), StorageFailure> {
+        if self.sessions.contains_key(&id) || self.sessions.len() >= 16 {
+            return Err(StorageFailure::not_committed(
+                StorageFailureCode::ResourceUnavailable,
+            ));
+        }
+        self.sessions.insert(id, session);
+        Ok(())
+    }
+    pub fn contains_key(&self, id: &wimm_finance_types::scalars::EntityId) -> bool {
+        self.sessions.contains_key(id)
+    }
+    pub fn is_full(&self) -> bool {
+        self.sessions.len() >= 16
+    }
+    pub fn get(&self, id: &wimm_finance_types::scalars::EntityId) -> Option<&RuntimeSession> {
+        self.sessions.get(id)
+    }
+    pub fn get_mut(
+        &mut self,
+        id: &wimm_finance_types::scalars::EntityId,
+    ) -> Option<&mut RuntimeSession> {
+        self.sessions.get_mut(id)
+    }
+    pub fn remove(&mut self, id: &wimm_finance_types::scalars::EntityId) {
+        self.sessions.remove(id);
+    }
+    pub fn clear(&mut self) {
+        self.sessions.clear();
+    }
+}

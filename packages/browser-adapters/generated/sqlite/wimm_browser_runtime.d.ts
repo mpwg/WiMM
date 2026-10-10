@@ -1052,11 +1052,11 @@ export class BrowserStorage {
     free(): void;
     [Symbol.dispose](): void;
     close(): void;
-    close_runtime(): void;
+    close_runtime(client: string): void;
     commit(request: LocalCommitRequest): BrowserCommitOutcome;
     contract_version(): number;
     lookup_result(identity: LocalOperationIdentity): BrowserReceiptLookup;
-    open_runtime(input: BrowserRuntimeOpen): void;
+    open_runtime(client: string, input: BrowserRuntimeOpen): void;
     persist_backup(input: BrowserBackupInput): EncryptedBackupReceipt;
     port(request: LocalPortRequestV2): LocalPortOutcomeV2;
     query_imported(query: ImportSourceQuery): LocalPortOutcomeV2;
@@ -1064,8 +1064,8 @@ export class BrowserStorage {
     query_transactions(query: TransactionIndexQuery): LocalPortOutcomeV2;
     read_backup(receipt: EncryptedBackupReceipt): BrowserCiphertext;
     rebuild_projection_cache(space: string): void;
-    runtime(input: RuntimeRequestV2): RuntimeEventV2;
-    runtime_page(input: BrowserRuntimePage): RuntimePageV2;
+    runtime(client: string, input: RuntimeRequestV2): RuntimeEventV2;
+    runtime_page(client: string, input: BrowserRuntimePage): RuntimePageV2;
 }
 
 export class CreatedVault {
@@ -1162,11 +1162,11 @@ export interface InitOutput {
     readonly __wbg_signingsession_free: (a: number, b: number) => void;
     readonly __wbg_vaultsession_free: (a: number, b: number) => void;
     readonly browserstorage_close: (a: number) => [number, number];
-    readonly browserstorage_close_runtime: (a: number) => void;
+    readonly browserstorage_close_runtime: (a: number, b: number, c: number) => [number, number];
     readonly browserstorage_commit: (a: number, b: any) => [number, number, number];
     readonly browserstorage_contract_version: (a: number) => number;
     readonly browserstorage_lookup_result: (a: number, b: any) => [number, number, number];
-    readonly browserstorage_open_runtime: (a: number, b: any) => [number, number];
+    readonly browserstorage_open_runtime: (a: number, b: number, c: number, d: any) => [number, number];
     readonly browserstorage_persist_backup: (a: number, b: any) => [number, number, number];
     readonly browserstorage_port: (a: number, b: any) => [number, number, number];
     readonly browserstorage_query_imported: (a: number, b: any) => [number, number, number];
@@ -1174,8 +1174,8 @@ export interface InitOutput {
     readonly browserstorage_query_transactions: (a: number, b: any) => [number, number, number];
     readonly browserstorage_read_backup: (a: number, b: any) => [number, number, number];
     readonly browserstorage_rebuild_projection_cache: (a: number, b: number, c: number) => [number, number];
-    readonly browserstorage_runtime: (a: number, b: any) => [number, number, number];
-    readonly browserstorage_runtime_page: (a: number, b: any) => [number, number, number];
+    readonly browserstorage_runtime: (a: number, b: number, c: number, d: any) => [number, number, number];
+    readonly browserstorage_runtime_page: (a: number, b: number, c: number, d: any) => [number, number, number];
     readonly canonical_json: (a: number, b: number) => [number, number, number, number];
     readonly createdvault_create: (a: number, b: number) => [number, number, number];
     readonly createdvault_record: (a: number) => [number, number];

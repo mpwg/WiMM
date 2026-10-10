@@ -83,7 +83,7 @@ Server-SQL-Wechsel ist ein separates Betreiberverfahren für Chiffrate und öffe
 
 ## PWA-Runtime und Updates
 
-Diesel-WASM-Build allein genügt nicht. Die konkret verwendete SQLite-Instanz muss über einen persistenten Browser-VFS, vorzugsweise OPFS, arbeiten. Worker-/Verbindungsbesitz, Web-Lock-Führung, Mehrtabbetrieb, Führungsverlust und Wiederanlauf werden zusammen nachgewiesen. Ein begrenzter Besitzer führt DB-Zugriffe; wartende Tabs zeigen einen verständlichen Status. Keine konkurrierenden unkoordinierten Writer, keine unbemerkte Memory-/IndexedDB-Ersatzpersistenz.
+Diesel-WASM-Build allein genügt nicht. Die konkret verwendete SQLite-Instanz muss über einen persistenten Browser-VFS, vorzugsweise OPFS, arbeiten. Worker-/Verbindungsbesitz, Web-Lock-Führung, Mehrtabbetrieb, Führungsverlust und Wiederanlauf werden zusammen nachgewiesen. Ein begrenzter Besitzer führt DB-Zugriffe; wartende Tabs zeigen einen verständlichen Status. Gleichprofilige Tabs delegieren typisierte lokale RPCs an den tatsächlichen Besitzer gemäß ADR-061; keine zusätzliche DBverbindung. Rust-Sitzungen und Schlüsselbesitz bleiben je Client getrennt und begrenzt. Keine konkurrierenden unkoordinierten Writer, keine unbemerkte Memory-/IndexedDB-Ersatzpersistenz.
 
 COOP/COEP-/SharedArrayBuffer-Anforderungen sind VFS-abhängig und Teil des Hosting-/OIDC-Nachweises. Browser-/iOS-Eignung, Quota, Persistenzablehnung und Ressourcenfehler bleiben eigene reale Kriterien. Bei fehlender Unterstützung keine Migration aktivieren; vorhandene Daten bleiben sicher erreichbar/exportierbar.
 

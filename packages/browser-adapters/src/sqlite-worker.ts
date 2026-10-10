@@ -3,7 +3,7 @@ import type {BrowserStorage,LocalPortRequestV2,LocalOperationIdentity,LocalCommi
 let database:BrowserStorage|undefined;
 // Rust-Zugriffe sind synchron. Die Kette verhindert, dass die asynchrone VFS-Öffnung von Nachrichten überholt wird.
 let queue=Promise.resolve();
-interface Message {id:number;method:string;profileId?:string;input:unknown}
+interface Message {id:number;method:string;profileId?:string;clientId?:string;input:unknown}
 self.onmessage=({data}:MessageEvent<Message>)=>{queue=queue.then(async()=>{
  try{
   if(data.method==='open'){
@@ -16,11 +16,12 @@ self.onmessage=({data}:MessageEvent<Message>)=>{queue=queue.then(async()=>{
   }
   if(database===undefined)throw {contractVersion:2,code:'RESOURCE_UNAVAILABLE',commitState:'notCommitted'};
   let value:unknown;
+  if(['openRuntime','runtime','runtimePage','closeRuntime'].includes(data.method)&&typeof data.clientId!=='string')throw {contractVersion:2,code:'INVALID_RESPONSE',commitState:'notCommitted'};
   switch(data.method){
-   case 'openRuntime':database.open_runtime(data.input as BrowserRuntimeOpen);value=null;break;
-   case 'runtime':value=database.runtime(data.input as RuntimeRequestV2);break;
-   case 'runtimePage':value=database.runtime_page(data.input as BrowserRuntimePage);break;
-   case 'closeRuntime':database.close_runtime();value=null;break;
+   case 'openRuntime':database.open_runtime(data.clientId!,data.input as BrowserRuntimeOpen);value=null;break;
+   case 'runtime':value=database.runtime(data.clientId!,data.input as RuntimeRequestV2);break;
+   case 'runtimePage':value=database.runtime_page(data.clientId!,data.input as BrowserRuntimePage);break;
+   case 'closeRuntime':database.close_runtime(data.clientId!);value=null;break;
    case 'rebuild':database.rebuild_projection_cache(data.input as string);value=null;break;
    case 'port':value=database.port(data.input as LocalPortRequestV2);break;
    case 'commit':value=database.commit(data.input as LocalCommitRequest);break;

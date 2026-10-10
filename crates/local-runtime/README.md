@@ -15,3 +15,5 @@ cargo build --locked -p wimm-local-runtime --target wasm32-unknown-unknown
 ```
 
 Die früher im Tauri-Crate enthaltenen nativen Assertions wurden mit der Implementierung hierher verschoben, einschließlich echtem Prozessneustart. Ein zusätzlicher Sitzungstest prüft Version, tatsächliches Receipt, Originaljournal und begrenzte Seite auf realer SQLite. Tauri importiert diesen gemeinsamen Crate. Browserbindungen verwenden dieselben Ports innerhalb des produktiven OPFS-Workers; vollständige PWA-Umschaltung und weitere #109-/#119-Kriterien bleiben offen. [DAL04-Matrix](../../docs/dal04-browser.md).
+
+`RuntimeSessions` begrenzt clientgebundene Sitzungen auf 16, weist Duplicate-IDs/Überfüllung ab und entfernt Schlüssel-/Historienbesitz einzeln oder vollständig. Native echte SQLite-Assertion prüft getrennte Historien, Freigabe und Wiederbelegung; kein gemeinsamer History-/Finanzschlüsselzustand zwischen Peerclients.
