@@ -28,3 +28,15 @@ it('wendet eine späte Importvorbereitung nach Abbruch nicht an', async () => {
   await expect(pending).rejects.toThrow('abgebrochen');
   expect(commit).not.toHaveBeenCalled();
 });
+it('bildet Fachkandidaten ohne Parserfelder und erhält Originalvorschau', () => {
+  const finance = new FinanceModel(id, [], async () => {}, dependencies);
+  const automation = new AutomationModel(finance,{execute:async()=>null});
+  const record = { sourceRow: 1, date: '2026-10-07', amount: 100, currency: 'EUR' as const, memo: 'Synthetische Originalnotiz' };
+  const row = {source:{sourceRow:1,line:1,cells:[],issues:[]},record,issues:[]} as import('@wimm/importers').PreviewRow;
+  const before = structuredClone(row);
+  const result = automation.ruleResult(row,'csv');
+  expect(result?.candidate).toMatchObject({sourceRow:1,date:'2026-10-07',amount:100,parserSource:'csv',memo:'Synthetische Originalnotiz'});
+  expect(result?.candidate).not.toHaveProperty('currency');
+  expect(result?.candidate.sourceFingerprint).toBeTypeOf('string');
+  expect(row).toEqual(before);
+});

@@ -32,7 +32,13 @@ export class AutomationModel {
     return result;
   }
   ruleResult(row: PreviewRow, format: ImportFormat, categoryId?: UUID) {
-    try { return row.record ? applyRules({ ...row.record, parserSource: format, ...(categoryId ? { categoryId } : {}) }, this.rules, this.all, this.finance.activeSpaceId) : null; } catch { return null; }
+    try {
+      if (!row.record) return null;
+      const {sourceRow,date,amount,payee,memo,externalId}=row.record;
+      const candidate:ImportCandidate={sourceRow,date,amount,parserSource:format,
+        ...(payee===undefined?{}:{payee}),...(memo===undefined?{}:{memo}),...(externalId===undefined?{}:{externalId}),...(categoryId?{categoryId}:{})};
+      return applyRules(candidate,this.rules,this.all,this.finance.activeSpaceId);
+    } catch { return null; }
   }
   duplicateStates(rows: readonly PreviewRow[], decisions: Readonly<Record<number, ImportDecision>>, format: ImportFormat, accountId: UUID) {
     return classifyImportCandidates(rows.flatMap((row) => row.record && decisions[row.source.sourceRow] !== 'exclude' ? [{ ...row.record, parserSource: format }] : []), accountId, this.all.filter((entry): entry is ImportFingerprintAggregate => entry.aggregateType === 'importFingerprint'));

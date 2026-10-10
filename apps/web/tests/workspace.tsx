@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Ausschließlich Vite-Testseite; kein Produktionsentry und keine Fehlerports in der App.
-import { createBrowserApplicationRuntime } from '@wimm/browser-adapters';
+import { createBrowserApplicationRuntime,BrowserSqliteStorageAdapter } from '@wimm/browser-adapters';
 import { ProfileApplication, ApplicationActivity } from '@wimm/application';
 import { FinanceWorkspace } from '@wimm/ui/workspace';
 import { createRoot } from 'react-dom/client';
 import { createBrowserPlatformServices, type UnlockedAppContext, type WorkspaceStorage } from '@wimm/ui';
-import { IndexedDbStorageAdapter, StorageFailureError, toStoredAggregate, type StoredAggregate } from '@wimm/storage';
+import { StorageFailureError, toStoredAggregate, type StoredAggregate } from '@wimm/storage';
 import type { AtomicBatch, UUID } from '@wimm/contracts';
 import type { AccountAggregate, CategoryGroupAggregate, CategoryAggregate, P2Aggregate, TransactionAggregate } from '@wimm/domain';
 import '../src/styles.css';
@@ -14,10 +14,11 @@ const id = (value: number) => `00000000-0000-4000-8000-${String(value).padStart(
 const profileId = id(1), spaceId = id(2), accountId = id(3), groupId = id(4), categoryId = id(5);
 const meta = (value: number) => ({ id: id(value), spaceId, revision: 1, createdAt: '2026-10-04T12:00:00Z', updatedAt: '2026-10-04T12:00:00Z' }) as const;
 const parameters = new URLSearchParams(location.search);
-const adapter = new IndexedDbStorageAdapter(profileId, 'wimm-workspace-integration');
+const adapter = new BrowserSqliteStorageAdapter(profileId);
 const count = Number(parameters.get('count') ?? 3);
 const performanceFixture = parameters.get('performance') === 'true';
 const matrixFixture = parameters.get('matrix') === 'true';
+await adapter.initializeArea(spaceId,id(9));
 // Beim Neustart nur das bekannte Startkonto prüfen; keine zweite Vollabfrage
 // oder erneute Erzeugung der bereits gespeicherten 50.000 Testbuchungen.
 if (await adapter.readAggregate(accountId) === undefined) {
@@ -52,7 +53,7 @@ if (await adapter.readAggregate(accountId) === undefined) {
     Object.assign(initial[2]!, { name: 'AußergewöhnlicheHaushaltsausgabenUndFamilienrücklagen' });
     for (const entry of initial) if (entry.aggregateType === 'transaction') Object.assign(entry, { amount: -123456789, note: 'Österreichische Gemeinschaftsbäckerei mit außergewöhnlich langer Bezeichnung', splits: [{ id: id(100000), categoryId, amount: -123456789 }] });
   }
-  await adapter.applyAtomicBatch({ expectedRevisions: [], aggregates: initial.map(toStoredAggregate), outbox: [], projections: performanceFixture ? Array.from({ length: 1000 }, (_, index) => ({ spaceId, kind: 'synthetic-shared-expense-load', key: String(index), payload: { id: id(200000 + index), amount: 100, source: 'private_advance', reimbursementSource: 'household', categoryId, shares: [{ participantId: id(300000), amount: 50 }, { participantId: id(300001), amount: 50 }] } })) : [] });
+  await adapter.applyAtomicBatch({ expectedRevisions: [], aggregates: initial.map(toStoredAggregate), outbox: performanceFixture ? Array.from({ length: 1000 }, (_, index) => ({ operationId:id(200000+index),spaceId,expectedRevisions:[],dependsOn:[],state:'blocked' as const,retryCount:0,createdAt:meta(0).createdAt,draft:{syntheticSharedExpenseLoad:true,id:id(200000+index),amount:100,source:'private_advance',reimbursementSource:'household',categoryId,shares:[{participantId:id(300000),amount:50},{participantId:id(300001),amount:50}]} })) : [], projections: [] });
 }
 let mode = 'normal'; let release: (() => void) | undefined;
 let coldListPaintedAt: number | undefined;
@@ -64,8 +65,8 @@ const storage: WorkspaceStorage = {
     if (mode === 'disk') throw new StorageFailureError('QUOTA', 'notCommitted');
     if (mode === 'native-disk') throw new StorageFailureError('QUOTA', 'notCommitted');
     if (mode === 'partial') {
-      // Der letzte Put besitzt einen ungültigen Schlüssel: Dexie muss auch die
-      // vorher geschriebenen Transfer-/Abgleichzeilen in derselben Transaktion zurückrollen.
+      // Ungültiger letzter Handle prüft die UI-Originalerhaltung; tatsächliche
+      // SQL-Rollbacks nach begonnenen Writes werden separat nativ geprüft.
       const invalid = { ...batch, aggregates: batch.aggregates.map((entry, index) => index === batch.aggregates.length - 1 ? { ...entry, handle: undefined } : entry) } as unknown as AtomicBatch<StoredAggregate, never, never>;
       await adapter.applyAtomicBatch(invalid); return;
     }
@@ -80,16 +81,7 @@ window.workspaceTest = {
   mode(value) { mode = value; }, release() { release?.(); }, read: () => adapter.query({ spaceId }),
   async fixture() {
     const aggregates = await adapter.query({ spaceId });
-    const sharedExpenseLoad = await new Promise<number>((resolve, reject) => {
-      const request = indexedDB.open('wimm-workspace-integration');
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => {
-        const database = request.result;
-        const query = database.transaction('projections').objectStore('projections').getAll();
-        query.onerror = () => { database.close(); reject(query.error); };
-        query.onsuccess = () => { const entries = query.result as { kind: string }[]; database.close(); resolve(entries.filter((entry) => entry.kind === 'synthetic-shared-expense-load').length); };
-      };
-    });
+    const sharedExpenseLoad=(await adapter.loadPending(spaceId)).filter(entry=>typeof entry.draft==='object'&&entry.draft!==null&&'syntheticSharedExpenseLoad' in entry.draft&&entry.draft.syntheticSharedExpenseLoad===true).length;
     const transactions = aggregates.filter((entry) => entry.aggregateType === 'transaction') as unknown as TransactionAggregate[];
     return { transactions: transactions.length, accounts: aggregates.filter((entry) => entry.aggregateType === 'account').length, categories: aggregates.filter((entry) => entry.aggregateType === 'category').length, months: new Set(transactions.map((entry) => entry.date.slice(0, 7))).size, sharedExpenseLoad };
   },
