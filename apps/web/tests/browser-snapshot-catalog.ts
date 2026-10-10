@@ -6,27 +6,27 @@ import type {LocalStorageAdapter} from '@wimm/storage';
 import {runSnapshotCase,negativeSnapshotVariants,p5Snapshot,normalized,equal,type SnapshotCase,profileId,spaceId} from '../../../tests/storage/contracts/snapshot-catalog.js';
 export async function runBrowserSnapshotCase(scenario:SnapshotCase,initial:BrowserSqliteStorageAdapter):Promise<void>{
  let current:BrowserSqliteStorageAdapter|undefined=initial;
- const use=async(profile:UUID)=>{
+ const getOwner=async(profile:UUID)=>{
   if(current!==undefined&&current.profileId!==profile){await current.close();current=undefined;}
   current??=new BrowserSqliteStorageAdapter(profile);await current.client.ready;return current;
  };
  const access=(profile:UUID):LocalStorageAdapter=>({
   profileId:profile,
-  async initializeArea(space,epoch){return (await use(profile)).initializeArea(space,epoch);},
-  async readAggregate(id){return (await use(profile)).readAggregate(id);},
-  async query(query){return (await use(profile)).query(query);},
-  async applyAtomicBatch(batch){return (await use(profile)).applyAtomicBatch(batch);},
-  async loadConfirmed(space){return (await use(profile)).loadConfirmed(space);},
-  async loadPending(space){return (await use(profile)).loadPending(space);},
-  async saveSyncPage(page){return (await use(profile)).saveSyncPage(page);},
-  async getSyncState(space){return (await use(profile)).getSyncState(space);},
-  async exportSnapshot(space){return (await use(profile)).exportSnapshot(space);},
-  async replaceSnapshot(snapshot){return (await use(profile)).replaceSnapshot(snapshot);},
-  async rebuildProjections(space){return (await use(profile)).rebuildProjections(space);}
+  async initializeArea(space,epoch){return (await getOwner(profile)).initializeArea(space,epoch);},
+  async readAggregate(id){return (await getOwner(profile)).readAggregate(id);},
+  async query(query){return (await getOwner(profile)).query(query);},
+  async applyAtomicBatch(batch){return (await getOwner(profile)).applyAtomicBatch(batch);},
+  async loadConfirmed(space){return (await getOwner(profile)).loadConfirmed(space);},
+  async loadPending(space){return (await getOwner(profile)).loadPending(space);},
+  async saveSyncPage(page){return (await getOwner(profile)).saveSyncPage(page);},
+  async getSyncState(space){return (await getOwner(profile)).getSyncState(space);},
+  async exportSnapshot(space){return (await getOwner(profile)).exportSnapshot(space);},
+  async replaceSnapshot(snapshot){return (await getOwner(profile)).replaceSnapshot(snapshot);},
+  async rebuildProjections(space){return (await getOwner(profile)).rebuildProjections(space);}
  });
  const storage=access(profileId);
  try{await runSnapshotCase(scenario,{storage,storageSchemaVersion:2,
-  async restart(){await current?.close();current=undefined;await use(profileId);return storage;},
+  async restart(){await current?.close();current=undefined;await getOwner(profileId);return storage;},
   forProfile:access,async close(){await current?.close();current=undefined;}
  });}finally{await current?.close();}
 }

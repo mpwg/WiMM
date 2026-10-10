@@ -147,3 +147,11 @@ pnpm exec playwright test --config tests/browser-storage/config.ts --grep 'Rust-
 Die laufende vollständige CI auf 47e2497 gehört zum vorherigen Abschnitt und ist keine Prüfung dieses neuen Kernfixes. #109/#148/#149/#150/#151/Gesamtabnahmen bleiben bis jeweiligem vollständigem Nachweis offen.
 
 Aktueller kombinierter Kataloglauf: 18 erfolgreich (je vier gemeinsame Snapshotfälle, ein direkter 26-Varianten-Grenzfall und ein F01-Neuaufbau-/Idempotenz-/Wiederöffnungsfall pro Browser). Typecheck einschließlich neuer Testconsumer, Lint, Dokumentation und Whitespace ebenfalls erfolgreich.
+
+## Optimierter regulärer Workerbuild
+
+Buildscript erzeugt den Browserworker jetzt aus dem Rust-Releaseprofil statt aus Debug-WASM. Öffentliche typisierte API unverändert; interne wasm-bindgen-Symbolhashes/ungenutzte Debugexports verändert und nach Diffprüfung ausdrücklich aus Rust neu erzeugt. Positive und absichtlich negative Driftprüfung ohne Überschreiben bestehen weiter. Aktuelle WASM-Datei 7.556.231 Byte statt vorher rund 19,95 MB; vollständiger warnungsfreier PWA-Produktionsbuild erfolgreich. Das ist keine neue Version, Veröffentlichung oder bestandene 50.000-UI-Leistungsabnahme.
+
+Vollständiger aktueller Drei-Browserkatalog mit optimierter tatsächlicher WASM: 44 erfolgreich, vier ausdrücklich browserabhängige Überspringungen (WebKit-Privatmodus nur WebKit, Chromium-CDP-Originquota nur Chromium). Gebauter Client mit tatsächlich beendetem eigenen Previewserver und kaltem Browserprozess ebenfalls in allen drei Browsern erfolgreich, drei weitere Fälle. Native Rust-Fachkerntests zusätzlich im Releaseprofil bestanden; keine debug_assert-abhängigen Finanz-/Anwendungs-/DALguards. Typecheck und Gesamt-Lint nach Umbenennung des als React-Hook erkannten Testconsumernamens getOwner erfolgreich; die frühere Lintaussage des lokalen vorherigen Abschnitts war verfrüht.
+
+Vorherige Ubuntu-CI auf 47e2497 scheitert jetzt unabhängig an dem bereits offenen CAMT-Leistungsfall #113; AR05-Umstellung läuft darin erfolgreich durch, ebenso DAL01-/Receipt-/bisheriger Leistungsjob und CodeQL. Vollständige aktuelle neue CI bleibt erforderlich.
