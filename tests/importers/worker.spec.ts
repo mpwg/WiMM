@@ -29,3 +29,18 @@ test('Echter Worker: lokal parsen, strukturiert ablehnen, abbrechen und danach n
   expect(result.again).toEqual(result.parsed);
   expect(requests).toEqual([]);
 });
+
+test('Echter Worker erhält 100.000 normalisierte CAMT-Zeilen innerhalb der unveränderten Prüfgrenze',async({page})=>{
+ await page.goto('/');
+ const result=await page.evaluate(async url=>{
+  const {port}=await import(/* @vite-ignore */ url) as {port:ImportWorkerPort};
+  const entry='<Ntry><Amt Ccy="EUR">1.00</Amt><CdtDbtInd>CRDT</CdtDbtInd><BookgDt><Dt>2026-10-07</Dt></BookgDt><NtryRef>synthetisch</NtryRef></Ntry>';
+  const bytes=new TextEncoder().encode('<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.02">'+entry.repeat(100000)+'</Document>');
+  const start=performance.now();const parsed=await port.parse({bytes,format:'camt053',preview:true});
+  return {milliseconds:performance.now()-start,records:parsed.records.length,preview:parsed.preview?.length,first:parsed.preview?.[0]?.record,last:parsed.preview?.at(-1)?.record};
+ },harness);
+ expect(result.records).toBe(100000);expect(result.preview).toBe(100000);
+ expect(result.first).toMatchObject({sourceRow:1,date:'2026-10-07',amount:100,currency:'EUR'});
+ expect(result.last).toMatchObject({sourceRow:100000,date:'2026-10-07',amount:100,currency:'EUR'});
+ expect(result.milliseconds).toBeLessThan(15000);
+});

@@ -46,7 +46,7 @@ Oberfläche implementiert, vollständige Abnahme offen. [Gesamtübersicht #57](h
 
 ## P5 — Import und Automatisierung
 
-P5.1–P5.6 und UX-Neugestaltung durch Nutzerauftrag vom 5. Oktober freigegeben; Kernabläufe weitgehend implementiert, Gesamtabschluss offen. [Gesamtabnahme #71](https://github.com/mpwg/WiMM/issues/71) mit Funktionsdeltas #58–#62 und Abnahmen #63–#70; zusätzlicher CAMT-Leistungsbefund [#113](https://github.com/mpwg/WiMM/issues/113). Fristen/Ressourcen-/Finanzgrenzen nicht zur Abnahme lockern. Etablierte Parser bleiben, neue Rust-Anwendungskoordination wird separat freigegeben. [Formate](formats.md), [Abnahmekatalog](acceptance-catalog.md).
+P5.1–P5.6 und UX-Neugestaltung durch Nutzerauftrag vom 5. Oktober freigegeben; Kernabläufe weitgehend implementiert, Gesamtabschluss offen. [Gesamtabnahme #71](https://github.com/mpwg/WiMM/issues/71) mit Funktionsdeltas #58–#62 und Abnahmen #63–#70; zusätzlicher CAMT-Leistungsbefund [#113](https://github.com/mpwg/WiMM/issues/113): CPUprofil identifiziert UTF-8-Allokationen des Ausgabebudgets; Standard-Encoderpuffer reduziert lokalen vollständigen 100.000-Zeilen-Pfad von 10.286,8 auf 3.137,6 ms ohne Grenzänderung. 59 Importerfälle und zwei echte Workerfälle bestanden; neue CI-Abnahme offen. Fristen/Ressourcen-/Finanzgrenzen nicht zur Abnahme lockern. Etablierte Parser bleiben, neue Rust-Anwendungskoordination wird separat freigegeben. [Formate](formats.md), [Abnahmekatalog](acceptance-catalog.md).
 
 ## P6 — Budget, Ziele und Berichte
 

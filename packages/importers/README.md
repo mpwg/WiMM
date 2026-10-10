@@ -43,3 +43,18 @@ Die [datierte Kriterienmatrix](https://github.com/mpwg/WiMM/blob/84d730cc6e10d70
 ## Architekturstand vom 9. Oktober 2026
 
 Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.
+
+## CAMT-Profilierung und UTF-8-Ausgabebudget (#113)
+
+Der vollständige gesperrte Saxes-/Normalisierungs-/Vorschaupfad mit 100.000 synthetischen Zeilen lässt sich ohne echte Finanzdaten profilieren:
+
+```sh
+mkdir -p test-results/camt113
+node --import tsx --cpu-prof --cpu-prof-dir=test-results/camt113 scripts/profile-camt.mjs
+pnpm --filter @wimm/importers test
+pnpm exec playwright test --config tests/importers/config.ts
+```
+
+Aktive Linux-x86_64-Arbeitskopie: bisher 10.286,8 ms; CPUprofil zeigt 7.377 ms allein in TextEncoder-Encode-/UTF8-Allokationsframes plus weitere Budgettraversierung. Ausgabebudget verwendet nun Standard-TextEncoder.encodeInto mit festem 1.024-Byte-Puffer für vollständig passende Texte. Bei unvollständiger Codierung bleibt der bisherige vollständige Encodepfad. Exakte UTF-8-Bytes, Schlüssel-/Objekt-/Primitiveoverhead, gemeinsame Objektverweise und kumulative Grenzen bleiben unverändert; kein eigener XML-/Unicodeparser, Cache unbeschränkter Strings oder erhöhte Ressourcen-/Zeitgrenze. Neue Unicode-/Puffer-/Surrogat-/Aliasprüfungen benutzen nur im isolierten Unitfall eine kleinere Grenze; Produktgrenze weiterhin 256 MiB.
+
+Derselbe vollständige 100.000-Records-Pfad danach 3.137,6 ms. Alle 59 Importerfälle erfolgreich einschließlich bestehendem 15.000-ms-Großfall und ursprünglichen Byte-/Knoten-/Entry-/Ausgabelimits. Echte Chromium-Workerprüfung: Abbruch/strukturelle Ablehnung/Neustart sowie 100.000 normalisierte CAMT-Zeilen mit geprüfter erster/letzter Datum-/Cent-/Währungsform unter derselben 15.000-ms-Grenze bestanden. Aktuelle Typecheck-/Lintprüfung erfolgreich. Lokale Werte sind kein Geräte-/CI-Gesamtbeleg; #113 bis aktuellem passendem CI-Lauf offen.
