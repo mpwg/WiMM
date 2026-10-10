@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[package]
+name = "wimm-public-crypto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+[dependencies]
+libsodium-rs = "=0.2.5"
+[lints]
+workspace = true

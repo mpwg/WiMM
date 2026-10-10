@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 [workspace]
-members = ["crates/contract-primitives", "crates/public-contracts", "crates/local-contracts", "crates/finance-core", "crates/finance-types", "crates/finance-bindings", "tools/ffi-bindgen", "tools/core-probe", "tools/wasm-glue", "tools/dal-proof", "tools/contract-schema"]
+members = ["crates/public-crypto", "crates/client-crypto", "crates/contract-primitives", "crates/public-contracts", "crates/local-contracts", "crates/finance-core", "crates/finance-types", "crates/finance-bindings", "tools/ffi-bindgen", "tools/core-probe", "tools/wasm-glue", "tools/dal-proof", "tools/contract-schema"]
 exclude = ["apps/desktop/src-tauri"]
 resolver = "3"
 

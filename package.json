@@ -83,7 +83,8 @@
     "test:contracts:commands:wasm": "pnpm check:contracts:generated && node scripts/test-typed-command-wasm.mjs",
     "test:contracts:storage-errors": "pnpm check:contracts:generated && node scripts/test-storage-error-bindings.mjs && pnpm exec vitest run packages/contracts/src/storage-error-generation.test.ts",
     "check:target:architecture": "node scripts/check-target-architecture.mjs",
-    "test:target:architecture": "node --test scripts/check-target-architecture.test.mjs && node scripts/test-target-architecture-injection.mjs && node scripts/test-native-architecture-assertions.mjs"
+    "test:target:architecture": "node --test scripts/check-target-architecture.test.mjs && node scripts/test-target-architecture-injection.mjs && node scripts/test-native-architecture-assertions.mjs",
+    "test:crypto:rust": "node scripts/test-rust-crypto.mjs"
   },
   "devDependencies": {
     "@babel/parser": "8.0.6",
@@ -99,6 +100,7 @@
     "tsx": "4.23.15",
     "typescript": "7.0.2",
     "vitest": "5.0.3",
-    "yaml": "2.9.1"
+    "yaml": "2.9.1",
+    "libsodium-wrappers-sumo": "0.8.4"
   }
 }

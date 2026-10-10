@@ -18,7 +18,8 @@
     "tests/storage/**/*.ts",
     "tests/core-bindings/**/*.ts",
     "tests/contract-bindings/**/*.ts",
-    "tests/dal-proof/**/*.ts"
+    "tests/dal-proof/**/*.ts",
+    "tests/crypto-rust/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -1,0 +1,382 @@
+{
+  "snapshotDate": "2026-10-10",
+  "projectLicense": "AGPL-3.0-or-later",
+  "scope": "AR08 Machbarkeit, keine Gesamtabnahme #122; vorhandene Sperrversionen unverändert",
+  "nativeBinding": {
+    "name": "libsodium-rs",
+    "version": "0.2.5",
+    "sourceCommit": "21fa621007fa4e2696cfe9e23678571453a79dbc"
+  },
+  "wasmBinding": {
+    "name": "libsodium-wrappers-sumo",
+    "version": "0.8.4",
+    "existing": true
+  },
+  "dependencies": [
+    {
+      "name": "adler32",
+      "version": "1.2.0",
+      "license": "Zlib",
+      "checksum": "aae1277d39aeec15cb388266ecc24b11c80469deae6067e17a1a7aa9e5c1f234",
+      "source": "https://crates.io/crates/adler32/1.2.0",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/adler32-1.2.0-LICENSE"
+      ]
+    },
+    {
+      "name": "allocator-api2",
+      "version": "0.2.21",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923",
+      "source": "https://crates.io/crates/allocator-api2/0.2.21",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/allocator-api2-0.2.21-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/allocator-api2-0.2.21-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "base64",
+      "version": "0.23.1",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5",
+      "source": "https://crates.io/crates/base64/0.23.1",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/base64-0.23.1-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/base64-0.23.1-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "crc32fast",
+      "version": "1.5.2",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "01a7799fd6b852db0e61728dde9a204c423b44d689dbd432522543614b490e78",
+      "source": "https://crates.io/crates/crc32fast/1.5.2",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/crc32fast-1.5.2-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/crc32fast-1.5.2-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "ct-codecs",
+      "version": "1.1.8",
+      "license": "MIT",
+      "checksum": "8fd9f3db6f2cfef61c10613071955154ffdc9e515daebff26de4b54e35038fdd",
+      "source": "https://crates.io/crates/ct-codecs/1.1.8",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/ct-codecs-1.1.8-LICENSE"
+      ]
+    },
+    {
+      "name": "ctor",
+      "version": "1.0.13",
+      "license": "Apache-2.0 OR MIT",
+      "checksum": "914a755b7c2d4af2bdcff7ce1739e2db9a1b81a9b07123d8015786ae03c0980d",
+      "source": "https://crates.io/crates/ctor/1.0.13",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/ctor-1.0.13-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/ctor-1.0.13-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "dary_heap",
+      "version": "0.3.9",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "8b1e3a325bc115f096c8b77bbf027a7c2592230e70be2d985be950d3d5e60ebe",
+      "source": "https://crates.io/crates/dary_heap/0.3.9",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/dary_heap-0.3.9-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/dary_heap-0.3.9-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "filetime",
+      "version": "0.2.29",
+      "license": "MIT/Apache-2.0",
+      "checksum": "5c287a33c7f0a620c38e641e7f60827713987b3c0f26e8ddc9462cc69cf75759",
+      "source": "https://crates.io/crates/filetime/0.2.29",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/filetime-0.2.29-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/filetime-0.2.29-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "flate2",
+      "version": "1.1.10",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "6e634e2e0ebac1ee034020da1ca582e17ffe4e0f5e985823721e168928136dcb",
+      "source": "https://crates.io/crates/flate2/1.1.10",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/flate2-1.1.10-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/flate2-1.1.10-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "http",
+      "version": "1.5.0",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "918d3568bebf352712bc2ef3d46a8bcf1a75b373be6539de198e9105cbbf9ce0",
+      "source": "https://crates.io/crates/http/1.5.0",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/http-1.5.0-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/http-1.5.0-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "httparse",
+      "version": "1.10.1",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "6dbf3de79e51f3d586ab4cb9d5c3e2c14aa28ed23d180cf89b4df0454a69cc87",
+      "source": "https://crates.io/crates/httparse/1.10.1",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/httparse-1.10.1-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/httparse-1.10.1-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "libflate",
+      "version": "2.3.2",
+      "license": "MIT",
+      "checksum": "561a8da1a50e1428d3c51321dafeca849df992a5bb67720c386131234caba82e",
+      "source": "https://crates.io/crates/libflate/2.3.2",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/libflate-2.3.2-LICENSE"
+      ]
+    },
+    {
+      "name": "libflate_lz77",
+      "version": "2.3.0",
+      "license": "MIT",
+      "checksum": "ff7a10e427698aef6eef269482776debfef63384d30f13aad39a1a95e0e098fd",
+      "source": "https://crates.io/crates/libflate_lz77/2.3.0",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/libflate_lz77-2.3.0-LICENSE"
+      ]
+    },
+    {
+      "name": "libsodium-rs",
+      "version": "0.2.5",
+      "license": "MIT",
+      "checksum": "fb88b4f8f68b2773309d05da6c15f33b8ed9bfa007708d876476cb13d786b1e9",
+      "source": "https://crates.io/crates/libsodium-rs/0.2.5",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/libsodium-rs-0.2.5-LICENSE"
+      ]
+    },
+    {
+      "name": "libsodium-sys-stable",
+      "version": "1.24.0",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "72b04bf6da2c98b727af37ab62cb505f4d751b975b034a9b9ad491d333b0564e",
+      "source": "https://crates.io/crates/libsodium-sys-stable/1.24.0",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/libsodium-sys-stable-1.24.0-LICENSE",
+        "docs/dependency-provenance/licenses/rust-crypto/libsodium-sys-stable-1.24.0-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/libsodium-sys-stable-1.24.0-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "link-section",
+      "version": "0.19.3",
+      "license": "Apache-2.0 OR MIT",
+      "checksum": "39c29a617ce3df32c08497bdc1ab6e2376e0b17948ac166a2fbe5977c5954cd9",
+      "source": "https://crates.io/crates/link-section/0.19.3",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/link-section-0.19.3-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/link-section-0.19.3-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "linktime-proc-macro",
+      "version": "0.2.3",
+      "license": "Apache-2.0 OR MIT",
+      "checksum": "7e57c38c1e860fd37c604281cdfb1dd2216977fd76a50f85ba2f388ef3219616",
+      "source": "https://crates.io/crates/linktime-proc-macro/0.2.3",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/linktime-proc-macro-0.2.3-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/linktime-proc-macro-0.2.3-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "minisign-verify",
+      "version": "0.2.5",
+      "license": "MIT",
+      "checksum": "22f9645cb765ea72b8111f36c522475d2daa0d22c957a9826437e97534bc4e9e",
+      "source": "https://crates.io/crates/minisign-verify/0.2.5",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/minisign-verify-0.2.5-LICENSE"
+      ]
+    },
+    {
+      "name": "no_std_io2",
+      "version": "0.9.4",
+      "license": "Apache-2.0 OR MIT",
+      "checksum": "418abd1b6d34fbf6cae440dc874771b0525a604428704c76e48b29a5e67b8003",
+      "source": "https://crates.io/crates/no_std_io2/0.9.4",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/no_std_io2-0.9.4-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/no_std_io2-0.9.4-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "rle-decode-fast",
+      "version": "1.0.3",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "3582f63211428f83597b51b2ddb88e2a91a9d52d12831f9d08f5e624e8977422",
+      "source": "https://crates.io/crates/rle-decode-fast/1.0.3",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/rle-decode-fast-1.0.3-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/rle-decode-fast-1.0.3-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "simd-adler32",
+      "version": "0.3.10",
+      "license": "MIT",
+      "checksum": "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea",
+      "source": "https://crates.io/crates/simd-adler32/0.3.10",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/simd-adler32-0.3.10-LICENSE.md"
+      ]
+    },
+    {
+      "name": "tar",
+      "version": "0.4.46",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "3f6221d9a6003c78398e3b239969f352578258df48c8eb051caadae0015bc840",
+      "source": "https://crates.io/crates/tar/0.4.46",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/tar-0.4.46-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/tar-0.4.46-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "thiserror",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "b6aaf5339b578ea85b50e080feb250a3e8ae8cfcdff9a461c9ec2904bc923f52",
+      "source": "https://crates.io/crates/thiserror/1.0.69",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/thiserror-1.0.69-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/thiserror-1.0.69-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "thiserror-impl",
+      "version": "1.0.69",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "4fee6c4efc90059e10f81e6d42c60a18f76588c3d74cb83a0b242a2b6c7504c1",
+      "source": "https://crates.io/crates/thiserror-impl/1.0.69",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/thiserror-impl-1.0.69-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/thiserror-impl-1.0.69-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "typed-path",
+      "version": "0.12.3",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "8e28f89b80c87b8fb0cf04ab448d5dd0dd0ade2f8891bae878de66a75a28600e",
+      "source": "https://crates.io/crates/typed-path/0.12.3",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/typed-path-0.12.3-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/typed-path-0.12.3-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "ureq",
+      "version": "3.4.2",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "9a7ac20be9b7726e0bbdbf974c059676d9acb1cd414961f570a4e8231cacd7fc",
+      "source": "https://crates.io/crates/ureq/3.4.2",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/ureq-3.4.2-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/ureq-3.4.2-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "ureq-proto",
+      "version": "0.6.4",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "f86fd172ccca569e458f61b6bdd6220965a9ef36e672a6852953b51a0e1583be",
+      "source": "https://crates.io/crates/ureq-proto/0.6.4",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/ureq-proto-0.6.4-LICENSE-APACHE.txt",
+        "docs/dependency-provenance/licenses/rust-crypto/ureq-proto-0.6.4-LICENSE-MIT.txt"
+      ]
+    },
+    {
+      "name": "utf8-zero",
+      "version": "0.8.1",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "b8c0a043c9540bae7c578c88f91dda8bd82e59ae27c21baca69c8b191aaf5a6e",
+      "source": "https://crates.io/crates/utf8-zero/0.8.1",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/utf8-zero-0.8.1-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/utf8-zero-0.8.1-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "xattr",
+      "version": "1.6.1",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "32e45ad4206f6d2479085147f02bc2ef834ac85886624a23575ae137c8aa8156",
+      "source": "https://crates.io/crates/xattr/1.6.1",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/xattr-1.6.1-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/xattr-1.6.1-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "zeroize",
+      "version": "1.9.0",
+      "license": "Apache-2.0 OR MIT",
+      "checksum": "e13c156562582aa81c60cb29407084cdb54c4164760106ab78e6c5b0858cf64e",
+      "source": "https://crates.io/crates/zeroize/1.9.0",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/zeroize-1.9.0-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/zeroize-1.9.0-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "zeroize_derive",
+      "version": "1.5.0",
+      "license": "Apache-2.0 OR MIT",
+      "checksum": "3c50655cbb0fe3fc43170059e702f1ce5e19b84cec58dc87b037a09935c2f328",
+      "source": "https://crates.io/crates/zeroize_derive/1.5.0",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/zeroize_derive-1.5.0-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/zeroize_derive-1.5.0-LICENSE-MIT"
+      ]
+    },
+    {
+      "name": "zip",
+      "version": "8.6.0",
+      "license": "MIT",
+      "checksum": "2d04a6b5381502aa6087c94c669499eb1602eb9c5e8198e534de571f7154809b",
+      "source": "https://crates.io/crates/zip/8.6.0",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/zip-8.6.0-LICENSE"
+      ]
+    },
+    {
+      "name": "zlib-rs",
+      "version": "0.6.8",
+      "license": "Zlib",
+      "checksum": "b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112",
+      "source": "https://crates.io/crates/zlib-rs/0.6.8",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/zlib-rs-0.6.8-LICENSE"
+      ]
+    },
+    {
+      "name": "zopfli",
+      "version": "0.8.3",
+      "license": "Apache-2.0",
+      "checksum": "f05cd8797d63865425ff89b5c4a48804f35ba0ce8d125800027ad6017d2b5249",
+      "source": "https://crates.io/crates/zopfli/0.8.3",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/zopfli-0.8.3-COPYING"
+      ]
+    }
+  ]
+}

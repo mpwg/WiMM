@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[package]
+name = "wimm-client-crypto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+[lib]
+crate-type = ["rlib", "cdylib"]
+[features]
+contract-probe = []
+[dependencies]
+zeroize = "=1.9.0"
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+libsodium-rs = "=0.2.5"
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen.workspace = true
+js-sys = "=0.3.106"
+[lints]
+workspace = true

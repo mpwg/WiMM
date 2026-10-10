@@ -240,6 +240,22 @@
       "checkClosure": false,
       "bindings": true,
       "nativeAssertions": "apps/desktop/src-tauri/src/storage_failure.rs"
+    },
+    "wimm-client-crypto": {
+      "role": "clientCrypto",
+      "features": [
+        "contract-probe"
+      ],
+      "checkClosure": true,
+      "bindings": true,
+      "nativeAssertions": "crates/client-crypto/src/lib.rs"
+    },
+    "wimm-public-crypto": {
+      "role": "publicCrypto",
+      "features": [],
+      "checkClosure": true,
+      "bindings": false,
+      "nativeAssertions": "crates/public-crypto/src/lib.rs"
     }
   },
   "plannedServerRoots": [

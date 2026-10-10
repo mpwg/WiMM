@@ -1,3 +1,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Original-Lizenztext bytegenau erhalten, einschließlich zusätzlicher Schlussleerzeile.
 docs/dependency-provenance/licenses/private-schema-validation/ajv-LICENSE.txt whitespace=-blank-at-eof
+# Originale Rust-Krypto-Fremdlizenzen unverändert einschließlich CRLF/Schlussleerzeilen erhalten.
+docs/dependency-provenance/licenses/rust-crypto/allocator-api2-0.2.21-LICENSE-APACHE -text whitespace=cr-at-eol
+docs/dependency-provenance/licenses/rust-crypto/allocator-api2-0.2.21-LICENSE-MIT -text whitespace=cr-at-eol
+docs/dependency-provenance/licenses/rust-crypto/crc32fast-1.5.2-LICENSE-APACHE whitespace=-blank-at-eof
+docs/dependency-provenance/licenses/rust-crypto/httparse-1.10.1-LICENSE-MIT whitespace=-blank-at-eof
+docs/dependency-provenance/licenses/rust-crypto/no_std_io2-0.9.4-LICENSE-APACHE whitespace=-blank-at-eof
+docs/dependency-provenance/licenses/rust-crypto/zlib-rs-0.6.8-LICENSE whitespace=-blank-at-eol
