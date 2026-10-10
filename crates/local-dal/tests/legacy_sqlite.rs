@@ -1662,3 +1662,376 @@ fn full_restore_missing_backup_wrong_key_bad_scope_hash_and_version_preserve_ori
         assert_eq!(checkpoint_value(&db), before);
     }
 }
+
+use wimm_finance_types::scalars::{FinanceDate, UtcTimestamp};
+use wimm_local_contracts::index_ports::*;
+fn indexed_fixture(file: &std::path::Path) -> SqliteConnection {
+    let mut raw = fixture(file);
+    let source = include_str!("../../../apps/desktop/src-tauri/src/migration.rs");
+    let sql = source
+        .split("CREATE INDEX transactions_by_account_date")
+        .nth(1)
+        .unwrap()
+        .split("\";")
+        .next()
+        .unwrap();
+    raw.batch_execute(&format!("CREATE INDEX transactions_by_account_date{sql}"))
+        .unwrap();
+    raw.batch_execute("INSERT INTO storage_migrations VALUES(1,1,2,1,'synthetic-backup','synthetic-hash','synthetic-profile','synthetic-space','synthetic-epoch'); UPDATE storage_meta SET value='2' WHERE key='storageSchemaVersion'; INSERT INTO storage_meta VALUES('domainSchemaVersion','1');").unwrap();
+    raw
+}
+fn indexed_transaction(n: u32, date: &str, deleted: bool) -> StoredAggregate {
+    let mut value = serde_json::json!({"id":id(n),"handle":id(n),"spaceId":id(2),"revision":1,"aggregateType":"transaction","createdAt":"2026-10-10T00:00:00Z","updatedAt":"2026-10-10T00:00:00Z","date":date,"accountId":id(4),"amount":-1001,"kind":"normal","clearance":"uncleared","splits":[{"id":id(n+1000),"categoryId":id(17),"amount":-1001}],"importReference":"Quelle β"});
+    if deleted {
+        value["deletedAt"] = "2026-10-10T00:00:00Z".into();
+    }
+    serde_json::from_value(value).unwrap()
+}
+fn index_batch(rows: Vec<StoredAggregate>) -> AtomicBatch {
+    AtomicBatch {
+        expected_revisions: vec![],
+        aggregates: rows,
+        outbox: vec![],
+        projections: vec![],
+    }
+}
+#[test]
+fn orm_index_queries_use_real_account_category_import_indexes_and_cursor_boundaries() {
+    let file = path("native-orm-index");
+    drop(indexed_fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    db.apply_atomic_batch(index_batch(vec![
+        indexed_transaction(11, "2026-10-10", false),
+        indexed_transaction(12, "2026-10-11", false),
+        indexed_transaction(13, "2026-10-11", true),
+        indexed_transaction(14, "2026-10-11", false),
+    ]))
+    .unwrap();
+    for (kind, reference) in [
+        (ReferenceKind::Account, id(4).as_str().to_owned()),
+        (ReferenceKind::Category, id(17).as_str().to_owned()),
+        (ReferenceKind::Import, "Quelle β".into()),
+    ] {
+        let mut q = TransactionIndexQuery {
+            space_id: id(2),
+            kind,
+            reference,
+            from_date: None,
+            through_date: None,
+            after: None,
+            limit: 1,
+        };
+        assert_eq!(db.query_transactions(q.clone()).unwrap()[0].handle, id(11));
+        q.after = Some(TransactionCursor {
+            date: FinanceDate::new("2026-10-10".into()).unwrap(),
+            handle: id(11),
+        });
+        assert_eq!(db.query_transactions(q.clone()).unwrap()[0].handle, id(12));
+        q.after = Some(TransactionCursor {
+            date: FinanceDate::new("2026-10-11".into()).unwrap(),
+            handle: id(12),
+        });
+        assert_eq!(db.query_transactions(q.clone()).unwrap()[0].handle, id(14));
+        q.through_date = Some(FinanceDate::new("2026-10-10".into()).unwrap());
+        assert!(db.query_transactions(q.clone()).unwrap().is_empty());
+        q.through_date = None;
+        q.space_id = id(90);
+        assert!(db.query_transactions(q).unwrap().is_empty());
+    }
+    #[cfg(feature = "receipt-probe")]
+    {
+        let plans = db.take_index_query_plans();
+        for expected in [
+            "transactions_by_account_date",
+            "transactions_by_category_date",
+            "transactions_by_import_reference",
+        ] {
+            assert!(plans.iter().any(|p| p.contains(expected)), "{plans:?}");
+        }
+        assert!(
+            !plans.iter().any(|p| p.contains("SCAN aggregates")),
+            "{plans:?}"
+        );
+    }
+    // Realer ORM-Update pflegt die vorhandenen Splitreferenztrigger atomar.
+    let mut updated = serde_json::to_value(indexed_transaction(12, "2026-10-11", false)).unwrap();
+    updated["revision"] = 2.into();
+    updated["splits"][0]["categoryId"] = serde_json::to_value(id(18)).unwrap();
+    db.apply_atomic_batch(index_batch(vec![serde_json::from_value(updated).unwrap()]))
+        .unwrap();
+    assert_eq!(
+        db.query_transactions(TransactionIndexQuery {
+            space_id: id(2),
+            kind: ReferenceKind::Category,
+            reference: id(18).as_str().into(),
+            from_date: None,
+            through_date: None,
+            after: None,
+            limit: 1000
+        })
+        .unwrap()[0]
+            .handle,
+        id(12)
+    );
+}
+#[test]
+fn orm_pending_and_import_source_queries_preserve_scope_order_limits_and_tombstones() {
+    let file = path("native-orm-secondary");
+    drop(indexed_fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    let mut first = request(31, 1).batch.outbox.remove(0);
+    first.created_at = Some(UtcTimestamp::new("2026-10-11T00:00:00Z".into()).unwrap());
+    let mut second = request(32, 1).batch.outbox.remove(0);
+    second.draft.0 = serde_json::json!({"occurredAt":"2026-10-10T00:00:00Z"});
+    let mut batch = index_batch(vec![indexed_transaction(40, "2026-10-10", false)]);
+    batch.outbox = vec![first, second.clone()];
+    let fingerprint = serde_json::json!({"id":id(41),"handle":id(41),"spaceId":id(2),"revision":1,"aggregateType":"importFingerprint","createdAt":"2026-10-10T00:00:00Z","updatedAt":"2026-10-10T00:00:00Z","accountId":id(4),"parserSource":"csv","fingerprint":"synthetisch","transactionId":id(40),"importId":id(42),"sourceRow":1,"externalId":"row-1"});
+    batch
+        .aggregates
+        .push(serde_json::from_value(fingerprint.clone()).unwrap());
+    let mut duplicate = fingerprint;
+    duplicate["id"] = serde_json::to_value(id(43)).unwrap();
+    duplicate["handle"] = duplicate["id"].clone();
+    batch
+        .aggregates
+        .push(serde_json::from_value(duplicate).unwrap());
+    db.apply_atomic_batch(batch).unwrap();
+    let pending = db
+        .query_pending(PendingIndexQuery {
+            space_id: id(2),
+            state: PendingState::Queued,
+            limit: 2,
+        })
+        .unwrap();
+    assert_eq!(pending.len(), 2);
+    assert_eq!(pending[0].operation_id, id(130));
+    assert_eq!(pending[1].operation_id, second.operation_id);
+    let q = ImportSourceQuery {
+        space_id: id(2),
+        account_id: id(4),
+        parser_source: "csv".into(),
+        external_id: "row-1".into(),
+        limit: 1000,
+    };
+    let rows = db.query_imported(q.clone()).unwrap();
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0].handle, id(40));
+    #[cfg(feature = "receipt-probe")]
+    {
+        let plans = db.take_index_query_plans();
+        assert!(
+            plans.iter().any(|p| p.contains("outbox_by_state_created")),
+            "{plans:?}"
+        );
+        assert!(
+            plans
+                .iter()
+                .any(|p| p.contains("import_sources_by_external")),
+            "{plans:?}"
+        );
+    }
+    let foreign = LegacySqliteWriter::open(&file, id(90), CoreValidator).unwrap();
+    assert!(foreign.query_imported(q.clone()).unwrap().is_empty());
+    db.apply_atomic_batch(index_batch(vec![indexed_transaction(
+        40,
+        "2026-10-10",
+        true,
+    )]))
+    .unwrap();
+    assert!(db.query_imported(q).unwrap().is_empty());
+}
+#[test]
+fn orm_index_queries_reject_missing_registered_index_version_and_invalid_limits() {
+    let file = path("native-orm-unindexed");
+    drop(fixture(&file));
+    let db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let q = PendingIndexQuery {
+        space_id: id(2),
+        state: PendingState::Queued,
+        limit: 1,
+    };
+    assert_eq!(
+        db.query_pending(q).unwrap_err().code,
+        StorageFailureCode::UpdateRequired
+    );
+    for limit in [0, 1001] {
+        assert_eq!(
+            db.query_pending(PendingIndexQuery {
+                space_id: id(2),
+                state: PendingState::Queued,
+                limit
+            })
+            .unwrap_err()
+            .code,
+            StorageFailureCode::WriteFailed
+        );
+    }
+}
+#[test]
+fn registered_seaquery_index_step_preserves_full_checkpoint_and_uses_actual_indexes() {
+    let file = path("native-dsl-index-step");
+    drop(fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    db.commit(request(31, 2));
+    db.save_recovery_if_absent(b"synthetic-opaque-original")
+        .unwrap();
+    let before = db.checkpoint_v2(&id(2)).unwrap();
+    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let b = NativeBackup::new();
+    let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
+    db.migrate_indexes(vec![before.clone()], &[proof], &p, &b, &NeverCancel)
+        .unwrap();
+    let mut expected = before;
+    expected.snapshot.storage_schema_version = SnapshotStorageVersion::new(2).unwrap();
+    assert_eq!(
+        checkpoint_value(&db),
+        serde_json::to_value(expected).unwrap()
+    );
+    db.apply_atomic_batch(index_batch(vec![indexed_transaction(
+        40,
+        "2026-10-10",
+        false,
+    )]))
+    .unwrap();
+    assert_eq!(
+        db.query_transactions(TransactionIndexQuery {
+            space_id: id(2),
+            kind: ReferenceKind::Category,
+            reference: id(17).as_str().into(),
+            from_date: None,
+            through_date: None,
+            after: None,
+            limit: 1
+        })
+        .unwrap()[0]
+            .handle,
+        id(40)
+    );
+    #[cfg(feature = "receipt-probe")]
+    assert!(
+        db.take_index_query_plans()
+            .iter()
+            .any(|p| p.contains("transactions_by_category_date"))
+    );
+    drop(db);
+    let db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    assert!(db.load_recovery().unwrap().is_some());
+    assert!(
+        db.lookup_result(&request(31, 2).identity)
+            .unwrap()
+            .is_some()
+    );
+    assert_eq!(
+        db.query_transactions(TransactionIndexQuery {
+            space_id: id(2),
+            kind: ReferenceKind::Account,
+            reference: id(4).as_str().into(),
+            from_date: None,
+            through_date: None,
+            after: None,
+            limit: 1
+        })
+        .unwrap()
+        .len(),
+        1
+    );
+}
+#[test]
+fn index_dsl_step_cancellation_backup_failure_and_stale_original_never_leave_partial_indexes() {
+    for mode in ["cancel", "backup", "stale", "collision"] {
+        let file = path("native-dsl-index-rollback");
+        let mut raw = fixture(&file);
+        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+        migrate_commit(&mut db);
+        let expected = db.checkpoint_v2(&id(2)).unwrap();
+        let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+        let b = NativeBackup::new();
+        let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
+        if mode == "backup" {
+            std::fs::remove_file(b.directory.join(proof.backup_id.as_str())).unwrap();
+        }
+        if mode == "stale" {
+            db.save_recovery_if_absent(b"synthetic-new-reference")
+                .unwrap();
+        }
+        if mode == "collision" {
+            raw.batch_execute("CREATE INDEX transactions_by_category_date ON outbox(profile_id)")
+                .unwrap();
+        }
+        let before = checkpoint_value(&db);
+        let cancel = CancelAt {
+            at: if mode == "cancel" { 3 } else { 99 },
+            calls: std::cell::Cell::new(0),
+        };
+        assert!(
+            db.migrate_indexes(vec![expected], &[proof], &p, &b, &cancel)
+                .is_err()
+        );
+        assert_eq!(checkpoint_value(&db), before);
+        let count:Count=diesel::sql_query("SELECT count(*) AS count FROM sqlite_master WHERE name IN ('transaction_categories','storage_migrations','transactions_by_account_date')").get_result(&mut raw).unwrap();
+        assert_eq!(count.count, 0);
+    }
+}
+#[test]
+fn real_fifty_thousand_row_orm_pages_keep_late_cursor_bound_and_under_existing_query_budget() {
+    let file = path("native-orm-50000");
+    drop(indexed_fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let rows = (10_000..60_000)
+        .map(|n| indexed_transaction(n, "2026-10-10", false))
+        .collect::<Vec<_>>();
+    db.apply_atomic_batch(index_batch(rows)).unwrap();
+    drop(db);
+    let started = std::time::Instant::now();
+    let db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let q = TransactionIndexQuery {
+        space_id: id(2),
+        kind: ReferenceKind::Account,
+        reference: id(4).as_str().into(),
+        from_date: None,
+        through_date: None,
+        after: Some(TransactionCursor {
+            date: FinanceDate::new("2026-10-10".into()).unwrap(),
+            handle: id(58_999),
+        }),
+        limit: 1000,
+    };
+    let page = db.query_transactions(q.clone()).unwrap();
+    assert_eq!(page.len(), 1000);
+    assert_eq!(page[0].handle, id(59_000));
+    assert_eq!(page[999].handle, id(59_999));
+    let opening = started.elapsed().as_secs_f64() * 1000.0;
+    assert!(
+        opening < 2000.0,
+        "Native DAO-Dateiöffnung plus erste Seite: {opening} ms"
+    );
+    let mut timings = Vec::new();
+    for _ in 0..30 {
+        let start = std::time::Instant::now();
+        assert_eq!(db.query_transactions(q.clone()).unwrap().len(), 1000);
+        timings.push(start.elapsed().as_secs_f64() * 1000.0);
+    }
+    timings.sort_by(f64::total_cmp);
+    let p95 = timings[28];
+    assert!(p95 < 100.0, "Native DAO-Seite p95: {p95} ms");
+    #[cfg(feature = "receipt-probe")]
+    {
+        let plans = db.take_index_query_plans();
+        assert!(
+            plans
+                .iter()
+                .any(|p| p.contains("transactions_by_account_date"))
+        );
+        assert!(
+            !plans
+                .iter()
+                .any(|p| p.contains("USE TEMP B-TREE FOR ORDER BY"))
+        );
+    }
+    eprintln!(
+        "Synthetische 50.000-Zeilen-DAO-Probe: Dateiöffnung/erste Seite {opening:.2} ms, späte Seite p95 {p95:.2} ms; keine GUI-/Scrollabnahme."
+    );
+}

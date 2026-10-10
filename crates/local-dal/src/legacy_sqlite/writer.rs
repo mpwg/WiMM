@@ -165,8 +165,10 @@ fn write_batch(
 /// Jeder Write besitzt genau eine unmittelbare SQLite-Transaktion.
 /// Finanz-/Cacheprüfung beim Snapshot-/Projektionsersatz wird zwingend injiziert.
 pub struct LegacySqliteWriter<V> {
-    store: LegacySqliteStore,
+    pub(super) store: LegacySqliteStore,
     validator: V,
+    #[cfg(feature = "receipt-probe")]
+    pub(super) query_plans: RefCell<Vec<String>>,
 }
 impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
     #[cfg(not(target_family = "wasm"))]
@@ -178,7 +180,13 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
         Ok(Self {
             store: LegacySqliteStore::open_mode(path, profile, true)?,
             validator,
+            #[cfg(feature = "receipt-probe")]
+            query_plans: RefCell::new(Vec::new()),
         })
+    }
+    #[cfg(feature = "receipt-probe")]
+    pub fn take_index_query_plans(&self) -> Vec<String> {
+        std::mem::take(&mut *self.query_plans.borrow_mut())
     }
     /// Runtimewrites benötigen ausdrücklich den aktivierten physischen Stand vier.
     pub fn ensure_runtime_schema(&self) -> Result<(), StorageFailure> {

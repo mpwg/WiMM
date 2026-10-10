@@ -253,3 +253,32 @@ impl SnapshotProtectionPort<wimm_local_contracts::checkpoint_v2::LocalCheckpoint
 }
 #[cfg(test)]
 mod tests;
+impl wimm_local_contracts::index_ports::LocalIndexQueryPort for NativeRuntimeStorage {
+    fn query_transactions(
+        &self,
+        query: wimm_local_contracts::index_ports::TransactionIndexQuery,
+    ) -> Result<Vec<StoredAggregate>, StorageFailure> {
+        self.store
+            .lock()
+            .map_err(|_| error(StorageFailureCode::ResourceUnavailable))?
+            .query_transactions(query)
+    }
+    fn query_pending(
+        &self,
+        query: wimm_local_contracts::index_ports::PendingIndexQuery,
+    ) -> Result<Vec<PendingOperation>, StorageFailure> {
+        self.store
+            .lock()
+            .map_err(|_| error(StorageFailureCode::ResourceUnavailable))?
+            .query_pending(query)
+    }
+    fn query_imported(
+        &self,
+        query: wimm_local_contracts::index_ports::ImportSourceQuery,
+    ) -> Result<Vec<StoredAggregate>, StorageFailure> {
+        self.store
+            .lock()
+            .map_err(|_| error(StorageFailureCode::ResourceUnavailable))?
+            .query_imported(query)
+    }
+}

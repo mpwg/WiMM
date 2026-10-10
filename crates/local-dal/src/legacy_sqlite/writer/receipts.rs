@@ -305,3 +305,5 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
 mod migration;
 
 mod checkpoint;
+
+mod index_migration;

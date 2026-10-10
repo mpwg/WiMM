@@ -56,6 +56,24 @@ cargo clippy --locked --manifest-path apps/desktop/src-tauri/Cargo.toml --all-ta
 
 Gesamte aktuelle Tauri-Rust-Suite: 36 bestanden, zwei vorhandene Contractdriver-Einstiege regulär ignoriert. Diese Driver werden für ihre jeweiligen gemeinsamen Konformitätsbefehle getrennt gestartet; die ignorierten Einträge sind kein Konformitätsnachweis. Keine GUI-/Produkt-/Swift-/Kotlin-/Browserruntime-Abnahme aus dem nativen Hostabschnitt. Der zusätzliche native Lockfileabschluss enthält ausschließlich schon im Workspace gesperrte Paketversionen mit identischen Checksummen; keine bisherige native Paketversion wurde entfernt.
 
+## Registrierte Indizes und begrenzte ORM-Abfragen
+
+`LocalIndexQueryPort` ist auf dem vollständigen nativen Writer implementiert und wird vom nativen Runtimehost delegiert. Konto-/Kategorie-/Importreferenzfilter, Datum-/Handlecursor, Pendingstatus/Erstellungszeit sowie Importquellen bleiben profil-/bereichsgebunden. Ergebnisse sind auf 1–1.000 begrenzt, Tombstones werden ausgeschlossen, mehrfache passende Fingerprints liefern keine doppelten Buchungen. Abfragen verwenden tatsächliche Diesel-Selects, Kategoriejoin und ein aliasiertes Fingerprint-Subselect. Unregistrierter Indexstand führt zu `UPDATE_REQUIRED`, ohne Scan- oder Backendfallback.
+
+Der neue explizite `migrate_indexes`-Schritt verlangt vollständige rückgelesene/entschlüsselte Checkpoints sämtlicher Bereiche einschließlich Receipts und Recoverybytes. Original-CAS geschieht unter unmittelbarer SQLite-Transaktion. Tabellen, zusammengesetzte Schlüssel/Fremdschlüssel und reguläre Indizes entstehen über SeaQuery. Native physische Version vier bleibt erhalten; logische Snapshotversion steigt nach dem bestehenden registrierten Indexschritt von eins nach zwei. Vorhandene Daten und Epochen sowie historische Receipts/Originalreferenzen bleiben identisch. Das bestehende Journal wird gefüllt, vollständige zusätzliche Sicherungsbelege separat registriert. Abbruch, fehlendes Backup, konkurrierende Originaländerung und Namenskollision führen nicht zu Teilindizes.
+
+Gekapselte technische SQL-Ausnahmen sind explizit:
+
+- Feste JSONpfad-Literale in Diesel-Ausdrücken sind nötig, damit SQLite die vorhandenen Ausdrucksindizes verwendet. Alle Referenz-/Datums-/Cursorwerte bleiben gebundene Parameter.
+- Der vorbereitete Datum-/Handle-Zeilenvergleich ergänzt die Diesel-Query, weil Diesel-Tupel keine solche `gt`-Expression bereitstellen.
+- SeaQuery 1.0.2 löst im SQLitebuilder bei `IndexColumn::Expr` einen `Not supported`-Panic aus. Die sechs vorhandenen JSON-/CASE-Ausdrucksindizes werden deshalb ausschließlich aus dem festen registrierten Katalog erzeugt; Tabellen und reguläre Indizes bleiben DSL. Keine neue DSL, freie Caller-DDL oder Frameworkersetzung.
+- SeaQuery bietet keine SQLite-Trigger-/`json_each`-Backfill-DSL. Exakt die vorhandenen registrierten Splitreferenztrigger und der ursprüngliche Backfill bleiben feste backendinterne Anweisungen.
+- Nur das synthetische `receipt-probe`-Feature führt `EXPLAIN QUERY PLAN` auf genau derselben aufgebauten ORM-Query mit ihren tatsächlichen Bindings aus. Der normale Adapter enthält diesen Beobachter nicht; seine Ergebnisse enthalten nur technische Plandetails, keine SQL-/Payload-/Schlüsselwerte.
+
+Native Tests bestätigen die tatsächliche Verwendung von `transactions_by_account_date`, `transactions_by_category_date`, `transactions_by_import_reference`, `outbox_by_state_created` und `import_sources_by_external`. Cursorfälle umfassen gleiche Datumswerte, korrekte nächste Handles, Terminobergrenze und Tombstones; echte ORM-Updates pflegen Splitreferenzen atomar.
+
+Zusätzliche synthetische DAO-Probe: 50.000 Buchungen auf echter SQLite, tatsächliches Dateineuöffnen und eine späte 1.000-Zeilen-Seite nach Handle 58.999. Vollständiger lokaler Lauf: Dateiöffnung/erste Seite 64,49 ms, späte Seite p95 63,72 ms über 30 Wiederholungen; Orakel, Indexplan und unveränderte Grenzen unter 2.000/100 ms bestanden. Dies misst ausschließlich den DAO, keine sichtbare Finanzliste, GUI, Scrollreaktion, neue Browserpersistenz oder P4-Gesamtabnahme.
+
 ## Kriterienmatrix
 
 | #108-Kriterium | Aktueller Nachweis |
@@ -65,7 +83,7 @@ Gesamte aktuelle Tauri-Rust-Suite: 36 bestanden, zwei vorhandene Contractdriver-
 | Atomare Batches/CAS/Snapshot-/Projektionsersatz | Tatsächliche ORM-Transaktionen prüfen Batch-/Sync-/Snapshotrollback nach begonnenen Writes, konkurrierende CAS-Verbindungen, Finanzrevisionsanker und vollständigen Ausgangsvergleich beim Cacheersatz. Integrierte Original-/Receipts und private Recoverybytes ebenfalls geprüft; konkrete native Runtimeports geprüft; vollständige Tauri-/Konformitätsintegration noch offen. |
 | Gesicherte versionierte Migration | Registrierte SeaQuery-Erweiterung mit tatsächlich verschlüsselten/rückgelesenen Originalen, Vergleich aller Bereiche, Sicherungsjournal und DDL-/Abbruchrollback geprüft. Vollständiger V2-Checkpoint-/Restorepfad und gesicherter Drei-nach-vier-Schritt umgesetzt; Runtime-/Tauri-/Aktivierungsabnahme noch offen. |
 | Reguläre ORM-Abfragen, Rust-DSL-Migrationen | Leseabfragen durch Diesel umgesetzt. Registrierte DSL-Erweiterung vorhanden; reguläre Writes ebenfalls durch ORM. Verbindungs-PRAGMAs und registrierte DDL bleiben gekapselte technische Ausnahmen. |
-| Native Assertions, Neustart, Fehler, Leistung | 36 native Testfälle plus zwei tatsächlich separat gestartete Child-Probes; Receipt und verschlüsselter Originalauftrag überleben Prozessneustart. Keine GUI-/Disk-full-/Abfrageleistungsabnahme. |
+| Native Assertions, Neustart, Fehler, Leistung | 42 native Testfälle plus zwei tatsächlich separat gestartete Child-Probes; Receipt und verschlüsselter Originalauftrag überleben Prozessneustart. Zusätzliche DAO-Abfrageprobe separat belegt; keine GUI-/Scroll-/Disk-full-Abnahme. |
 | Vollständiger #77-Vertrag ohne dauerhaften rusqlite-Produktpfad | Tauri noch nicht umgeschaltet; Issue bleibt offen. |
 
 ## Ausgeführte Prüfungen
@@ -80,6 +98,6 @@ pnpm check:target:architecture
 cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml sqlite_unbekannte_versionen_bleiben_vor_jeder_initialisierung_unveraendert
 ```
 
-Native Suite: 38 Bestands-Testeinträge einschließlich der beiden Child-Probe-Einstiege, elf Memoryreferenztests und zehn bestehende tatsächliche AR04-SQLitetests bestanden. Die Elternprozesse starten und überprüfen beide Child-Probes tatsächlich. Der aktuelle Tauri-Rustguard weist zusätzlich physische Stände drei und vier ohne Initialisierungs-/Datenänderung ab. Schemafixture wird gegen die aktuelle Initialschemaquelle geprüft; die V2-Datei verwendet die bestehende registrierte Index-DDL direkt aus der Tauri-Quelle. Fixtureerzeugung ist Testaufbau; der neue registrierte Erweiterungsschritt besitzt separat tatsächliche Sicherungs-/Original-/Abbruchbelege. WASM-Check prüft Kompatibilität der Crate, keine neue Browserpersistenz.
+Native Suite: 44 Bestands-Testeinträge einschließlich der beiden Child-Probe-Einstiege, elf Memoryreferenztests und zehn bestehende tatsächliche AR04-SQLitetests bestanden. Die Elternprozesse starten und überprüfen beide Child-Probes tatsächlich. Der aktuelle Tauri-Rustguard weist zusätzlich physische Stände drei und vier ohne Initialisierungs-/Datenänderung ab. Schemafixture wird gegen die aktuelle Initialschemaquelle geprüft; die V2-Datei verwendet die bestehende registrierte Index-DDL direkt aus der Tauri-Quelle. Fixtureerzeugung ist Testaufbau; der neue registrierte Erweiterungsschritt besitzt separat tatsächliche Sicherungs-/Original-/Abbruchbelege. WASM-Check prüft Kompatibilität der Crate, keine neue Browserpersistenz.
 
 Aktuelles Tracking einschließlich nächster Implementierung und Prüfbelege ausschließlich in [#108](https://github.com/mpwg/WiMM/issues/108); Abhängigkeitsfolge in [#114](https://github.com/mpwg/WiMM/issues/114).

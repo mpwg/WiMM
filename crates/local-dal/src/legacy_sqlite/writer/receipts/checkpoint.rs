@@ -9,7 +9,7 @@ use wimm_local_contracts::{
     scalars::*,
     storage_port::{BackupReadPort, SnapshotProtectionPort},
 };
-fn capture(
+pub(super) fn capture(
     c: &mut SqliteConnection,
     p: &EntityId,
     s: &EntityId,
@@ -66,7 +66,7 @@ fn capture(
     value.validate().map_err(|_| invalid())?;
     Ok(value)
 }
-fn hash(v: &LocalCheckpointV2) -> Result<String, ReadError> {
+pub(super) fn hash(v: &LocalCheckpointV2) -> Result<String, ReadError> {
     Ok(Sha256::digest(text(v)?.as_bytes())
         .iter()
         .map(|b| format!("{b:02x}"))
