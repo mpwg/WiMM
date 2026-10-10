@@ -910,15 +910,19 @@ mod tests {
 
     #[test]
     fn sqlite_unbekannte_versionen_bleiben_vor_jeder_initialisierung_unveraendert() {
-        for key in ["storageSchemaVersion", "domainSchemaVersion"] {
+        for (key, version) in [
+            ("storageSchemaVersion", "999"),
+            ("domainSchemaVersion", "999"),
+            ("storageSchemaVersion", "3"),
+        ] {
             let directory = tempfile::tempdir_in(".").unwrap();
             let path = directory.path().join("schema.sqlite3");
             let connection = Connection::open(&path).unwrap();
             initialize_storage(&connection).unwrap();
             connection
                 .execute(
-                    "UPDATE storage_meta SET value = '999' WHERE key = ?1",
-                    [key],
+                    "UPDATE storage_meta SET value = ?1 WHERE key = ?2",
+                    params![version, key],
                 )
                 .unwrap();
             drop(connection);

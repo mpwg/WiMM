@@ -687,3 +687,510 @@ fn foreign_pending_collision_after_aggregate_write_rolls_back_without_moving_ori
         serde_json::to_value(vec![p]).unwrap()
     );
 }
+
+use wimm_local_contracts::{
+    commit::{CancellableLocalCommitPort, LocalCommitPort},
+    models::EncryptedBackupReceipt,
+    ports::EncryptedBackupRequest,
+    scalars::{LocalHash, LocalId},
+    storage_port::{
+        BackupPort, BackupReadPort, CancellationPort, NeverCancel, SnapshotProtectionPort,
+    },
+};
+struct NativeProtection(wimm_client_crypto::SecretKey);
+impl SnapshotProtectionPort for NativeProtection {
+    type Error = wimm_local_contracts::persistence_errors::StorageFailure;
+    fn seal(&self, s: LocalSnapshot) -> Result<Vec<u8>, Self::Error> {
+        wimm_client_crypto::vault::seal_snapshot(&self.0, &serde_json::to_vec(&s).unwrap())
+            .map_err(|_| Self::Error::not_committed(StorageFailureCode::WriteFailed))
+    }
+    fn unseal(&self, bytes: &[u8]) -> Result<LocalSnapshot, Self::Error> {
+        let value = wimm_client_crypto::vault::open_snapshot(&self.0, bytes)
+            .map_err(|_| Self::Error::not_committed(StorageFailureCode::InvalidResponse))?;
+        serde_json::from_slice(&value)
+            .map_err(|_| Self::Error::not_committed(StorageFailureCode::InvalidResponse))
+    }
+}
+struct NativeBackup {
+    directory: std::path::PathBuf,
+    next: std::cell::Cell<u32>,
+}
+impl NativeBackup {
+    fn new() -> Self {
+        let directory = path("native-backup");
+        std::fs::create_dir_all(&directory).unwrap();
+        Self {
+            directory,
+            next: std::cell::Cell::new(700),
+        }
+    }
+}
+impl BackupPort for NativeBackup {
+    type Error = wimm_local_contracts::persistence_errors::StorageFailure;
+    fn persist(&self, r: EncryptedBackupRequest) -> Result<EncryptedBackupReceipt, Self::Error> {
+        use std::io::Write;
+        let number = self.next.get();
+        self.next.set(number + 1);
+        let receipt = EncryptedBackupReceipt {
+            backup_id: LocalId::new(id(number).as_str().into()).unwrap(),
+            profile_id: r.profile_id,
+            space_id: r.space_id,
+            epoch: r.epoch,
+            snapshot_hash: r.snapshot_hash,
+        };
+        let mut file =
+            std::fs::File::create(self.directory.join(receipt.backup_id.as_str())).unwrap();
+        file.write_all(&r.ciphertext).unwrap();
+        file.sync_all().unwrap();
+        let mut meta = std::fs::File::create(
+            self.directory
+                .join(format!("{}.json", receipt.backup_id.as_str())),
+        )
+        .unwrap();
+        meta.write_all(&serde_json::to_vec(&receipt).unwrap())
+            .unwrap();
+        meta.sync_all().unwrap();
+        std::fs::File::open(&self.directory)
+            .unwrap()
+            .sync_all()
+            .unwrap();
+        Ok(receipt)
+    }
+}
+impl BackupReadPort for NativeBackup {
+    fn read(&self, r: &EncryptedBackupReceipt) -> Result<Vec<u8>, Self::Error> {
+        let invalid = || Self::Error::not_committed(StorageFailureCode::InvalidResponse);
+        let meta = std::fs::read(
+            self.directory
+                .join(format!("{}.json", r.backup_id.as_str())),
+        )
+        .map_err(|_| invalid())?;
+        let stored: EncryptedBackupReceipt =
+            serde_json::from_slice(&meta).map_err(|_| invalid())?;
+        if serde_json::to_value(stored).unwrap() != serde_json::to_value(r).unwrap() {
+            return Err(invalid());
+        }
+        std::fs::read(self.directory.join(r.backup_id.as_str())).map_err(|_| invalid())
+    }
+}
+fn protected_backup(
+    s: &LocalSnapshot,
+    p: &NativeProtection,
+    b: &NativeBackup,
+) -> EncryptedBackupReceipt {
+    use sha2::{Digest, Sha256};
+    let hash = Sha256::digest(serde_json::to_vec(s).unwrap())
+        .iter()
+        .map(|v| format!("{v:02x}"))
+        .collect::<String>();
+    b.persist(EncryptedBackupRequest {
+        profile_id: LocalId::new(s.profile_id.as_str().into()).unwrap(),
+        space_id: LocalId::new(s.space_id.as_str().into()).unwrap(),
+        epoch: LocalId::new(s.epoch.as_str().into()).unwrap(),
+        snapshot_hash: LocalHash::new(hash).unwrap(),
+        ciphertext: p.seal(s.clone()).unwrap(),
+    })
+    .unwrap()
+}
+fn migrate_commit(db: &mut LegacySqliteWriter<CoreValidator>) {
+    let s = db.export_snapshot(&id(2)).unwrap();
+    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let b = NativeBackup::new();
+    let r = protected_backup(&s, &p, &b);
+    db.enable_commit_schema(vec![s], &[r], &p, &b, &NeverCancel)
+        .unwrap();
+}
+#[derive(QueryableByName)]
+struct Count {
+    #[diesel(sql_type=diesel::sql_types::BigInt)]
+    count: i64,
+}
+fn extension_tables(c: &mut SqliteConnection) -> i64 {
+    diesel::sql_query("SELECT count(*) AS count FROM sqlite_master WHERE name IN ('wimm_native_schema','wimm_native_receipts','wimm_native_recovery')").get_result::<Count>(c).unwrap().count
+}
+#[test]
+fn registered_dsl_extension_requires_real_encrypted_backup_and_preserves_all_scopes() {
+    let file = path("native-migration");
+    let mut raw = fixture(&file);
+    let mut first = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let mut other = LegacySqliteWriter::open(&file, id(90), CoreValidator).unwrap();
+    other.initialize_area(&id(91), &id(92)).unwrap();
+    let original = first.export_snapshot(&id(2)).unwrap();
+    let foreign = other.export_snapshot(&id(91)).unwrap();
+    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let b = NativeBackup::new();
+    let r = protected_backup(&original, &p, &b);
+    let foreign_receipt = protected_backup(&foreign, &p, &b);
+    assert_eq!(
+        first
+            .enable_commit_schema(
+                vec![original.clone()],
+                std::slice::from_ref(&r),
+                &p,
+                &b,
+                &NeverCancel
+            )
+            .unwrap_err()
+            .code,
+        StorageFailureCode::RevisionConflict
+    );
+    assert_eq!(extension_tables(&mut raw), 0);
+    first
+        .enable_commit_schema(
+            vec![original.clone(), foreign.clone()],
+            &[r, foreign_receipt],
+            &p,
+            &b,
+            &NeverCancel,
+        )
+        .unwrap();
+    assert_eq!(extension_tables(&mut raw), 3);
+    let physical: Payload = diesel::sql_query(
+        "SELECT value AS payload FROM storage_meta WHERE key='storageSchemaVersion'",
+    )
+    .get_result(&mut raw)
+    .unwrap();
+    assert_eq!(physical.payload, "3");
+    let version: Payload = diesel::sql_query("SELECT sqlite_version() AS payload")
+        .get_result(&mut raw)
+        .unwrap();
+    eprintln!("DAL03 SQLite-Version: {}", version.payload);
+    assert_eq!(
+        snapshot_value(&first),
+        serde_json::to_value(original.clone()).unwrap()
+    );
+    assert_eq!(
+        serde_json::to_value(other.export_snapshot(&id(91)).unwrap()).unwrap(),
+        serde_json::to_value(foreign).unwrap()
+    );
+    let r = protected_backup(&original, &p, &b);
+    assert_eq!(
+        first
+            .enable_commit_schema(vec![original], &[r], &p, &b, &NeverCancel)
+            .unwrap_err()
+            .code,
+        StorageFailureCode::UpdateRequired
+    );
+}
+#[test]
+fn backup_tampering_wrong_key_missing_file_and_stale_original_never_install_schema() {
+    for fault in ["missing", "cipher", "key", "stale"] {
+        let file = path("native-backup-rejection");
+        let mut raw = fixture(&file);
+        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+        let original = db.export_snapshot(&id(2)).unwrap();
+        let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+        let b = NativeBackup::new();
+        let r = protected_backup(&original, &p, &b);
+        let selected = if fault == "key" {
+            NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[99; 32]).unwrap())
+        } else {
+            NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap())
+        };
+        if fault == "missing" {
+            std::fs::remove_file(b.directory.join(r.backup_id.as_str())).unwrap();
+        }
+        if fault == "cipher" {
+            std::fs::write(b.directory.join(r.backup_id.as_str()), b"corrupt").unwrap();
+        }
+        if fault == "stale" {
+            db.apply_atomic_batch(request(31, 2).batch).unwrap();
+        }
+        let before = snapshot_value(&db);
+        assert!(
+            db.enable_commit_schema(vec![original], &[r], &selected, &b, &NeverCancel)
+                .is_err()
+        );
+        assert_eq!(extension_tables(&mut raw), 0);
+        assert_eq!(snapshot_value(&db), before);
+    }
+}
+struct CancelAt {
+    at: u32,
+    calls: std::cell::Cell<u32>,
+}
+impl CancellationPort for CancelAt {
+    fn is_cancelled(&self) -> bool {
+        let n = self.calls.get() + 1;
+        self.calls.set(n);
+        n >= self.at
+    }
+}
+#[test]
+fn cancellation_after_actual_registered_ddl_rolls_back_schema_and_journal() {
+    let file = path("native-migration-cancel");
+    let mut raw = fixture(&file);
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let s = db.export_snapshot(&id(2)).unwrap();
+    let before = snapshot_value(&db);
+    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let b = NativeBackup::new();
+    let r = protected_backup(&s, &p, &b);
+    let cancel = CancelAt {
+        at: 4,
+        calls: std::cell::Cell::new(0),
+    };
+    assert_eq!(
+        db.enable_commit_schema(vec![s], &[r], &p, &b, &cancel)
+            .unwrap_err()
+            .code,
+        StorageFailureCode::Cancelled
+    );
+    assert_eq!(cancel.calls.get(), 4);
+    assert_eq!(extension_tables(&mut raw), 0);
+    assert_eq!(snapshot_value(&db), before);
+    migrate_commit(&mut db);
+    assert_eq!(extension_tables(&mut raw), 3);
+}
+#[test]
+fn native_receipts_bind_original_hash_and_survive_reopen_without_repeat_write() {
+    use wimm_persistence_contracts::CommitOutcome;
+    let file = path("native-integrated-receipt");
+    drop(fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    assert!(matches!(
+        db.commit(request(31, 2)),
+        CommitOutcome::NotCommitted { .. }
+    ));
+    migrate_commit(&mut db);
+    let r = request(31, 2);
+    let receipt = match db.commit(r.clone()) {
+        CommitOutcome::Committed { value } => value,
+        other => panic!("{other:?}"),
+    };
+    let after = snapshot_value(&db);
+    drop(db);
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    assert_eq!(
+        serde_json::to_value(db.lookup_result(&r.identity).unwrap()).unwrap(),
+        serde_json::to_value(&receipt).unwrap()
+    );
+    assert!(matches!(
+        db.commit(r.clone()),
+        CommitOutcome::Committed { .. }
+    ));
+    assert_eq!(snapshot_value(&db), after);
+    let mut reused = r.clone();
+    reused.batch.outbox.clear();
+    assert!(
+        matches!(db.commit(reused),CommitOutcome::NotCommitted{error} if error.code==StorageFailureCode::OperationIdReused)
+    );
+    let mut foreign = r.identity.clone();
+    foreign.profile_id = id(90);
+    assert_eq!(
+        db.lookup_result(&foreign).unwrap_err().code,
+        StorageFailureCode::EpochMismatch
+    );
+    let mut snapshot = db.export_snapshot(&id(2)).unwrap();
+    snapshot.epoch = id(99);
+    for confirmed in &mut snapshot.confirmed {
+        confirmed.epoch = id(99);
+    }
+    db.replace_snapshot(snapshot).unwrap();
+    assert!(matches!(db.commit(r), CommitOutcome::Committed { .. }));
+    assert!(
+        matches!(db.commit(request(32,3)),CommitOutcome::NotCommitted{error} if error.code==StorageFailureCode::EpochMismatch)
+    );
+}
+#[test]
+fn sqlite_receipt_abort_rolls_back_financial_write_and_preserves_private_recovery() {
+    use wimm_persistence_contracts::CommitOutcome;
+    let file = path("native-receipt-failure");
+    let mut raw = fixture(&file);
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    db.save_recovery_if_absent(b"synthetic-encrypted-journal")
+        .unwrap();
+    let before = snapshot_value(&db);
+    raw.batch_execute("CREATE TRIGGER synthetic_receipt_abort BEFORE INSERT ON wimm_native_receipts BEGIN SELECT RAISE(ABORT,'synthetic-private-diagnostic'); END;").unwrap();
+    let r = request(31, 2);
+    assert!(matches!(
+        db.commit(r.clone()),
+        CommitOutcome::Unknown { .. }
+    ));
+    assert_eq!(snapshot_value(&db), before);
+    assert!(db.lookup_result(&r.identity).unwrap().is_none());
+    assert_eq!(
+        db.load_recovery().unwrap().unwrap(),
+        b"synthetic-encrypted-journal"
+    );
+}
+#[test]
+fn native_private_recovery_is_durable_profile_bound_and_cas_protected() {
+    let file = path("native-recovery");
+    drop(fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    let key = wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap();
+    let original = serde_json::to_vec(&request(31, 2)).unwrap();
+    let sealed =
+        wimm_client_crypto::encrypt(&key, b"wimm/local/application-recovery/v1", &original)
+            .unwrap();
+    let encrypted = serde_json::to_vec(
+        &serde_json::json!({"nonce":sealed.nonce,"ciphertext":sealed.ciphertext}),
+    )
+    .unwrap();
+    assert!(!String::from_utf8_lossy(&encrypted).contains("Synthetisch"));
+    assert!(!String::from_utf8_lossy(&encrypted).contains("expectedRevisions"));
+    assert!(db.save_recovery_if_absent(&[]).is_err());
+    db.save_recovery_if_absent(&encrypted).unwrap();
+    db.save_recovery_if_absent(&encrypted).unwrap();
+    assert_eq!(
+        db.save_recovery_if_absent(b"different").unwrap_err().code,
+        StorageFailureCode::RevisionConflict
+    );
+    drop(db);
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let other = LegacySqliteWriter::open(&file, id(90), CoreValidator).unwrap();
+    assert!(other.load_recovery().unwrap().is_none());
+    assert_eq!(db.load_recovery().unwrap().unwrap(), encrypted);
+    assert_eq!(
+        db.clear_recovery(b"different").unwrap_err().code,
+        StorageFailureCode::RevisionConflict
+    );
+    let stored: serde_json::Value =
+        serde_json::from_slice(&db.load_recovery().unwrap().unwrap()).unwrap();
+    let nonce: Vec<u8> = serde_json::from_value(stored["nonce"].clone()).unwrap();
+    let cipher: Vec<u8> = serde_json::from_value(stored["ciphertext"].clone()).unwrap();
+    assert_eq!(
+        wimm_client_crypto::decrypt(&key, &nonce, b"wimm/local/application-recovery/v1", &cipher)
+            .unwrap()
+            .as_slice(),
+        original.as_slice()
+    );
+    let wrong = wimm_client_crypto::SecretKey::from_bytes(&[99; 32]).unwrap();
+    assert!(
+        wimm_client_crypto::decrypt(
+            &wrong,
+            &nonce,
+            b"wimm/local/application-recovery/v1",
+            &cipher
+        )
+        .is_err()
+    );
+    db.clear_recovery(&encrypted).unwrap();
+    assert!(db.load_recovery().unwrap().is_none());
+}
+
+#[test]
+fn integrated_commit_cancellation_preserves_original_but_never_revokes_known_receipt() {
+    use wimm_persistence_contracts::CommitOutcome;
+    let file = path("native-commit-cancel");
+    drop(fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    let before = snapshot_value(&db);
+    let r = request(31, 2);
+    for at in [1, 2, 3] {
+        let cancel = CancelAt {
+            at,
+            calls: std::cell::Cell::new(0),
+        };
+        assert!(
+            matches!(db.commit_cancellable(r.clone(),&cancel),CommitOutcome::NotCommitted{error} if error.code==StorageFailureCode::Cancelled)
+        );
+        assert_eq!(snapshot_value(&db), before);
+        assert!(db.lookup_result(&r.identity).unwrap().is_none());
+    }
+    assert!(matches!(
+        db.commit(r.clone()),
+        CommitOutcome::Committed { .. }
+    ));
+    let cancel = CancelAt {
+        at: 1,
+        calls: std::cell::Cell::new(0),
+    };
+    assert!(matches!(
+        db.commit_cancellable(r, &cancel),
+        CommitOutcome::Committed { .. }
+    ));
+    assert_eq!(cancel.calls.get(), 0);
+}
+
+#[test]
+fn child_process_resolves_integrated_receipt_and_private_ciphertext() {
+    let Some(file) = std::env::var_os("WIMM_DAL03_RECEIPT_FILE") else {
+        return;
+    };
+    let db = LegacySqliteWriter::open(std::path::Path::new(&file), id(1), CoreValidator).unwrap();
+    let request = request(31, 2);
+    let receipt = db.lookup_result(&request.identity).unwrap().unwrap();
+    assert_eq!(
+        serde_json::to_value(&receipt.identity).unwrap(),
+        serde_json::to_value(&request.identity).unwrap()
+    );
+    assert_eq!(receipt.committed_revisions[0].revision.value(), 2);
+    let stored: serde_json::Value =
+        serde_json::from_slice(&db.load_recovery().unwrap().unwrap()).unwrap();
+    let nonce: Vec<u8> = serde_json::from_value(stored["nonce"].clone()).unwrap();
+    let cipher: Vec<u8> = serde_json::from_value(stored["ciphertext"].clone()).unwrap();
+    let key = wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap();
+    let original =
+        wimm_client_crypto::decrypt(&key, &nonce, b"wimm/local/application-recovery/v1", &cipher)
+            .unwrap();
+    assert_eq!(
+        original.as_slice(),
+        serde_json::to_vec(&request).unwrap().as_slice()
+    );
+}
+#[test]
+fn integrated_receipt_and_encrypted_original_survive_actual_process_restart() {
+    use wimm_persistence_contracts::CommitOutcome;
+    let file = path("native-integrated-process");
+    drop(fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    let original = request(31, 2);
+    let key = wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap();
+    let sealed = wimm_client_crypto::encrypt(
+        &key,
+        b"wimm/local/application-recovery/v1",
+        &serde_json::to_vec(&original).unwrap(),
+    )
+    .unwrap();
+    db.save_recovery_if_absent(
+        &serde_json::to_vec(
+            &serde_json::json!({"nonce":sealed.nonce,"ciphertext":sealed.ciphertext}),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert!(matches!(
+        db.commit(original),
+        CommitOutcome::Committed { .. }
+    ));
+    drop(db);
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "child_process_resolves_integrated_receipt_and_private_ciphertext",
+            "--nocapture",
+        ])
+        .env("WIMM_DAL03_RECEIPT_FILE", &file)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert!(String::from_utf8_lossy(&output.stdout).contains("1 passed"));
+}
+#[test]
+fn corrupt_or_future_extension_headers_never_allow_receipt_or_journal_writes() {
+    for sql in [
+        "UPDATE wimm_native_schema SET version=2",
+        "UPDATE wimm_native_schema SET backups='[]'",
+        "UPDATE wimm_native_schema SET original_version=99",
+        "UPDATE storage_meta SET value='1' WHERE key='storageSchemaVersion'",
+    ] {
+        let file = path("native-header");
+        let mut raw = fixture(&file);
+        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+        migrate_commit(&mut db);
+        raw.batch_execute(sql).unwrap();
+        assert!(db.save_recovery_if_absent(b"opaque").is_err());
+        assert!(db.lookup_result(&request(31, 2).identity).is_err());
+        assert!(LegacySqliteStore::open(&file, id(1)).is_err());
+    }
+}

@@ -15,6 +15,7 @@ diesel::table! { outbox (profile_id, operation_id) { profile_id -> Text, operati
 diesel::table! { projections (profile_id, space_id, projection_kind, projection_key) { profile_id -> Text, space_id -> Text, projection_kind -> Text, projection_key -> Text, payload -> Text, } }
 diesel::table! { sync_state (profile_id, space_id) { profile_id -> Text, space_id -> Text, epoch -> Text, cursor -> Text, } }
 diesel::table! { storage_migrations (number) { number -> Integer, } }
+diesel::table! { wimm_native_schema (version) { version -> Integer, original_version -> Integer, backups -> Text, } }
 diesel::table! { sqlite_master (name) { name -> Text, #[sql_name="type"] type_ -> Text, } }
 
 fn invalid() -> StorageFailure {
@@ -272,8 +273,33 @@ fn supported(c: &mut SqliteConnection) -> Result<u32, ReadError> {
     let version = match storage.as_deref() {
         Some("1") => 1,
         Some("2") => 2,
+        Some("3") => {
+            writer::receipts::schema(c)?;
+            let original: i32 = wimm_native_schema::table
+                .select(wimm_native_schema::original_version)
+                .first(c)?;
+            match original {
+                1 => 1,
+                2 => 2,
+                _ => return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into()),
+            }
+        }
         _ => return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into()),
     };
+    if storage.as_deref() != Some("3") {
+        let extension: i64 = sqlite_master::table
+            .filter(sqlite_master::name.eq_any([
+                "wimm_native_schema",
+                "wimm_native_receipts",
+                "wimm_native_recovery",
+                "wimm_native_receipts_by_area",
+            ]))
+            .count()
+            .get_result(c)?;
+        if extension != 0 {
+            return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into());
+        }
+    }
     if domain.as_deref().is_some_and(|d| d != "1") {
         return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into());
     }

@@ -6,7 +6,7 @@ use wimm_local_contracts::{commit::SnapshotValidationPort, storage_port::LocalSt
 fn fail(code: StorageFailureCode) -> ReadError {
     StorageFailure::not_committed(code).into()
 }
-fn text<T: serde::Serialize>(v: &T) -> Result<String, ReadError> {
+fn text<T: serde::Serialize + ?Sized>(v: &T) -> Result<String, ReadError> {
     serde_json::to_string(v).map_err(|_| fail(StorageFailureCode::WriteFailed))
 }
 fn unique<T: Ord>(items: impl Iterator<Item = T>) -> bool {
@@ -615,3 +615,5 @@ fn check_pending(p: &PendingOperation) -> Result<(), ReadError> {
     }
     Ok(())
 }
+
+pub(super) mod receipts;
