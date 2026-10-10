@@ -8,3 +8,4 @@ docs/dependency-provenance/licenses/rust-crypto/crc32fast-1.5.2-LICENSE-APACHE w
 docs/dependency-provenance/licenses/rust-crypto/httparse-1.10.1-LICENSE-MIT whitespace=-blank-at-eof
 docs/dependency-provenance/licenses/rust-crypto/no_std_io2-0.9.4-LICENSE-APACHE whitespace=-blank-at-eof
 docs/dependency-provenance/licenses/rust-crypto/zlib-rs-0.6.8-LICENSE whitespace=-blank-at-eol
+docs/dependency-provenance/licenses/rust-crypto/serde_json_canonicalizer-0.3.2-LICENSE -text whitespace=cr-at-eol

@@ -1,0 +1,15 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import type * as Binding from '../../crates/client-crypto/bindings/wimm_client_crypto.js';
+import {unlockUserVaultWithPassphrase,unlockUserVaultWithRecoveryCode,lockUserVault,createEncryptedJsonSnapshotProtector}from'../../packages/crypto/src/index.js';
+export async function vaultInterop(wasm:typeof Binding,fixture:{password:string;recoveryCode:string;current:unknown;legacy:unknown;spaceId:string}){
+ const enc=new TextEncoder();let passed=0;
+ for(const record of [fixture.current,fixture.legacy]){
+  const bytes=enc.encode(JSON.stringify(record));const pass=wasm.VaultSession.unlock_passphrase(bytes,enc.encode(fixture.password));const recover=wasm.VaultSession.unlock_recovery(bytes,fixture.recoveryCode);if(BufferSafe(pass.publicKey)!==BufferSafe(recover.publicKey)||!pass.has_space(fixture.spaceId,1n))throw new Error('Rust-Tresor stimmt nicht überein.');
+  const upgraded=JSON.parse(new TextDecoder().decode(pass.upgrade_passphrase(bytes,enc.encode(fixture.password)))) as Parameters<typeof unlockUserVaultWithPassphrase>[0];const ts=await unlockUserVaultWithPassphrase(upgraded,fixture.password);if(BufferSafe(ts.identityPublicKey)!==BufferSafe(pass.publicKey))throw new Error('Rust→TS-Tresor stimmt nicht überein.');await lockUserVault(ts);pass.lock();let rejected=false;try{void pass.publicKey;}catch{rejected=true;}if(!rejected)throw new Error('Rust-Tresorsperre fehlt.');pass.free();recover.free();passed+=4;
+ }
+ const created=wasm.CreatedVault.create(enc.encode(fixture.password));const record=JSON.parse(new TextDecoder().decode(created.record)) as Parameters<typeof unlockUserVaultWithPassphrase>[0];const a=await unlockUserVaultWithPassphrase(record,fixture.password);const b=await unlockUserVaultWithRecoveryCode(record,created.recoveryCode);if(BufferSafe(a.identityPublicKey)!==BufferSafe(b.identityPublicKey))throw new Error('Rust-Erstellung nicht interoperabel.');await lockUserVault(a);await lockUserVault(b);created.free();passed+=2;
+ const key=new Uint8Array(32).fill(7);const session=new wasm.CryptoSession(key);const protector=createEncryptedJsonSnapshotProtector<{amount:number;note:string}>(key);const value={amount:1001,note:'Synthetisch 🏠'};const exported=session.seal_snapshot(enc.encode(JSON.stringify(value)));const original=await protector.unseal(exported);if(JSON.stringify(original)!==JSON.stringify(value))throw new Error('Rust→TS-Export stimmt nicht überein.');const imported=session.open_snapshot(await protector.seal(value));if(new TextDecoder().decode(imported)!==JSON.stringify(value))throw new Error('TS→Rust-Export stimmt nicht überein.');
+ for(const version of [null,0,2,99]){const modified=JSON.parse(new TextDecoder().decode(exported)) as Record<string,unknown>;modified.version=version;let rejected=false;try{session.open_snapshot(enc.encode(JSON.stringify(modified)));}catch{rejected=true;}if(!rejected)throw new Error('Falsche Exportversion angenommen.');}session.free();passed+=6;
+ return {passed};
+}
+function BufferSafe(bytes:Uint8Array):string{return Array.from(bytes).join(',');}

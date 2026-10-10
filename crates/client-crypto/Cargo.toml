@@ -10,7 +10,12 @@ crate-type = ["rlib", "cdylib"]
 [features]
 contract-probe = []
 [dependencies]
-zeroize = "=1.9.0"
+wimm-public-crypto = { path = "../public-crypto" }
+wimm-contract-primitives = { path = "../contract-primitives" }
+serde.workspace = true
+serde_json.workspace = true
+base64 = "=0.23.1"
+zeroize = { version = "=1.9.0", features = ["serde"] }
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libsodium-rs = "=0.2.5"
 [target.'cfg(target_arch = "wasm32")'.dependencies]

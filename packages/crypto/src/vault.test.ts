@@ -188,3 +188,9 @@ it('authentifiziert erlaubte Parameteränderungen und erkennt das Entfernen des 
   const { version: _version, kdf: _kdf, ...stripped } = created.record.passphraseWrap;
   await expect(unlockUserVaultWithPassphrase({ ...created.record, passphraseWrap: stripped }, passphrase)).rejects.toBeInstanceOf(VaultUnlockError);
 });
+
+it('weist unbekannte JSON-Snapshot-Hüllen ohne Legacyfallback vor dem Restore ab',async()=>{
+ const protector=createEncryptedJsonSnapshotProtector<{amount:number}>(new Uint8Array(32).fill(7));const encrypted=await protector.seal({amount:100});const original=JSON.parse(new TextDecoder().decode(encrypted)) as Record<string,unknown>;
+ for(const version of [undefined,null,0,2,99,'1']) {const value={...original,version};await expect(protector.unseal(new TextEncoder().encode(JSON.stringify(value)))).rejects.toBeInstanceOf(VaultUnlockError);}
+ expect(await protector.unseal(encrypted)).toEqual({amount:100});
+});

@@ -1,7 +1,7 @@
 {
   "snapshotDate": "2026-10-10",
   "projectLicense": "AGPL-3.0-or-later",
-  "scope": "AR08 Machbarkeit, keine Gesamtabnahme #122; vorhandene Sperrversionen unverändert",
+  "scope": "AR08-Rust-/WASM-Kryptoports; keine P8–P11-Produkt-/Release-/extern geprüfte Protokollabnahme",
   "nativeBinding": {
     "name": "libsodium-rs",
     "version": "0.2.5",
@@ -377,6 +377,32 @@
       "licenseFiles": [
         "docs/dependency-provenance/licenses/rust-crypto/zopfli-0.8.3-COPYING"
       ]
+    },
+    {
+      "name": "ryu-js",
+      "version": "1.0.3",
+      "license": "Apache-2.0 OR BSL-1.0",
+      "checksum": "04d056b875a9d2e6cb9a61d127afee9ac5999b9f87bcb32079d1318e505be714",
+      "source": "https://crates.io/crates/ryu-js/1.0.3",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/ryu-js-1.0.3-LICENSE-APACHE",
+        "docs/dependency-provenance/licenses/rust-crypto/ryu-js-1.0.3-LICENSE-BOOST"
+      ]
+    },
+    {
+      "name": "serde_json_canonicalizer",
+      "version": "0.3.2",
+      "license": "MIT",
+      "checksum": "fe52319a927259afbfa5180c5157cd8167edfd3e8c254f9558c7fef44c5649f2",
+      "source": "https://crates.io/crates/serde_json_canonicalizer/0.3.2",
+      "licenseFiles": [
+        "docs/dependency-provenance/licenses/rust-crypto/serde_json_canonicalizer-0.3.2-LICENSE"
+      ]
     }
-  ]
+  ],
+  "canonicalization": {
+    "name": "serde_json_canonicalizer",
+    "version": "0.3.2",
+    "source": "https://github.com/evik42/serde-json-canonicalizer"
+  }
 }

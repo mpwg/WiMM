@@ -1,0 +1,16 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import sodium from 'libsodium-wrappers-sumo';
+import {canonicalJsonBytes}from'../../packages/crypto/src/index.js';
+import type * as Binding from '../../crates/client-crypto/bindings/wimm_client_crypto.js';
+const same=(a:Uint8Array,b:Uint8Array)=>Array.from(a).join(',')===Array.from(b).join(',');
+export async function primitiveInterop(wasm:typeof Binding){
+ await sodium.ready;const seed=Uint8Array.from({length:32},(_,i)=>i),enc=new TextEncoder(),message=enc.encode('WIMM fixture signature v1');let passed=0;
+ const id=wasm.SigningSession.from_seed(seed),pair=sodium.crypto_sign_seed_keypair(seed);if(!same(id.publicKey,pair.publicKey)||!same(id.sign(message),sodium.crypto_sign_detached(message,pair.privateKey))||!wasm.verify_public(message,id.sign(message),id.publicKey))throw new Error('Signaturinterop fehlgeschlagen.');passed+=3;
+ if(wasm.verify_public(enc.encode('anderer Kontext'),id.sign(message),id.publicKey))throw new Error('Signaturkontext ignoriert.');id.lock();let locked=false;try{id.sign(message);}catch{locked=true;}if(!locked)throw new Error('Signatursperre fehlt.');passed+=2;
+ const box=wasm.SealedSession.from_seed(seed),other=wasm.SealedSession.from_seed(new Uint8Array(32).fill(9)),keys=sodium.crypto_box_seed_keypair(seed);if(!same(box.publicKey,keys.publicKey))throw new Error('X25519-Interop fehlgeschlagen.');const cipher=wasm.seal_to(message,box.publicKey);if(!same(box.open(sodium.crypto_box_seal(message,keys.publicKey)),message)||!same(sodium.crypto_box_seal_open(cipher,keys.publicKey,keys.privateKey),message))throw new Error('Sealedbox-Interop fehlgeschlagen.');passed+=3;
+ let rejected=false;try{other.open(cipher);}catch{rejected=true;}if(!rejected)throw new Error('Falscher Empfänger angenommen.');wasm.validate_key_pairs(pair.publicKey,pair.privateKey,keys.publicKey,keys.privateKey);const bad=pair.privateKey.slice();bad[63]=(bad[63]??0)^1;rejected=false;try{wasm.validate_key_pairs(pair.publicKey,bad,keys.publicKey,keys.privateKey);}catch{rejected=true;}if(!rejected)throw new Error('Beschädigtes Schlüsselpaar angenommen.');sodium.memzero(bad);passed+=3;
+ for(const ops of [2,3]){const password=enc.encode('Synthetische Passphrase 🏠'),salt=new Uint8Array(16),key=sodium.crypto_pwhash(32,password,salt,ops,67108864,sodium.crypto_pwhash_ALG_ARGON2ID13),session=wasm.passphrase_session(password,salt,ops,67108864,ops===2),nonce=new Uint8Array(24);if(!same(session.encrypt_fixed(nonce,new Uint8Array(),message),sodium.crypto_aead_xchacha20poly1305_ietf_encrypt(message,new Uint8Array(),null,nonce,key)))throw new Error('Argon2id-Interop fehlgeschlagen.');sodium.memzero(key);session.free();passed++;}
+ for(const [ops,memory]of [[1,67108864],[7,67108864],[3,268435457]]){let invalid=false;try{wasm.passphrase_session(enc.encode('synthetisch'),new Uint8Array(16),ops!,memory!,false);}catch{invalid=true;}if(!invalid)throw new Error('KDF-Grenze gelockert.');passed++;}
+ const data={ '€':0.1,'𐐀':1e21,'\ue000':1,inner:[true,null,'🏠',9007199254740991]};if(!same(wasm.canonical_json(JSON.stringify(data)),canonicalJsonBytes(data)))throw new Error('RFC8785-Abweichung.');passed++;
+ id.free();box.free();other.free();sodium.memzero(pair.privateKey);sodium.memzero(keys.privateKey);return {passed};
+}

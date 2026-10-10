@@ -1389,6 +1389,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
+name = "ryu-js"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04d056b875a9d2e6cb9a61d127afee9ac5999b9f87bcb32079d1318e505be714"
+
+[[package]]
 name = "schemars"
 version = "1.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1551,6 +1557,17 @@ dependencies = [
  "serde",
  "serde_core",
  "zmij",
+]
+
+[[package]]
+name = "serde_json_canonicalizer"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe52319a927259afbfa5180c5157cd8167edfd3e8c254f9558c7fef44c5649f2"
+dependencies = [
+ "ryu-js",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -2238,9 +2255,14 @@ dependencies = [
 name = "wimm-client-crypto"
 version = "0.0.0"
 dependencies = [
+ "base64 0.23.1",
  "js-sys",
  "libsodium-rs",
+ "serde",
+ "serde_json",
  "wasm-bindgen",
+ "wimm-contract-primitives",
+ "wimm-public-crypto",
  "zeroize",
 ]
 
@@ -2372,6 +2394,9 @@ name = "wimm-public-crypto"
 version = "0.0.0"
 dependencies = [
  "libsodium-rs",
+ "serde_json",
+ "serde_json_canonicalizer",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -2471,6 +2496,7 @@ version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e13c156562582aa81c60cb29407084cdb54c4164760106ab78e6c5b0858cf64e"
 dependencies = [
+ "serde",
  "zeroize_derive",
 ]
 

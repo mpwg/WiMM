@@ -1,0 +1,47 @@
+{
+  "synthetic": true,
+  "password": "Synthetische Passphrase 🏠",
+  "recoveryCode": "bSAexXT80yB2aJdYsTxA2GquBvgK8DcXX8ZKDOjZxPQ",
+  "current": {
+    "version": 1,
+    "vault": {
+      "version": 1,
+      "ciphertext": "tz9eo2D_pHCWkUpyevptEDIs8w8lDSSodsAVEXBhTGRQEfiDaEBZoaPijMmpTdIcghI9jKBM7mnFeQKIxrL90jU5FTXWUJcTVXdks2kHlbHMhAfewEtpanjHO2LU3PL8k0ACw-t6Ru1f-LIAc09QC54Sjrqr6GNU2DGwR7eSpxk_rORwjJnJ2wucGXW11dTzGG2CHfFz4RIUlnR8IeMZBmefjsbyvqYbwtyDeH69tX4FtY9QstHi76ff1usZ8sFtx7swJNX_Ox5Z9dU86iFM0D9k2QGpF4VXTx6MMlEgwbqe2UQ0FdLqkwwxjXhNLq5ETGUs9skWSml7BZudlDP9WBtXkKXT9x56yNTNZ-7ROs5hi8nfd5FDE-Et-knAS2Ah-ROrQX7SYMNGDhlZ8bikJcE0v-CBk4f6JgQzBT2FVlkozLb2ZPVIdBIc0m9Yx3xPcJvG8Zcf-0WSfNpAEnu-gn9pQUncaWaTmU9S1HYPZZFWm30c5UfRSBdA4VZdMfz2rE9DY-ESHqMGtno6R2SaNt50xN9O2_Q69GWnaCe-KzUM5iP7P8jzREvvBJhGBEBRXq2TCLgJB8_nLrcCjGguDH5H29LSOKhQHlDH",
+      "nonce": "itNiIqau4fH91Y4jzv3wC4dMoQC1XEz4"
+    },
+    "passphraseWrap": {
+      "algorithm": "argon2id",
+      "version": 2,
+      "salt": "nPwXSwMapXZ7JyZByCAVmw",
+      "kdf": {
+        "opslimit": 3,
+        "memlimit": 67108864
+      },
+      "nonce": "5IJzVmHEf5i8qrPG-nXc188wVJ6843uT",
+      "ciphertext": "rfErc4RW3BuDwAG11bqd13Z7zbL_WXMfqD_EZRKE-8sw-fDhmKQ2_Soc6ss9bcYc"
+    },
+    "recoveryWrap": {
+      "nonce": "eYLzQxvO4GzaBdw96y6Rzj0RG5P_NpsY",
+      "ciphertext": "G1jGQWiZ3NR4KcQMbblR0sxtboB81EYZmCS83bhnEW8HW2KcNS7lBPWpJBM-Lo11"
+    }
+  },
+  "legacy": {
+    "version": 1,
+    "vault": {
+      "version": 1,
+      "ciphertext": "tz9eo2D_pHCWkUpyevptEDIs8w8lDSSodsAVEXBhTGRQEfiDaEBZoaPijMmpTdIcghI9jKBM7mnFeQKIxrL90jU5FTXWUJcTVXdks2kHlbHMhAfewEtpanjHO2LU3PL8k0ACw-t6Ru1f-LIAc09QC54Sjrqr6GNU2DGwR7eSpxk_rORwjJnJ2wucGXW11dTzGG2CHfFz4RIUlnR8IeMZBmefjsbyvqYbwtyDeH69tX4FtY9QstHi76ff1usZ8sFtx7swJNX_Ox5Z9dU86iFM0D9k2QGpF4VXTx6MMlEgwbqe2UQ0FdLqkwwxjXhNLq5ETGUs9skWSml7BZudlDP9WBtXkKXT9x56yNTNZ-7ROs5hi8nfd5FDE-Et-knAS2Ah-ROrQX7SYMNGDhlZ8bikJcE0v-CBk4f6JgQzBT2FVlkozLb2ZPVIdBIc0m9Yx3xPcJvG8Zcf-0WSfNpAEnu-gn9pQUncaWaTmU9S1HYPZZFWm30c5UfRSBdA4VZdMfz2rE9DY-ESHqMGtno6R2SaNt50xN9O2_Q69GWnaCe-KzUM5iP7P8jzREvvBJhGBEBRXq2TCLgJB8_nLrcCjGguDH5H29LSOKhQHlDH",
+      "nonce": "itNiIqau4fH91Y4jzv3wC4dMoQC1XEz4"
+    },
+    "passphraseWrap": {
+      "algorithm": "argon2id",
+      "salt": "VfSITfDJrGXPBEAnUD4FmA",
+      "nonce": "0HCB8PFAxnnt7kLb7MYtNar1KHEnBMXB",
+      "ciphertext": "sRY0DDBk8PTmBw6SQ3Zlf3KIaduZ6x5OdGMhqNATgzGY86DQ9cPCmrd-e2hoeN6I"
+    },
+    "recoveryWrap": {
+      "nonce": "eYLzQxvO4GzaBdw96y6Rzj0RG5P_NpsY",
+      "ciphertext": "G1jGQWiZ3NR4KcQMbblR0sxtboB81EYZmCS83bhnEW8HW2KcNS7lBPWpJBM-Lo11"
+    }
+  },
+  "spaceId": "00000000-0000-4000-8000-000000000001"
+}

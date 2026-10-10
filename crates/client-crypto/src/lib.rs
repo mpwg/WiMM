@@ -2,8 +2,10 @@
 //! Sichere libsodium-Clientgrenze; keine Fach-/Speicher-/HTTP-Abhängigkeit.
 #![forbid(unsafe_code)]
 use zeroize::{Zeroize, Zeroizing};
+pub mod keys;
 #[cfg(not(target_arch = "wasm32"))]
 mod native;
+pub mod vault;
 #[cfg(target_arch = "wasm32")]
 mod wasm;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

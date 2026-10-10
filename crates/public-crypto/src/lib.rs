@@ -2,6 +2,7 @@
 //! Ausschließlich öffentliche Signaturprüfung; keine Client-/Tresorabhängigkeit.
 #![forbid(unsafe_code)]
 /// Ungültige Formen/Signaturen geben false zurück, ohne Originaldiagnosen.
+#[cfg(not(target_arch = "wasm32"))]
 pub fn verify_ed25519(message: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
     if libsodium_rs::ensure_init().is_err() {
         return false;
@@ -13,6 +14,43 @@ pub fn verify_ed25519(message: &[u8], signature: &[u8], public_key: &[u8]) -> bo
         return false;
     };
     libsodium_rs::crypto_sign::verify_detached(signature, message, &key)
+}
+#[cfg(target_arch = "wasm32")]
+#[wasm_bindgen::prelude::wasm_bindgen(module = "/js/verify.js")]
+extern "C" {
+    #[wasm_bindgen::prelude::wasm_bindgen(catch)]
+    fn verify(
+        message: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> Result<bool, wasm_bindgen::JsValue>;
+}
+#[cfg(target_arch = "wasm32")]
+pub fn verify_ed25519(message: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
+    signature.len() == 64
+        && public_key.len() == 32
+        && verify(message, signature, public_key).unwrap_or(false)
+}
+pub fn canonical_json_bytes(value: &serde_json::Value) -> Result<Vec<u8>, serde_json::Error> {
+    serde_json_canonicalizer::to_vec(value)
+}
+pub enum Context {
+    Certificate,
+    Grant,
+    Operation,
+    Roster,
+    Snapshot,
+}
+impl Context {
+    pub const fn as_bytes(&self) -> &'static [u8] {
+        match self {
+            Self::Certificate => b"wimm/v1/certificate",
+            Self::Grant => b"wimm/v1/grant",
+            Self::Operation => b"wimm/v1/operation",
+            Self::Roster => b"wimm/v1/roster",
+            Self::Snapshot => b"wimm/v1/snapshot",
+        }
+    }
 }
 #[cfg(test)]
 mod tests {
@@ -39,5 +77,26 @@ mod tests {
         assert!(!verify_ed25519(msg, &changed, &pk));
         assert!(!verify_ed25519(msg, &sig, &pk[..31]));
         assert!(!verify_ed25519(msg, &sig[..63], &pk));
+    }
+}
+
+#[cfg(test)]
+mod canonical_tests {
+    #[test]
+    fn canonical_unicode_numeric_and_context_values_match_existing_contract() {
+        let value = serde_json::json!({"€":0.1,"𐐀":1e21,"\u{e000}":1,"inner":[true,null,"🏠",9007199254740991u64]});
+        let text = String::from_utf8(super::canonical_json_bytes(&value).unwrap()).unwrap();
+        assert_eq!(
+            text,
+            "{\"inner\":[true,null,\"🏠\",9007199254740991],\"€\":0.1,\"𐐀\":1e+21,\"\u{e000}\":1}"
+        );
+        assert_eq!(
+            super::Context::Certificate.as_bytes(),
+            b"wimm/v1/certificate"
+        );
+        assert_eq!(super::Context::Grant.as_bytes(), b"wimm/v1/grant");
+        assert_eq!(super::Context::Operation.as_bytes(), b"wimm/v1/operation");
+        assert_eq!(super::Context::Roster.as_bytes(), b"wimm/v1/roster");
+        assert_eq!(super::Context::Snapshot.as_bytes(), b"wimm/v1/snapshot");
     }
 }

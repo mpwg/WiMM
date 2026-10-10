@@ -92,6 +92,7 @@ export function createEncryptedJsonSnapshotProtector<T>(key: Uint8Array): {
     async unseal(bytes) {
       try {
         const envelope = JSON.parse(decoder.decode(bytes)) as EncryptedVaultEnvelope;
+        if (envelope.version !== vaultVersion) throw new VaultUnlockError();
         const plaintext = await decryptXChaCha20Poly1305({
           associatedData: vaultAad,
           key,
