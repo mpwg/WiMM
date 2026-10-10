@@ -469,21 +469,9 @@ impl<V: SnapshotValidationPort> LocalCommitPort for MemoryStorage<V> {
                 error: error(StorageFailureCode::UpdateRequired),
             };
         }
-        if identity.profile_id != self.profile_id
-            || self.state.epochs.get(identity.space_id.as_str()) != Some(&identity.epoch)
-        {
+        if identity.profile_id != self.profile_id {
             return Outcome::NotCommitted {
                 error: error(StorageFailureCode::EpochMismatch),
-            };
-        }
-        if request.batch.expected_revisions.iter().any(|r| {
-            self.state
-                .aggregates
-                .get(r.handle.as_str())
-                .is_some_and(|a| a.aggregate.space_id() != &identity.space_id)
-        }) {
-            return Outcome::NotCommitted {
-                error: error(StorageFailureCode::WriteFailed),
             };
         }
         let key = serde_json::to_string(identity).expect("Geprüfte Identität ist serialisierbar.");
@@ -496,6 +484,21 @@ impl<V: SnapshotValidationPort> LocalCommitPort for MemoryStorage<V> {
                 Outcome::NotCommitted {
                     error: error(StorageFailureCode::OperationIdReused),
                 }
+            };
+        }
+        if self.state.epochs.get(identity.space_id.as_str()) != Some(&identity.epoch) {
+            return Outcome::NotCommitted {
+                error: error(StorageFailureCode::EpochMismatch),
+            };
+        }
+        if request.batch.expected_revisions.iter().any(|r| {
+            self.state
+                .aggregates
+                .get(r.handle.as_str())
+                .is_some_and(|a| a.aggregate.space_id() != &identity.space_id)
+        }) {
+            return Outcome::NotCommitted {
+                error: error(StorageFailureCode::WriteFailed),
             };
         }
         if request

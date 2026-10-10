@@ -48,7 +48,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
   dal-proof:
-    name: DAL01 auf nativer SQLite und drei Browsern
+    name: DAL01 und lokale Operationsreceipts auf nativer SQLite und drei Browsern
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -80,12 +80,16 @@ jobs:
           pnpm exec playwright install --with-deps chromium firefox webkit
       - name: Tatsächliche DAL01-Prüfung
         run: pnpm test:dal:proof
+      - name: Dauerhafte lokale Operationsreceipts prüfen
+        run: pnpm test:storage:receipts
       - name: DAL01-Belege sichern
         if: always()
         uses: actions/upload-artifact@v7.0.1
         with:
           name: dal01-native-browser-belege
-          path: test-results/dal-proof/browser/
+          path: |
+            test-results/dal-proof/browser/
+            test-results/ar04/browser/
           if-no-files-found: ignore
           retention-days: 7
   ubuntu:

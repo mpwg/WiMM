@@ -5,6 +5,8 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish = false
+[lib]
+crate-type = ["rlib", "cdylib"]
 [dependencies]
 wimm-local-contracts = { path = "../local-contracts" }
 wimm-finance-types = { path = "../finance-types" }
@@ -16,3 +18,34 @@ sha2 = "=0.11.0"
 wimm-finance-core = { path = "../finance-core" }
 [lints]
 workspace = true
+
+[features]
+receipt-probe = ["sqlite", "dep:wasm-bindgen", "dep:wasm-bindgen-futures"]
+sqlite = ["dep:diesel", "dep:sea-query", "dep:libsqlite3-sys", "dep:sqlite-wasm-rs", "dep:sqlite-wasm-vfs"]
+
+[dependencies.diesel]
+version = "=2.3.13"
+default-features = false
+features = ["sqlite", "32-column-tables"]
+optional = true
+[dependencies.sea-query]
+version = "=1.0.2"
+default-features = false
+features = ["backend-sqlite"]
+optional = true
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+libsqlite3-sys = { version = "=0.38.2", features = ["bundled"], optional = true }
+[target.'cfg(target_family = "wasm")'.dependencies]
+sqlite-wasm-rs = { version = "=0.5.5", optional = true }
+sqlite-wasm-vfs = { version = "=0.2.0", optional = true }
+
+[target.'cfg(target_family = "wasm")'.dependencies.wasm-bindgen]
+workspace = true
+optional = true
+[target.'cfg(target_family = "wasm")'.dependencies.wasm-bindgen-futures]
+version = "=0.4.79"
+optional = true
+[[bin]]
+name = "wimm-local-receipt-probe"
+path = "src/bin/receipt-probe.rs"
+required-features = ["receipt-probe"]

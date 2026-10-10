@@ -509,3 +509,44 @@ fn duplicate_batches_and_foreign_sync_handles_roll_back_without_epoch_change() {
     );
     assert!(db.load_confirmed(&id(70)).unwrap().is_empty());
 }
+#[test]
+fn known_receipt_remains_committed_after_authorized_snapshot_epoch_change() {
+    use wimm_persistence_contracts::CommitOutcome;
+    let mut db = fixture();
+    let request = LocalCommitRequest {
+        identity: LocalOperationIdentity {
+            operation_contract_version: 1,
+            profile_id: id(1),
+            space_id: id(2),
+            epoch: id(3),
+            operation_id: id(80),
+        },
+        batch: batch(aggregate(4, 1), 0),
+    };
+    assert!(matches!(
+        db.commit(request.clone()),
+        CommitOutcome::Committed { .. }
+    ));
+    let before = db.lookup_result(&request.identity).unwrap().unwrap();
+    let mut restored = db.export_snapshot(&id(2)).unwrap();
+    restored.epoch = id(81);
+    db.replace_snapshot(restored).unwrap();
+    match db.commit(request.clone()) {
+        CommitOutcome::Committed { value } => assert_eq!(
+            serde_json::to_value(value).unwrap(),
+            serde_json::to_value(before).unwrap()
+        ),
+        _ => panic!("Bekanntes Receipt darf nicht als uncommitted umgedeutet werden"),
+    }
+    let mut unknown = request;
+    unknown.identity.operation_id = id(82);
+    assert!(matches!(
+        db.commit(unknown),
+        CommitOutcome::NotCommitted {
+            error: StorageFailure {
+                code: StorageFailureCode::EpochMismatch,
+                ..
+            }
+        }
+    ));
+}

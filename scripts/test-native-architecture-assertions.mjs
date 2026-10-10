@@ -4,8 +4,10 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 const policy=JSON.parse(await readFile('docs/architecture-checks/policy.json','utf8'));const results=[];
-for(const [name] of Object.entries(policy.rust).filter(([,rule])=>rule.nativeAssertions)) {
+for(const [name,rule] of Object.entries(policy.rust).filter(([,rule])=>rule.nativeAssertions)) {
   const args=['test','--locked',...(name==='wimm-desktop'?['--manifest-path','apps/desktop/src-tauri/Cargo.toml']:['-p',name])];
+  for(const feature of rule.nativeAssertionFeatures??[])assert.ok(rule.features.includes(feature),`${name}: nicht registriertes natives Prüffeature ${feature}`);
+  if(rule.nativeAssertionFeatures?.length)args.push('--features',rule.nativeAssertionFeatures.join(','));
   const result=spawnSync('cargo',args,{encoding:'utf8',maxBuffer:16*1024*1024});
   assert.equal(result.status,0,result.stderr);assert.doesNotMatch(result.stderr,/(?:^|\n)warning(?:\[|:)/);
   const passed=[...result.stdout.matchAll(/test result: ok\. (\d+) passed;/g)].reduce((sum,m)=>sum+Number(m[1]),0);

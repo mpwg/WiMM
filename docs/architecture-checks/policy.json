@@ -268,10 +268,16 @@
     },
     "wimm-local-dal": {
       "role": "localDal",
-      "features": [],
+      "features": [
+        "receipt-probe",
+        "sqlite"
+      ],
       "checkClosure": true,
       "bindings": false,
-      "nativeAssertions": "crates/local-dal/tests/memory_contract.rs"
+      "nativeAssertions": "crates/local-dal/tests/memory_contract.rs",
+      "nativeAssertionFeatures": [
+        "receipt-probe"
+      ]
     }
   },
   "plannedServerRoots": [

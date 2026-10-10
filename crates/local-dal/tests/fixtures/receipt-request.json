@@ -1,0 +1,58 @@
+{
+  "identity": {
+    "operationContractVersion": 1,
+    "profileId": "50000000-0000-4000-8000-000000000001",
+    "spaceId": "50000000-0000-4000-8000-000000000002",
+    "epoch": "50000000-0000-4000-8000-000000000003",
+    "operationId": "50000000-0000-4000-8000-000000000030"
+  },
+  "batch": {
+    "expectedRevisions": [
+      {
+        "handle": "50000000-0000-4000-8000-000000000004",
+        "expectedRevision": 0
+      }
+    ],
+    "aggregates": [
+      {
+        "handle": "50000000-0000-4000-8000-000000000004",
+        "id": "50000000-0000-4000-8000-000000000004",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "revision": 1,
+        "aggregateType": "account",
+        "createdAt": "2026-10-10T00:00:00Z",
+        "updatedAt": "2026-10-10T00:00:00Z",
+        "name": "Synthetisch 🏠",
+        "type": "checking",
+        "onBudget": true,
+        "archived": false
+      }
+    ],
+    "outbox": [
+      {
+        "operationId": "50000000-0000-4000-8000-000000000130",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "expectedRevisions": [],
+        "dependsOn": [],
+        "state": "queued",
+        "draft": {
+          "original": "Erhalten 🏠",
+          "values": [
+            null,
+            true,
+            1
+          ]
+        },
+        "retryCount": 0
+      }
+    ],
+    "projections": [
+      {
+        "kind": "balance",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "key": "50000000-0000-4000-8000-000000000004",
+        "payload": 0
+      }
+    ]
+  }
+}

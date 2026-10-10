@@ -2450,9 +2450,16 @@ dependencies = [
 name = "wimm-local-dal"
 version = "0.0.0"
 dependencies = [
+ "diesel",
+ "libsqlite3-sys",
+ "sea-query",
  "serde",
  "serde_json",
  "sha2",
+ "sqlite-wasm-rs",
+ "sqlite-wasm-vfs",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
  "wimm-finance-core",
  "wimm-finance-types",
  "wimm-local-contracts",

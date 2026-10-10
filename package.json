@@ -84,7 +84,8 @@
     "test:contracts:storage-errors": "pnpm check:contracts:generated && node scripts/test-storage-error-bindings.mjs && pnpm exec vitest run packages/contracts/src/storage-error-generation.test.ts",
     "check:target:architecture": "node scripts/check-target-architecture.mjs",
     "test:target:architecture": "node --test scripts/check-target-architecture.test.mjs && node scripts/test-target-architecture-injection.mjs && node scripts/test-native-architecture-assertions.mjs",
-    "test:crypto:rust": "node scripts/test-rust-crypto.mjs"
+    "test:crypto:rust": "node scripts/test-rust-crypto.mjs",
+    "test:storage:receipts": "node scripts/test-local-receipts.mjs"
   },
   "devDependencies": {
     "@babel/parser": "8.0.6",

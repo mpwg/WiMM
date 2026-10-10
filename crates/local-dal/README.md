@@ -27,3 +27,14 @@ pnpm test:contracts:public:native
 ```
 
 [Kriterienmatrix und aktueller Beleg](../../docs/dal02-contracts.md), [DAL02 #107](https://github.com/mpwg/WiMM/issues/107). Physische lokale Persistenz und Anwendungen folgen der unveränderten Reihenfolge in [#114](https://github.com/mpwg/WiMM/issues/114).
+
+## AR04-Persistenzabschnitt
+
+Das optionale `sqlite`-Feature aktiviert `SqliteCommitStore` mit derselben registrierten leeren Schemaerzeugung und dieselben Commit-/Lookupmethoden nativ und auf SQLite/WASM/OPFS. Das Standardfeature bleibt Memory; keine produktive Umschaltung oder automatische Migration. `receipt-probe` ist ausschließlich der synthetische Native-/Browserprüfeinstieg. Verbindungsbesitz, ORM-Entities, DSL und feste technische PRAGMAs bleiben adapterintern. Keine Finanzberechnung im SQLiteadapter.
+
+```sh
+cargo test --locked -p wimm-local-dal --all-features
+pnpm test:storage:receipts
+```
+
+[Sechs native SQLitefälle, elf Memorytests, tatsächliche Browserbelege und offene AR04-Grenzen](../../docs/ar04-local-receipts.md). Das größere neue Journal-/Sicherungs-/Restoreverfahren wird nicht durch den Initialschemafall ersetzt.
