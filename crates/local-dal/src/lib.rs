@@ -12,5 +12,5 @@ pub mod receipt_probe;
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
 
-#[cfg(all(feature = "sqlite", not(target_family = "wasm")))]
+#[cfg(feature = "sqlite")]
 pub mod sqlite_backup;

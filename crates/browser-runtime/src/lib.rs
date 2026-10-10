@@ -8,6 +8,7 @@ use wimm_local_contracts::{persistence_errors::*, storage::*, storage_port::Loca
 use wimm_local_dal::sqlite::SqliteWriter;
 pub struct StorageHost {
     pub(crate) store: SqliteWriter<CoreSnapshotValidator>,
+    pub(crate) profile: EntityId,
 }
 impl StorageHost {
     pub fn from_connection(
@@ -15,8 +16,16 @@ impl StorageHost {
         profile: EntityId,
     ) -> Result<Self, StorageFailure> {
         Ok(Self {
-            store: SqliteWriter::from_connection(connection, profile, CoreSnapshotValidator)?,
+            store: SqliteWriter::from_connection(
+                connection,
+                profile.clone(),
+                CoreSnapshotValidator,
+            )?,
+            profile,
         })
+    }
+    pub fn profile(&self) -> &EntityId {
+        &self.profile
     }
     pub fn port(
         &mut self,

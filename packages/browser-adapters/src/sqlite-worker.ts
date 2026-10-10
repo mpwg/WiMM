@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import init,{open_browser_storage,type BrowserStorage,type LocalPortRequestV2,type LocalOperationIdentity,type LocalCommitRequest,type TransactionIndexQuery,type PendingIndexQuery,type ImportSourceQuery} from '../generated/sqlite/wimm_browser_runtime.js';
+import init,{open_browser_storage,type BrowserStorage,type LocalPortRequestV2,type LocalOperationIdentity,type LocalCommitRequest,type TransactionIndexQuery,type PendingIndexQuery,type ImportSourceQuery,type BrowserBackupInput,type EncryptedBackupReceipt} from '../generated/sqlite/wimm_browser_runtime.js';
 let database:BrowserStorage|undefined;
 // Rust-Zugriffe sind synchron. Die Kette verhindert, dass die asynchrone VFS-Öffnung von Nachrichten überholt wird.
 let queue=Promise.resolve();
@@ -21,6 +21,8 @@ self.onmessage=({data}:MessageEvent<Message>)=>{queue=queue.then(async()=>{
    case 'transactions':value=database.query_transactions(data.input as TransactionIndexQuery);break;
    case 'pending':value=database.query_pending(data.input as PendingIndexQuery);break;
    case 'imported':value=database.query_imported(data.input as ImportSourceQuery);break;
+   case 'persistBackup':value=database.persist_backup(data.input as BrowserBackupInput);break;
+   case 'readBackup':value=database.read_backup(data.input as EncryptedBackupReceipt);break;
    case 'close':database.close();database.free();database=undefined;value=null;break;
    default:throw {contractVersion:2,code:'INVALID_RESPONSE',commitState:'notCommitted'};
   }

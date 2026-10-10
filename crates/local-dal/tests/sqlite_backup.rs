@@ -138,3 +138,29 @@ fn actual_relaxed_connection_durability_never_emits_a_backup_receipt() {
     );
     assert!(store.read(&receipt()).is_err());
 }
+
+#[test]
+fn shared_connection_backup_initialization_and_reopen_preserve_original_ciphertext() {
+    let file = path("shared-connection-backup");
+    let connection = SqliteConnection::establish(file.to_str().unwrap()).unwrap();
+    let mut store = SqliteBackupStore::initialize_connection(connection).unwrap();
+    let r = receipt();
+    let ciphertext = [0, 255, 128, 7];
+    assert_eq!(
+        serde_json::to_value(store.persist(r.clone(), &ciphertext).unwrap()).unwrap(),
+        serde_json::to_value(&r).unwrap()
+    );
+    drop(store);
+    let connection = SqliteConnection::establish(file.to_str().unwrap()).unwrap();
+    assert_eq!(
+        SqliteBackupStore::initialize_connection(connection)
+            .err()
+            .unwrap()
+            .code,
+        StorageFailureCode::UpdateRequired
+    );
+    let connection = SqliteConnection::establish(file.to_str().unwrap()).unwrap();
+    let store = SqliteBackupStore::from_connection(connection).unwrap();
+    assert_eq!(store.read(&r).unwrap(), ciphertext);
+    std::fs::remove_file(file).unwrap();
+}

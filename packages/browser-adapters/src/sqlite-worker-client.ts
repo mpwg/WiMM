@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import {decodeStorageFailure,StorageFailureError} from '@wimm/storage';
 import type {UUID} from '@wimm/contracts';
-import type {LocalPortRequestV2,LocalPortOutcomeV2,LocalCommitRequest,BrowserCommitOutcome,LocalOperationIdentity,BrowserReceiptLookup,TransactionIndexQuery,PendingIndexQuery,ImportSourceQuery} from '../generated/sqlite/wimm_browser_runtime.js';
+import type {LocalPortRequestV2,LocalPortOutcomeV2,LocalCommitRequest,BrowserCommitOutcome,LocalOperationIdentity,BrowserReceiptLookup,TransactionIndexQuery,PendingIndexQuery,ImportSourceQuery,BrowserBackupInput,EncryptedBackupReceipt,BrowserCiphertext} from '../generated/sqlite/wimm_browser_runtime.js';
 export type SqliteWorkerStatus='waiting'|'opening'|'ready'|'closed'|'failed';
 /** Ein Web Lock umfasst die tatsächliche Lebensdauer der SQLite-/OPFS-Verbindung, nicht nur einzelne Requests. */
 export class SqliteWorkerClient {
@@ -36,6 +36,8 @@ export class SqliteWorkerClient {
  async transactions(query:TransactionIndexQuery):Promise<LocalPortOutcomeV2>{await this.ready;return await this.send('transactions',query) as LocalPortOutcomeV2;}
  async pendingOperations(query:PendingIndexQuery):Promise<LocalPortOutcomeV2>{await this.ready;return await this.send('pending',query) as LocalPortOutcomeV2;}
  async importedTransactions(query:ImportSourceQuery):Promise<LocalPortOutcomeV2>{await this.ready;return await this.send('imported',query) as LocalPortOutcomeV2;}
+ async persistBackup(input:BrowserBackupInput):Promise<EncryptedBackupReceipt>{await this.ready;return await this.send('persistBackup',input) as EncryptedBackupReceipt;}
+ async readBackup(receipt:EncryptedBackupReceipt):Promise<BrowserCiphertext>{await this.ready;return await this.send('readBackup',receipt) as BrowserCiphertext;}
  async close():Promise<void>{
   if(this.closed)return;
   if(this.worker!==undefined){try{await this.send('close',undefined);}finally{this.stop(new StorageFailureError('RESOURCE_UNAVAILABLE','notCommitted'));}}

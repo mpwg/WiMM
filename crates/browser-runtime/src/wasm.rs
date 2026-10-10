@@ -48,10 +48,23 @@ pub struct BrowserReceiptLookup {
     contract_version: u32,
     receipt: Option<LocalCommitReceipt>,
 }
+#[derive(serde::Serialize, serde::Deserialize, tsify::Tsify)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BrowserBackupInput {
+    receipt: wimm_local_contracts::models::EncryptedBackupReceipt,
+    ciphertext: Vec<u8>,
+}
+#[derive(serde::Serialize, serde::Deserialize, tsify::Tsify)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct BrowserCiphertext {
+    contract_version: u32,
+    ciphertext: Vec<u8>,
+}
 #[wasm_bindgen]
 pub struct BrowserStorage {
     host: Option<StorageHost>,
     pool: OpfsSAHPoolUtil,
+    backups: Option<wimm_local_dal::sqlite_backup::SqliteBackupStore>,
 }
 #[wasm_bindgen]
 impl BrowserStorage {
@@ -132,9 +145,45 @@ impl BrowserStorage {
             receipt,
         })
     }
+    pub fn persist_backup(
+        &mut self,
+        input: tsify::Ts<BrowserBackupInput>,
+    ) -> Result<tsify::Ts<wimm_local_contracts::models::EncryptedBackupReceipt>, JsValue> {
+        let input: BrowserBackupInput = decode(input)?;
+        if input.receipt.profile_id.as_str() != self.host()?.profile.as_str() {
+            return Err(js_error(failure(StorageFailureCode::EpochMismatch)));
+        }
+        let saved = self
+            .backups
+            .as_mut()
+            .ok_or_else(|| js_error(failure(StorageFailureCode::ResourceUnavailable)))?
+            .persist(input.receipt, &input.ciphertext)
+            .map_err(js_error)?;
+        output(&saved)
+    }
+    pub fn read_backup(
+        &mut self,
+        receipt: tsify::Ts<wimm_local_contracts::models::EncryptedBackupReceipt>,
+    ) -> Result<tsify::Ts<BrowserCiphertext>, JsValue> {
+        let receipt: wimm_local_contracts::models::EncryptedBackupReceipt = decode(receipt)?;
+        if receipt.profile_id.as_str() != self.host()?.profile.as_str() {
+            return Err(js_error(failure(StorageFailureCode::EpochMismatch)));
+        }
+        let ciphertext = self
+            .backups
+            .as_ref()
+            .ok_or_else(|| js_error(failure(StorageFailureCode::ResourceUnavailable)))?
+            .read(&receipt)
+            .map_err(js_error)?;
+        output(&BrowserCiphertext {
+            contract_version: 2,
+            ciphertext,
+        })
+    }
     pub fn close(&mut self) -> Result<(), JsValue> {
         // Erst SQLite schließen, danach die tatsächlichen SyncAccessHandles freigeben.
         self.host.take();
+        self.backups.take();
         self.pool.pause_vfs().map_err(|_| {
             js_error(StorageFailure::unknown(
                 StorageFailureCode::ResourceUnavailable,
@@ -179,8 +228,21 @@ pub async fn open_browser_storage(profile: String) -> Result<BrowserStorage, JsV
         .map_err(js_error)?;
     }
     let host = StorageHost::from_connection(connection, profile).map_err(js_error)?;
+    let backup_exists = pool
+        .exists("/wimm-backups.sqlite3")
+        .map_err(|_| js_error(failure(StorageFailureCode::ResourceUnavailable)))?;
+    let backup_connection =
+        SqliteConnection::establish("file:/wimm-backups.sqlite3?vfs=wimm-browser-vfs")
+            .map_err(|_| js_error(failure(StorageFailureCode::ResourceUnavailable)))?;
+    let backups = if backup_exists {
+        wimm_local_dal::sqlite_backup::SqliteBackupStore::from_connection(backup_connection)
+    } else {
+        wimm_local_dal::sqlite_backup::SqliteBackupStore::initialize_connection(backup_connection)
+    }
+    .map_err(js_error)?;
     Ok(BrowserStorage {
         host: Some(host),
         pool,
+        backups: Some(backups),
     })
 }

@@ -57,6 +57,16 @@ export interface BalancePayload {
     balance: MoneyCents;
 }
 
+export interface BrowserBackupInput {
+    receipt: EncryptedBackupReceipt;
+    ciphertext: number[];
+}
+
+export interface BrowserCiphertext {
+    contractVersion: number;
+    ciphertext: number[];
+}
+
 export interface BrowserReceiptLookup {
     contractVersion: number;
     receipt: LocalCommitReceipt | null;
@@ -958,10 +968,12 @@ export class BrowserStorage {
     commit(request: LocalCommitRequest): BrowserCommitOutcome;
     contract_version(): number;
     lookup_result(identity: LocalOperationIdentity): BrowserReceiptLookup;
+    persist_backup(input: BrowserBackupInput): EncryptedBackupReceipt;
     port(request: LocalPortRequestV2): LocalPortOutcomeV2;
     query_imported(query: ImportSourceQuery): LocalPortOutcomeV2;
     query_pending(query: PendingIndexQuery): LocalPortOutcomeV2;
     query_transactions(query: TransactionIndexQuery): LocalPortOutcomeV2;
+    read_backup(receipt: EncryptedBackupReceipt): BrowserCiphertext;
 }
 
 export function open_browser_storage(profile: string): Promise<BrowserStorage>;
@@ -987,10 +999,12 @@ export interface InitOutput {
     readonly browserstorage_commit: (a: number, b: any) => [number, number, number];
     readonly browserstorage_contract_version: (a: number) => number;
     readonly browserstorage_lookup_result: (a: number, b: any) => [number, number, number];
+    readonly browserstorage_persist_backup: (a: number, b: any) => [number, number, number];
     readonly browserstorage_port: (a: number, b: any) => [number, number, number];
     readonly browserstorage_query_imported: (a: number, b: any) => [number, number, number];
     readonly browserstorage_query_pending: (a: number, b: any) => [number, number, number];
     readonly browserstorage_query_transactions: (a: number, b: any) => [number, number, number];
+    readonly browserstorage_read_backup: (a: number, b: any) => [number, number, number];
     readonly open_browser_storage: (a: number, b: number) => any;
     readonly roundtrip_local_snapshot_v2: (a: any) => [number, number, number];
     readonly roundtrip_storage_failure_v2: (a: any) => [number, number, number];

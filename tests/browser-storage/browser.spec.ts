@@ -92,3 +92,21 @@ test('WebKit-Privatmodus weist fehlende OPFS-Persistenz sichtbar vor einem Write
   expect(await page.evaluate(()=>window.sqliteStatus)).toBe('failed');
  }finally{await context.close();await browser.close();}
 });
+
+test('Verschlüsseltes Backup bleibt nach OPFS-Wiederöffnung erhalten und weist fremden Scope ab',async({page})=>{
+ const profile=randomUUID();await ready(page,profile);
+ const receipt={backupId:id(90),profileId:profile,spaceId:id(2),epoch:id(3),snapshotHash:'c3ludGhldGlzY2g'};
+ const plaintext={syntheticPrivateNote:'Nur synthetischer Backup-Prüfwert',amount:12345};
+ const ciphertext=await page.evaluate(async value=>Array.from(await window.backupProtector.seal(value)),plaintext);
+ expect(new TextDecoder().decode(new Uint8Array(ciphertext))).not.toContain(plaintext.syntheticPrivateNote);
+ expect(await page.evaluate(async input=>await window.sqliteClient.persistBackup(input),{receipt,ciphertext})).toEqual(receipt);
+ await page.reload();await expect.poll(()=>page.evaluate(()=>window.sqliteStatus)).toBe('ready');
+ const stored=await page.evaluate(async receipt=>await window.sqliteClient.readBackup(receipt),receipt);
+ expect(stored).toEqual({contractVersion:2,ciphertext});
+ expect(await page.evaluate(async bytes=>await window.backupProtector.unseal(new Uint8Array(bytes)),stored.ciphertext)).toEqual(plaintext);
+ const rejection=await page.evaluate(async receipt=>{try{await window.sqliteClient.readBackup(receipt);return null;}catch(error){const failure=error as {code:string;commitState:string};return {code:failure.code,commitState:failure.commitState};}},{...receipt,profileId:id(91)});
+ expect(rejection).toEqual({code:'EPOCH_MISMATCH',commitState:'notCommitted'});
+ const duplicate=await page.evaluate(async input=>{try{await window.sqliteClient.persistBackup(input);return null;}catch(error){return (error as {code:string}).code;}},{receipt,ciphertext:[99]});
+ expect(duplicate).toBe('WRITE_FAILED');
+ expect(await page.evaluate(async receipt=>await window.sqliteClient.readBackup(receipt),receipt)).toEqual(stored);
+});

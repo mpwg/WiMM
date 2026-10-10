@@ -2,7 +2,9 @@
 //! Bestehender privater Chiffratspeicher über ORM; keine Finanzklartexte oder Schlüssel.
 use diesel::{connection::SimpleConnection, prelude::*};
 use sea_query::{Alias, ColumnDef, Expr, Index, SqliteQueryBuilder, Table};
-use std::{cell::RefCell, path::Path};
+use std::cell::RefCell;
+#[cfg(not(target_family = "wasm"))]
+use std::path::Path;
 use wimm_local_contracts::{models::EncryptedBackupReceipt, persistence_errors::*};
 diesel::table! {backup_meta(id){id->Integer,version->Integer,}}
 diesel::table! {encrypted_backups(backup_id){backup_id->Text,profile_id->Text,space_id->Text,epoch->Text,snapshot_hash->Text,ciphertext->Binary,}}
@@ -76,6 +78,7 @@ pub struct SqliteBackupStore {
     connection: RefCell<SqliteConnection>,
 }
 impl SqliteBackupStore {
+    #[cfg(not(target_family = "wasm"))]
     fn connection(path: &Path, create: bool) -> Result<SqliteConnection, StorageFailure> {
         let location = if create {
             path.to_str()
@@ -106,18 +109,30 @@ impl SqliteBackupStore {
             .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
         Ok(c)
     }
+    #[cfg(not(target_family = "wasm"))]
     pub fn open_existing(path: &Path) -> Result<Self, StorageFailure> {
         if !path.is_file() {
             return Err(failure(StorageFailureCode::ResourceUnavailable));
         }
-        let mut c = Self::connection(path, false)?;
+        Self::from_connection(Self::connection(path, false)?)
+    }
+    /// Übernimmt einen tatsächlichen aktuellen Chiffratstore ohne Schemaänderung.
+    pub fn from_connection(mut c: SqliteConnection) -> Result<Self, StorageFailure> {
+        c.batch_execute("PRAGMA synchronous=FULL; PRAGMA busy_timeout=3000;")
+            .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
         schema(&mut c).map_err(mapped)?;
         Ok(Self {
             connection: RefCell::new(c),
         })
     }
+    #[cfg(not(target_family = "wasm"))]
     pub fn initialize_new(path: &Path) -> Result<Self, StorageFailure> {
-        let mut c = Self::connection(path, true)?;
+        Self::initialize_connection(Self::connection(path, true)?)
+    }
+    /// Expliziter Initialschritt derselben DSL auf einer leeren nativen/WASM-Verbindung.
+    pub fn initialize_connection(mut c: SqliteConnection) -> Result<Self, StorageFailure> {
+        c.batch_execute("PRAGMA synchronous=FULL; PRAGMA busy_timeout=3000;")
+            .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
         c.immediate_transaction::<_, Error, _>(|c| {
             let tables: i64 = sqlite_master::table
                 .filter(sqlite_master::type_.eq("table"))
