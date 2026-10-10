@@ -93,3 +93,15 @@ ADR-008/011/024/031/034 sind ersetzt. Frühere D0-Auftragsbegrenzungen ADR-013, 
 - Betroffene Verträge/Pakete: [Anwendungsverträge](core-contracts.md), [AR04 #118](https://github.com/mpwg/WiMM/issues/118), nachfolgende DAL-/Clientpakete.
 - Migration und Kompatibilität: Checkpointversion eins und registriertes initiales physisches Schema eins; alte Snapshot-/Export-/Binding-/Crypto-/Transportdimensionen unverändert. Keine Produktaktivierung, IndexedDB-Migration oder P10-Gesamtsicherung. Destruktiver Restore benötigt dauerhaftes verschlüsseltes Original und CAS; neue Restoreepoche wird vom autorisierten Client vorbereitet, nicht vom Backend erfunden.
 - Prüfung: tatsächliche native SQLite und persistente Browser-SQLite mit fehlendem/fehlerhaftem Backup, falschem Schlüssel/Scope, konkurrierendem Write, Restorefehler, Receiptaufbewahrung und vor-/nach-Commit-Abbruch.
+
+## ADR-056 — Produktive Commitumschaltung bereits in AR05
+
+- Datum: 10. Oktober 2026. Status: angenommen.
+- Herkunft: ausdrückliche Nutzerwahl „Reihenfolge ändern, Produktumschaltung bereits in #119“ als Antwort auf den Widerspruch zwischen #119 und #120.
+- Problem: Frühere Folge #119 → #108 → #120 verlangte in #119 bereits die Entfernung produktiver TS-Commitduplikate, ließ den geprüften DAL und die Rust-Anwendungsgrundlage jedoch erst danach entstehen.
+- Entscheidung: #119 behält die vollständige produktive Umschaltung. Neue Voraussetzung [#139](https://github.com/mpwg/WiMM/issues/139) baut gemeinsame Rust-Commit-/Laufzeit-/Portgrundlagen vor nativer #108 und Browser #109. #109 setzt diese frühe Grundlage statt abgeschlossenen #120 voraus. Sichere Updates, Bestands-/Export-/Migrations-/Aktivierungskriterien werden vor produktiver #119-Umschaltung erfüllt. #120 erweitert danach Profil-/Key-/Anwendungsabläufe; #121 die weitergehenden Views/Projektionen. Konkrete Folge ausschließlich #114.
+- Alternative: #119 allein als Bibliothek abnehmen und Produktumschaltung #120 zuordnen. Der Nutzer hat diese Alternative ausdrücklich nicht gewählt.
+- Folgen: Keine Teilbibliotheks-/Memoryabnahme als #119-Abschluss; keine Zwischenlösung mit neuen Legacy-Receipts, Dual-Write oder stale Backendfallback. Bereits geprüfte Rust-Schreibpfade werden in #120 nicht dupliziert.
+- Betroffene Verträge/Pakete: [Aufgaben](tasks.md), [Architektur](architecture.md), [Anwendungsverträge](core-contracts.md), #114/#139/#108/#109/#119/#120.
+- Migration und Kompatibilität: Alle bestehenden Daten-/Finanz-/E2EE-/CAS-/Backup-/Update-/Leistungs-/Plattformkriterien bleiben erhalten. Neue Produktfunktionen P6–P11 und Releases nicht beauftragt. Umschaltung erst nach tatsächlichem Nachweis und gesicherter Bestandsaktivierung.
+- Prüfung: Native Rust-Assertions und tatsächliche native/Browser-/Sprach-/Bestands-/Migrationskonformität pro Voraussetzung; #119 schließt erst nach tatsächlicher produktiver Entfernung der Commitduplikate.

@@ -104,3 +104,7 @@ Native Rust-Assertions, tatsächliche WASM-/Swift-/Kotlin-Bindings, echte lokale
 ## Negative Architekturgrenzen
 
 [AR11 #125](architecture-checks/README.md) katalogisiert Rollen, Featurevarianten, transitive Targetabschlüsse und genau begrenzte UI-Übergangskanten. Neue Runtime-/Finanz-/ORM-/Serverprivatkanten, gelockerte unsafe-Sperren und fehlende Contractorakel scheitern. Native/WASM/SQL- und manuelle Nachweise bleiben getrennt; historische Greens erzeugen keine neue Maschinen- oder Gesamtproduktabnahme.
+
+## Vorgezogene produktive Commitumschaltung
+
+Nutzerentscheidung vom 10. Oktober 2026 (ADR-056): Produktive Commitumschaltung bereits AR05/#119. Die frühe gemeinsame Rust-Commit-/Laufzeit-/Portgrundlage #139, vollständiger nativer/Browser-DAL sowie sichere Update-/Bestands-/Migrationsaktivierung gehen voraus. #119 schließt erst nach tatsächlicher Entfernung produktiver TS-Commitduplikate. Weitergehende Profil-/Anwendungsabläufe folgen #120; keine neue Legacy-Receipt-/Dual-Write-Zwischenimplementierung. Alle bestehenden fachlichen, kryptografischen, Leistungs- und Plattformgrenzen erhalten; konkrete Reihenfolge #114.
