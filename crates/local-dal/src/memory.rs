@@ -348,7 +348,7 @@ impl<V: SnapshotValidationPort> wimm_local_contracts::storage_port::LocalStorage
                     };
                     for row in rows {
                         let value: wimm_finance_types::models::Aggregate =
-                            serde_json::from_value(row.clone())
+                            wimm_local_contracts::storage::decode_draft_aggregate(row)
                                 .map_err(|_| error(StorageFailureCode::WriteFailed))?;
                         if value.space_id() != &snapshot.space_id {
                             return Err(error(StorageFailureCode::WriteFailed));

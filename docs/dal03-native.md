@@ -54,7 +54,7 @@ cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
 cargo clippy --locked --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
 ```
 
-Gesamte aktuelle Tauri-Rust-Suite: 36 bestanden, zwei vorhandene Contractdriver-Einstiege regulär ignoriert. Diese Driver werden für ihre jeweiligen gemeinsamen Konformitätsbefehle getrennt gestartet; die ignorierten Einträge sind kein Konformitätsnachweis. Keine GUI-/Produkt-/Swift-/Kotlin-/Browserruntime-Abnahme aus dem nativen Hostabschnitt. Der zusätzliche native Lockfileabschluss enthält ausschließlich schon im Workspace gesperrte Paketversionen mit identischen Checksummen; keine bisherige native Paketversion wurde entfernt.
+Gesamte aktuelle Tauri-Rust-Suite: 36 bestanden, drei Contractdriver-Einstiege regulär ignoriert. Diese Driver werden für ihre jeweiligen gemeinsamen Konformitätsbefehle getrennt gestartet; die ignorierten Einträge sind kein Konformitätsnachweis. Keine GUI-/Produkt-/Swift-/Kotlin-/Browserruntime-Abnahme aus dem nativen Hostabschnitt. Der zusätzliche native Lockfileabschluss enthält ausschließlich schon im Workspace gesperrte Paketversionen mit identischen Checksummen; keine bisherige native Paketversion wurde entfernt.
 
 ## Registrierte Indizes und begrenzte ORM-Abfragen
 
@@ -74,6 +74,16 @@ Native Tests bestätigen die tatsächliche Verwendung von `transactions_by_accou
 
 Zusätzliche synthetische DAO-Probe: 50.000 Buchungen auf echter SQLite, tatsächliches Dateineuöffnen und eine späte 1.000-Zeilen-Seite nach Handle 58.999. Vollständiger lokaler Lauf: Dateiöffnung/erste Seite 64,49 ms, späte Seite p95 63,72 ms über 30 Wiederholungen; Orakel, Indexplan und unveränderte Grenzen unter 2.000/100 ms bestanden. Dies misst ausschließlich den DAO, keine sichtbare Finanzliste, GUI, Scrollreaktion, neue Browserpersistenz oder P4-Gesamtabnahme.
 
+## Produktive Finanzcommands und gemeinsame Bestandskonformität
+
+Die elf bisherigen Tauri-Finanzspeichercommands sind auf `orm_storage::OrmStorageState` umgestellt. Ihre ursprünglichen IPC-Namen bleiben über Tauri-`rename` erhalten; Argument-/Ergebnisformen verwenden die gemeinsame Rustquelle beziehungsweise den ausdrücklichen V1-Kompatibilitätsadapter. Der Startpfad erzeugt ausschließlich eine neue leere Datei über registrierte SeaQuery-Tabellen/Schlüssel/Indizes; bestehende Dateien werden weder beim Öffnen initialisiert noch automatisch umgebaut. Die früheren Finanzcommand-Wrapper wurden entfernt. Frühere finanzielle rusqlite-Testhelfer sind ausschließlich unter `cfg(test)` verfügbar. Der alte Schema-/Indexprüfpfad und Chiffratspeicher bleiben bis ihrer vollständigen Ablösung separat offen; damit ist #108 noch nicht abgeschlossen.
+
+Der gemeinsame unveränderte Snapshot-/Neuaufbau-/Merge-/Versionskatalog läuft ausdrücklich gegen den neuen ORM-Driver und echte SQLite: 18 Fälle bestanden; vollständiger gemeinsamer Lauf insgesamt 48 echte SQLitefälle, einschließlich bisheriger Sicherungs-/Migrations-/Indexfälle. `sqliteFixture('orm')` benennt den Zieladapter ausdrücklich; es gibt keinen automatischen Driver-/Backendfallback. `pnpm test:storage:native` startet nun zusätzlich zu seinen bisherigen Bestands-/Migrationsfällen den vollständigen neuen Katalog. Neue normale Tauri-Finanzcommands sind keine Umstellung der noch produktiven TS-Commitkoordination aus #119.
+
+Die separat nachverfolgten Bestandsdeltas [#144](https://github.com/mpwg/WiMM/issues/144) und [#145](https://github.com/mpwg/WiMM/issues/145) wurden dabei korrigiert, ohne Originale umzuschreiben: opake Entwürfe können reine Fachaggregate oder flache StoredAggregate-Records mit `handle` enthalten. Gemeinsame typisierte Prüfung akzeptiert beide, prüft Handle/Fach-ID und Bereich und erhält die Originalbytes/-werte. Historische unbekannte Cachearten bleiben nur im ausdrücklich gekapselten V1-Batch-/Snapshotpfad verfügbar; bekannte Cachearten können darüber nicht an ihren Typ-/Payloadguards vorbeigeschleust werden. Der reguläre typisierte Snapshot-/V2-Checkpointport bleibt streng. Expliziter Cache-Neuaufbau liest den vollständigen aktuellen Finanzbestand, vergleicht dessen Originale und prüft die vom Kern berechneten Ersatzcaches, ohne obsolete alte Caches zuvor als aktuelle Fachprojektionen anzunehmen. Restore weist unbekannte Cachearten weiterhin ab.
+
+Versionsabweisung bei den elf Void-/Lesecommands geschieht vor jedem Write und liefert `UPDATE_REQUIRED/notCommitted`; der separate receiptfähige Commitport behält seine konservative Behandlung nicht belegter historischer Commitgewissheit. Keine Grenz-, Golden-, Formschema- oder Finanzregellockerung aus diesen Kompatibilitätskorrekturen.
+
 ## Kriterienmatrix
 
 | #108-Kriterium | Aktueller Nachweis |
@@ -83,7 +93,7 @@ Zusätzliche synthetische DAO-Probe: 50.000 Buchungen auf echter SQLite, tatsäc
 | Atomare Batches/CAS/Snapshot-/Projektionsersatz | Tatsächliche ORM-Transaktionen prüfen Batch-/Sync-/Snapshotrollback nach begonnenen Writes, konkurrierende CAS-Verbindungen, Finanzrevisionsanker und vollständigen Ausgangsvergleich beim Cacheersatz. Integrierte Original-/Receipts und private Recoverybytes ebenfalls geprüft; konkrete native Runtimeports geprüft; vollständige Tauri-/Konformitätsintegration noch offen. |
 | Gesicherte versionierte Migration | Registrierte SeaQuery-Erweiterung mit tatsächlich verschlüsselten/rückgelesenen Originalen, Vergleich aller Bereiche, Sicherungsjournal und DDL-/Abbruchrollback geprüft. Vollständiger V2-Checkpoint-/Restorepfad und gesicherter Drei-nach-vier-Schritt umgesetzt; Runtime-/Tauri-/Aktivierungsabnahme noch offen. |
 | Reguläre ORM-Abfragen, Rust-DSL-Migrationen | Leseabfragen durch Diesel umgesetzt. Registrierte DSL-Erweiterung vorhanden; reguläre Writes ebenfalls durch ORM. Verbindungs-PRAGMAs und registrierte DDL bleiben gekapselte technische Ausnahmen. |
-| Native Assertions, Neustart, Fehler, Leistung | 42 native Testfälle plus zwei tatsächlich separat gestartete Child-Probes; Receipt und verschlüsselter Originalauftrag überleben Prozessneustart. Zusätzliche DAO-Abfrageprobe separat belegt; keine GUI-/Scroll-/Disk-full-Abnahme. |
+| Native Assertions, Neustart, Fehler, Leistung | 44 native Testfälle plus zwei tatsächlich separat gestartete Child-Probes; Receipt und verschlüsselter Originalauftrag überleben Prozessneustart. Zusätzliche DAO-Abfrageprobe separat belegt; keine GUI-/Scroll-/Disk-full-Abnahme. |
 | Vollständiger #77-Vertrag ohne dauerhaften rusqlite-Produktpfad | Tauri noch nicht umgeschaltet; Issue bleibt offen. |
 
 ## Ausgeführte Prüfungen
@@ -98,6 +108,6 @@ pnpm check:target:architecture
 cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml sqlite_unbekannte_versionen_bleiben_vor_jeder_initialisierung_unveraendert
 ```
 
-Native Suite: 44 Bestands-Testeinträge einschließlich der beiden Child-Probe-Einstiege, elf Memoryreferenztests und zehn bestehende tatsächliche AR04-SQLitetests bestanden. Die Elternprozesse starten und überprüfen beide Child-Probes tatsächlich. Der aktuelle Tauri-Rustguard weist zusätzlich physische Stände drei und vier ohne Initialisierungs-/Datenänderung ab. Schemafixture wird gegen die aktuelle Initialschemaquelle geprüft; die V2-Datei verwendet die bestehende registrierte Index-DDL direkt aus der Tauri-Quelle. Fixtureerzeugung ist Testaufbau; der neue registrierte Erweiterungsschritt besitzt separat tatsächliche Sicherungs-/Original-/Abbruchbelege. WASM-Check prüft Kompatibilität der Crate, keine neue Browserpersistenz.
+Native Suite: 46 Bestands-Testeinträge einschließlich der beiden Child-Probe-Einstiege, elf Memoryreferenztests und zehn bestehende tatsächliche AR04-SQLitetests bestanden. Die Elternprozesse starten und überprüfen beide Child-Probes tatsächlich. Der aktuelle Tauri-Rustguard weist zusätzlich physische Stände drei und vier ohne Initialisierungs-/Datenänderung ab. Schemafixture wird gegen die aktuelle Initialschemaquelle geprüft; die V2-Datei verwendet die bestehende registrierte Index-DDL direkt aus der Tauri-Quelle. Fixtureerzeugung ist Testaufbau; der neue registrierte Erweiterungsschritt besitzt separat tatsächliche Sicherungs-/Original-/Abbruchbelege. WASM-Check prüft Kompatibilität der Crate, keine neue Browserpersistenz.
 
 Aktuelles Tracking einschließlich nächster Implementierung und Prüfbelege ausschließlich in [#108](https://github.com/mpwg/WiMM/issues/108); Abhängigkeitsfolge in [#114](https://github.com/mpwg/WiMM/issues/114).

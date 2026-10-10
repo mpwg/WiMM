@@ -8,10 +8,11 @@ mod backups;
 #[cfg(test)]
 mod core_contract;
 mod migration;
+pub mod orm_storage;
 pub mod runtime_storage;
 mod storage;
 mod storage_failure;
-use storage::{StorageState, initialize_storage};
+use storage::StorageState;
 use tauri::{Emitter, Manager};
 mod platform;
 use platform::*;
@@ -155,8 +156,16 @@ fn main() {
             .build()?;
             let directory = app.path().app_local_data_dir()?;
             fs::create_dir_all(&directory)?;
-            let connection = Connection::open(directory.join("wimm.sqlite3"))?;
-            initialize_storage(&connection)?;
+            let storage_path = directory.join("wimm.sqlite3");
+            let orm = if storage_path.exists() {
+                orm_storage::OrmStorageState::open_existing(&storage_path)
+            } else {
+                orm_storage::OrmStorageState::initialize_new(&storage_path)
+            }
+            .map_err(std::io::Error::other)?;
+            app.manage(orm);
+            // Ausschließlich früherer Schema-/Indexprüfpfad bis dessen ORM-Ablösung, keine Finanzcommands.
+            let connection = Connection::open(&storage_path)?;
             app.manage(StorageState(Mutex::new(connection)));
             let backup_connection = Connection::open(directory.join("wimm-backups.sqlite3"))?;
             backups::initialize_backups(&backup_connection)?;
@@ -169,17 +178,17 @@ fn main() {
             platform_write_file,
             platform_open_url,
             platform_set_menu,
-            storage::storage_apply_batch,
-            storage::storage_initialize_area,
-            storage::storage_read_aggregate,
-            storage::storage_query_aggregates,
-            storage::storage_load_confirmed,
-            storage::storage_load_pending,
-            storage::storage_get_sync_state,
-            storage::storage_save_sync_page,
-            storage::storage_export_snapshot,
-            storage::storage_replace_snapshot,
-            storage::storage_rebuild_projections,
+            orm_storage::orm_storage_apply_batch,
+            orm_storage::orm_storage_initialize_area,
+            orm_storage::orm_storage_read_aggregate,
+            orm_storage::orm_storage_query_aggregates,
+            orm_storage::orm_storage_load_confirmed,
+            orm_storage::orm_storage_load_pending,
+            orm_storage::orm_storage_get_sync_state,
+            orm_storage::orm_storage_save_sync_page,
+            orm_storage::orm_storage_export_snapshot,
+            orm_storage::orm_storage_replace_snapshot,
+            orm_storage::orm_storage_rebuild_projections,
             backups::storage_persist_encrypted_backup,
             backups::storage_read_encrypted_backup,
             migration::storage_migrate,

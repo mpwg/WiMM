@@ -2035,3 +2035,56 @@ fn real_fifty_thousand_row_orm_pages_keep_late_cursor_bound_and_under_existing_q
         "Synthetische 50.000-Zeilen-DAO-Probe: Dateiöffnung/erste Seite {opening:.2} ms, späte Seite p95 {p95:.2} ms; keine GUI-/Scrollabnahme."
     );
 }
+#[test]
+fn explicit_initial_dsl_schema_matches_legacy_format_and_never_reinitializes_data() {
+    let file = path("native-initial-dsl");
+    LegacySqliteStore::initialize_empty_file(&file).unwrap();
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    assert_eq!(db.initialize_area(&id(2), &id(3)).unwrap(), id(3));
+    db.apply_atomic_batch(request(30, 1).batch).unwrap();
+    drop(db);
+    let before = std::fs::read(&file).unwrap();
+    assert_eq!(
+        LegacySqliteStore::initialize_empty_file(&file)
+            .unwrap_err()
+            .code,
+        StorageFailureCode::UpdateRequired
+    );
+    assert_eq!(std::fs::read(&file).unwrap(), before);
+    let reopened = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    assert_eq!(
+        reopened.export_snapshot(&id(2)).unwrap().aggregates.len(),
+        1
+    );
+}
+#[test]
+fn legacy_cache_compatibility_preserves_typed_snapshot_guards_and_rebuild_original_cas() {
+    let file = path("native-legacy-cache");
+    drop(fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let source = db.export_snapshot(&id(2)).unwrap();
+    use wimm_local_dal::legacy_sqlite::LegacyProjection;
+    let cache = LegacyProjection {
+        space_id: id(2),
+        kind: wimm_finance_types::scalars::NonEmptyText::new("obsolete-cache".into()).unwrap(),
+        key: wimm_finance_types::scalars::NonEmptyText::new("old".into()).unwrap(),
+        payload: LegacyJson(serde_json::json!({"preserve":123})),
+    };
+    db.apply_legacy_projection_batch(index_batch(vec![]), vec![cache])
+        .unwrap();
+    assert!(db.export_snapshot(&id(2)).is_err());
+    assert!(
+        db.export_legacy_snapshot(&id(2)).unwrap().0["projections"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|p| p["kind"] == "obsolete-cache")
+    );
+    db.rebuild_projections(ProjectionRebuild {
+        space_id: id(2),
+        source_aggregates: source.aggregates,
+        projections: source.projections,
+    })
+    .unwrap();
+    assert!(db.export_snapshot(&id(2)).is_ok());
+}

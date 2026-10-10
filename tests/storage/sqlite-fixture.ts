@@ -10,7 +10,7 @@ import type { UUID } from '../../packages/contracts/src/index.js';
 import type { VersionFixture } from './contracts/version-catalog.js';
 import { profileId } from './contracts/snapshot-catalog.js';
 
-export async function sqliteFixture(): Promise<VersionFixture & { backups: DesktopEncryptedBackupPort; migration:DesktopMigrationPort; indices:DesktopIndexQueryPort }> {
+export async function sqliteFixture(driver: 'bestand' | 'orm' = 'bestand'): Promise<VersionFixture & { backups: DesktopEncryptedBackupPort; migration:DesktopMigrationPort; indices:DesktopIndexQueryPort }> {
   const records = (await readFile('test-results/storage-contract-build.jsonl', 'utf8')).trim().split('\n').map((line) => JSON.parse(line) as { reason: string; executable?: string; profile?: { test: boolean } });
   const executable = records.find((entry) => entry.reason === 'compiler-artifact' && entry.profile?.test && entry.executable)?.executable;
   if (!executable) throw new Error('Zuerst pnpm test:storage:native ausführen; Rust-Testbinary fehlt.');
@@ -21,7 +21,7 @@ export async function sqliteFixture(): Promise<VersionFixture & { backups: Deskt
   let stderr = '';
   const pending = new Map<number, { resolve(value: unknown): void; reject(error: unknown): void }>();
   const start = () => {
-    process = spawn(executable, ['--exact', 'storage::tests::contract_driver', '--ignored', '--nocapture'], { env: { ...globalThis.process.env, WIMM_CONTRACT_DATABASE: resolve(directory, 'native.sqlite3') } });
+    process = spawn(executable, ['--exact', driver === 'orm' ? 'orm_storage::tests::contract_driver' : 'storage::tests::contract_driver', '--ignored', '--nocapture'], { env: { ...globalThis.process.env, WIMM_CONTRACT_DATABASE: resolve(directory, 'native.sqlite3') } });
     process.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
     createInterface({ input: process.stdout }).on('line', (line) => {
       if (!line.startsWith('WIMM_CONTRACT:')) return;

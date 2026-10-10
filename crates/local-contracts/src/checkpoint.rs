@@ -76,8 +76,7 @@ impl Validate for LocalCommitCheckpoint {
                     let rows = rows.as_array().ok_or("Ungültige Originalaggregate.")?;
                     for row in rows {
                         let a: wimm_finance_types::models::Aggregate =
-                            serde_json::from_value(row.clone())
-                                .map_err(|_| "Ungültiges Originalaggregat.")?;
+                            crate::storage::decode_draft_aggregate(row)?;
                         if a.space_id() != &s.space_id {
                             return Err("Bereichsfremdes Originalaggregat.");
                         }

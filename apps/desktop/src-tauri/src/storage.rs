@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-use crate::storage_failure::{
-    StorageFailure, StorageFailureCode, commit_error, failure, storage_error,
-};
-use rusqlite::{Connection, OptionalExtension, Transaction, TransactionBehavior, params};
+#[cfg(test)]
+use crate::storage_failure::commit_error;
+use crate::storage_failure::{StorageFailure, StorageFailureCode, failure, storage_error};
+#[cfg(test)]
+use rusqlite::TransactionBehavior;
+use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Mutex;
@@ -11,6 +13,7 @@ pub struct StorageState(pub Mutex<Connection>);
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg(test)]
 pub struct ExpectedRevision {
     handle: String,
     expected_revision: i64,
@@ -28,6 +31,7 @@ pub struct StoredAggregate {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg(test)]
 pub struct StorageBatch {
     profile_id: String,
     expected_revisions: Vec<ExpectedRevision>,
@@ -55,6 +59,7 @@ pub struct SyncState {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg(test)]
 pub struct SyncPage {
     state: SyncState,
     confirmed: Vec<ConfirmedAggregate>,
@@ -134,6 +139,7 @@ pub(crate) fn assert_supported_schema(connection: &Connection) -> rusqlite::Resu
     Ok(())
 }
 
+#[cfg(test)]
 pub fn initialize_storage(connection: &Connection) -> rusqlite::Result<()> {
     assert_supported_schema(connection)?;
     connection.pragma_update(None, "foreign_keys", "ON")?;
@@ -172,6 +178,7 @@ pub fn initialize_storage(connection: &Connection) -> rusqlite::Result<()> {
     transaction.commit()
 }
 
+#[cfg(test)]
 fn assert_expected_revisions(
     transaction: &Transaction<'_>,
     batch: &StorageBatch,
@@ -192,18 +199,7 @@ fn assert_expected_revisions(
     Ok(())
 }
 
-#[tauri::command]
-pub fn storage_apply_batch(
-    state: tauri::State<'_, StorageState>,
-    batch: StorageBatch,
-) -> Result<(), StorageFailure> {
-    let mut connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    apply_batch(&mut connection, batch)
-}
-
+#[cfg(test)]
 fn apply_batch(connection: &mut Connection, batch: StorageBatch) -> Result<(), StorageFailure> {
     assert_supported_schema(connection).map_err(storage_error)?;
     let transaction = connection.transaction().map_err(storage_error)?;
@@ -211,6 +207,7 @@ fn apply_batch(connection: &mut Connection, batch: StorageBatch) -> Result<(), S
     transaction.commit().map_err(commit_error)
 }
 
+#[cfg(test)]
 fn write_batch(transaction: &Transaction<'_>, batch: &StorageBatch) -> Result<(), StorageFailure> {
     assert_supported_schema(transaction).map_err(storage_error)?;
     assert_expected_revisions(transaction, batch)?;
@@ -261,53 +258,6 @@ fn write_batch(transaction: &Transaction<'_>, batch: &StorageBatch) -> Result<()
         ).map_err(storage_error)?;
     }
     Ok(())
-}
-
-#[tauri::command]
-pub fn storage_read_aggregate(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    handle: String,
-) -> Result<Option<Value>, StorageFailure> {
-    let connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    assert_supported_schema(&connection).map_err(storage_error)?;
-    connection
-        .query_row(
-            "SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND handle = ?2",
-            params![profile_id, handle],
-            |row| row.get::<_, String>(0),
-        )
-        .optional()
-        .map_err(storage_error)?
-        .map(|payload| serde_json::from_str(&payload).map_err(storage_error))
-        .transpose()
-}
-
-#[tauri::command]
-pub fn storage_query_aggregates(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    space_id: String,
-) -> Result<Vec<Value>, StorageFailure> {
-    let connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    assert_supported_schema(&connection).map_err(storage_error)?;
-    let mut statement = connection
-        .prepare("SELECT json_set(payload, '$.handle', handle, '$.spaceId', space_id, '$.revision', revision) FROM aggregates WHERE profile_id = ?1 AND space_id = ?2")
-        .map_err(storage_error)?;
-    let rows = statement
-        .query_map(params![profile_id, space_id], |row| row.get::<_, String>(0))
-        .map_err(storage_error)?;
-    rows.map(|row| {
-        row.map_err(storage_error)
-            .and_then(|payload| serde_json::from_str(&payload).map_err(storage_error))
-    })
-    .collect()
 }
 
 fn read_rows(
@@ -370,6 +320,7 @@ fn get_local_epoch(
         .map_err(storage_error)
 }
 
+#[cfg(test)]
 fn write_local_epoch(
     transaction: &Transaction<'_>,
     profile_id: &str,
@@ -380,6 +331,7 @@ fn write_local_epoch(
     Ok(())
 }
 
+#[cfg(test)]
 pub(crate) fn initialize_area(
     connection: &mut Connection,
     profile_id: &str,
@@ -402,6 +354,7 @@ pub(crate) fn initialize_area(
     Ok(epoch)
 }
 
+#[cfg(test)]
 fn write_sync_state(
     transaction: &Transaction<'_>,
     state: &SyncState,
@@ -410,6 +363,7 @@ fn write_sync_state(
     Ok(())
 }
 
+#[cfg(test)]
 fn write_confirmed(
     transaction: &Transaction<'_>,
     profile_id: &str,
@@ -425,6 +379,7 @@ fn write_confirmed(
     Ok(())
 }
 
+#[cfg(test)]
 fn assert_area_rows(rows: &[Value], space_id: &str) -> Result<(), StorageFailure> {
     if rows
         .iter()
@@ -435,6 +390,7 @@ fn assert_area_rows(rows: &[Value], space_id: &str) -> Result<(), StorageFailure
     Ok(())
 }
 
+#[cfg(test)]
 fn save_sync_page(
     connection: &mut Connection,
     profile_id: &str,
@@ -487,6 +443,7 @@ fn save_sync_page(
     transaction.commit().map_err(commit_error)
 }
 
+#[cfg(test)]
 pub(crate) fn export_snapshot(
     connection: &mut Connection,
     profile_id: &str,
@@ -554,6 +511,7 @@ pub(crate) fn snapshot_in_transaction(
     Ok(snapshot)
 }
 
+#[cfg(test)]
 fn replace_snapshot(
     connection: &mut Connection,
     profile_id: &str,
@@ -673,110 +631,9 @@ fn replace_snapshot(
     transaction.commit().map_err(commit_error)
 }
 
-#[tauri::command]
-pub fn storage_initialize_area(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    space_id: String,
-    proposed_epoch: String,
-) -> Result<String, StorageFailure> {
-    let mut connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    initialize_area(&mut connection, &profile_id, &space_id, &proposed_epoch)
-}
-
-#[tauri::command]
-pub fn storage_load_confirmed(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    space_id: String,
-) -> Result<Vec<Value>, StorageFailure> {
-    let connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    read_rows(
-        &connection,
-        "SELECT payload FROM confirmed WHERE profile_id = ?1 AND space_id = ?2 ORDER BY handle",
-        &profile_id,
-        &space_id,
-    )
-}
-
-#[tauri::command]
-pub fn storage_load_pending(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    space_id: String,
-) -> Result<Vec<Value>, StorageFailure> {
-    let connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    read_rows(
-        &connection,
-        "SELECT payload FROM outbox WHERE profile_id = ?1 AND space_id = ?2 ORDER BY operation_id",
-        &profile_id,
-        &space_id,
-    )
-}
-
-#[tauri::command]
-pub fn storage_get_sync_state(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    space_id: String,
-) -> Result<Option<SyncState>, StorageFailure> {
-    let connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    get_sync_state(&connection, &profile_id, &space_id)
-}
-
-#[tauri::command]
-pub fn storage_save_sync_page(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    page: SyncPage,
-) -> Result<(), StorageFailure> {
-    let mut connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    save_sync_page(&mut connection, &profile_id, page)
-}
-
-#[tauri::command]
-pub fn storage_export_snapshot(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    space_id: String,
-) -> Result<LocalSnapshot, StorageFailure> {
-    let mut connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    export_snapshot(&mut connection, &profile_id, &space_id)
-}
-
-#[tauri::command]
-pub fn storage_replace_snapshot(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    snapshot: LocalSnapshot,
-) -> Result<(), StorageFailure> {
-    let mut connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    replace_snapshot(&mut connection, &profile_id, snapshot)
-}
-
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[cfg(test)]
 pub struct ProjectionRebuild {
     space_id: String,
     source_aggregates: Vec<StoredAggregate>,
@@ -784,6 +641,7 @@ pub struct ProjectionRebuild {
 }
 
 // Kein Fachrechner in Rust: vollständiger Bestandsvergleich und atomarer Cacheersatz.
+#[cfg(test)]
 fn rebuild_projections(
     connection: &mut Connection,
     profile_id: &str,
@@ -826,19 +684,6 @@ fn rebuild_projections(
         },
     )?;
     transaction.commit().map_err(commit_error)
-}
-
-#[tauri::command]
-pub fn storage_rebuild_projections(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    rebuild: ProjectionRebuild,
-) -> Result<(), StorageFailure> {
-    let mut connection = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    rebuild_projections(&mut connection, &profile_id, rebuild)
 }
 
 #[cfg(test)]

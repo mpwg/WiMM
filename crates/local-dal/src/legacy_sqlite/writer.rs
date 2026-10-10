@@ -466,7 +466,7 @@ impl<V: SnapshotValidationPort> LocalStoragePort for LegacySqliteWriter<V> {
     }
     fn rebuild_projections(&mut self, r: ProjectionRebuild) -> Result<(), StorageFailure> {
         self.write(|c, p, v| {
-            let mut current = snapshot(c, p, &r.space_id)?;
+            let mut current = snapshot_with_projections(c, p, &r.space_id, Some(&r.projections))?;
             let mut expected = r.source_aggregates.clone();
             expected.sort_by(|a, b| a.handle.as_str().cmp(b.handle.as_str()));
             if text(&current.aggregates)? != text(&expected)? {
@@ -535,8 +535,9 @@ fn check_pending(p: &PendingOperation) -> Result<(), ReadError> {
                 .as_array()
                 .ok_or_else(|| fail(StorageFailureCode::WriteFailed))?;
             for row in rows {
-                let a: wimm_finance_types::models::Aggregate = serde_json::from_value(row.clone())
-                    .map_err(|_| fail(StorageFailureCode::WriteFailed))?;
+                let a: wimm_finance_types::models::Aggregate =
+                    wimm_local_contracts::storage::decode_draft_aggregate(row)
+                        .map_err(|_| fail(StorageFailureCode::WriteFailed))?;
                 if a.space_id() != &p.space_id {
                     return Err(fail(StorageFailureCode::WriteFailed));
                 }
@@ -730,4 +731,102 @@ fn replace_in_transaction(
             .execute(c)?;
     }
     write_epoch(c, p, &s.space_id, &s.epoch)
+}
+
+/// Ausschließlich Bestandskompatibilität für historische, nicht fachliche Cachearten.
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct LegacyProjection {
+    pub space_id: EntityId,
+    pub kind: wimm_finance_types::scalars::NonEmptyText,
+    pub key: wimm_finance_types::scalars::NonEmptyText,
+    pub payload: LegacyJson,
+}
+impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
+    pub fn apply_legacy_projection_batch(
+        &mut self,
+        batch: AtomicBatch,
+        legacy: Vec<LegacyProjection>,
+    ) -> Result<(), StorageFailure> {
+        self.write(|c, p, _| {
+            if !unique(
+                legacy
+                    .iter()
+                    .map(|a| (a.space_id.as_str(), a.kind.as_str(), a.key.as_str())),
+            ) || legacy.iter().any(|a| {
+                matches!(
+                    a.kind.as_str(),
+                    "balance" | "accountBalance" | "consumption"
+                )
+            }) {
+                return Err(fail(StorageFailureCode::WriteFailed));
+            }
+            write_batch(c, p, &batch)?;
+            for row in legacy {
+                diesel::insert_into(projections::table)
+                    .values((
+                        projections::profile_id.eq(p.as_str()),
+                        projections::space_id.eq(row.space_id.as_str()),
+                        projections::projection_kind.eq(row.kind.as_str()),
+                        projections::projection_key.eq(row.key.as_str()),
+                        projections::payload.eq(text(&row)?),
+                    ))
+                    .on_conflict((
+                        projections::profile_id,
+                        projections::space_id,
+                        projections::projection_kind,
+                        projections::projection_key,
+                    ))
+                    .do_update()
+                    .set(projections::payload.eq(text(&row)?))
+                    .execute(c)?;
+            }
+            Ok(())
+        })
+    }
+}
+impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
+    /// Explizite V1-Bestandsform mit historischen Cachearten; kein Ersatz des typisierten Snapshotports.
+    pub fn export_legacy_snapshot(&self, space: &EntityId) -> Result<LegacyJson, StorageFailure> {
+        self.store
+            .connection
+            .borrow_mut()
+            .transaction::<_, ReadError, _>(|c| {
+                let snapshot = snapshot_with_projections(c, &self.store.profile, space, Some(&[]))?;
+                let rows: Vec<(String, String, String)> = projections::table
+                    .filter(projections::profile_id.eq(self.store.profile.as_str()))
+                    .filter(projections::space_id.eq(space.as_str()))
+                    .order((projections::projection_kind, projections::projection_key))
+                    .select((
+                        projections::projection_kind,
+                        projections::projection_key,
+                        projections::payload,
+                    ))
+                    .load(c)?;
+                let mut values = Vec::new();
+                for (kind, key, payload) in rows {
+                    let value: serde_json::Value = decode(&payload)?;
+                    if matches!(kind.as_str(), "balance" | "accountBalance" | "consumption") {
+                        let known: StoredProjection = decode(&payload)?;
+                        let (actual_space, actual_kind, actual_key) = projection_key(&known);
+                        if actual_space != space || actual_kind != kind || actual_key != key {
+                            return Err(invalid().into());
+                        }
+                    } else {
+                        let unknown: LegacyProjection = decode(&payload)?;
+                        if unknown.space_id != *space
+                            || unknown.kind.as_str() != kind
+                            || unknown.key.as_str() != key
+                        {
+                            return Err(invalid().into());
+                        }
+                    }
+                    values.push(value);
+                }
+                let mut value = serde_json::to_value(snapshot).map_err(|_| invalid())?;
+                value["projections"] = serde_json::Value::Array(values);
+                Ok(LegacyJson(value))
+            })
+            .map_err(|e| e.0)
+    }
 }

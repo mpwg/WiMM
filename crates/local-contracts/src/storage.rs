@@ -286,3 +286,42 @@ macro_rules! version {
 }
 version!(SnapshotStorageVersion, [1, 2]);
 version!(SnapshotDomainVersion, [1]);
+
+/// Historische Originalentwürfe enthalten entweder Fachaggregate oder flache StoredAggregate-Records.
+/// Kein Umformen des Originals; nur typisierte Struktur-/Handleprüfung für vorhandene Daten.
+pub fn decode_draft_aggregate(value: &serde_json::Value) -> Result<Aggregate, &'static str> {
+    if value.get("handle").is_some() {
+        let stored: StoredAggregate =
+            serde_json::from_value(value.clone()).map_err(|_| "Ungültiges Originalaggregat.")?;
+        if stored.handle != *stored.aggregate.id() {
+            return Err("Widersprüchlicher Originalhandle.");
+        }
+        Ok(stored.aggregate)
+    } else {
+        serde_json::from_value(value.clone()).map_err(|_| "Ungültiges Originalaggregat.")
+    }
+}
+#[cfg(test)]
+mod draft_tests {
+    use super::*;
+    #[test]
+    fn historical_flat_original_handles_are_checked_without_rewriting() {
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../local-dal/tests/fixtures/receipt-request.json"
+        ))
+        .unwrap();
+        let stored = fixture["batch"]["aggregates"][0].clone();
+        let before = stored.clone();
+        assert_eq!(
+            decode_draft_aggregate(&stored).unwrap().id().as_str(),
+            stored["id"].as_str().unwrap()
+        );
+        assert_eq!(stored, before);
+        let mut plain = stored.clone();
+        plain.as_object_mut().unwrap().remove("handle");
+        assert!(decode_draft_aggregate(&plain).is_ok());
+        let mut wrong = stored;
+        wrong["handle"] = "50000000-0000-4000-8000-000000000099".into();
+        assert!(decode_draft_aggregate(&wrong).is_err());
+    }
+}

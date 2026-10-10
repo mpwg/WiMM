@@ -137,6 +137,14 @@ fn snapshot(
     profile: &EntityId,
     space: &EntityId,
 ) -> Result<LocalSnapshot, ReadError> {
+    snapshot_with_projections(c, profile, space, None)
+}
+fn snapshot_with_projections(
+    c: &mut SqliteConnection,
+    profile: &EntityId,
+    space: &EntityId,
+    replacement: Option<&[StoredProjection]>,
+) -> Result<LocalSnapshot, ReadError> {
     let version = supported(c)?;
     let rows: Vec<(String, String, i64, String)> = aggregates::table
         .filter(aggregates::profile_id.eq(profile.as_str()))
@@ -155,33 +163,40 @@ fn snapshot(
         .collect::<Result<Vec<_>, _>>()?;
     let confirmed = read_confirmed(c, profile, space)?;
     let pending = read_pending(c, profile, space)?;
-    let rows: Vec<(String, String, String)> = projections::table
-        .filter(projections::profile_id.eq(profile.as_str()))
-        .filter(projections::space_id.eq(space.as_str()))
-        .order((projections::projection_kind, projections::projection_key))
-        .select((
-            projections::projection_kind,
-            projections::projection_key,
-            projections::payload,
-        ))
-        .load(c)?;
-    let mut projections = Vec::new();
-    for (kind, key, payload) in rows {
-        let row: StoredProjection = decode(&payload)?;
-        let (area, actual_kind, actual_key) = match &row {
-            StoredProjection::Balance { space_id, key, .. } => (space_id, "balance", key.as_str()),
-            StoredProjection::AccountBalance { space_id, key, .. } => {
-                (space_id, "accountBalance", key.as_str())
+    let projections = if let Some(values) = replacement {
+        values.to_vec()
+    } else {
+        let rows: Vec<(String, String, String)> = projections::table
+            .filter(projections::profile_id.eq(profile.as_str()))
+            .filter(projections::space_id.eq(space.as_str()))
+            .order((projections::projection_kind, projections::projection_key))
+            .select((
+                projections::projection_kind,
+                projections::projection_key,
+                projections::payload,
+            ))
+            .load(c)?;
+        let mut projections = Vec::new();
+        for (kind, key, payload) in rows {
+            let row: StoredProjection = decode(&payload)?;
+            let (area, actual_kind, actual_key) = match &row {
+                StoredProjection::Balance { space_id, key, .. } => {
+                    (space_id, "balance", key.as_str())
+                }
+                StoredProjection::AccountBalance { space_id, key, .. } => {
+                    (space_id, "accountBalance", key.as_str())
+                }
+                StoredProjection::Consumption { space_id, key, .. } => {
+                    (space_id, "consumption", key.as_str())
+                }
+            };
+            if area != space || kind != actual_kind || key != actual_key {
+                return Err(invalid().into());
             }
-            StoredProjection::Consumption { space_id, key, .. } => {
-                (space_id, "consumption", key.as_str())
-            }
-        };
-        if area != space || kind != actual_kind || key != actual_key {
-            return Err(invalid().into());
+            projections.push(row);
         }
-        projections.push(row);
-    }
+        projections
+    };
     let state: Option<(String, String)> = sync_state::table
         .filter(sync_state::profile_id.eq(profile.as_str()))
         .filter(sync_state::space_id.eq(space.as_str()))
@@ -337,7 +352,7 @@ fn supported(c: &mut SqliteConnection) -> Result<u32, ReadError> {
 }
 
 mod writer;
-pub use writer::LegacySqliteWriter;
+pub use writer::{LegacyProjection, LegacySqliteWriter};
 
 fn read_confirmed(
     c: &mut SqliteConnection,
@@ -402,3 +417,6 @@ fn read_pending(
 }
 
 mod index_queries;
+
+#[cfg(not(target_family = "wasm"))]
+mod initial_schema;
