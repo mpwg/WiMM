@@ -57,7 +57,7 @@ impl RecoveryTicket {
     /// Original nur nach authentifizierter Entschlüsselung und vollständiger Inhaltsbindung lesen.
     pub fn open_original(
         &self,
-        protection: &impl SnapshotProtectionPort<LocalCommitRequest, Error = StorageFailure>,
+        protection: &(impl SnapshotProtectionPort<LocalCommitRequest, Error = StorageFailure> + ?Sized),
     ) -> Result<LocalCommitRequest, StorageFailure> {
         let original = protection.unseal(&self.original)?;
         if !original_matches(self, &original) {
@@ -73,7 +73,7 @@ impl RecoveryTicket {
     }
     fn new(
         prepared: &PreparedCommit,
-        protection: &impl SnapshotProtectionPort<LocalCommitRequest, Error = StorageFailure>,
+        protection: &(impl SnapshotProtectionPort<LocalCommitRequest, Error = StorageFailure> + ?Sized),
     ) -> Result<Self, StorageFailure> {
         let bytes = serde_json::to_vec(&prepared.request).map_err(|_| failure())?;
         let hash = Sha256::digest(bytes)
@@ -134,9 +134,9 @@ impl DurableCommitPipeline {
     pub fn dispatch(
         &mut self,
         prepared: PreparedCommit,
-        storage: &mut impl CancellableLocalCommitPort,
-        journal: &mut impl RecoveryJournalPort,
-        protection: &impl SnapshotProtectionPort<LocalCommitRequest, Error = StorageFailure>,
+        storage: &mut (impl CancellableLocalCommitPort + ?Sized),
+        journal: &mut (impl RecoveryJournalPort + ?Sized),
+        protection: &(impl SnapshotProtectionPort<LocalCommitRequest, Error = StorageFailure> + ?Sized),
         scope: &dyn CommitContextPort,
         cancellation: &dyn CancellationPort,
     ) -> DispatchResult {
@@ -177,9 +177,9 @@ impl DurableCommitPipeline {
     }
     pub fn resume(
         &mut self,
-        storage: &impl LocalCommitPort,
-        journal: &mut impl RecoveryJournalPort,
-        protection: &impl SnapshotProtectionPort<LocalCommitRequest, Error = StorageFailure>,
+        storage: &(impl LocalCommitPort + ?Sized),
+        journal: &mut (impl RecoveryJournalPort + ?Sized),
+        protection: &(impl SnapshotProtectionPort<LocalCommitRequest, Error = StorageFailure> + ?Sized),
         scope: &dyn CommitContextPort,
     ) -> DispatchResult {
         let ticket = match journal.load() {

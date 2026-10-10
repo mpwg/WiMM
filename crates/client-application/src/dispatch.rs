@@ -49,7 +49,7 @@ impl CommitPipeline {
     pub fn dispatch(
         &mut self,
         prepared: PreparedCommit,
-        storage: &mut impl CancellableLocalCommitPort,
+        storage: &mut (impl CancellableLocalCommitPort + ?Sized),
         scope: &dyn CommitContextPort,
         cancellation: &dyn CancellationPort,
     ) -> DispatchResult {
@@ -87,7 +87,7 @@ impl CommitPipeline {
     /// Auch nach Scopewechsel ausschließlich das ursprüngliche Receipt lesen, nie erneut schreiben.
     pub fn resolve(
         &mut self,
-        storage: &impl LocalCommitPort,
+        storage: &(impl LocalCommitPort + ?Sized),
         scope: &dyn CommitContextPort,
     ) -> DispatchResult {
         let Some(prepared) = self.unresolved.as_ref() else {
