@@ -132,10 +132,8 @@ impl Rig {
         ));
         std::fs::create_dir_all(&folder).unwrap();
         let path = folder.join("state.sqlite3");
-        // Tatsächlicher bestehender Tauri-Schemaaufbau, ausschließlich synthetischer Testbestand.
-        let legacy = rusqlite::Connection::open(&path).unwrap();
-        crate::storage::initialize_storage(&legacy).unwrap();
-        drop(legacy);
+        // Tatsächlicher ORM-Schemaaufbau, ausschließlich synthetischer Testbestand.
+        wimm_local_dal::legacy_sqlite::LegacySqliteStore::initialize_empty_file(&path).unwrap();
         assert_eq!(
             NativeRuntimeStorage::open(&path, context.profile_id.clone())
                 .err()

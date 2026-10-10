@@ -352,7 +352,7 @@ fn supported(c: &mut SqliteConnection) -> Result<u32, ReadError> {
 }
 
 mod writer;
-pub use writer::{LegacyProjection, LegacySqliteWriter};
+pub use writer::LegacySqliteWriter;
 
 fn read_confirmed(
     c: &mut SqliteConnection,

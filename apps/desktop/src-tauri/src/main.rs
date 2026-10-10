@@ -3,16 +3,13 @@
 use std::fs;
 use std::sync::Mutex;
 
-use rusqlite::Connection;
 mod backups;
 #[cfg(test)]
 mod core_contract;
 mod migration;
 pub mod orm_storage;
 pub mod runtime_storage;
-mod storage;
 mod storage_failure;
-use storage::StorageState;
 use tauri::{Emitter, Manager};
 mod platform;
 use platform::*;
@@ -164,9 +161,6 @@ fn main() {
             }
             .map_err(std::io::Error::other)?;
             app.manage(orm);
-            // Ausschließlich früherer Schema-/Indexprüfpfad bis dessen ORM-Ablösung, keine Finanzcommands.
-            let connection = Connection::open(&storage_path)?;
-            app.manage(StorageState(Mutex::new(connection)));
             let backup_path = directory.join("wimm-backups.sqlite3");
             let backup_connection = if backup_path.exists() {
                 wimm_local_dal::sqlite_backup::SqliteBackupStore::open_existing(&backup_path)

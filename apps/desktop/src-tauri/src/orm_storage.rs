@@ -33,7 +33,7 @@ impl OrmStorageState {
         LegacySqliteStore::initialize_empty_file(path)?;
         Self::open_existing(path)
     }
-    fn with_profile<T>(
+    pub(crate) fn with_profile<T>(
         &self,
         profile: &str,
         run: impl FnOnce(&mut LegacySqliteWriter<CoreSnapshotValidator>) -> Result<T, StorageFailure>,
@@ -71,13 +71,7 @@ pub struct StorageBatch {
     expected_revisions: Vec<RevisionExpectation>,
     aggregates: Vec<StoredAggregate>,
     outbox: Vec<PendingOperation>,
-    projections: Vec<ProjectionInput>,
-}
-#[derive(serde::Deserialize)]
-#[serde(untagged)]
-pub enum ProjectionInput {
-    Known(StoredProjection),
-    Legacy(wimm_local_dal::legacy_sqlite::LegacyProjection),
+    projections: Vec<StoredProjection>,
 }
 #[tauri::command(rename = "storage_apply_batch")]
 pub fn orm_storage_apply_batch(
@@ -85,23 +79,12 @@ pub fn orm_storage_apply_batch(
     batch: StorageBatch,
 ) -> Result<(), StorageFailure> {
     state.with_profile(batch.profile_id.as_str(), |p| {
-        let mut projections = Vec::new();
-        let mut legacy = Vec::new();
-        for value in batch.projections {
-            match value {
-                ProjectionInput::Known(v) => projections.push(v),
-                ProjectionInput::Legacy(v) => legacy.push(v),
-            }
-        }
-        p.apply_legacy_projection_batch(
-            AtomicBatch {
-                expected_revisions: batch.expected_revisions,
-                aggregates: batch.aggregates,
-                outbox: batch.outbox,
-                projections,
-            },
-            legacy,
-        )
+        p.apply_atomic_batch(AtomicBatch {
+            expected_revisions: batch.expected_revisions,
+            aggregates: batch.aggregates,
+            outbox: batch.outbox,
+            projections: batch.projections,
+        })
     })
 }
 #[tauri::command(rename = "storage_initialize_area")]
@@ -168,8 +151,8 @@ pub fn orm_storage_export_snapshot(
     state: tauri::State<'_, OrmStorageState>,
     profile_id: String,
     space_id: EntityId,
-) -> Result<serde_json::Value, StorageFailure> {
-    state.with_profile(&profile_id, |p| Ok(p.export_legacy_snapshot(&space_id)?.0))
+) -> Result<LocalSnapshot, StorageFailure> {
+    state.with_profile(&profile_id, |p| p.export_snapshot(&space_id))
 }
 #[tauri::command(rename = "storage_replace_snapshot")]
 pub fn orm_storage_replace_snapshot(

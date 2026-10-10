@@ -5107,6 +5107,7 @@ dependencies = [
 name = "wimm-local-dal"
 version = "0.0.0"
 dependencies = [
+ "base64 0.23.1",
  "diesel",
  "libsqlite3-sys",
  "sea-query",

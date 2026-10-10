@@ -78,7 +78,8 @@ export async function runIndexMaintenanceCase(fixture:MigrationFixture):Promise<
   await fixture.storage.applyAtomicBatch({expectedRevisions:[{handle:original.handle,expectedRevision:2}],aggregates:[{...changed,revision:3,deletedAt:'2026-10-09T10:00:00Z'}],outbox:[],projections:[]});
   for(const kind of ['account','category','import'] as const){check((await fixture.indices.queryIndexedTransactions({spaceId:snapshot.spaceId,kind,reference:kind==='account'?id(10):kind==='category'?id(13):'geänderte-Quellreferenz',limit:100})).length===0,'Tombstone bleibt als aktive Sekundärreferenz erhalten');}
   check((await fixture.indices.queryImportedTransactions({spaceId:snapshot.spaceId,accountId:id(10),parserSource:'csv',externalId:'synthetische-externe-id',limit:100})).length===0,'Importquelle liefert gelöschte Buchung');
-  await fixture.storage.replaceSnapshot(snapshot);
+  const currentVersion=(await fixture.storage.exportSnapshot(snapshot.spaceId)).storageSchemaVersion;
+  await fixture.storage.replaceSnapshot({...snapshot,storageSchemaVersion:currentVersion});
   check(equal((await fixture.indices.queryIndexedTransactions({spaceId:snapshot.spaceId,kind:'category',reference:id(13),limit:100})).map(row=>row.id),[id(17)]),'Snapshotersatz baut Referenzen nicht atomar auf');
   const outbox=snapshot.pending[0]!;
   await fixture.storage.applyAtomicBatch({expectedRevisions:[],aggregates:[],projections:[],outbox:[{...outbox,operationId:id(100),state:'queued',createdAt:'2026-10-09T12:00:00Z'},{...outbox,operationId:id(99),state:'queued',createdAt:'2026-10-09T11:00:00Z'},{...outbox,operationId:id(101),state:'sending',createdAt:'2026-10-09T10:00:00Z'}]});

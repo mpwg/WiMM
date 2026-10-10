@@ -60,3 +60,9 @@ Die elf bisherigen Tauri-Finanzspeichercommands verwenden den gemeinsamen ORM-DA
 ## DAL03 — Privater ORM-Chiffratstore
 
 `sqlite_backup::SqliteBackupStore` übernimmt vorhandene native verschlüsselte Backupbestände mit Diesel, expliziter leerer SeaQuery-Erzeugung und unverändertem Receipt-/Schemaformat. FULL-Durabilität wird tatsächlich abgefragt, IDs werden nicht überschrieben und erfolgreicher Commit benötigt bytegleiches Rücklesen. Native Assertions prüfen tatsächliche Fehler/Neustarts; [Matrix](../../docs/dal03-native.md#produktiver-orm-chiffratspeicher-und-indexcommands). Keine eigene Kryptografie, Finanzklartexte, UI-Dateipfade oder Öffnungs-Upgrades.
+
+## Bereinigung gemäß Nutzerentscheidung vom 10. Oktober 2026
+
+Alte native rusqlite-Finanz-, Backup-, Migrations- und Indexabfrageimplementierungen samt separatem Testtreiber sind entfernt. Der gemeinsame native Konformitätskatalog verwendet ausschließlich den produktiven ORM-DAL; doppelte Testausführung entfällt. Tauri verwendet die gemeinsamen typisierten Backupbelege, Migrationspläne, Snapshots und Projektionen. Unbekannte alte Projektionsformen werden vor dem Write abgewiesen; kein opaker Kompatibilitätsexport mehr.
+
+Die aktuelle vollständige Legacybereinigung bleibt in [#146](https://github.com/mpwg/WiMM/issues/146) offen: historische SQLite-Schema-/Upgradepfade, alte Binding-/Vertragsformen und nachfolgend ersetzte Browser-/Anwendungs-/Serverkomponenten sind noch zu entfernen. Dieser Abschnitt ist keine DAL03-/Gesamtarchitekturabnahme. Historische Bestands-/Upgradebelege oben sind keine aktuellen Kompatibilitätsanforderungen.

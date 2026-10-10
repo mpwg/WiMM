@@ -314,3 +314,125 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
         })
     }
 }
+impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
+    /// Erhält den bestehenden V1-Clientvertrag: Krypto/Rückleseprüfung liegt im Client,
+    /// hier werden tatsächlicher Cipherbeleg, Originalbytes/Hash und Datenbank-CAS geprüft.
+    /// Keine behauptete native Entschlüsselung ohne entsperrten Client-Keyport.
+    pub fn migrate_legacy_indexes(
+        &mut self,
+        request: wimm_local_contracts::ports::LocalMigrationRequest,
+        original_bytes: &[u8],
+        read_backup: &dyn Fn(&EncryptedBackupReceipt) -> Result<Vec<u8>, StorageFailure>,
+        cancel: &dyn CancellationPort,
+    ) -> Result<(), StorageFailure> {
+        use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
+        let invalid_input = || StorageFailure::not_committed(StorageFailureCode::WriteFailed);
+        request.plan.validate().map_err(|_| invalid_input())?;
+        let plan = &request.plan;
+        let proof = request.backup.as_ref().ok_or_else(invalid_input)?;
+        if plan.expected_migration_number.value() != 0
+            || plan.from.storage_schema_version.value() != 1
+            || plan.from.domain_schema_version.value() != 1
+            || plan.steps.len() != 1
+        {
+            return Err(invalid_input());
+        }
+        let step = &plan.steps[0];
+        if step.number.value() != 1
+            || step.to.storage_schema_version.value() != 2
+            || step.to.domain_schema_version.value() != 1
+            || step.destructive
+        {
+            return Err(invalid_input());
+        }
+        if cancel.is_cancelled() {
+            return Err(StorageFailure::not_committed(StorageFailureCode::Cancelled));
+        }
+        let original = &request.expected_snapshot;
+        self.validator.validate(original)?;
+        let encoded: serde_json::Value =
+            serde_json::from_slice(original_bytes).map_err(|_| invalid_input())?;
+        if serde_json::to_value(original).map_err(|_| invalid_input())? != encoded
+            || proof.profile_id.as_str() != original.profile_id.as_str()
+            || proof.space_id.as_str() != original.space_id.as_str()
+            || proof.epoch.as_str() != original.epoch.as_str()
+            || proof.snapshot_hash.as_str()
+                != URL_SAFE_NO_PAD.encode(Sha256::digest(original_bytes))
+        {
+            return Err(invalid_input());
+        }
+        if read_backup(proof)?.is_empty() {
+            return Err(invalid_input());
+        }
+        self.write(|c, p, _| {
+            let physical: String = storage_meta::table
+                .find("storageSchemaVersion")
+                .select(storage_meta::value)
+                .first(c)?;
+            if physical != "1" || original.profile_id != *p || supported(c)? != 1 {
+                return Err(fail(StorageFailureCode::RevisionConflict));
+            }
+            let existing: i64 = sqlite_master::table
+                .filter(sqlite_master::name.eq_any([
+                    "transaction_categories",
+                    "storage_migrations",
+                    "transactions_by_account_date",
+                    "transactions_by_category_date",
+                    "transactions_by_import_reference",
+                    "outbox_by_state_created",
+                    "rules_by_order",
+                    "occurrences_by_schedule_date",
+                    "import_sources_by_external",
+                ]))
+                .count()
+                .get_result(c)?;
+            if existing != 0 {
+                return Err(fail(StorageFailureCode::RevisionConflict));
+            }
+            let actual = snapshot(c, p, &original.space_id)?;
+            if text(&actual)? != text(original)? {
+                return Err(fail(StorageFailureCode::RevisionConflict));
+            }
+            if cancel.is_cancelled() {
+                return Err(fail(StorageFailureCode::Cancelled));
+            }
+            ddl(c, cancel)?;
+            diesel::insert_into(index_journal::table)
+                .values((
+                    index_journal::number.eq(1),
+                    index_journal::from_storage.eq(1),
+                    index_journal::to_storage.eq(2),
+                    index_journal::domain_version.eq(1),
+                    index_journal::backup_id.eq(proof.backup_id.as_str()),
+                    index_journal::snapshot_hash.eq(proof.snapshot_hash.as_str()),
+                    index_journal::profile_id.eq(proof.profile_id.as_str()),
+                    index_journal::space_id.eq(proof.space_id.as_str()),
+                    index_journal::epoch.eq(proof.epoch.as_str()),
+                ))
+                .execute(c)?;
+            diesel::insert_into(storage_meta::table)
+                .values((
+                    storage_meta::key.eq("domainSchemaVersion"),
+                    storage_meta::value.eq("1"),
+                ))
+                .on_conflict(storage_meta::key)
+                .do_update()
+                .set(storage_meta::value.eq("1"))
+                .execute(c)?;
+            diesel::update(storage_meta::table.find("storageSchemaVersion"))
+                .set(storage_meta::value.eq("2"))
+                .execute(c)?;
+            let actual = snapshot(c, p, &original.space_id)?;
+            let mut expected = original.clone();
+            expected.storage_schema_version =
+                SnapshotStorageVersion::new(2).map_err(|_| invalid())?;
+            if text(&actual)? != text(&expected)? {
+                return Err(fail(StorageFailureCode::InvalidResponse));
+            }
+            if cancel.is_cancelled() {
+                return Err(fail(StorageFailureCode::Cancelled));
+            }
+            Ok(())
+        })
+    }
+}

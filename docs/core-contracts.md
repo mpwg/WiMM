@@ -1,5 +1,7 @@
 # Gemeinsame Fach- und Anwendungsverträge
 
+Nutzerentscheidung vom 10. Oktober 2026: WiMM ist unveröffentlicht und benötigt keine Legacy-Kompatibilität oder Altdatenübernahme. [ADR-060](decisions.md#adr-060--zielimplementierung-ohne-legacy-komponenten) ersetzt frühere Übergangsanforderungen; [#146](https://github.com/mpwg/WiMM/issues/146) verfolgt die vollständige Entfernung. Aktuelle Finanz-, E2EE-, CAS-, Restore-, Versions- und Plattformprüfungen bleiben verbindlich.
+
 Stand: 9. Oktober 2026. Der bestehende K01-Vertrag ist die kompatible Ausgangsbasis, historisch in [#92](https://github.com/mpwg/WiMM/issues/92) abgenommen. Das bestätigte [Rust-Ziel](architecture.md) erweitert ihn durch typisierte gemeinsame Fach-/Anwendungsports, lokale Commitreceipts und begrenzte Ansichten. [Gesamtübersicht #114](https://github.com/mpwg/WiMM/issues/114), [Freigaben](tasks.md). Die derzeitigen TS-Formschemas und Stringbindings bleiben bis geprüfter Umstellung Bestand; neue Schnittstellen hier sind Zielverträge, noch kein implementierter APIumfang.
 
 ## Versionen und Darstellung
@@ -83,7 +85,7 @@ K06 konkretisiert diese Portgrundlage für die vollständige öffentliche Verwal
 
 ## Gemeinsame Vertragsquelle und Zustandsports
 
-Typisierte Rust-Newtypes/tagged unions sind Quelle für Fach-, Anwendungs- und generierte Sprachtypen/Formschemas. Private Fachverträge, öffentliche Serverhüllen und ORMmodels bleiben getrennt. Die etablierte Generierung muss safe nutzbar, reproduzierbar und auf Drift prüfbar sein. Unbekannte Version/Format scheitert vor Mutation; der vorhandene V1-Vertrag wird nicht still erweitert.
+Typisierte Rust-Newtypes/tagged unions sind Quelle für Fach-, Anwendungs- und generierte Sprachtypen/Formschemas. Private Fachverträge, öffentliche Serverhüllen und ORMmodels bleiben getrennt. Die etablierte Generierung muss safe nutzbar, reproduzierbar und auf Drift prüfbar sein. Unbekannte Version/Format scheitert vor Mutation; historische V1-Bindingverträge werden gemäß ADR-060 entfernt.
 
 Die vollständige bestehende private Rust-Formquelle liegt in `wimm-finance-types`, unabhängig von Fachhandlern und Plattformadaptern. Der Kern reexportiert die bisherigen Modulpfade. Geschützte Werte und Serde-/Schemaformen bleiben unverändert; fachliche CAS-/Referenz-/Projektions-/Befehlsregeln verbleiben im Kern. Öffentliche Server- und lokale Speicherquellen bleiben getrennt von diesen privaten Finanzformen.
 
@@ -97,7 +99,7 @@ Der neue lokale Commitvertrag bindet Profil, Bereich, Epoche, Operations-ID und 
 
 ## Kryptografie-, Laufzeit- und Backendgrenzen
 
-Clientcryptoports kapseln etablierte libsodium-Primitive nativ/WASM und bewahren Suite/KDF/AAD/Domain-Separatoren/Legacy/Recovery/Export. Private Schlüssel bleiben clientseitig; öffentliche Server-Signaturprüfung unabhängig. Kein eigener unsafe-FFI-Wrapper. ORM-/VFS-/DSL-/Bindingeignung muss praktisch nachgewiesen sein; bei fehlendem Nachweis Rückfrage vor Ersatzwahl.
+Clientcryptoports kapseln etablierte libsodium-Primitive nativ/WASM und bewahren aktuelle Suite/KDF/AAD/Domain-Separatoren/Recovery/Export. Private Schlüssel bleiben clientseitig; öffentliche Server-Signaturprüfung unabhängig. Kein eigener unsafe-FFI-Wrapper. ORM-/VFS-/DSL-/Bindingeignung muss praktisch nachgewiesen sein; bei fehlendem Nachweis Rückfrage vor Ersatzwahl.
 
 Lokale und öffentliche Servermigrationen verwenden getrennte Modelle/Journale auf gemeinsamem technischem Unterbau. API und Serverports sind unabhängig von Axum/SQL. Blockierende ORM-Arbeit wird begrenzt ausgeführt; Worker-/Tab-/HTTP-Abbruch darf kein tatsächliches Commitresultat erfinden. Build-/Binding-/Fach-/Storage-/Crypto-/Protokollkompatibilität wird vor Assetupdates/Migration geprüft, Epoche bleibt separate Dimension.
 
@@ -115,7 +117,7 @@ Lokale und öffentliche Servermigrationen verwenden getrennte Modelle/Journale a
 
 ## AR05 — Verbindliche produktive Umschaltung
 
-ADR-056 übernimmt die ausdrückliche Nutzerwahl: #119 muss bereits produktiv alle bestehenden mutierenden Anwendungswege durch denselben Rust-Commitdienst führen. #139 liefert frühe gemeinsame typisierte Commit-/Laufzeitports, #108/#109 den geprüften vollständigen DAL und die Aktivierungspakete die sichere Bestandsübernahme. Bibliotheks-/Memoryprüfungen schließen #119 nicht ab. Die weitergehenden Profil-/Key-/Anwendungsabläufe in #120 verwenden diese geprüften Schreibpfade, statt eine zweite Orchestrierung zu bauen. Alte V1/V2-/Finanz-/E2EE-/Speicherverträge sowie Update-/CAS-/Receipt-/Backup-/Leistungsgrenzen bleiben verbindlich; kein neues Legacy-Receipt-Zwischenbackend.
+ADR-056 übernimmt die ausdrückliche Nutzerwahl: #119 muss bereits produktiv alle bestehenden mutierenden Anwendungswege durch denselben Rust-Commitdienst führen. #139 liefert frühe gemeinsame typisierte Commit-/Laufzeitports, #108/#109 den geprüften vollständigen DAL und die Aktivierungspakete die sichere Zielinitialisierung und Updates. Bibliotheks-/Memoryprüfungen schließen #119 nicht ab. Die weitergehenden Profil-/Key-/Anwendungsabläufe in #120 verwenden diese geprüften Schreibpfade, statt eine zweite Orchestrierung zu bauen. Die aktuellen typisierten Finanz-/E2EE-/Speicherverträge sowie Update-/CAS-/Receipt-/Backup-/Leistungsgrenzen bleiben verbindlich; alte Binding-/Schemaadapter werden gemäß ADR-060 vollständig entfernt.
 
 ## AR05 — Private Anwendungswiederanlaufreferenz
 

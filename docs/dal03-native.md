@@ -94,19 +94,21 @@ Vier native Rustfälle plus tatsächlich zweimal aufgerufener Child-Probe prüfe
 
 Auch die drei produktiven Indexcommands delegieren nun an `LocalIndexQueryPort`; frühere rusqlite-Querywrapper sind entfernt und ihre historischen Queryreferenzen ausschließlich `cfg(test)`. Das frühere Schema-Migrationscommand verwendet vorläufig denselben neuen Chiffratleseport, besitzt jedoch noch seinen bisherigen Schema-/Journalwriter. Dieser letzte Produktionspfad muss vor #108-Abschluss durch den vollständigen ORM-/DSL-Migrationsadapter ersetzt und mit den unveränderten gemeinsamen Migrations-/Indexfällen geprüft werden. Keine Gesamt-/GUI-/Releaseabnahme aus dem Backupabschnitt.
 
-## Kriterienmatrix
+## Kriterienmatrix nach ADR-060
 
 | #108-Kriterium | Aktueller Nachweis |
 | --- | --- |
-| Vorhandene SQLite-Bestände ohne Format-/Schemaumbau öffnen | Native synthetische Dateien im unveränderten Tauri-Schema eins und zwei; Bytevergleich vor/nach Lesen und Neuöffnen. Vollständige produktive Bestandsabnahme folgt mit Integration. |
-| Alle lokalen Ports und konsistente Snapshots | Alle elf `LocalStoragePort`-Methoden implementiert und nativ gegen echte SQLite geprüft. Konsistente Lesetransaktion und gemeinsame atomare Syncdaten; vollständige gemeinsame Tauri-Konformität noch offen. |
-| Atomare Batches/CAS/Snapshot-/Projektionsersatz | Tatsächliche ORM-Transaktionen prüfen Batch-/Sync-/Snapshotrollback nach begonnenen Writes, konkurrierende CAS-Verbindungen, Finanzrevisionsanker und vollständigen Ausgangsvergleich beim Cacheersatz. Integrierte Original-/Receipts und private Recoverybytes ebenfalls geprüft; konkrete native Runtimeports geprüft; vollständige Tauri-/Konformitätsintegration noch offen. |
-| Gesicherte versionierte Migration | Registrierte SeaQuery-Erweiterung mit tatsächlich verschlüsselten/rückgelesenen Originalen, Vergleich aller Bereiche, Sicherungsjournal und DDL-/Abbruchrollback geprüft. Vollständiger V2-Checkpoint-/Restorepfad und gesicherter Drei-nach-vier-Schritt umgesetzt; Runtime-/Tauri-/Aktivierungsabnahme noch offen. |
-| Reguläre ORM-Abfragen, Rust-DSL-Migrationen | Leseabfragen durch Diesel umgesetzt. Registrierte DSL-Erweiterung vorhanden; reguläre Writes ebenfalls durch ORM. Verbindungs-PRAGMAs und registrierte DDL bleiben gekapselte technische Ausnahmen. |
-| Native Assertions, Neustart, Fehler, Leistung | 44 native Testfälle plus zwei tatsächlich separat gestartete Child-Probes; Receipt und verschlüsselter Originalauftrag überleben Prozessneustart. Zusätzliche DAO-Abfrageprobe separat belegt; keine GUI-/Scroll-/Disk-full-Abnahme. |
-| Vollständiger #77-Vertrag ohne dauerhaften rusqlite-Produktpfad | Tauri noch nicht umgeschaltet; Issue bleibt offen. |
+| Ausschließlich aktuelles vollständiges Schema direkt initialisieren | Noch offen: der bestehende ORM-DAL enthält historische Schema-/Upgradepfade. Entfernung und unmittelbare vollständige Initialisierung in #146/#108. Alte V1/V2-Öffnungsbelege sind hierfür keine Zielabnahme. |
+| Alle lokalen Ports und konsistente Snapshots | Elf `LocalStoragePort`-Methoden auf tatsächlicher SQLite; gemeinsamer nativer Konformitätskatalog ausschließlich gegen ORM. Atomare Syncseiten und konsistente Lesetransaktionen geprüft. |
+| Atomare Batches/CAS/Snapshot-/Projektionsersatz | Echte ORM-Transaktionen, konkurrierende Verbindungen, Finanzrevisionsanker, Rollbacks nach begonnenen Writes und vollständiger Ausgangsvergleich geprüft. Alte opake Cacheadapter entfernt; IPC weist unbekannte Projektionsformen ohne Teilwrite ab. Snapshotversion muss der aktuellen Dateiform entsprechen. |
+| Aktueller geschützter Checkpoint/Restore | Vollständiger Checkpoint mit Receipts/Recovery, gesichertem Originalvergleich und getrennten lokalen/Serverepochen nativ geprüft. Historische Upgradepfade werden entfernt; keine neue Altdatenübernahmeabnahme. |
+| Reguläre ORM-Abfragen und Rust-DSL | Alle produktiven nativen Finanz-/Backup-/Indexkommandos auf gemeinsamem ORM-DAL. Verbindungs-PRAGMAs und begründete feste DDL-/Indexausnahmen gekapselt. |
+| Native Assertions, Neustart, Fehler und Leistung | Native Adapter-/Backup-/Runtimeassertions und tatsächliche SQLite-/Prozessneustarts; aktuelle gemeinsame 50.000-Buchungen-Indexprobe. Kein neuer Geräte-/GUI-/Scroll-/Disk-full-Nachweis. |
+| Kein dauerhafter zweiter rusqlite-Speicher | Alter produktiver und test-only Finanz-/Backup-/Migrations-/Indexspeicher entfernt. rusqlite ausschließlich als Testwerkzeug für gezielte SQLite-Fehlerinjektion; kein alternatives Backend und keine Treiberauswahl. |
 
-## Ausgeführte Prüfungen
+#108 bleibt offen: vollständige Entfernung historischer nativer Schema-/Upgradepfade und neue Zielinitialisierung noch erforderlich. Übergreifende Legacyentfernung, Browser- und Produktumschaltung bleiben #146/#109/#119.
+
+## Historische Prüfungen vor ADR-060
 
 Aktive Arbeitskopie: Linux 7.2.9-1-cachyos, x86_64, Rust 1.99.0. Gesperrte Bibliotheken: Diesel 2.3.13 und libsqlite3-sys 0.38.2 mit tatsächlich abgefragter gebündelter SQLite 3.53.2. Keine neue Abhängigkeit oder Lockfileänderung. Ausschließlich synthetische Finanzdaten.
 
@@ -121,3 +123,13 @@ cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml sqlite_unb
 Native Suite: 46 Bestands-Testeinträge einschließlich der beiden Child-Probe-Einstiege, elf Memoryreferenztests und zehn bestehende tatsächliche AR04-SQLitetests bestanden. Die Elternprozesse starten und überprüfen beide Child-Probes tatsächlich. Der aktuelle Tauri-Rustguard weist zusätzlich physische Stände drei und vier ohne Initialisierungs-/Datenänderung ab. Schemafixture wird gegen die aktuelle Initialschemaquelle geprüft; die V2-Datei verwendet die bestehende registrierte Index-DDL direkt aus der Tauri-Quelle. Fixtureerzeugung ist Testaufbau; der neue registrierte Erweiterungsschritt besitzt separat tatsächliche Sicherungs-/Original-/Abbruchbelege. WASM-Check prüft Kompatibilität der Crate, keine neue Browserpersistenz.
 
 Aktuelles Tracking einschließlich nächster Implementierung und Prüfbelege ausschließlich in [#108](https://github.com/mpwg/WiMM/issues/108); Abhängigkeitsfolge in [#114](https://github.com/mpwg/WiMM/issues/114).
+
+## Bereinigung gemäß Nutzerentscheidung vom 10. Oktober 2026
+
+Alte native rusqlite-Finanz-, Backup-, Migrations- und Indexabfrageimplementierungen samt separatem Testtreiber sind entfernt. Der gemeinsame native Konformitätskatalog verwendet ausschließlich den produktiven ORM-DAL; doppelte Testausführung entfällt. Tauri verwendet die gemeinsamen typisierten Backupbelege, Migrationspläne, Snapshots und Projektionen. Unbekannte alte Projektionsformen werden vor dem Write abgewiesen; kein opaker Kompatibilitätsexport mehr.
+
+Die aktuelle vollständige Legacybereinigung bleibt in [#146](https://github.com/mpwg/WiMM/issues/146) offen: historische SQLite-Schema-/Upgradepfade, alte Binding-/Vertragsformen und nachfolgend ersetzte Browser-/Anwendungs-/Serverkomponenten sind noch zu entfernen. Dieser Abschnitt ist keine DAL03-/Gesamtarchitekturabnahme. Historische Bestands-/Upgradebelege oben sind keine aktuellen Kompatibilitätsanforderungen.
+
+Aktuelle Prüfung dieses Abschnitts in der aktiven Linux-x86_64-Arbeitskopie (Linux 7.2.9-1-cachyos, Rust 1.99.0, gesperrte Bibliotheken): `cargo test --locked -p wimm-local-dal --all-features` erfolgreich mit 44 Adapter-Testeinträgen, fünf ORM-Backup-, elf Memory- und zehn bestehenden Receipt-/Checkpoint-Testeinträgen. Elternprüfungen starten zusätzliche tatsächliche Rust-Childprozesse. `cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml`: 15 bestanden, ein ausdrücklich ignorierter Prozess-Konformitätstreiber. `pnpm test:storage:native`: alle 30 gemeinsamen Fälle ausschließlich auf dem ORM-DAL bestanden, einschließlich echter verschlüsselter Sicherung, Prozessneustart, Profiltrennung, CAS, Cache-/Indexrollback und vollständiger 50.000-Buchungen-Probe. Tauri-IPC-Negativprüfung nutzt echte Command-/Argument-/Capability-Verarbeitung mit MockRuntime, keinen GUI-Nachweis. Die obsolete Cacheform wird vor einem Write abgewiesen; aktuelle bekannte Cachewerte werden weiterhin vollständig neu aufgebaut.
+
+Clippy für DAL und Tauri mit unverändertem `-D warnings`, SQLite-WASM-Compilecheck, Zielarchitektur-, Dokumentations- und Contract-Typecheck sowie Whitespaceprüfung bestanden. Die gemeinsame native Indexprobe maß eine erste DAO-Seite von 21,75 ms sowie Konto-/Kategorie-/Import-p95 von 7,98/8,45/7,96 ms bei 50.000 Buchungen. Das ist ein Index-/DAO-Beleg, keine native GUI-Kaltöffnung oder gesamte P4-Abnahme. Bestehende Snapshotversionsprüfung bleibt strikt; die Testquelle für einen Snapshotersatz benutzt den aktuellen Versionsstand statt Legacykompatibilität zu verlangen.

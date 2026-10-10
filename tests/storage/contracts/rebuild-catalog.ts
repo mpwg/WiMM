@@ -45,9 +45,9 @@ export async function runRebuildCase(scenario: RebuildCase, fixture: RebuildFixt
       const otherSpace = id(98);
       await storage.initializeArea(otherSpace, epoch);
       const other = await storage.exportSnapshot(otherSpace);
-      await storage.applyAtomicBatch({ expectedRevisions: [], aggregates: [], outbox: [], projections: [{ spaceId, kind: 'balance', key: id(10), payload: 999 }, { spaceId, kind: 'obsolete-cache', key: 'alt', payload: 123 }] });
+      await storage.applyAtomicBatch({ expectedRevisions: [], aggregates: [], outbox: [], projections: [{ spaceId, kind: 'balance', key: id(10), payload: 999 }] });
       await storage.rebuildProjections(spaceId);
-      check(equal(projectionValues((await storage.exportSnapshot(spaceId)).projections), projectionValues(original.projections)), 'F01/Transfer/Erstattung/Tombstone/Legacy/Monatscache muss dem vollständigen inkrementellen Ergebnis entsprechen.');
+      check(equal(projectionValues((await storage.exportSnapshot(spaceId)).projections), projectionValues(original.projections)), 'F01/Transfer/Erstattung/Tombstone/Monatscache muss dem vollständigen inkrementellen Ergebnis entsprechen.');
       check(equal(foreignBefore, normalized(await foreign.exportSnapshot(spaceId))), 'Neuaufbau verändert anderes Profil.');
       check(equal(other, await storage.exportSnapshot(otherSpace)), 'Neuaufbau verändert anderen Bereich.');
       const before = normalized(await storage.exportSnapshot(spaceId));

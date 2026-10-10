@@ -205,52 +205,6 @@ fn real_concurrent_writer_preserves_separate_confirmed_local_pending_and_cursor_
 }
 
 #[test]
-fn existing_v2_registered_indexes_and_journal_open_without_changes() {
-    let file = path("legacy-v2-ä-?#");
-    let mut db = fixture(&file);
-    let migration_source = include_str!("../../../apps/desktop/src-tauri/src/migration.rs");
-    let sql = migration_source
-        .split("CREATE INDEX transactions_by_account_date")
-        .nth(1)
-        .unwrap()
-        .split("\";")
-        .next()
-        .unwrap();
-    db.batch_execute(&format!("CREATE INDEX transactions_by_account_date{sql}"))
-        .unwrap();
-    db.batch_execute("INSERT INTO storage_migrations VALUES(1,1,2,1,'synthetic-backup','synthetic-hash','synthetic-profile','synthetic-space','synthetic-epoch'); UPDATE storage_meta SET value='2' WHERE key='storageSchemaVersion'; INSERT INTO storage_meta VALUES('domainSchemaVersion','1');").unwrap();
-    drop(db);
-    let original = std::fs::read(&file).unwrap();
-    let reader = LegacySqliteStore::open(&file, id(1)).unwrap();
-    assert_eq!(
-        reader
-            .export_snapshot(&id(2))
-            .unwrap()
-            .storage_schema_version
-            .value(),
-        2
-    );
-    drop(reader);
-    assert_eq!(std::fs::read(&file).unwrap(), original);
-}
-#[test]
-fn fixture_schema_matches_the_current_tauri_initial_schema() {
-    let source = include_str!("../../../apps/desktop/src-tauri/src/storage.rs");
-    let sql = source
-        .split("\"CREATE TABLE IF NOT EXISTS storage_meta")
-        .nth(1)
-        .unwrap()
-        .split("\",\n    )?;")
-        .next()
-        .unwrap();
-    let fixture = include_str!("fixtures/legacy-schema.sql")
-        .split("CREATE TABLE IF NOT EXISTS storage_meta")
-        .nth(1)
-        .unwrap();
-    assert_eq!(fixture.trim(), sql.trim());
-}
-
-#[test]
 fn child_process_reads_original_native_snapshot() {
     let Some(file) = std::env::var_os("WIMM_DAL03_READ_FILE") else {
         return;
@@ -1666,19 +1620,26 @@ fn full_restore_missing_backup_wrong_key_bad_scope_hash_and_version_preserve_ori
 use wimm_finance_types::scalars::{FinanceDate, UtcTimestamp};
 use wimm_local_contracts::index_ports::*;
 fn indexed_fixture(file: &std::path::Path) -> SqliteConnection {
-    let mut raw = fixture(file);
-    let source = include_str!("../../../apps/desktop/src-tauri/src/migration.rs");
-    let sql = source
-        .split("CREATE INDEX transactions_by_account_date")
-        .nth(1)
-        .unwrap()
-        .split("\";")
-        .next()
+    drop(fixture(file));
+    let mut db = LegacySqliteWriter::open(file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    let before = db.checkpoint_v2(&id(2)).unwrap();
+    let protection =
+        NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let backups = NativeBackup::new();
+    let receipt = db
+        .backup_checkpoint_v2(&id(2), &protection, &backups)
         .unwrap();
-    raw.batch_execute(&format!("CREATE INDEX transactions_by_account_date{sql}"))
-        .unwrap();
-    raw.batch_execute("INSERT INTO storage_migrations VALUES(1,1,2,1,'synthetic-backup','synthetic-hash','synthetic-profile','synthetic-space','synthetic-epoch'); UPDATE storage_meta SET value='2' WHERE key='storageSchemaVersion'; INSERT INTO storage_meta VALUES('domainSchemaVersion','1');").unwrap();
-    raw
+    db.migrate_indexes(
+        vec![before],
+        &[receipt],
+        &protection,
+        &backups,
+        &NeverCancel,
+    )
+    .unwrap();
+    drop(db);
+    SqliteConnection::establish(file.to_str().unwrap()).unwrap()
 }
 fn indexed_transaction(n: u32, date: &str, deleted: bool) -> StoredAggregate {
     let mut value = serde_json::json!({"id":id(n),"handle":id(n),"spaceId":id(2),"revision":1,"aggregateType":"transaction","createdAt":"2026-10-10T00:00:00Z","updatedAt":"2026-10-10T00:00:00Z","date":date,"accountId":id(4),"amount":-1001,"kind":"normal","clearance":"uncleared","splits":[{"id":id(n+1000),"categoryId":id(17),"amount":-1001}],"importReference":"Quelle β"});
@@ -1700,7 +1661,6 @@ fn orm_index_queries_use_real_account_category_import_indexes_and_cursor_boundar
     let file = path("native-orm-index");
     drop(indexed_fixture(&file));
     let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
     db.apply_atomic_batch(index_batch(vec![
         indexed_transaction(11, "2026-10-10", false),
         indexed_transaction(12, "2026-10-11", false),
@@ -1780,7 +1740,6 @@ fn orm_pending_and_import_source_queries_preserve_scope_order_limits_and_tombsto
     let file = path("native-orm-secondary");
     drop(indexed_fixture(&file));
     let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    migrate_commit(&mut db);
     let mut first = request(31, 1).batch.outbox.remove(0);
     first.created_at = Some(UtcTimestamp::new("2026-10-11T00:00:00Z".into()).unwrap());
     let mut second = request(32, 1).batch.outbox.remove(0);
@@ -2058,33 +2017,16 @@ fn explicit_initial_dsl_schema_matches_legacy_format_and_never_reinitializes_dat
     );
 }
 #[test]
-fn legacy_cache_compatibility_preserves_typed_snapshot_guards_and_rebuild_original_cas() {
-    let file = path("native-legacy-cache");
+fn unknown_projection_form_is_rejected_without_changing_actual_sqlite_snapshot() {
+    let file = path("native-unknown-cache");
     drop(fixture(&file));
-    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
-    let source = db.export_snapshot(&id(2)).unwrap();
-    use wimm_local_dal::legacy_sqlite::LegacyProjection;
-    let cache = LegacyProjection {
-        space_id: id(2),
-        kind: wimm_finance_types::scalars::NonEmptyText::new("obsolete-cache".into()).unwrap(),
-        key: wimm_finance_types::scalars::NonEmptyText::new("old".into()).unwrap(),
-        payload: LegacyJson(serde_json::json!({"preserve":123})),
-    };
-    db.apply_legacy_projection_batch(index_batch(vec![]), vec![cache])
-        .unwrap();
-    assert!(db.export_snapshot(&id(2)).is_err());
-    assert!(
-        db.export_legacy_snapshot(&id(2)).unwrap().0["projections"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|p| p["kind"] == "obsolete-cache")
+    let db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    let before = serde_json::to_value(db.export_snapshot(&id(2)).unwrap()).unwrap();
+    let invalid =
+        serde_json::json!({"spaceId":id(2),"kind":"obsolete-cache","key":"old","payload":123});
+    assert!(serde_json::from_value::<StoredProjection>(invalid).is_err());
+    assert_eq!(
+        serde_json::to_value(db.export_snapshot(&id(2)).unwrap()).unwrap(),
+        before
     );
-    db.rebuild_projections(ProjectionRebuild {
-        space_id: id(2),
-        source_aggregates: source.aggregates,
-        projections: source.projections,
-    })
-    .unwrap();
-    assert!(db.export_snapshot(&id(2)).is_ok());
 }
