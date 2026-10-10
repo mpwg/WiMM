@@ -5,7 +5,7 @@ import { ProfileApplication, ApplicationActivity } from '@wimm/application';
 import { FinanceWorkspace } from '@wimm/ui/workspace';
 import { createRoot } from 'react-dom/client';
 import { createBrowserPlatformServices, type UnlockedAppContext, type WorkspaceStorage } from '@wimm/ui';
-import { IndexedDbStorageAdapter, toStoredAggregate, type StoredAggregate } from '@wimm/storage';
+import { IndexedDbStorageAdapter, StorageFailureError, toStoredAggregate, type StoredAggregate } from '@wimm/storage';
 import type { AtomicBatch, UUID } from '@wimm/contracts';
 import type { AccountAggregate, CategoryGroupAggregate, CategoryAggregate, P2Aggregate, TransactionAggregate } from '@wimm/domain';
 import '../src/styles.css';
@@ -61,8 +61,8 @@ const storage: WorkspaceStorage = {
   applyAtomicBatch: async (batch) => {
     if (mode === 'delay') await new Promise<void>((resolve) => { release = resolve; });
     if (mode === 'quota') throw new DOMException('QuotaExceededError', 'QuotaExceededError');
-    if (mode === 'disk') throw new Error('SQLite disk full');
-    if (mode === 'native-disk') throw 'Speicherfehler: database or disk is full';
+    if (mode === 'disk') throw new StorageFailureError('QUOTA', 'notCommitted');
+    if (mode === 'native-disk') throw new StorageFailureError('QUOTA', 'notCommitted');
     if (mode === 'partial') {
       // Der letzte Put besitzt einen ungültigen Schlüssel: Dexie muss auch die
       // vorher geschriebenen Transfer-/Abgleichzeilen in derselben Transaktion zurückrollen.
