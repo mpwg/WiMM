@@ -49,17 +49,17 @@ fn all_existing_command_oracles_keep_core_results_and_atomically_prepared_data()
         }
         if let Some(value) = result.unwrap_or_else(|e| panic!("{}: {e:?}", case["name"])) {
             prepared += 1;
-            command_types.insert(value.change.command_type.clone());
-            assert!(value.request.batch.outbox.is_empty());
+            command_types.insert(value.change().command_type.clone());
+            assert!(value.request().batch.outbox.is_empty());
             assert_eq!(
-                value.request.identity.operation_id,
-                value.change.operation_id
+                value.request().identity.operation_id,
+                value.change().operation_id
             );
             assert_eq!(
-                value.request.batch.aggregates.len(),
-                value.change.aggregates.len()
+                value.request().batch.aggregates.len(),
+                value.change().aggregates.len()
             );
-            assert!(!value.request.batch.projections.is_empty());
+            assert!(!value.request().batch.projections.is_empty());
         }
     }
     assert_eq!(covered, 176);
@@ -111,14 +111,14 @@ fn complete_reconciliation_seed_preserves_confirmed_opening_balance_and_connecte
     let prepared = prepare_command(r, &ctx, &ctx, AreaMode::Connected)
         .unwrap()
         .unwrap();
-    assert_eq!(prepared.request.batch.outbox.len(), 1);
+    assert_eq!(prepared.request().batch.outbox.len(), 1);
     assert_eq!(
-        serde_json::to_value(&prepared.request.batch.outbox[0].draft).unwrap(),
-        serde_json::to_value(&prepared.change).unwrap()
+        serde_json::to_value(&prepared.request().batch.outbox[0].draft).unwrap(),
+        serde_json::to_value(prepared.change()).unwrap()
     );
     assert_eq!(
-        prepared.request.batch.outbox[0].operation_id,
-        prepared.request.identity.operation_id
+        prepared.request().batch.outbox[0].operation_id,
+        prepared.request().identity.operation_id
     );
-    assert_eq!(prepared.request.batch.aggregates.len(), 2);
+    assert_eq!(prepared.request().batch.aggregates.len(), 2);
 }

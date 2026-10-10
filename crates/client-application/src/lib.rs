@@ -44,9 +44,9 @@ pub enum PreparationFailure {
 /// Keine Debugausgabe für private Finanz-/Originalentwurfsdaten.
 #[derive(Clone)]
 pub struct PreparedCommit {
-    pub context: CommitContext,
-    pub request: LocalCommitRequest,
-    pub change: ChangeSet,
+    context: CommitContext,
+    request: LocalCommitRequest,
+    change: ChangeSet,
 }
 pub fn prepare_command(
     request: Request,
@@ -178,3 +178,16 @@ fn prepare_change(
         change,
     })
 }
+
+impl PreparedCommit {
+    pub fn context(&self) -> &CommitContext {
+        &self.context
+    }
+    pub fn request(&self) -> &LocalCommitRequest {
+        &self.request
+    }
+    pub fn change(&self) -> &ChangeSet {
+        &self.change
+    }
+}
+pub mod dispatch;

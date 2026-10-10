@@ -2327,9 +2327,11 @@ version = "0.0.0"
 dependencies = [
  "serde",
  "serde_json",
+ "sha2",
  "wimm-finance-core",
  "wimm-finance-types",
  "wimm-local-contracts",
+ "wimm-local-dal",
 ]
 
 [[package]]
