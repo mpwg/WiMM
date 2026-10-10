@@ -5,7 +5,7 @@ export default defineConfig({
   outputDir: '../../test-results/ui-desktop',
   forbidOnly: true,
   testDir: '.',
-  testMatch: ['audit-*.spec.ts', 'p4-1*.spec.ts', 'p4-2-1.spec.ts', 'p4-2-2.spec.ts', 'p4-2-3.spec.ts', 'p4-2-4.spec.ts', 'p4-2-5.spec.ts', 'p4-2-6.spec.ts', 'p4-2-7.spec.ts', 'p4-3*.spec.ts', 'p4-4*.spec.ts', 'p4-5*.spec.ts', 'p5*.spec.ts'],
+  testMatch: ['dal04-current-storage.spec.ts', 'audit-*.spec.ts', 'p4-1*.spec.ts', 'p4-2-1.spec.ts', 'p4-2-2.spec.ts', 'p4-2-3.spec.ts', 'p4-2-4.spec.ts', 'p4-2-5.spec.ts', 'p4-2-6.spec.ts', 'p4-2-7.spec.ts', 'p4-3*.spec.ts', 'p4-4*.spec.ts', 'p4-5*.spec.ts', 'p5*.spec.ts'],
   // PWA-Service-Worker sind ausschließlich Bestandteil des Webclients.
   testIgnore: ['p4-1-7.spec.ts', 'p5-offline.spec.ts'],
   timeout: 45_000,

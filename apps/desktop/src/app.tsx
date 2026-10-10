@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { createBrowserProfileStore, createBrowserApplicationRuntime } from '@wimm/browser-adapters';
+import { createBrowserProfileStore, createBrowserApplicationRuntime, BrowserSqliteStorageAdapter } from '@wimm/browser-adapters';
 import { ProfileApplication, ApplicationActivity } from '@wimm/application';
 import { createDesktopPlatformServices } from './platform.js';
 import { invoke } from '@tauri-apps/api/core';
 import { AppShell, type WorkspaceStorage } from '@wimm/ui';
-import { createTauriStorageBridge, DesktopStorageAdapter, IndexedDbStorageAdapter } from '@wimm/storage';
+import { createTauriStorageBridge, DesktopStorageAdapter } from '@wimm/storage';
 import type { UUID } from '@wimm/contracts';
 
 // Das getrennte Modul vor dem Einstieg laden: nach SW-Kontrolle wird es so
@@ -16,12 +16,12 @@ const profileApplication = new ProfileApplication(profileStore, { next: () => cr
 const platform = createDesktopPlatformServices();
 
 function createDesktopWorkspaceStorage(profileId: UUID): WorkspaceStorage {
-  // Die Playwright-Frontendprüfung läuft absichtlich ohne Tauri-Laufzeit. Die
-  // Produktanwendung verwendet dort niemals den Browserfallback.
+  // Native Tauri verwendet den nativen Rust-DAL. Der Browser-Frontendmodus
+  // verwendet den gemeinsamen Rust-/OPFS-DAL wie die PWA und Workspaceprüfung.
   if ('__TAURI_INTERNALS__' in window) {
     return new DesktopStorageAdapter(profileId, createTauriStorageBridge(invoke));
   }
-  return new IndexedDbStorageAdapter(profileId, `wimm-ui-desktop-frontend-test-${profileId}`);
+  return new BrowserSqliteStorageAdapter(profileId);
 }
 
 const runtime = createBrowserApplicationRuntime(createDesktopWorkspaceStorage, profileApplication);

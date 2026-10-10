@@ -58,19 +58,14 @@ export async function details(page: Page, text: string | RegExp) {
   await rows(page).filter({ hasText: text }).getByRole('button', { name: /^Details:/ }).click();
   return page.getByRole('dialog');
 }
+const storageModule = '/@fs' + process.cwd() + '/packages/browser-adapters/src/sqlite-storage.ts';
+const profileKey = process.env.WIMM_CLIENT === 'desktop' ? 'wimm/desktop-profile/v1' : 'wimm/local-profile/v1';
 export async function readAggregates(page: Page) {
-  return page.evaluate(async () => {
-    const name = (await indexedDB.databases()).find(entry => entry.name?.startsWith('wimm-ui-'))?.name;
-    if (!name) throw new Error('Testdatenbank fehlt');
-    return new Promise<import('../../packages/domain/src/index.js').P2Aggregate[]>((resolve, reject) => {
-      const request = indexedDB.open(name);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => {
-        const database = request.result;
-        const query = database.transaction('aggregates').objectStore('aggregates').getAll();
-        query.onerror = () => { database.close(); reject(query.error); };
-        query.onsuccess = () => { database.close(); resolve(query.result.map((row: { payload: import('../../packages/domain/src/index.js').P2Aggregate }) => row.payload)); };
-      };
-    });
-  });
+  return page.evaluate(async ({ url, key }) => {
+    const profile = JSON.parse(localStorage.getItem(key)!) as { profileId: string; selectedAreaId: string };
+    const { BrowserSqliteStorageAdapter } = await import(/* @vite-ignore */ url) as typeof import('../../packages/browser-adapters/src/sqlite-storage.js');
+    const storage = new BrowserSqliteStorageAdapter(profile.profileId);
+    try { return await storage.query({ spaceId: profile.selectedAreaId }); }
+    finally { await storage.close(); }
+  }, { url: storageModule, key: profileKey });
 }

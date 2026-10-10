@@ -35,7 +35,13 @@ test('bewahrt erfasste, geänderte, gesplittete und gelöschte Daten nach vollst
     let page = await context.newPage(); await prepare(page); await split(page, 'Dauerhafter Split'); await saved(page); await book(page, '-20', 'Ändern'); await saved(page); let dialog = await details(page, 'Ändern'); await dialog.getByRole('button', { name: 'Bearbeiten', exact: true }).click(); await dialog.getByLabel('Betrag', { exact: true }).fill('25'); await dialog.getByRole('button', { name: 'Änderung speichern' }).click(); await expect(dialog).toHaveCount(0);
     await book(page, '-30', 'Gelöscht'); await saved(page); dialog = await details(page, 'Gelöscht'); await dialog.getByRole('button', { name: 'Löschen', exact: true }).click(); await dialog.getByRole('button', { name: 'Löschen bestätigen' }).click(); await expect(rows(page)).toHaveCount(2); const before = await readAggregates(page);
     if (!desktop) { await page.evaluate(async () => { await navigator.serviceWorker.ready; }); await page.reload(); await expect.poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true); }
-    await context.close(); context = await launch(); if (!desktop) await context.setOffline(true); page = await context.newPage(); const response = await page.goto('/'); if (!desktop) expect(response?.fromServiceWorker()).toBe(true); await expect(page.locator('.app-shell')).toHaveCount(0); await unlock(page); if (desktop) await context.setOffline(true);
+    await context.close(); context = await launch(); if (!desktop) await context.setOffline(true); page = await context.newPage(); const response = await page.goto('/'); if (!desktop) expect(response?.fromServiceWorker()).toBe(true); await expect(page.locator('.app-shell')).toHaveCount(0); await unlock(page); if (desktop) {
+      // Der Browser-Frontendmodus hat keinen Tauri-Bundlepfad oder PWA-Service-Worker.
+      // Tatsächliche Rust-Workerinitialisierung vor der bisherigen Offline-Umschaltung abschließen.
+      await expect(page.locator('.overview-hero')).toContainText(/-€\s*125,00/);
+      expect(await readAggregates(page)).toEqual(before);
+      await context.setOffline(true);
+    }
     await expect(page.locator('.overview-hero')).toContainText(/-€\s*125,00/); await navigate(page, 'Buchungen'); await expect(rows(page)).toHaveCount(2); expect(await readAggregates(page)).toEqual(before); dialog = await details(page, 'Dauerhafter Split'); await expect(dialog).toContainText(/-€\s*60,00/); await expect(dialog).toContainText(/-€\s*40,00/);
   } finally { await context.close(); }
 });

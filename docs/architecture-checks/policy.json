@@ -112,7 +112,6 @@
         "source": "@wimm/storage",
         "names": [
           "DesktopStorageAdapter",
-          "IndexedDbStorageAdapter",
           "createTauriStorageBridge"
         ]
       },
@@ -120,6 +119,7 @@
         "kind": "runtime",
         "source": "@wimm/browser-adapters",
         "names": [
+          "BrowserSqliteStorageAdapter",
           "createBrowserApplicationRuntime",
           "createBrowserProfileStore"
         ]

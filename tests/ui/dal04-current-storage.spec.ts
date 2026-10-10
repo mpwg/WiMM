@@ -2,7 +2,7 @@
 import {expect,test} from '@playwright/test';
 import {createAccount,navigate} from '../helpers/ui.js';
 const passphrase='dal04-ausschliesslich-synthetische-passphrase';
-test('Produktive PWA speichert Konto auf OPFS und öffnet es nach Neustart ohne IndexedDB-Finanzpfad',async({page})=>{
+test('Aktueller Browserclient speichert Konto auf OPFS und öffnet es nach Neustart ohne IndexedDB-Finanzpfad',async({page})=>{
  await page.goto('/');await page.getByLabel('Entsperrpassphrase').fill(passphrase);await page.getByLabel('Passphrase wiederholen').fill(passphrase);
  await page.getByRole('button',{name:'Tresor anlegen'}).click();await page.getByLabel('Ich habe den Rettungscode sicher abgelegt.').check();await page.getByRole('button',{name:'Lokalen Bereich eröffnen'}).click();
  await page.getByLabel('Entsperrpassphrase').fill(passphrase);await page.getByRole('button',{name:'Entsperren'}).click();
