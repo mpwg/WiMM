@@ -130,7 +130,10 @@ pub fn persist_backup(
     tx.execute("INSERT INTO encrypted_backups(backup_id,profile_id,space_id,epoch,snapshot_hash,ciphertext) VALUES(?1,?2,?3,?4,?5,?6)",
         params![input.receipt.backup_id,input.receipt.profile_id,input.receipt.space_id,input.receipt.epoch,input.receipt.snapshot_hash,input.ciphertext]).map_err(storage_error)?;
     tx.commit().map_err(commit_error)?;
-    if read_backup(connection, &input.receipt).map_err(|_| StorageFailure::unknown(StorageFailureCode::CommitUnknown))? != input.ciphertext {
+    if read_backup(connection, &input.receipt)
+        .map_err(|_| StorageFailure::unknown(StorageFailureCode::CommitUnknown))?
+        != input.ciphertext
+    {
         return Err(StorageFailure::unknown(StorageFailureCode::CommitUnknown));
     }
     Ok(input.receipt)
