@@ -12,6 +12,7 @@
     "@wimm/contracts": "workspace:*",
     "@wimm/domain": "workspace:*",
     "@wimm/storage": "workspace:*",
-    "@wimm/importers": "workspace:*"
+    "@wimm/importers": "workspace:*",
+    "libsodium-wrappers-sumo": "0.8.4"
   }
 }

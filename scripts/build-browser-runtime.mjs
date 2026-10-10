@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import './warnings-as-errors.mjs';
-import {mkdir,readFile,writeFile,copyFile} from 'node:fs/promises';
+import {mkdir,readFile,writeFile,copyFile,cp,rm} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {runWithWarningCheck} from './run-with-warning-check.mjs';
 const mode=process.argv[2]??'--check';if(!['--check','--write'].includes(mode)||process.argv.length>4)throw new Error('Verwendung: build-browser-runtime.mjs [--check|--write [Signaturverzeichnis]]');
@@ -14,4 +14,6 @@ for(const file of ['wimm_browser_runtime.d.ts','wimm_browser_runtime_bg.wasm.d.t
  else if(await readFile(`${expected}/${file}`,'utf8')!==signature)throw new Error('Die versionierte Browser-WASM-Signatur ist verändert. Keine Datei wurde überschrieben.');
 }
 for(const file of ['wimm_browser_runtime.js','wimm_browser_runtime_bg.wasm'])await copyFile(`${staging}/${file}`,`${target}/${file}`);
+await rm(`${target}/snippets`,{recursive:true,force:true});
+await cp(`${staging}/snippets`,`${target}/snippets`,{recursive:true});
 console.log('Aktueller Browser-Rust-DAL und typisierte Workerassets ohne Signaturdrift erzeugt.');

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import init,{open_browser_storage,type BrowserStorage,type LocalPortRequestV2,type LocalOperationIdentity,type LocalCommitRequest,type TransactionIndexQuery,type PendingIndexQuery,type ImportSourceQuery,type BrowserBackupInput,type EncryptedBackupReceipt} from '../generated/sqlite/wimm_browser_runtime.js';
+import type {BrowserStorage,LocalPortRequestV2,LocalOperationIdentity,LocalCommitRequest,TransactionIndexQuery,PendingIndexQuery,ImportSourceQuery,BrowserBackupInput,EncryptedBackupReceipt,BrowserRuntimeOpen,RuntimeRequestV2,BrowserRuntimePage} from '../generated/sqlite/wimm_browser_runtime.js';
 let database:BrowserStorage|undefined;
 // Rust-Zugriffe sind synchron. Die Kette verhindert, dass die asynchrone VFS-Öffnung von Nachrichten überholt wird.
 let queue=Promise.resolve();
@@ -8,6 +8,8 @@ self.onmessage=({data}:MessageEvent<Message>)=>{queue=queue.then(async()=>{
  try{
   if(data.method==='open'){
    if(database!==undefined||typeof data.profileId!=='string')throw {contractVersion:2,code:'INVALID_RESPONSE',commitState:'notCommitted'};
+   // Handler steht vor asynchronen Kryptomodulen bereit; die Öffnungsnachricht bleibt in der Queue.
+   const {default:init,open_browser_storage}=await import('../generated/sqlite/wimm_browser_runtime.js');
    await init({module_or_path:new URL('../generated/sqlite/wimm_browser_runtime_bg.wasm',import.meta.url)});database=await open_browser_storage(data.profileId);
    if(database.contract_version()!==2)throw {contractVersion:2,code:'UPDATE_REQUIRED',commitState:'notCommitted'};
    self.postMessage({id:data.id,value:{contractVersion:2,ready:true}});return;
@@ -15,6 +17,10 @@ self.onmessage=({data}:MessageEvent<Message>)=>{queue=queue.then(async()=>{
   if(database===undefined)throw {contractVersion:2,code:'RESOURCE_UNAVAILABLE',commitState:'notCommitted'};
   let value:unknown;
   switch(data.method){
+   case 'openRuntime':database.open_runtime(data.input as BrowserRuntimeOpen);value=null;break;
+   case 'runtime':value=database.runtime(data.input as RuntimeRequestV2);break;
+   case 'runtimePage':value=database.runtime_page(data.input as BrowserRuntimePage);break;
+   case 'closeRuntime':database.close_runtime();value=null;break;
    case 'port':value=database.port(data.input as LocalPortRequestV2);break;
    case 'commit':value=database.commit(data.input as LocalCommitRequest);break;
    case 'lookup':value=database.lookup_result(data.input as LocalOperationIdentity);break;

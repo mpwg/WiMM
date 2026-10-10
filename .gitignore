@@ -8,3 +8,4 @@ test-results/
 /target/
 /packages/browser-adapters/generated/sqlite/*.js
 /packages/browser-adapters/generated/sqlite/*.wasm
+/packages/browser-adapters/generated/sqlite/snippets/

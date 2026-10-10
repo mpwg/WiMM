@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[package]
+name = "wimm-local-runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+[dependencies]
+wimm-client-application = { path = "../client-application" }
+wimm-client-crypto = { path = "../client-crypto" }
+wimm-local-dal = { path = "../local-dal", features = ["sqlite"] }
+wimm-local-contracts = { path = "../local-contracts" }
+wimm-finance-types = { path = "../finance-types" }
+serde.workspace = true
+serde_json.workspace = true
+diesel = { version = "=2.3.13", default-features = false, features = ["sqlite","32-column-tables"] }
+[dev-dependencies]
+wimm-finance-core = { path = "../finance-core" }
+rusqlite = { version = "=0.40.2", features = ["bundled"] }
+[lints]
+workspace = true

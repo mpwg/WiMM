@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import {decodeStorageFailure,StorageFailureError} from '@wimm/storage';
 import type {UUID} from '@wimm/contracts';
-import type {LocalPortRequestV2,LocalPortOutcomeV2,LocalCommitRequest,BrowserCommitOutcome,LocalOperationIdentity,BrowserReceiptLookup,TransactionIndexQuery,PendingIndexQuery,ImportSourceQuery,BrowserBackupInput,EncryptedBackupReceipt,BrowserCiphertext} from '../generated/sqlite/wimm_browser_runtime.js';
+import type {LocalPortRequestV2,LocalPortOutcomeV2,LocalCommitRequest,BrowserCommitOutcome,LocalOperationIdentity,BrowserReceiptLookup,TransactionIndexQuery,PendingIndexQuery,ImportSourceQuery,BrowserBackupInput,EncryptedBackupReceipt,BrowserCiphertext,BrowserRuntimeOpen,RuntimeRequestV2,RuntimeEventV2,RuntimePageV2} from '../generated/sqlite/wimm_browser_runtime.js';
 export type SqliteWorkerStatus='waiting'|'opening'|'ready'|'closed'|'failed';
 /** Ein Web Lock umfasst die tatsächliche Lebensdauer der SQLite-/OPFS-Verbindung, nicht nur einzelne Requests. */
 export class SqliteWorkerClient {
@@ -30,6 +30,10 @@ export class SqliteWorkerClient {
   }).catch(error=>{onStatus(this.closed?'closed':'failed');rejectReady(error instanceof StorageFailureError?error:new StorageFailureError('RESOURCE_UNAVAILABLE','notCommitted'));});
   window.addEventListener('pagehide',()=>{this.stop(new StorageFailureError('COMMIT_UNKNOWN','unknown'));},{once:true});
  }
+ async openRuntime(input:BrowserRuntimeOpen):Promise<void>{await this.ready;await this.send('openRuntime',input);}
+ async runtime(input:RuntimeRequestV2):Promise<RuntimeEventV2>{await this.ready;return await this.send('runtime',input) as RuntimeEventV2;}
+ async runtimePage(offset:number,limit:number):Promise<RuntimePageV2>{await this.ready;return await this.send('runtimePage',{offset,limit}) as RuntimePageV2;}
+ async closeRuntime():Promise<void>{await this.ready;await this.send('closeRuntime',undefined);}
  async port(request:LocalPortRequestV2):Promise<LocalPortOutcomeV2>{await this.ready;return await this.send('port',request) as LocalPortOutcomeV2;}
  async commit(request:LocalCommitRequest):Promise<BrowserCommitOutcome>{await this.ready;return await this.send('commit',request) as BrowserCommitOutcome;}
  async lookup(identity:LocalOperationIdentity):Promise<BrowserReceiptLookup>{await this.ready;return await this.send('lookup',identity) as BrowserReceiptLookup;}

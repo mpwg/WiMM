@@ -296,6 +296,13 @@
       "checkClosure": true,
       "bindings": false,
       "nativeAssertions": "crates/browser-runtime/tests/storage_host.rs"
+    },
+    "wimm-local-runtime": {
+      "role": "platform",
+      "features": [],
+      "checkClosure": true,
+      "bindings": false,
+      "nativeAssertions": "crates/local-runtime/src/tests.rs"
     }
   },
   "plannedServerRoots": [

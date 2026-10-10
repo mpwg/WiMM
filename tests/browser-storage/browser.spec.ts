@@ -3,7 +3,7 @@ import {expect,test as base,chromium,firefox,webkit} from '@playwright/test';
 import {mkdtemp} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {readFileSync} from 'node:fs';
-import type {LocalCommitRequest} from '../../packages/browser-adapters/generated/sqlite/wimm_browser_runtime.js';
+import type {LocalCommitRequest,RuntimeRequestV2} from '../../packages/browser-adapters/generated/sqlite/wimm_browser_runtime.js';
 import {randomUUID} from 'node:crypto';
 import {p5Snapshot,normalized} from '../storage/contracts/snapshot-catalog.js';
 const engines={chromium,firefox,webkit};
@@ -109,4 +109,33 @@ test('Verschlüsseltes Backup bleibt nach OPFS-Wiederöffnung erhalten und weist
  const duplicate=await page.evaluate(async input=>{try{await window.sqliteClient.persistBackup(input);return null;}catch(error){return (error as {code:string}).code;}},{receipt,ciphertext:[99]});
  expect(duplicate).toBe('WRITE_FAILED');
  expect(await page.evaluate(async receipt=>await window.sqliteClient.readBackup(receipt),receipt)).toEqual(stored);
+});
+
+test('Gemeinsame Rust-Anwendung schreibt echte SQLite-Receipts und führt Undo/Redo im Worker aus',async({page})=>{
+ const profile=randomUUID();await ready(page,profile);
+ type CommandInput=Extract<RuntimeRequestV2['action'],{actionType:'execute'}> & {spaceId:string;aggregates:Array<{id:string}>};
+ const catalog=JSON.parse(readFileSync('crates/finance-core/tests/fixtures/contract-catalog.json','utf8')) as Array<{name:string;request:CommandInput}>;
+ const request=catalog.find(row=>row.name==='Buchungs-CAS F01 neue Ausgabe')!.request;
+ const context={profileId:profile,spaceId:request.spaceId,epoch:id(3),profileRevision:1,sessionGeneration:1,generation:1};
+ await port(page,{method:'initializeArea',spaceId:request.spaceId,proposedEpoch:context.epoch});
+ await port(page,{method:'replaceSnapshot',snapshot:{storageSchemaVersion:2,domainSchemaVersion:1,profileId:profile,spaceId:request.spaceId,epoch:context.epoch,aggregates:request.aggregates.map(aggregate=>({...aggregate,handle:aggregate.id})),confirmed:[],pending:[],projections:[]}});
+ await page.evaluate(async context=>await window.sqliteClient.openRuntime({contractVersion:2,context,mode:'connected',key:Array(32).fill(42) as number[]}),context);
+ const input:RuntimeRequestV2={contractVersion:2,domainSchemaVersion:1,action:{actionType:'execute',command:request.command,expectedRevisions:request.expectedRevisions,operation:request.operation??(request as unknown as {context:CommandInput['operation']}).context}};
+ const rejected=await page.evaluate(async input=>await window.sqliteClient.runtime(input),{...input,contractVersion:1});
+ expect(rejected.result).toMatchObject({status:'rejected',code:'UPDATE_REQUIRED'});
+ const event=await page.evaluate(async input=>await window.sqliteClient.runtime(input),input);
+ expect(event.result.status).toBe('committed');expect(event.canUndo).toBe(true);
+ if(event.result.status!=='committed')throw new Error('Echtes Receipt fehlt.');
+ expect(await page.evaluate(async identity=>await window.sqliteClient.lookup(identity),event.result.receipt.identity)).toMatchObject({receipt:event.result.receipt});
+ const operation=(n:number)=>({operationId:id(n),occurredAt:'2026-10-10T12:00:00Z',generatedIds:[]});
+ for(const [direction,n] of [['undo',94],['redo',95]] as const){
+  const result=await page.evaluate(async input=>await window.sqliteClient.runtime(input),{contractVersion:2,domainSchemaVersion:1,action:{actionType:'history',direction,operation:operation(n)}} as RuntimeRequestV2);
+  expect(result.result.status).toBe('committed');
+ }
+ const before=await page.evaluate(async()=>await window.sqliteClient.runtimePage(0,100));expect(before.aggregates.length).toBeGreaterThan(0);
+ for(const limit of [101,1.5,Number.NaN])expect(await page.evaluate(async limit=>{try{await window.sqliteClient.runtimePage(0,limit);return null;}catch(error){return (error as {code:string}).code;}},limit)).toBe('INVALID_RESPONSE');
+ await page.reload();await expect.poll(()=>page.evaluate(()=>window.sqliteStatus)).toBe('ready');
+ await page.evaluate(async context=>await window.sqliteClient.openRuntime({contractVersion:2,context,mode:'connected',key:Array(32).fill(42) as number[]}),context);
+ expect((await page.evaluate(async()=>await window.sqliteClient.runtime({contractVersion:2,domainSchemaVersion:1,action:{actionType:'load'}}))).result.status).toBe('state');
+ expect(await page.evaluate(async()=>await window.sqliteClient.runtimePage(0,100))).toEqual(before);
 });

@@ -354,6 +354,9 @@ importers:
       '@wimm/storage':
         specifier: workspace:*
         version: link:../storage
+      libsodium-wrappers-sumo:
+        specifier: 0.8.4
+        version: 0.8.4
 
   packages/contracts:
     dependencies:

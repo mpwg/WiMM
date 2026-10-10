@@ -57,7 +57,7 @@ impl CommitContextPort for Scope {
     }
 }
 struct LostAnswer {
-    port: NativeRuntimeStorage,
+    port: RuntimeStorage,
     lose: bool,
 }
 impl LocalCommitPort for LostAnswer {
@@ -91,14 +91,14 @@ struct Rig {
     path: std::path::PathBuf,
     context: CommitContext,
     request: Request,
-    port: NativeRuntimeStorage,
-    protection: NativeRuntimeProtection,
+    port: RuntimeStorage,
+    protection: RuntimeProtection,
     backup: Backup,
 }
 impl Rig {
     fn new() -> Self {
         let rows: Vec<serde_json::Value> = serde_json::from_str(include_str!(
-            "../../../../../crates/finance-core/tests/fixtures/contract-catalog.json"
+            "../../finance-core/tests/fixtures/contract-catalog.json"
         ))
         .unwrap();
         let request = wimm_finance_core::decode_command_request_v1(
@@ -118,7 +118,7 @@ impl Rig {
             generation: Revision::new(1).unwrap(),
         };
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../test-results/dal03/runtime");
+            .join("../../test-results/dal03/runtime");
         std::fs::create_dir_all(&root).unwrap();
         let folder = root.join(format!(
             "{}-{}",
@@ -157,15 +157,14 @@ impl Rig {
             projections: vec![],
         })
         .unwrap();
-        let protection = NativeRuntimeProtection::new(
-            wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap(),
-        );
+        let protection =
+            RuntimeProtection::new(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
         let backup = Backup {
             folder,
             next: Cell::new(700),
         };
         drop(dal);
-        let port = NativeRuntimeStorage::open(&path, context.profile_id.clone()).unwrap();
+        let port = RuntimeStorage::open(&path, context.profile_id.clone()).unwrap();
         Self {
             path,
             context,
@@ -179,7 +178,7 @@ impl Rig {
         &self,
         app: &mut ClientRuntime,
         writer: &mut impl CancellableLocalCommitPort,
-        journal: &mut NativeRuntimeStorage,
+        journal: &mut RuntimeStorage,
         scope: &Scope,
     ) -> RuntimeOutcome {
         let r = self.request.clone();
@@ -230,7 +229,7 @@ fn real_native_runtime_uses_dal_receipts_private_journal_and_undo_redo() {
     committed(app.move_history(Direction::Undo, operation(201), &mut ports));
     committed(app.move_history(Direction::Redo, operation(202), &mut ports));
     assert_eq!(app.history_available(), (true, false));
-    let reopened = NativeRuntimeStorage::open(&rig.path, rig.context.profile_id.clone()).unwrap();
+    let reopened = RuntimeStorage::open(&rig.path, rig.context.profile_id.clone()).unwrap();
     assert_eq!(
         MutationReadPort::load(&reopened, &rig.context)
             .unwrap()
@@ -280,7 +279,7 @@ fn lost_answer_and_new_runtime_resolve_only_actual_original_sqlite_receipt() {
     drop(app);
     drop(writer);
     drop(journal);
-    let reopened = NativeRuntimeStorage::open(&rig.path, rig.context.profile_id.clone()).unwrap();
+    let reopened = RuntimeStorage::open(&rig.path, rig.context.profile_id.clone()).unwrap();
     let mut writer = reopened.clone();
     let mut journal = reopened.clone();
     let mut app = ClientRuntime::new(rig.context.clone(), AreaMode::Connected);
@@ -419,7 +418,7 @@ fn native_runtime_wrong_key_retains_real_original_journal_and_blocks_followup() 
         .unwrap()
         .unwrap();
     let wrong =
-        NativeRuntimeProtection::new(wimm_client_crypto::SecretKey::from_bytes(&[99; 32]).unwrap());
+        RuntimeProtection::new(wimm_client_crypto::SecretKey::from_bytes(&[99; 32]).unwrap());
     let mut app = ClientRuntime::new(rig.context.clone(), AreaMode::Connected);
     let mut writer = rig.port.clone();
     let mut ports = RuntimePorts {
@@ -494,12 +493,12 @@ fn child_native_runtime_resolves_real_recovery_ticket_without_financial_replay()
     let Some(path) = std::env::var_os("WIMM_NATIVE_RUNTIME_RECOVERY") else {
         return;
     };
-    let port = NativeRuntimeStorage::open(std::path::Path::new(&path), id(1)).unwrap();
+    let port = RuntimeStorage::open(std::path::Path::new(&path), id(1)).unwrap();
     let ticket = RecoveryJournalPort::load(&port).unwrap().unwrap();
     let context = ticket.context().clone();
     let scope = Scope(context.clone());
     let protection =
-        NativeRuntimeProtection::new(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+        RuntimeProtection::new(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
     let before = port
         .store
         .lock()
@@ -552,7 +551,15 @@ fn full_native_runtime_process_restart_recovers_sqlite_ticket_and_exact_receipt(
     drop(app);
     drop(writer);
     drop(journal);
-    let result=std::process::Command::new(std::env::current_exe().unwrap()).args(["--exact","runtime_storage::tests::child_native_runtime_resolves_real_recovery_ticket_without_financial_replay","--nocapture"]).env("WIMM_NATIVE_RUNTIME_RECOVERY",&rig.path).output().unwrap();
+    let result = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "tests::child_native_runtime_resolves_real_recovery_ticket_without_financial_replay",
+            "--nocapture",
+        ])
+        .env("WIMM_NATIVE_RUNTIME_RECOVERY", &rig.path)
+        .output()
+        .unwrap();
     assert!(
         result.status.success(),
         "{}",
@@ -560,4 +567,60 @@ fn full_native_runtime_process_restart_recovers_sqlite_ticket_and_exact_receipt(
     );
     assert!(String::from_utf8_lossy(&result.stdout).contains("1 passed"));
     assert!(RecoveryJournalPort::load(&rig.port).unwrap().is_none());
+}
+
+#[test]
+fn shared_session_versions_execute_and_bounded_page_use_real_sqlite_receipt() {
+    use wimm_client_application::runtime_contracts::*;
+    let rig = Rig::new();
+    let protection =
+        RuntimeProtection::new(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let mut session = RuntimeSession::new(
+        rig.context.clone(),
+        AreaMode::Connected,
+        rig.port.clone(),
+        protection,
+    )
+    .unwrap();
+    let action = RuntimeActionV2::Execute {
+        command: rig.request.command.clone(),
+        expected_revisions: rig.request.expected_revisions.clone(),
+        operation: rig.request.context.clone(),
+    };
+    assert!(matches!(
+        session
+            .invoke(RuntimeRequestV2 {
+                contract_version: 1,
+                domain_schema_version: 1,
+                action: action.clone()
+            })
+            .result,
+        RuntimeResultV2::Rejected { .. }
+    ));
+    assert!(RecoveryJournalPort::load(&rig.port).unwrap().is_none());
+    let event = session.invoke(RuntimeRequestV2 {
+        contract_version: 2,
+        domain_schema_version: 1,
+        action,
+    });
+    let RuntimeResultV2::Committed {
+        receipt,
+        current: true,
+        ..
+    } = event.result
+    else {
+        panic!("Echtes Receipt fehlt")
+    };
+    assert!(event.can_undo);
+    assert_eq!(
+        rig.port
+            .lookup_result(&receipt.identity)
+            .unwrap()
+            .unwrap()
+            .content_hash,
+        receipt.content_hash
+    );
+    assert!(RecoveryJournalPort::load(&rig.port).unwrap().is_none());
+    assert!(!session.page(0, 100).unwrap().aggregates.is_empty());
+    assert!(session.page(0, 101).is_err());
 }

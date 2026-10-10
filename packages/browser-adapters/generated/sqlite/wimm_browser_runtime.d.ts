@@ -38,6 +38,31 @@ export interface AggregateQuery {
     spaceId: EntityId;
 }
 
+export interface ApplicationCommandV2 {
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    command: Command;
+    expectedRevisions: Expectation[];
+    context: Context;
+}
+
+export interface ApplicationRequestV2 {
+    contractVersion: number;
+    domainSchemaVersion: number;
+    started: CommitContext;
+    current: CommitContext;
+    mode: AreaMode;
+    action: ApplicationActionV2;
+}
+
+export interface ApplicationReverseV2 {
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    expectedRevisions: Expectation[];
+    context: Context;
+    targets: NonEmptyVec<ReverseTarget>;
+}
+
 export interface ApplicationScope {
     profileId: PublicId;
     spaceId: PublicId;
@@ -70,6 +95,18 @@ export interface BrowserCiphertext {
 export interface BrowserReceiptLookup {
     contractVersion: number;
     receipt: LocalCommitReceipt | null;
+}
+
+export interface BrowserRuntimeOpen {
+    contractVersion: number;
+    context: CommitContext;
+    mode: AreaMode;
+    key: number[];
+}
+
+export interface BrowserRuntimePage {
+    offset: number;
+    limit: number;
 }
 
 export interface Category {
@@ -117,6 +154,15 @@ export interface ChangeSet {
 export interface ClassificationRow {
     sourceRow: PositiveOrdinal;
     classification: Classification;
+}
+
+export interface CommitContext {
+    profileId: EntityId;
+    spaceId: EntityId;
+    epoch: EntityId;
+    profileRevision: Revision;
+    sessionGeneration: Revision;
+    generation: Revision;
 }
 
 export interface CommittedRevision {
@@ -616,6 +662,33 @@ export interface RuleRequest {
     candidate: ImportCandidate;
 }
 
+export interface RuntimeEventV2 {
+    contractVersion: number;
+    context: CommitContext;
+    canUndo: boolean;
+    canRedo: boolean;
+    result: RuntimeResultV2;
+}
+
+export interface RuntimePageV2 {
+    contractVersion: number;
+    context: CommitContext;
+    offset: number;
+    aggregates: Aggregate[];
+}
+
+export interface RuntimeRequestV2 {
+    contractVersion: number;
+    domainSchemaVersion: number;
+    action: RuntimeActionV2;
+}
+
+export interface RuntimeSnapshotV2 {
+    contractVersion: number;
+    context: CommitContext;
+    aggregates: Aggregate[];
+}
+
 export interface SaveCommand {
     aggregates: NonEmptyVec<Aggregate>;
 }
@@ -815,6 +888,14 @@ export type Aggregate = ({ aggregateType: "account" } & Account) | ({ aggregateT
 
 export type AggregateKind = "Account" | "FinancialRevision" | "CategoryGroup" | "Category" | "Payee" | "Transaction" | "Transfer" | "Reconciliation" | "ImportMapping" | "ImportBatch" | "ImportFingerprint" | "Rule" | "Schedule" | "ScheduleOccurrence";
 
+export type ApplicationActionV2 = { actionType: "command"; request: ApplicationCommandV2 } | { actionType: "reverse"; request: ApplicationReverseV2 };
+
+export type ApplicationFailureCode = "UPDATE_REQUIRED" | "SCOPE_CHANGED" | "WRONG_AREA" | "INVALID_STATE" | "FINANCE_REJECTED";
+
+export type ApplicationPreparationV2 = { status: "prepared"; contractVersion: number; context: CommitContext; request: LocalCommitRequest } | { status: "unchanged"; contractVersion: number } | { status: "rejected"; contractVersion: number; code: ApplicationFailureCode; financeCode: string | null };
+
+export type AreaMode = "standalone" | "connected";
+
 export type Base64Url = string;
 
 export type BrowserCommitOutcome = { status: "committed"; value: LocalCommitReceipt } | { status: "notCommitted"; error: StorageFailure } | { status: "unknown"; identity: LocalOperationIdentity };
@@ -844,6 +925,8 @@ export type ConditionValue = string | MoneyCents;
 export type ContractError = { contractVersion: number; code: string; detail: string };
 
 export type CryptoSuite = "XCHACHA20_POLY1305_IETF_ED25519_V1";
+
+export type Direction = "undo" | "redo";
 
 export type DomainSchemaVersion = number;
 
@@ -931,6 +1014,12 @@ export type Role = "admin" | "member" | "viewer";
 
 export type RuleAction = { field: "categoryId"; value: EntityId } | { field: "payeeId"; value: EntityId } | { field: "clearance"; value: ImportClearance };
 
+export type RuntimeActionV2 = { actionType: "load" } | { actionType: "execute"; command: Command; expectedRevisions: Expectation[]; operation: Context } | { actionType: "history"; direction: Direction; operation: Context } | { actionType: "resolve" };
+
+export type RuntimeCommitResultV2 = { status: "committed"; receipt: LocalCommitReceipt } | { status: "notCommitted"; error: StorageFailure } | { status: "unknown"; identity: LocalOperationIdentity };
+
+export type RuntimeResultV2 = { status: "state" } | { status: "committed"; context: CommitContext; receipt: LocalCommitReceipt; current: boolean } | { status: "notCommitted"; error: StorageFailure } | { status: "readFailed"; error: StorageFailure } | { status: "unknown" } | { status: "busy" } | { status: "scopeChanged" } | { status: "idle" } | { status: "closed" } | { status: "rejected"; code: ApplicationFailureCode; financeCode: string | null };
+
 export type ServerPersistenceCode = "REVISION_CONFLICT" | "QUOTA" | "WRITE_FAILED" | "UPDATE_REQUIRED" | "EPOCH_MISMATCH" | "OPERATION_ID_REUSED" | "CANCELLED" | "RESOURCE_UNAVAILABLE";
 
 export type SnapshotDomainVersion = number;
@@ -965,22 +1054,92 @@ export class BrowserStorage {
     free(): void;
     [Symbol.dispose](): void;
     close(): void;
+    close_runtime(): void;
     commit(request: LocalCommitRequest): BrowserCommitOutcome;
     contract_version(): number;
     lookup_result(identity: LocalOperationIdentity): BrowserReceiptLookup;
+    open_runtime(input: BrowserRuntimeOpen): void;
     persist_backup(input: BrowserBackupInput): EncryptedBackupReceipt;
     port(request: LocalPortRequestV2): LocalPortOutcomeV2;
     query_imported(query: ImportSourceQuery): LocalPortOutcomeV2;
     query_pending(query: PendingIndexQuery): LocalPortOutcomeV2;
     query_transactions(query: TransactionIndexQuery): LocalPortOutcomeV2;
     read_backup(receipt: EncryptedBackupReceipt): BrowserCiphertext;
+    runtime(input: RuntimeRequestV2): RuntimeEventV2;
+    runtime_page(input: BrowserRuntimePage): RuntimePageV2;
 }
 
+export class CreatedVault {
+    private constructor();
+    free(): void;
+    [Symbol.dispose](): void;
+    static create(password: Uint8Array): CreatedVault;
+    readonly record: Uint8Array;
+    readonly recoveryCode: string;
+}
+
+export class CryptoSession {
+    free(): void;
+    [Symbol.dispose](): void;
+    decrypt(nonce: Uint8Array, aad: Uint8Array, cipher: Uint8Array): Uint8Array;
+    encrypt(aad: Uint8Array, plaintext: Uint8Array): EncryptedBytes;
+    lock(): void;
+    constructor(key: Uint8Array);
+    open_snapshot(record: Uint8Array): Uint8Array;
+    seal_snapshot(plaintext: Uint8Array): Uint8Array;
+}
+
+export class EncryptedBytes {
+    private constructor();
+    free(): void;
+    [Symbol.dispose](): void;
+    readonly ciphertext: Uint8Array;
+    readonly nonce: Uint8Array;
+}
+
+export class SealedSession {
+    free(): void;
+    [Symbol.dispose](): void;
+    lock(): void;
+    constructor();
+    open(cipher: Uint8Array): Uint8Array;
+    readonly publicKey: Uint8Array;
+}
+
+export class SigningSession {
+    free(): void;
+    [Symbol.dispose](): void;
+    lock(): void;
+    constructor();
+    sign(message: Uint8Array): Uint8Array;
+    readonly publicKey: Uint8Array;
+}
+
+export class VaultSession {
+    private constructor();
+    free(): void;
+    [Symbol.dispose](): void;
+    has_space(id: string, version: bigint): boolean;
+    lock(): void;
+    static unlock_passphrase(record: Uint8Array, password: Uint8Array): VaultSession;
+    static unlock_recovery(record: Uint8Array, code: string): VaultSession;
+    upgrade_passphrase(record: Uint8Array, password: Uint8Array): Uint8Array;
+    readonly publicKey: Uint8Array;
+}
+
+export function canonical_json(input: string): Uint8Array;
+
 export function open_browser_storage(profile: string): Promise<BrowserStorage>;
+
+export function passphrase_session(password: Uint8Array, salt: Uint8Array, ops: number, memory: number, legacy: boolean): CryptoSession;
 
 export function roundtrip_local_snapshot_v2(input: LocalSnapshot): SnapshotOutcomeV2;
 
 export function roundtrip_storage_failure_v2(input: StorageFailure): StorageFailure;
+
+export function seal_to(message: Uint8Array, _public: Uint8Array): Uint8Array;
+
+export function validate_key_pairs(identity_public: Uint8Array, identity_secret: Uint8Array, encryption_public: Uint8Array, encryption_secret: Uint8Array): void;
 
 export function validate_local_migration_form_v2(input: StorageMigrationPlan): LocalFormOutcome;
 
@@ -990,28 +1149,70 @@ export function validate_public_operation_form_v2(input: EncryptedOperation): Pu
 
 export function validate_public_roster_form_v2(input: SignedKeyRoster): PublicValidationOutcome;
 
+export function verify_public(message: Uint8Array, signature: Uint8Array, public_key: Uint8Array): boolean;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_browserstorage_free: (a: number, b: number) => void;
+    readonly __wbg_createdvault_free: (a: number, b: number) => void;
+    readonly __wbg_cryptosession_free: (a: number, b: number) => void;
+    readonly __wbg_encryptedbytes_free: (a: number, b: number) => void;
+    readonly __wbg_sealedsession_free: (a: number, b: number) => void;
+    readonly __wbg_signingsession_free: (a: number, b: number) => void;
+    readonly __wbg_vaultsession_free: (a: number, b: number) => void;
     readonly browserstorage_close: (a: number) => [number, number];
+    readonly browserstorage_close_runtime: (a: number) => void;
     readonly browserstorage_commit: (a: number, b: any) => [number, number, number];
     readonly browserstorage_contract_version: (a: number) => number;
     readonly browserstorage_lookup_result: (a: number, b: any) => [number, number, number];
+    readonly browserstorage_open_runtime: (a: number, b: any) => [number, number];
     readonly browserstorage_persist_backup: (a: number, b: any) => [number, number, number];
     readonly browserstorage_port: (a: number, b: any) => [number, number, number];
     readonly browserstorage_query_imported: (a: number, b: any) => [number, number, number];
     readonly browserstorage_query_pending: (a: number, b: any) => [number, number, number];
     readonly browserstorage_query_transactions: (a: number, b: any) => [number, number, number];
     readonly browserstorage_read_backup: (a: number, b: any) => [number, number, number];
+    readonly browserstorage_runtime: (a: number, b: any) => [number, number, number];
+    readonly browserstorage_runtime_page: (a: number, b: any) => [number, number, number];
+    readonly canonical_json: (a: number, b: number) => [number, number, number, number];
+    readonly createdvault_create: (a: number, b: number) => [number, number, number];
+    readonly createdvault_record: (a: number) => [number, number];
+    readonly createdvault_recoveryCode: (a: number) => [number, number];
+    readonly cryptosession_decrypt: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number, number];
+    readonly cryptosession_encrypt: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
+    readonly cryptosession_lock: (a: number) => void;
+    readonly cryptosession_new: (a: number, b: number) => [number, number, number];
+    readonly cryptosession_open_snapshot: (a: number, b: number, c: number) => [number, number, number];
+    readonly cryptosession_seal_snapshot: (a: number, b: number, c: number) => [number, number, number, number];
+    readonly encryptedbytes_ciphertext: (a: number) => [number, number];
+    readonly encryptedbytes_nonce: (a: number) => [number, number];
     readonly open_browser_storage: (a: number, b: number) => any;
+    readonly passphrase_session: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number, number];
     readonly roundtrip_local_snapshot_v2: (a: any) => [number, number, number];
     readonly roundtrip_storage_failure_v2: (a: any) => [number, number, number];
+    readonly seal_to: (a: number, b: number, c: number, d: number) => [number, number, number, number];
+    readonly sealedsession_lock: (a: number) => void;
+    readonly sealedsession_new: () => [number, number, number];
+    readonly sealedsession_open: (a: number, b: number, c: number) => [number, number, number];
+    readonly sealedsession_publicKey: (a: number) => [number, number];
+    readonly signingsession_lock: (a: number) => void;
+    readonly signingsession_new: () => [number, number, number];
+    readonly signingsession_publicKey: (a: number) => [number, number];
+    readonly signingsession_sign: (a: number, b: number, c: number) => [number, number, number, number];
+    readonly validate_key_pairs: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number];
     readonly validate_local_migration_form_v2: (a: any) => [number, number, number];
     readonly validate_local_port_form_v2: (a: any) => [number, number, number];
     readonly validate_public_operation_form_v2: (a: any) => [number, number, number];
     readonly validate_public_roster_form_v2: (a: any) => [number, number, number];
+    readonly vaultsession_has_space: (a: number, b: number, c: number, d: bigint) => number;
+    readonly vaultsession_lock: (a: number) => void;
+    readonly vaultsession_publicKey: (a: number) => [number, number, number, number];
+    readonly vaultsession_unlock_passphrase: (a: number, b: number, c: number, d: number) => [number, number, number];
+    readonly vaultsession_unlock_recovery: (a: number, b: number, c: number, d: number) => [number, number, number];
+    readonly vaultsession_upgrade_passphrase: (a: number, b: number, c: number, d: number, e: number) => [number, number, number, number];
+    readonly verify_public: (a: number, b: number, c: number, d: number, e: number, f: number) => number;
     readonly rust_sqlite_wasm_abort: () => void;
     readonly rust_sqlite_wasm_assert_fail: (a: number, b: number, c: number, d: number) => void;
     readonly rust_sqlite_wasm_calloc: (a: number, b: number) => number;
@@ -1032,6 +1233,7 @@ export interface InitOutput {
     readonly __wbindgen_externrefs: WebAssembly.Table;
     readonly __wbindgen_destroy_closure: (a: number, b: number) => void;
     readonly __externref_table_dealloc: (a: number) => void;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_start: () => void;
 }
 

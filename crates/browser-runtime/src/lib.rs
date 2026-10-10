@@ -2,12 +2,11 @@
 //! Browser-Plattformadapter auf demselben vollständigen lokalen Rust-DAL; keine eigene Fachengine.
 #![forbid(unsafe_code)]
 use diesel::SqliteConnection;
-use wimm_client_application::CoreSnapshotValidator;
 use wimm_finance_types::scalars::EntityId;
 use wimm_local_contracts::{persistence_errors::*, storage::*, storage_port::LocalStoragePort};
-use wimm_local_dal::sqlite::SqliteWriter;
+use wimm_local_runtime::RuntimeStorage;
 pub struct StorageHost {
-    pub(crate) store: SqliteWriter<CoreSnapshotValidator>,
+    pub(crate) store: RuntimeStorage,
     pub(crate) profile: EntityId,
 }
 impl StorageHost {
@@ -16,11 +15,7 @@ impl StorageHost {
         profile: EntityId,
     ) -> Result<Self, StorageFailure> {
         Ok(Self {
-            store: SqliteWriter::from_connection(
-                connection,
-                profile.clone(),
-                CoreSnapshotValidator,
-            )?,
+            store: RuntimeStorage::from_connection(connection, profile.clone())?,
             profile,
         })
     }

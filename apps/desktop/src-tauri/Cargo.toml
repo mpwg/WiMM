@@ -20,6 +20,7 @@ tempfile = "=3.27.0"
 
 wimm-finance-types = { path = "../../../crates/finance-types" }
 wimm-local-dal = { path = "../../../crates/local-dal", features = ["sqlite"] }
+wimm-local-runtime = { path = "../../../crates/local-runtime" }
 wimm-client-application = { path = "../../../crates/client-application" }
 wimm-client-crypto = { path = "../../../crates/client-crypto" }
 

@@ -53,3 +53,21 @@ Aktuelle native Assertions prüfen zusätzlich direkte gemeinsame Verbindungskon
 cargo test --locked -p wimm-local-dal --all-features --test sqlite_backup
 pnpm exec playwright test --config tests/browser-storage/config.ts --grep 'Verschlüsseltes Backup'
 ```
+
+## Gemeinsame Rust-Sitzung im produktiven Worker
+
+`crates/local-runtime` übernimmt die bisherigen Tauri-Runtimeports und deren native Assertions als gemeinsame native/WASM-Implementierung. Tauri reexportiert die gemeinsamen Ports; die alte Implementierung und die alte Testkopie sind entfernt. Der Browserhost teilt dieselbe einzelne profilgebundene SQL-Verbindung zwischen elf Speicherports, indizierten Abfragen, Rust-ClientRuntime, Commitreceipts und Originaljournal. Sitzungsschutz verwendet die vorhandenen Rust-libsodium-Primitive, Recovery-AAD und Snapshotformate. Schlüsselbesitz wird bei Sitzungsschluss gelöscht; kein neuer Kryptofallback.
+
+Typisierte Workeraktionen öffnen/schließen eine Rust-Sitzung, führen Load/Execute/History/Resolve aus und liefern auf 100 Aggregate begrenzte Seiten. Seitenparameter durchlaufen die strikte Rust-Datengrenze einschließlich Ganzzahlprüfung. Falsche Versionen, zu große/gebrochene/NaN-Seitengrenzen werden abgewiesen. Nachrichtenhandler wird vor den asynchron geladenen Kryptomodulen registriert; dadurch geht die erste Öffnungsnachricht nicht während ihrer Initialisierung verloren. Build übernimmt die originalen Rust-generierten libsodium-Snippets reproduzierbar; versionierte Signaturen bleiben driftgeprüft.
+
+Aktuelle native Prüfung: acht Runtime-Testeinträge einschließlich echtem Prozesswiederanlauf, falschem Schlüssel bei Originaljournal, verlorenem Ergebnis/Receiptlookup, lokaler Restoreepoche, Undo/Redo und zusätzlichem direkten Sitzungstest. Eine native Browserhost-Assertion sowie verbleibende sieben Tauri-Tests erfolgreich, ein bewusst ignorierter Tauri-Prozesstreiber. Keine native GUI-Abnahme hieraus ableiten.
+
+```sh
+cargo test --locked -p wimm-local-runtime -p wimm-browser-runtime
+cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
+pnpm exec playwright test --config tests/browser-storage/config.ts --grep 'Gemeinsame Rust-Anwendung'
+```
+
+Aktueller vollständiger Drei-Browserlauf: 22 erfolgreich (je sieben reguläre Fälle und ein echter WebKit-Privatmodusfall), zwei bewusst übersprungene Privatmodusfälle außerhalb WebKit. Rust-Befehls-/Undo-/Redo-/Neuladefall in jedem Browser bestanden, einschließlich falscher Bindingversion und zu großer/gebrochener/NaN-Seitengrenzen. Typecheck, Lint, native/WASM-Clippy, Architektur-/Paketgraph-/Dokumentationsprüfung sowie absichtlicher negativer Signaturdrift ohne Überschreiben erfolgreich.
+
+React-Controller/Composition-Root, vollständige Rust-Restore-/Recoverymatrix im Browser, Offline-Produktionsassets, Quota, gemeinsame Gesamtkataloge, indizierte begrenzte UI-Views und 50.000-Buchungen-Grenzen bleiben offen. Die laufende Sitzung lädt derzeit vollständigen Mutationsbestand; diese Abschnittsprüfung ist kein Leistungsnachweis. #109/#119/#146 bleiben offen.
