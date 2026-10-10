@@ -143,6 +143,13 @@ impl BrowserStorage {
     pub fn contract_version(&self) -> u32 {
         2
     }
+    pub fn rebuild_projection_cache(&mut self, space: String) -> Result<(), JsValue> {
+        let space = EntityId::new(space)
+            .map_err(|_| js_error(failure(StorageFailureCode::InvalidResponse)))?;
+        self.host()?
+            .rebuild_projection_cache(&space)
+            .map_err(js_error)
+    }
     pub fn port(
         &mut self,
         request: tsify::Ts<LocalPortRequestV2>,

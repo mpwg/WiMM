@@ -21,6 +21,7 @@ self.onmessage=({data}:MessageEvent<Message>)=>{queue=queue.then(async()=>{
    case 'runtime':value=database.runtime(data.input as RuntimeRequestV2);break;
    case 'runtimePage':value=database.runtime_page(data.input as BrowserRuntimePage);break;
    case 'closeRuntime':database.close_runtime();value=null;break;
+   case 'rebuild':database.rebuild_projection_cache(data.input as string);value=null;break;
    case 'port':value=database.port(data.input as LocalPortRequestV2);break;
    case 'commit':value=database.commit(data.input as LocalCommitRequest);break;
    case 'lookup':value=database.lookup_result(data.input as LocalOperationIdentity);break;

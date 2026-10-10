@@ -22,6 +22,10 @@ macro_rules! record {
 #[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
 #[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
 #[cfg_attr(feature="contract-schema",schemars(extend("unevaluatedProperties" = false)))]
+#[cfg_attr(
+    feature = "wasm-bindings",
+    tsify(type = "Aggregate & { handle: EntityId }")
+)]
 pub struct StoredAggregate {
     pub handle: EntityId,
     #[serde(flatten)]

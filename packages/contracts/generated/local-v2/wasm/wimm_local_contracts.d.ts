@@ -8,9 +8,7 @@ export type BoundedVec<T> = T[];
 /**
  * Native Records trennen Handle und Fachaggregat; Serde erhält das flache V1-Format.
  */
-export interface StoredAggregate extends Aggregate {
-    handle: EntityId;
-}
+export type StoredAggregate = Aggregate & { handle: EntityId };
 
 export interface Account {
     id: EntityId;

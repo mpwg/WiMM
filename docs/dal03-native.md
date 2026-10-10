@@ -63,3 +63,7 @@ Die frühen optionalen Receipt-/Checkpointprobes sind keine produktive Backendwa
 ## Nachprüfung der CI-Abnahme
 
 CI auf 2ee0cdf hat einen noch historischen positiven Checkpoint-Schema-Test mit Stand vier aufgedeckt. #108 ist deshalb bis zur erneuten Prüfung wieder geöffnet; [#147](https://github.com/mpwg/WiMM/issues/147) verfolgt die Korrektur. Der positive Fall verwendet jetzt den tatsächlich unterstützten physischen Stand fünf/logischen Stand zwei, und physische Stände eins bis vier werden ausdrücklich abgewiesen. Recovery-, Bestätigungs-, Cursor- und Zusatzfeldguards bleiben unverändert. Gezielte Standard-JSON-Schema-Prüfung und vollständige Repositorytests lokal bestanden; neue CI getrennt nachweisen. Keine Schemagrenzlockerung oder finanzielle Goldenänderung.
+
+## Bestätigte Gesamt-CI nach Schematestkorrektur
+
+Vollständige [Ubuntu-Gesamtprüfung 38068842828](https://github.com/mpwg/WiMM/actions/runs/38068842828) auf c4a0844 einschließlich aller drei Jobs erfolgreich, CodeQL 38068842956 ebenfalls erfolgreich. Die Korrektur #147 ist damit vollständig abgenommen; #108/#147 erneut CLOSED/COMPLETED. Nachfolgende PWA-/Bindingänderungen #109/#148 sind separat nachzuweisen.

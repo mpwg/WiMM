@@ -1,6 +1,6 @@
 # DAL04 — Aktueller Browser-SQLite-Abschnitt
 
-Stand: 10. Oktober 2026. [#109](https://github.com/mpwg/WiMM/issues/109), [#146](https://github.com/mpwg/WiMM/issues/146), [#114](https://github.com/mpwg/WiMM/issues/114). Keine historische Datenübernahme nach ADR-060. Native Grundlage auf 2ee0cdf; #108 wegen nachträglicher CI-Schematestkorrektur #147 wieder geöffnet, neue CI separat nachweisen.
+Stand: 10. Oktober 2026. [#109](https://github.com/mpwg/WiMM/issues/109), [#146](https://github.com/mpwg/WiMM/issues/146), [#114](https://github.com/mpwg/WiMM/issues/114). Keine historische Datenübernahme nach ADR-060. Native Grundlage auf 2ee0cdf; #108/#147 nach erfolgreicher vollständiger Ubuntu-CI auf c4a0844 wieder als COMPLETED geschlossen.
 
 ## Implementierter Abschnitt
 
@@ -12,7 +12,7 @@ Rust-basierte typisierte WASM-Einstiege sind über den produktiven Dedicated Wor
 
 | #109-Kriterium | Aktueller Stand |
 | --- | --- |
-| Tatsächlicher gemeinsamer Rust-ORM-/OPFS-DAL | Typisierter Worker auf aktuellem physischem Schema fünf implementiert und in Chromium/Firefox/WebKit geprüft. React-Composition-Root noch nicht umgestellt. |
+| Tatsächlicher gemeinsamer Rust-ORM-/OPFS-DAL | Typisierter Worker auf aktuellem physischem Schema fünf implementiert und in Chromium/Firefox/WebKit geprüft. PWA-Composition-Root verwendet jetzt den gemeinsamen Rust-/OPFS-DAL; weitergehende Rust-Controllerumschaltung bleibt offen. |
 | Offline und vollständiger Browserneustart | Vollständiger Neustart aller drei Browserprozesse mit persistentem Profil erhält synthetische P5-Aggregate, Bestätigungen, Originalentwürfe, Projektionen und Cursor. Offline-Produktionsassets noch offen. |
 | Zwei Tabs und Führungswechsel | Tatsächlicher Web Lock hält zweiten Tab zurück; Close gibt OPFS-Handles frei, neuer Besitzer öffnet identischen Zustand. Dauerhafte Receipts, gleiche Operationsidentität/Inhaltsabweichung und stale CAS nach tatsächlicher Tabübergabe/Neuöffnen zusätzlich geprüft. Absturz-/Commitunklarheitsmatrix noch offen. |
 | Persistenzablehnung, Quota und Fehler | Sichere Rust-/Workerfehler und begrenzte Pending-RPCs implementiert; tatsächliche Persistenz-/Quota-/Draft-/Oberflächenmatrix noch offen. |
@@ -41,7 +41,7 @@ Keine gesamte DAL04-/Produkt-/Legacy-/Plattformabnahme aus diesem Abschnitt. Pro
 
 Je fünf reguläre Fälle auf tatsächlicher Chromium-/Firefox-/WebKit-OPFS: leere Bereichsepoche über Worker-/Seitenneustart, tatsächliche Tabwartephase und Handlefreigabe, vollständiger synthetischer P5-Bestand einschließlich bestätigter Daten/Originalentwürfe/Cursor, vollständiger Browserprozess-Neustart mit demselben persistenten Profil sowie Originalreceipt/Idempotenz/Inhaltsabweichung/stale CAS nach Tabübergabe und erneutem Neuöffnen. Alle 15 bestanden. Separater echter WebKit-Privatmodusfall: OPFS-Öffnung RESOURCE_UNAVAILABLE/notCommitted, verständlicher Status failed, kein Write oder Ersatzbackend. Bestanden. Aktuelle Root-Typecheck-/Lint-/Whitespaceprüfungen erfolgreich.
 
-Die neuen typisierten Clientmethoden delegieren ausschließlich an die Rust-Commit-/Receipt-/Indexports; keine zweite JS-Speicher-/Finanzlogik. Die Feld-/Versions-/CAS-/Originalguards sind unverändert. Gesamt-#109 bleibt offen; Schema-CI-Korrektur #147 und wieder geöffnete #108 benötigen noch die aktuelle erforderliche CI.
+Die neuen typisierten Clientmethoden delegieren ausschließlich an die Rust-Commit-/Receipt-/Indexports; keine zweite JS-Speicher-/Finanzlogik. Die Feld-/Versions-/CAS-/Originalguards sind unverändert. Gesamt-#109 bleibt offen; #108/#147 sind nach bestätigter vollständiger CI geschlossen.
 
 ## Gemeinsamer verschlüsselter Backupstore
 
@@ -71,3 +71,25 @@ pnpm exec playwright test --config tests/browser-storage/config.ts --grep 'Gemei
 Aktueller vollständiger Drei-Browserlauf: 22 erfolgreich (je sieben reguläre Fälle und ein echter WebKit-Privatmodusfall), zwei bewusst übersprungene Privatmodusfälle außerhalb WebKit. Rust-Befehls-/Undo-/Redo-/Neuladefall in jedem Browser bestanden, einschließlich falscher Bindingversion und zu großer/gebrochener/NaN-Seitengrenzen. Typecheck, Lint, native/WASM-Clippy, Architektur-/Paketgraph-/Dokumentationsprüfung sowie absichtlicher negativer Signaturdrift ohne Überschreiben erfolgreich.
 
 React-Controller/Composition-Root, vollständige Rust-Restore-/Recoverymatrix im Browser, Offline-Produktionsassets, Quota, gemeinsame Gesamtkataloge, indizierte begrenzte UI-Views und 50.000-Buchungen-Grenzen bleiben offen. Die laufende Sitzung lädt derzeit vollständigen Mutationsbestand; diese Abschnittsprüfung ist kein Leistungsnachweis. #109/#119/#146 bleiben offen.
+
+## Produktiver PWA-Speicherpfad
+
+Der reguläre PWA-Einstieg in `apps/web/src/app.tsx` verwendet `BrowserSqliteStorageAdapter`; der bisherige IndexedDB-Finanzpfad wird dort nicht mehr konstruiert. Der Adapter delegiert elf lokale Speicherports und drei indizierte Abfragen an die versionierte Rust-Grenze. Profilbezogene Referenzzählung teilt einen Worker zwischen Finanzansicht und temporärem Export; nur letzter Close beendet Verbindungen/Web Lock. Keine zweite JS-Datenbank, Dual-Writes oder Ersatzpersistenz. Geschlossene Adapter sind nicht wiederverwendbar. Optionale DTO-Felder werden zur Datenleitung ausgelassen; unzulässige opake Originalwerte, NaN, Zyklen und Getter werden vor dem Write abgewiesen, kein stilles Umformen von Entwürfen.
+
+Projektionsneuaufbau liest den tatsächlichen Snapshot, lässt Centwerte ausschließlich durch den vorhandenen Rust-Fachkern berechnen und schreibt vollständigen Projektionsersatz mit Originalaggregat-CAS im DAL. Keine Erzeugung historischer numerischer Balancecacheformen. Native Rust-Assertion vergleicht gegen den unveränderten gesperrten Fachprojektionskatalog und prüft Originalerhaltung. Tatsächlicher Drei-Browser-Adapterfall teilt Finanz-/Exportverbindung, erhält Bestand/Originalentwürfe/Cursor und liest Rust-Projektionen nach vollständiger Worker-Wiederöffnung identisch. Vollständiger Browserlauf: 25 erfolgreich (je acht reguläre Fälle und WebKit-Privatmodus), zwei passende Überspringungen außerhalb WebKit.
+
+Produktive Chromium-UI: neues lokales Profil anlegen/entsperren, Konto mit Anfangsbestand speichern, Seite neu starten/entsperren und dasselbe Konto wieder öffnen. OPFS-Verzeichnis tatsächlich vorhanden; keine `wimm-ui-`-IndexedDB-Finanzdatenbank entstanden. Ebenfalls Profilsperre/falsche Passphrase/Neustartprüfung bestanden. Produktionsbuild einschließlich Rust-WASM/Kryptosnippets und ES-Modul-Worker erfolgreich; keine Buildwarnung unterdrückt. Gemeinsame Rust-Sitzung ist weiterhin getrennt vom noch vorhandenen TS-Finanzcontroller; dessen tatsächliche Entfernung bleibt verpflichtend in #119/#120/#146.
+
+Bei dieser Anbindung gefundener Generierungsdefekt [#148](https://github.com/mpwg/WiMM/issues/148): Tsify erzeugte ein Interface mit Union-Vererbung. Rustquelle verwendet nun explizite Intersection für das Serde-flache StoredAggregate. Drei tatsächliche generierte WASM-Deklarationen ohne skipLibCheck positiv geprüft, absichtlich alte Interfaceformen negativ abgewiesen; zwei native Rust-Assertions prüfen unveränderte flache Datenform, Handlepflicht und Tsify-Form. Generierte Dateien ausdrücklich aus Rust neu erzeugt; kein handgepflegter ABI-/Legacyadapter.
+
+```sh
+pnpm check:contracts:generated
+cargo test --locked -p wimm-local-contracts --features wasm-bindings --test stored_aggregate_declaration
+cargo test --locked -p wimm-client-application --lib
+pnpm exec playwright test tests/ui/dal04-current-storage.spec.ts tests/ui/p4-1-3.spec.ts
+pnpm --filter @wimm/web build
+```
+
+Vollständige Network-off-/Quota-/Recovery-/Checkpoint-/50.000-UI-/Gesamtkatalog-/Geräteabnahme weiter offen. Die aktuell erzeugte Debug-WASM-Größe ist kein bestandener Kaltöffnungsnachweis. Verbleibender IndexedDB-Code/Altprüfungen außerhalb des regulären PWA-Einstiegs gehören zur vollständigen Entfernung #146, nicht zu einer erlaubten Kompatibilitätsphase.
+
+CI baut die ignorierten Rust-Workerassets vor produktiven Browserprüfungen. `test:storage:browser:rust` prüft zusätzlich Browserhost, gemeinsame Runtime, Clientanwendung und lokale Vertragsquelle nativ in `target/dal04-native`; dessen einheitliche Features vermeiden die Kollision unversionierter rlib-Buildprodukte mit den zuvor ausgeführten UniFFI-/WASM-Generatoren. Anschließend derselbe echte Drei-Browserkatalog. Ein im parallelen lokalen Generator-/Testlauf beobachteter rustdoc-Artefaktfehler wurde nach gezielter Artefakterneuerung vollständig ohne übersprungene Doctests geprüft; alle Tests bestanden.

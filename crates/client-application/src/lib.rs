@@ -232,4 +232,4 @@ pub mod runtime;
 pub mod runtime_contracts;
 
 mod snapshot_validation;
-pub use snapshot_validation::CoreSnapshotValidator;
+pub use snapshot_validation::{CoreSnapshotValidator, rebuild_projection_cache};

@@ -3,3 +3,4 @@ export * from './runtime.js';
 export * from './profile-store.js';
 export * from './encrypted-backups.js';
 export * from './storage-persistence.js';
+export * from './sqlite-storage.js';

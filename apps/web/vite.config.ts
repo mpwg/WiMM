@@ -16,6 +16,7 @@ export default defineConfig(({ command }) => {
 
   return {
     customLogger: logger,
+    worker: {format:'es'},
     build: {
       target: 'baseline-widely-available',
       rolldownOptions: {

@@ -8,9 +8,7 @@ export type BoundedVec<T> = T[];
 /**
  * Native Records trennen Handle und Fachaggregat; Serde erhält das flache V1-Format.
  */
-export interface StoredAggregate extends Aggregate {
-    handle: EntityId;
-}
+export type StoredAggregate = Aggregate & { handle: EntityId };
 
 export interface Account {
     id: EntityId;
@@ -1065,6 +1063,7 @@ export class BrowserStorage {
     query_pending(query: PendingIndexQuery): LocalPortOutcomeV2;
     query_transactions(query: TransactionIndexQuery): LocalPortOutcomeV2;
     read_backup(receipt: EncryptedBackupReceipt): BrowserCiphertext;
+    rebuild_projection_cache(space: string): void;
     runtime(input: RuntimeRequestV2): RuntimeEventV2;
     runtime_page(input: BrowserRuntimePage): RuntimePageV2;
 }
@@ -1174,6 +1173,7 @@ export interface InitOutput {
     readonly browserstorage_query_pending: (a: number, b: any) => [number, number, number];
     readonly browserstorage_query_transactions: (a: number, b: any) => [number, number, number];
     readonly browserstorage_read_backup: (a: number, b: any) => [number, number, number];
+    readonly browserstorage_rebuild_projection_cache: (a: number, b: number, c: number) => [number, number];
     readonly browserstorage_runtime: (a: number, b: any) => [number, number, number];
     readonly browserstorage_runtime_page: (a: number, b: any) => [number, number, number];
     readonly canonical_json: (a: number, b: number) => [number, number, number, number];

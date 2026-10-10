@@ -139,3 +139,22 @@ test('Gemeinsame Rust-Anwendung schreibt echte SQLite-Receipts und führt Undo/R
  expect((await page.evaluate(async()=>await window.sqliteClient.runtime({contractVersion:2,domainSchemaVersion:1,action:{actionType:'load'}}))).result.status).toBe('state');
  expect(await page.evaluate(async()=>await window.sqliteClient.runtimePage(0,100))).toEqual(before);
 });
+
+test('Produktiver PWA-Adapter teilt Profilverbindung mit Export und erhält Rust-Projektionen',async({page})=>{
+ const profile=randomUUID();await ready(page,profile);
+ const seed=p5Snapshot(2);const snapshot={...seed,profileId:profile,syncState:{...seed.syncState!,profileId:profile}};
+ const result=await page.evaluate(async snapshot=>{
+  const first=window.sqliteAdapter;const exported=window.sqliteCreateAdapter();
+  const shared=first.client===exported.client;
+  await first.replaceSnapshot(snapshot);const before=await exported.exportSnapshot(snapshot.spaceId);
+  await exported.close();await first.rebuildProjections(snapshot.spaceId);
+  const after=await first.exportSnapshot(snapshot.spaceId);
+  await first.close();const reopened=window.sqliteCreateAdapter();
+  const persistent=await reopened.exportSnapshot(snapshot.spaceId);await reopened.close();
+  return {shared,before,after,persistent};
+ },snapshot);
+ expect(result.shared).toBe(true);expect(normalized(result.before)).toEqual(normalized(snapshot));
+ expect(result.after.aggregates).toEqual(result.before.aggregates);expect(result.after.pending).toEqual(result.before.pending);expect(result.after.syncState).toEqual(result.before.syncState);
+ expect(result.after.projections.some(entry=>entry.kind==='accountBalance')).toBe(true);expect(result.after.projections.some(entry=>entry.kind==='consumption'&&entry.key==='all')).toBe(true);
+ expect(result.persistent).toEqual(result.after);
+});

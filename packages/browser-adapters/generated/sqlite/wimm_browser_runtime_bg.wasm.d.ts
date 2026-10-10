@@ -20,6 +20,7 @@ export const browserstorage_query_imported: (a: number, b: any) => [number, numb
 export const browserstorage_query_pending: (a: number, b: any) => [number, number, number];
 export const browserstorage_query_transactions: (a: number, b: any) => [number, number, number];
 export const browserstorage_read_backup: (a: number, b: any) => [number, number, number];
+export const browserstorage_rebuild_projection_cache: (a: number, b: number, c: number) => [number, number];
 export const browserstorage_runtime: (a: number, b: any) => [number, number, number];
 export const browserstorage_runtime_page: (a: number, b: any) => [number, number, number];
 export const canonical_json: (a: number, b: number) => [number, number, number, number];

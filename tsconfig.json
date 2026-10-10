@@ -19,7 +19,9 @@
     "tests/core-bindings/**/*.ts",
     "tests/contract-bindings/**/*.ts",
     "tests/dal-proof/**/*.ts",
-    "tests/crypto-rust/**/*.ts"
+    "tests/crypto-rust/**/*.ts",
+    "apps/web/tests/browser-storage.ts",
+    "tests/browser-storage/**/*.ts"
   ],
   "exclude": [
     "node_modules",

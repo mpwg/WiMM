@@ -22,6 +22,15 @@ impl StorageHost {
     pub fn profile(&self) -> &EntityId {
         &self.profile
     }
+    pub fn rebuild_projection_cache(&mut self, space: &EntityId) -> Result<(), StorageFailure> {
+        let snapshot = self.store.export_snapshot(space)?;
+        let projections = wimm_client_application::rebuild_projection_cache(&snapshot)?;
+        self.store.rebuild_projections(ProjectionRebuild {
+            space_id: space.clone(),
+            source_aggregates: snapshot.aggregates,
+            projections,
+        })
+    }
     pub fn port(
         &mut self,
         request: LocalPortRequestV2,

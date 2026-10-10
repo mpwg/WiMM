@@ -97,15 +97,9 @@
     "apps/web/src/app.tsx": [
       {
         "kind": "runtime",
-        "source": "@wimm/storage",
-        "names": [
-          "IndexedDbStorageAdapter"
-        ]
-      },
-      {
-        "kind": "runtime",
         "source": "@wimm/browser-adapters",
         "names": [
+          "BrowserSqliteStorageAdapter",
           "createBrowserApplicationRuntime",
           "createBrowserProfileStore",
           "createBrowserStoragePersistence"

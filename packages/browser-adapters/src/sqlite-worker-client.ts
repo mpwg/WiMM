@@ -34,6 +34,7 @@ export class SqliteWorkerClient {
  async runtime(input:RuntimeRequestV2):Promise<RuntimeEventV2>{await this.ready;return await this.send('runtime',input) as RuntimeEventV2;}
  async runtimePage(offset:number,limit:number):Promise<RuntimePageV2>{await this.ready;return await this.send('runtimePage',{offset,limit}) as RuntimePageV2;}
  async closeRuntime():Promise<void>{await this.ready;await this.send('closeRuntime',undefined);}
+ async rebuildProjections(spaceId:UUID):Promise<void>{await this.ready;await this.send('rebuild',spaceId);}
  async port(request:LocalPortRequestV2):Promise<LocalPortOutcomeV2>{await this.ready;return await this.send('port',request) as LocalPortOutcomeV2;}
  async commit(request:LocalCommitRequest):Promise<BrowserCommitOutcome>{await this.ready;return await this.send('commit',request) as BrowserCommitOutcome;}
  async lookup(identity:LocalOperationIdentity):Promise<BrowserReceiptLookup>{await this.ready;return await this.send('lookup',identity) as BrowserReceiptLookup;}
