@@ -93,3 +93,20 @@ pnpm --filter @wimm/web build
 Vollständige Network-off-/Quota-/Recovery-/Checkpoint-/50.000-UI-/Gesamtkatalog-/Geräteabnahme weiter offen. Die aktuell erzeugte Debug-WASM-Größe ist kein bestandener Kaltöffnungsnachweis. Verbleibender IndexedDB-Code/Altprüfungen außerhalb des regulären PWA-Einstiegs gehören zur vollständigen Entfernung #146, nicht zu einer erlaubten Kompatibilitätsphase.
 
 CI baut die ignorierten Rust-Workerassets vor produktiven Browserprüfungen. `test:storage:browser:rust` prüft zusätzlich Browserhost, gemeinsame Runtime, Clientanwendung und lokale Vertragsquelle nativ in `target/dal04-native`; dessen einheitliche Features vermeiden die Kollision unversionierter rlib-Buildprodukte mit den zuvor ausgeführten UniFFI-/WASM-Generatoren. Anschließend derselbe echte Drei-Browserkatalog. Ein im parallelen lokalen Generator-/Testlauf beobachteter rustdoc-Artefaktfehler wurde nach gezielter Artefakterneuerung vollständig ohne übersprungene Doctests geprüft; alle Tests bestanden.
+
+## Echte Offline- und Quotaabschnitte
+
+Gebauter regulärer PWA-Client in Chromium und Firefox: tatsächliches persistentes Profil, neues Konto mit Anfangsbestand, vollständiger Browserprozessneustart und vor erster Navigation ausgeschaltetes Netzwerk. Cache enthält den produktiven Worker und tatsächliche Rust-WASM-Datei; PWA startet gesperrt unter Service-Worker-Kontrolle, liest vollständige identische SQL-Snapshots und erlaubt neue lokale Kontoanlage offline. Ein getrennter ausschließlich synthetischer verbundener Testbereich enthält vollständigen P5-Bestand/Bestätigungen/Originalentwürfe/Projektionen/Cursor; byteidentischer Originalstand nach Offline-Neustart über unveränderten produktiven Buildworker geprüft. Kein Outboxeintrag im privaten Standalone-Produktbereich. Beide Fälle bestanden.
+
+WebKit: derselbe Prozess-/Offlinefall scheitert bei erster Navigation trotz vorheriger Cache-/Kontrollbestätigung. Keine erfolgreiche Oberfläche im neuen Offlineprozess; erfolgreiche Traceantworten gehören zum vorherigen Prozess. Ursache Produkt-/SW-Lebensdauer oder Browser-/Playwright-Netzwerkemulation noch nicht entschieden. Zusätzliche erfolgreiche Antwort-/DOM-/Kontrollprüfung erfüllte den Nachweis ebenfalls nicht. [Delta #149](https://github.com/mpwg/WiMM/issues/149), kein physischer iOS-/Drei-Browser-Offlineabschluss.
+
+Tatsächliche Chromium-Originquota über den Browser-QuotaManager (CDP Storage.overrideQuotaForOrigin) auf aktuelle Nutzung plus 4.096 Byte begrenzt. Reale OPFS-Speicherung eines gültigen synthetischen Zwei-MiB-Originalentwurfs wird mit sicherem Ressourcen-/Writefehler abgewiesen. Quota zurückgesetzt, Worker/Seite neu geöffnet: vollständiger vorheriger Snapshot unverändert. Derselbe unveränderte vergrößerte Auftrag anschließend erfolgreich; damit kein bloßer Form-/Fachfehler als Quotanachweis. Kein Mock-DAL, künstlich geworfener JS-Quotafehler oder Fehlerklassifikationswechsel. UI-Entwurfserhaltung und Firefox-/WebKit-Quota-/Persistenzmatrix weiter offen.
+
+```sh
+pnpm --filter @wimm/web build
+pnpm exec playwright test --config tests/browser-storage/offline.config.ts --project chromium --project firefox
+pnpm exec playwright test --config tests/browser-storage/offline.config.ts --project webkit
+pnpm exec playwright test --config tests/browser-storage/config.ts --project chromium --grep 'Originquota'
+```
+
+Die neue vollständige Ubuntu-CI auf fcbef65 scheitert unabhängig an einer frühen AR05-Probeassertion für Abbruch/Writefehler. [#150](https://github.com/mpwg/WiMM/issues/150) führt Ursachen-/Umstellungsprüfung; die betroffene Probe ist ohnehin vollständig nach #146 zu entfernen. #148 bleibt bis aktueller gesamter CI offen. DAL01-/Receipt-/bisheriger Leistungsjob erfolgreich, keine Gesamtabnahme hieraus. Neue lokale Typecheck-/Lintprüfung bestanden; bei diesen reinen zusätzlichen Browsernachweisen blieb Rust-Produktcode unverändert.

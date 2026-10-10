@@ -158,3 +158,23 @@ test('Produktiver PWA-Adapter teilt Profilverbindung mit Export und erhält Rust
  expect(result.after.projections.some(entry=>entry.kind==='accountBalance')).toBe(true);expect(result.after.projections.some(entry=>entry.kind==='consumption'&&entry.key==='all')).toBe(true);
  expect(result.persistent).toEqual(result.after);
 });
+
+test('Tatsächliche Chromium-Originquota weist OPFS-Write ab und erhält vollständiges Original',async({page,context,browserName})=>{
+ test.skip(browserName!=='chromium','Gezielter tatsächlicher Chromium-QuotaManager-Nachweis über CDP, kein Firefox-/WebKit-Nachweis.');
+ const profile=randomUUID();await ready(page,profile);
+ const seed=p5Snapshot(2);const source=JSON.parse(JSON.stringify({...seed,profileId:profile,syncState:{...seed.syncState!,profileId:profile}})) as ReturnType<typeof p5Snapshot>;
+ await port(page,{method:'replaceSnapshot',snapshot:source});const before=await port(page,{method:'exportSnapshot',spaceId:source.spaceId});
+ const usage=await page.evaluate(async()=>(await navigator.storage.estimate()).usage);expect(typeof usage).toBe('number');
+ const session=await context.newCDPSession(page);const origin='http://127.0.0.1:4179';
+ const enlarged=structuredClone(source);enlarged.pending[0]!.draft={syntheticPrivateNote:'x'.repeat(2*1024*1024)};
+ await session.send('Storage.overrideQuotaForOrigin',{origin,quotaSize:usage!+4096});
+ try{
+  const error=await page.evaluate(async command=>{try{await window.sqliteClient.port({contractVersion:2,command});return null;}catch(error){const failure=error as {code:string;commitState:string};return {code:failure.code,commitState:failure.commitState};}},{method:'replaceSnapshot',snapshot:enlarged});
+  expect(error).not.toBeNull();expect(['WRITE_FAILED','RESOURCE_UNAVAILABLE','QUOTA','COMMIT_UNKNOWN']).toContain(error!.code);expect(['notCommitted','unknown']).toContain(error!.commitState);
+ }finally{await session.send('Storage.overrideQuotaForOrigin',{origin});await session.detach();}
+ await page.reload();await expect.poll(()=>page.evaluate(()=>window.sqliteStatus)).toBe('ready');
+ expect(await port(page,{method:'exportSnapshot',spaceId:source.spaceId})).toEqual(before);
+ await port(page,{method:'replaceSnapshot',snapshot:enlarged});
+ const accepted=await port(page,{method:'exportSnapshot',spaceId:source.spaceId}) as {value:typeof source};
+ expect(accepted.value.pending[0]!.draft).toEqual(enlarged.pending[0]!.draft);
+});
