@@ -6,3 +6,5 @@ apps/desktop/src-tauri/gen/
 test-results/
 .toolchain-checks/
 /target/
+/packages/browser-adapters/generated/sqlite/*.js
+/packages/browser-adapters/generated/sqlite/*.wasm

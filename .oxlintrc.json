@@ -10,7 +10,8 @@
     "**/target/**",
     "**/gen/**",
     "packages/contracts/generated/**",
-    "test-results/**"
+    "test-results/**",
+    "packages/browser-adapters/generated/**"
   ],
   "env": {
     "browser": true,

@@ -184,6 +184,19 @@ impl<V: SnapshotValidationPort> SqliteWriter<V> {
             query_plans: RefCell::new(Vec::new()),
         })
     }
+    /// Derselbe profilgebundene Writer auf einer bereits tatsächlich geöffneten nativen/WASM-Verbindung.
+    pub fn from_connection(
+        connection: SqliteConnection,
+        profile: EntityId,
+        validator: V,
+    ) -> Result<Self, StorageFailure> {
+        Ok(Self {
+            store: SqliteStore::from_connection(connection, profile)?,
+            validator,
+            #[cfg(feature = "receipt-probe")]
+            query_plans: RefCell::new(Vec::new()),
+        })
+    }
     #[cfg(feature = "receipt-probe")]
     pub fn take_index_query_plans(&self) -> Vec<String> {
         std::mem::take(&mut *self.query_plans.borrow_mut())

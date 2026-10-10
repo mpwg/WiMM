@@ -2322,6 +2322,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "wimm-browser-runtime"
+version = "0.0.0"
+dependencies = [
+ "diesel",
+ "js-sys",
+ "serde",
+ "serde_json",
+ "sqlite-wasm-rs",
+ "sqlite-wasm-vfs",
+ "tsify",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wimm-client-application",
+ "wimm-contract-primitives",
+ "wimm-finance-types",
+ "wimm-local-contracts",
+ "wimm-local-dal",
+ "wimm-persistence-contracts",
+]
+
+[[package]]
 name = "wimm-client-application"
 version = "0.0.0"
 dependencies = [

@@ -88,7 +88,9 @@
     "test:storage:receipts": "node scripts/test-local-receipts.mjs",
     "test:contracts:application": "pnpm check:contracts:generated && node scripts/test-application-bindings.mjs --native-languages && node scripts/test-application-schema-drift.mjs && pnpm exec playwright test --config tests/contract-bindings/config.ts application-wasm.spec.ts",
     "test:contracts:runtime": "node scripts/test-stateful-runtime-bindings.mjs && node scripts/test-stateful-runtime-drift.mjs && pnpm exec playwright test --config tests/contract-bindings/config.ts stateful-runtime.spec.ts",
-    "test:contracts:runtime:all": "node scripts/test-stateful-runtime-bindings.mjs --native-languages && node scripts/test-stateful-runtime-drift.mjs && pnpm exec playwright test --config tests/contract-bindings/config.ts stateful-runtime.spec.ts"
+    "test:contracts:runtime:all": "node scripts/test-stateful-runtime-bindings.mjs --native-languages && node scripts/test-stateful-runtime-drift.mjs && pnpm exec playwright test --config tests/contract-bindings/config.ts stateful-runtime.spec.ts",
+    "build:browser:runtime": "node scripts/build-browser-runtime.mjs",
+    "test:storage:browser:rust": "pnpm build:browser:runtime && pnpm exec playwright test --config tests/browser-storage/config.ts"
   },
   "devDependencies": {
     "@babel/parser": "8.0.6",

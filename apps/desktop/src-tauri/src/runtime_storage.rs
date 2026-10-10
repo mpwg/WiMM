@@ -9,49 +9,12 @@ use wimm_client_application::{
     recovery::{RecoveryJournalPort, RecoveryTicket},
     runtime::{MutationReadPort, MutationSnapshot},
 };
-use wimm_finance_core::{projection_cache, validate};
 use wimm_local_contracts::{commit::*, persistence_errors::*, storage::*, storage_port::*};
 use wimm_local_dal::sqlite::SqliteWriter;
 fn error(code: StorageFailureCode) -> StorageFailure {
     StorageFailure::unknown(code)
 }
-pub struct CoreSnapshotValidator;
-impl SnapshotValidationPort for CoreSnapshotValidator {
-    fn validate(&self, s: &LocalSnapshot) -> Result<(), StorageFailure> {
-        // Die Fach-/Cacheengine bleibt ausschließlich im Rust-Fachkern.
-        let invalid = || StorageFailure::not_committed(StorageFailureCode::WriteFailed);
-        for aggregates in [
-            s.aggregates.iter().map(|a| a.aggregate.clone()).collect(),
-            s.confirmed
-                .iter()
-                .map(|a| a.aggregate.aggregate.clone())
-                .collect(),
-        ] {
-            validate(
-                wimm_finance_types::state_contracts::ValidationRequest::Historical {
-                    contract_version: 1.into(),
-                    domain_schema_version: 1.into(),
-                    space_id: s.space_id.clone(),
-                    aggregates,
-                },
-            )
-            .map_err(|_| invalid())?;
-        }
-        let aggregates = s
-            .aggregates
-            .iter()
-            .map(|a| serde_json::to_value(&a.aggregate))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| invalid())?;
-        let projections = s
-            .projections
-            .iter()
-            .map(serde_json::to_value)
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| invalid())?;
-        projection_cache::validate(&aggregates, &projections).map_err(|_| invalid())
-    }
-}
+pub use wimm_client_application::CoreSnapshotValidator;
 /// Mehrere Portansichten teilen genau einen profilgebundenen DAL, keinen zweiten Finanzwriter.
 #[derive(Clone)]
 pub struct NativeRuntimeStorage {

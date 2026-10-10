@@ -230,3 +230,6 @@ pub mod recovery;
 pub mod runtime;
 
 pub mod runtime_contracts;
+
+mod snapshot_validation;
+pub use snapshot_validation::CoreSnapshotValidator;

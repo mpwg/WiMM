@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Gemeinsamer ORM-Zugriff auf ausschließlich das vollständige aktuelle SQLite-Schema.
 //! Öffnen und Lesen erzeugen keine Tabellen oder Finanzwrites; keine historischen Upgradepfade.
-#[cfg(not(target_family = "wasm"))]
 use diesel::connection::SimpleConnection;
 use diesel::prelude::*;
 use std::cell::RefCell;
@@ -93,6 +92,24 @@ impl SqliteStore {
                 supported(c)?;
                 Ok(())
             })
+            .map_err(|e| e.0)?;
+        Ok(Self {
+            connection: RefCell::new(connection),
+            profile,
+        })
+    }
+    /// Übernimmt genau eine echte Verbindung; Schemaanlage bleibt ein getrennter expliziter Schritt.
+    pub fn from_connection(
+        mut connection: SqliteConnection,
+        profile: EntityId,
+    ) -> Result<Self, StorageFailure> {
+        connection
+            .batch_execute(
+                "PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL; PRAGMA busy_timeout=3000;",
+            )
+            .map_err(database)?;
+        connection
+            .transaction::<_, ReadError, _>(|c| supported(c).map(|_| ()))
             .map_err(|e| e.0)?;
         Ok(Self {
             connection: RefCell::new(connection),

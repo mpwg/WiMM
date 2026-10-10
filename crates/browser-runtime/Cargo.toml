@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[package]
+name = "wimm-browser-runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+[lib]
+crate-type = ["rlib","cdylib"]
+[dependencies]
+wimm-client-application = {path="../client-application"}
+wimm-local-dal = {path="../local-dal",features=["sqlite"]}
+wimm-local-contracts = {path="../local-contracts"}
+wimm-finance-types = {path="../finance-types"}
+wimm-persistence-contracts = {path="../persistence-contracts"}
+serde.workspace = true
+serde_json.workspace = true
+diesel = {version="=2.3.13",default-features=false,features=["sqlite","32-column-tables"]}
+[target.'cfg(target_family="wasm")'.dependencies]
+wimm-local-contracts = {path="../local-contracts",features=["wasm-bindings"]}
+wimm-contract-primitives = {path="../contract-primitives",features=["wasm-data"]}
+wasm-bindgen.workspace = true
+wasm-bindgen-futures = "=0.4.79"
+js-sys = "=0.3.106"
+tsify = {version="=0.5.8",default-features=false,features=["json"]}
+sqlite-wasm-rs = "=0.5.5"
+sqlite-wasm-vfs = "=0.2.0"
+[lints]
+workspace = true

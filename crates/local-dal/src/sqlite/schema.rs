@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Vollständiges aktuelles Schema; keine historischen Upgrade- oder Bestandsübernahmepfade.
 use super::*;
-#[cfg(not(target_family = "wasm"))]
 use diesel::connection::SimpleConnection;
 use sea_query::{
     Alias, ColumnDef, ExprTrait, ForeignKey, ForeignKeyAction, Index, SqliteQueryBuilder, Table,
 };
+use wimm_local_contracts::storage_port::CancellationPort;
 #[cfg(not(target_family = "wasm"))]
-use wimm_local_contracts::storage_port::{CancellationPort, NeverCancel};
+use wimm_local_contracts::storage_port::NeverCancel;
 pub const PHYSICAL_VERSION: u32 = 5;
 pub const SNAPSHOT_VERSION: u32 = 2;
-#[cfg(not(target_family = "wasm"))]
 fn cancelled() -> ReadError {
     StorageFailure::not_committed(StorageFailureCode::Cancelled).into()
 }
@@ -362,6 +361,13 @@ impl SqliteStore {
         }
         let mut c = SqliteConnection::establish(path.to_str().ok_or_else(invalid)?)
             .map_err(|_| database(diesel::result::Error::NotFound))?;
+        Self::initialize_connection_cancellable(&mut c, cancel)
+    }
+    /// Ausschließlich expliziter Initialschritt auf einer leeren nativen oder WASM-Verbindung.
+    pub fn initialize_connection_cancellable(
+        c: &mut SqliteConnection,
+        cancel: &dyn CancellationPort,
+    ) -> Result<(), StorageFailure> {
         c.batch_execute("PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL;")
             .map_err(database)?;
         c.immediate_transaction::<_, ReadError, _>(|c| {
