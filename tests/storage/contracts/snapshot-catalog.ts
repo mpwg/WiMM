@@ -44,6 +44,24 @@ export interface SnapshotFixture {
   storageSchemaVersion?: 1 | 2; readonly storage: LocalStorageAdapter; forProfile(profile: UUID): LocalStorageAdapter; restart(): Promise<LocalStorageAdapter>; close(): Promise<void> }
 export const snapshotCases = ['lokal-leer', 'p5-entwürfe-neustart', 'negative-inhalte', 'profil-bereich-handles'] as const;
 export type SnapshotCase = typeof snapshotCases[number];
+export function negativeSnapshotVariants(before:LocalSnapshot):readonly unknown[] {
+  const first = before.aggregates[0]!;
+  const pending = before.pending[0]!;
+  const confirmed = before.confirmed[0]!;
+  const projection = before.projections[0]!;
+  return [
+    { ...before, storageSchemaVersion: 999 }, { ...before, domainSchemaVersion: 999 }, { ...before, profileId: id(99) }, { ...before, epoch: 'ungültig' },
+    { ...before, aggregates: [{ ...first, spaceId: id(99) }, ...before.aggregates.slice(1)] }, { ...before, aggregates: [{ ...first, handle: id(99) }, ...before.aggregates.slice(1)] },
+    { ...before, aggregates: [...before.aggregates, first] }, { ...before, aggregates: [{ ...first, revision: 0 }, ...before.aggregates.slice(1)] },
+    { ...before, aggregates: before.aggregates.filter((entry) => entry.aggregateType !== 'category') },
+    { ...before, confirmed: [{ ...confirmed, epoch: id(99) }] }, { ...before, confirmed: [confirmed, confirmed] }, { ...before, confirmed: [{ ...confirmed, spaceId: id(99) }] },
+    { ...before, pending: [pending, pending] }, { ...before, pending: [{ ...pending, spaceId: id(99) }] }, { ...before, pending: [{ ...pending, expectedRevisions: [{ handle: id(10), expectedRevision: -1 }] }] },
+    { ...before, pending: [{ ...pending, draft: { spaceId: id(99) } }] }, { ...before, pending: [{ ...pending, draft: { aggregates: [{ ...first, spaceId: id(99) }] } }] },
+    { ...before, pending: [{ ...pending, dependsOn: [id(70), id(70)] }] }, { ...before, pending: [{ ...pending, expectedRevisions: [pending.expectedRevisions[0], pending.expectedRevisions[0]] }] },
+    { ...before, projections: [projection, projection] }, { ...before, projections: [{ ...projection, spaceId: id(99) }] }, { ...before, projections: [{ ...projection, payload: { balance: 1 } }] },
+    { ...before, projections: [{ ...projection, kind: 'unbekannt' }] }, { ...before, syncState: { ...before.syncState, epoch: id(99) } }, { ...before, syncState: { ...before.syncState, profileId: id(99) } }, { ...before, syncState: { ...before.syncState, spaceId: id(99) } }
+  ];
+}
 export async function runSnapshotCase(scenario: SnapshotCase, fixture: SnapshotFixture): Promise<void> {
   let storage = fixture.storage;
   const protector = createEncryptedJsonSnapshotProtector<LocalSnapshot>(new Uint8Array(32).fill(7));
@@ -77,22 +95,7 @@ export async function runSnapshotCase(scenario: SnapshotCase, fixture: SnapshotF
       return;
     }
     if (scenario === 'negative-inhalte') {
-      const first = before.aggregates[0]!;
-      const pending = before.pending[0]!;
-      const confirmed = before.confirmed[0]!;
-      const projection = before.projections[0]!;
-      const variants: readonly unknown[] = [
-        { ...before, storageSchemaVersion: 999 }, { ...before, domainSchemaVersion: 999 }, { ...before, profileId: id(99) }, { ...before, epoch: 'ungültig' },
-        { ...before, aggregates: [{ ...first, spaceId: id(99) }, ...before.aggregates.slice(1)] }, { ...before, aggregates: [{ ...first, handle: id(99) }, ...before.aggregates.slice(1)] },
-        { ...before, aggregates: [...before.aggregates, first] }, { ...before, aggregates: [{ ...first, revision: 0 }, ...before.aggregates.slice(1)] },
-        { ...before, aggregates: before.aggregates.filter((entry) => entry.aggregateType !== 'category') },
-        { ...before, confirmed: [{ ...confirmed, epoch: id(99) }] }, { ...before, confirmed: [confirmed, confirmed] }, { ...before, confirmed: [{ ...confirmed, spaceId: id(99) }] },
-        { ...before, pending: [pending, pending] }, { ...before, pending: [{ ...pending, spaceId: id(99) }] }, { ...before, pending: [{ ...pending, expectedRevisions: [{ handle: id(10), expectedRevision: -1 }] }] },
-        { ...before, pending: [{ ...pending, draft: { spaceId: id(99) } }] }, { ...before, pending: [{ ...pending, draft: { aggregates: [{ ...first, spaceId: id(99) }] } }] },
-        { ...before, pending: [{ ...pending, dependsOn: [id(70), id(70)] }] }, { ...before, pending: [{ ...pending, expectedRevisions: [pending.expectedRevisions[0], pending.expectedRevisions[0]] }] },
-        { ...before, projections: [projection, projection] }, { ...before, projections: [{ ...projection, spaceId: id(99) }] }, { ...before, projections: [{ ...projection, payload: { balance: 1 } }] },
-        { ...before, projections: [{ ...projection, kind: 'unbekannt' }] }, { ...before, syncState: { ...before.syncState, epoch: id(99) } }, { ...before, syncState: { ...before.syncState, profileId: id(99) } }, { ...before, syncState: { ...before.syncState, spaceId: id(99) } }
-      ];
+      const variants=negativeSnapshotVariants(before);
       for (const [index, value] of variants.entries()) {
         let rejected = false;
         try { await service.replaceEncryptedSnapshot(protector, await protector.seal(value as LocalSnapshot)); } catch { rejected = true; }

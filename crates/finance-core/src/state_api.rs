@@ -55,3 +55,27 @@ fn check_versions(binding: u32, domain: u32) -> CoreResult<()> {
         ))
     }
 }
+
+/// Referenzen gegen vollständigen Bestand prüfen; Monatsauswahl gehört erst in die Projektion.
+pub fn project_month(
+    request: ProjectionRequest,
+    month: &str,
+) -> CoreResult<wimm_finance_types::state_contracts::Consumption> {
+    check_versions(
+        request.contract_version.value(),
+        request.domain_schema_version.value(),
+    )?;
+    crate::calendar::parse_year_month(month)?;
+    state_validation::typed_validate(&request.aggregates, request.space_id.as_str())?;
+    let selected = request
+        .aggregates
+        .into_iter()
+        .filter(|entry| match entry {
+            wimm_finance_types::models::Aggregate::Transaction(tx) => {
+                tx.date.as_str().starts_with(month)
+            }
+            _ => true,
+        })
+        .collect::<Vec<_>>();
+    projections::typed_consumption(&selected)
+}

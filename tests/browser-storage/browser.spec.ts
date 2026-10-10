@@ -5,7 +5,7 @@ import {resolve} from 'node:path';
 import {readFileSync} from 'node:fs';
 import type {LocalCommitRequest,RuntimeRequestV2,LocalSnapshot as RustSnapshot} from '../../packages/browser-adapters/generated/sqlite/wimm_browser_runtime.js';
 import {randomUUID} from 'node:crypto';
-import {p5Snapshot,normalized} from '../storage/contracts/snapshot-catalog.js';
+import {p5Snapshot,normalized,snapshotCases,profileId as catalogProfile} from '../storage/contracts/snapshot-catalog.js';
 const engines={chromium,firefox,webkit};
 const test=base.extend({context:async({browserName},provide)=>{
  const dir=await mkdtemp(resolve('test-results/dal04/contract-browser-profile-'));
@@ -177,4 +177,16 @@ test('Tatsächliche Chromium-Originquota weist OPFS-Write ab und erhält vollst�
  await port(page,{method:'replaceSnapshot',snapshot:enlarged});
  const accepted=await port(page,{method:'exportSnapshot',spaceId:source.spaceId}) as {value:typeof source};
  expect(accepted.value.pending[0]!.draft).toEqual(enlarged.pending[0]!.draft);
+});
+
+for(const scenario of snapshotCases)test(`Gemeinsamer aktueller Snapshotkatalog auf Rust/OPFS: ${scenario}`,async({page})=>{
+ await ready(page,catalogProfile);await page.evaluate(async scenario=>await window.sqliteSnapshotCase(scenario),scenario);
+});
+
+test('Gemeinsame 26 Negativsnapshots werden unmittelbar von Rust/WASM abgewiesen',async({page})=>{
+ await ready(page,catalogProfile);expect(await page.evaluate(async()=>await window.sqliteNegativeSnapshots())).toBe(26);
+});
+
+test('Rust-Cachewerte entsprechen F01, Transfer, Erstattung und Tombstone nach tatsächlicher Wiederöffnung',async({page})=>{
+ await ready(page,catalogProfile);await page.evaluate(async()=>await window.sqliteRebuildOracle());
 });

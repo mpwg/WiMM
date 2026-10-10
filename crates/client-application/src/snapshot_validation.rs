@@ -126,27 +126,19 @@ pub fn rebuild_projection_cache(
         }
     }
     for month in months {
-        let selected = all
-            .iter()
-            .filter(|entry| match entry {
-                Aggregate::Transaction(tx) => tx.date.as_str().starts_with(&month),
-                _ => true,
-            })
-            .cloned()
-            .collect::<Vec<_>>();
         result.push(StoredProjection::Consumption {
             space_id: snapshot.space_id.clone(),
-            key: NonEmptyText::new(month).map_err(|_| invalid())?,
-            payload: wimm_finance_core::project(
+            key: NonEmptyText::new(month.clone()).map_err(|_| invalid())?,
+            payload: wimm_finance_core::project_month(
                 wimm_finance_types::state_contracts::ProjectionRequest {
                     contract_version: 1.into(),
                     domain_schema_version: 1.into(),
                     space_id: snapshot.space_id.clone(),
-                    aggregates: selected,
+                    aggregates: all.clone(),
                 },
+                &month,
             )
-            .map_err(|_| invalid())?
-            .consumption,
+            .map_err(|_| invalid())?,
         });
     }
     Ok(result)

@@ -27,7 +27,7 @@ mod schedule_dates;
 mod state_api;
 mod state_validation;
 pub use state_api::{
-    decode_projection_request_v1, decode_validation_request_v1, project, validate,
+    decode_projection_request_v1, decode_validation_request_v1, project, project_month, validate,
 };
 mod transfer_commands;
 mod typed_financial;

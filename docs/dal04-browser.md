@@ -127,3 +127,23 @@ WIMM_OFFLINE_STOP_SERVER=1 pnpm exec playwright test --config tests/browser-stor
 ```
 
 Dieser zusätzliche Nachweis grenzt #149 ein: echte Servernichtereichbarkeit funktioniert auch in WebKit, dessen Playwright-Offlineemulation scheitert weiter. Navigator-onLine/echte physische Flugmodus-/iOS-/Safariabnahme bleiben davon getrennt; Ursache der Emulationsabweichung noch nicht abschließend belegt, Issue bleibt offen. Die ursprüngliche fehlgeschlagene Reproduktion bleibt erhalten; kein ersetzter Backendpfad oder Online-Warmstart als Kaltstart. Aktuelle Typecheck-/Lint-/Architekturprüfung grün; zwei Typfehler des nachträglich verschärften Quotatestfixtures (Readonly-Draft und DTO-Mutabilität) korrigiert, keine Speichersperre gelockert.
+
+## Gemeinsamer Snapshotkatalog und direkte Rust-Negativgrenze
+
+Die vier bestehenden gemeinsamen Snapshotfälle laufen mit aktueller logischer Version zwei auf dem regulären Rust-/OPFS-Adapter: leerer Bereich, verschlüsselter P5-/Originalentwurfsroundtrip mit tatsächlicher Wiederöffnung, 26 unveränderte Negativformen mit Originalerhaltung und Profil-/Bereichs-/Handletrennung. Ein Profilwechsel schließt den tatsächlichen Besitzer und öffnet den nächsten profilgebundenen Writer; kein zweiter Testbackend oder stiller Ersatzspeicher. Je vier Fälle in Chromium/Firefox/WebKit erfolgreich.
+
+Dieselben 26 Negativvarianten sind als unveränderte gemeinsame Datenfunktion aus dem Katalog extrahiert und zusätzlich unmittelbar an den Rust-WASM-Port geschickt, ohne LocalAreaService/TS-Snapshotvalidator. Jede Variante wurde in jedem Browser mit sicherer Fehlerhülle abgewiesen; vollständiger Originalsnapshot blieb nach jedem Versuch unverändert. 78 tatsächliche Rust-Grenzablehnungen. Keine financial Goldenumschreibung oder abgesenkte Kriterien.
+
+Bei weiterer F01-Neuaufbaukonformität gefundener [Fehler #151](https://github.com/mpwg/WiMM/issues/151): leere historische Monatscaches wurden gegen einen bereits um Monatsbuchungen gefilterten Bestand geprüft, sodass gültige Transferreferenzen fehlten. Der Fachkern bietet nun einen typisierten Monatsprojektionsschritt: vollständigen Originalbestand und Monat zuerst prüfen, erst danach Transaktionen für die Konsumprojektion auswählen. Alle Cent-/Summen-/Referenzregeln bleiben im Kern; Clientanwendung filtert keine Fachtransaktionen mehr.
+
+Native Regression verwendet tatsächlichen gesperrten Transferprojektionsfall: leerer Monat liefert null Cent und keine Kategorien, unverändertes Original bleibt erhalten, beschädigter vollständiger Transferbestand und ungültiger Monat werden weiter abgewiesen. Gesamte Rust-Fachkern- und relevante Clientanwendungsassertions sowie Clippy mit -D warnings erfolgreich. Worker-WASM aus korrigierter Rustquelle ohne Signaturdrift erzeugt. F01-/Transfer-/Erstattungs-/Tombstone-/Monatscentwerte werden im Browser gegen die unveränderten bisherigen Zahlen geprüft; ausschließlich aktuelle accountBalance-/consumption-Adressen erwartet, keine neue Legacy-Balanceerzeugung.
+
+```sh
+cargo test --locked -p wimm-finance-core
+cargo test --locked -p wimm-finance-core --test month_projection
+pnpm exec playwright test --config tests/browser-storage/config.ts --grep 'Rust-Cachewerte|Snapshotkatalog|Negativsnapshots'
+```
+
+Die laufende vollständige CI auf 47e2497 gehört zum vorherigen Abschnitt und ist keine Prüfung dieses neuen Kernfixes. #109/#148/#149/#150/#151/Gesamtabnahmen bleiben bis jeweiligem vollständigem Nachweis offen.
+
+Aktueller kombinierter Kataloglauf: 18 erfolgreich (je vier gemeinsame Snapshotfälle, ein direkter 26-Varianten-Grenzfall und ein F01-Neuaufbau-/Idempotenz-/Wiederöffnungsfall pro Browser). Typecheck einschließlich neuer Testconsumer, Lint, Dokumentation und Whitespace ebenfalls erfolgreich.
