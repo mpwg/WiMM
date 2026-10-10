@@ -281,9 +281,13 @@
     },
     "wimm-client-application": {
       "role": "client",
-      "features": [],
+      "features": [
+        "contract-schema",
+        "native-bindings",
+        "wasm-bindings"
+      ],
       "checkClosure": true,
-      "bindings": false,
+      "bindings": true,
       "nativeAssertions": "crates/client-application/tests/commit_preparation.rs"
     }
   },

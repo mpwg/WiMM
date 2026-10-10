@@ -1,0 +1,18 @@
+{
+  "snapshotDate": "2026-10-10",
+  "scope": "Optionale Bindings und Formschemas der privaten Rust-Anwendungsquelle; keine neue Fremdversion",
+  "projectLicense": "AGPL-3.0-or-later",
+  "source": "crates/client-application",
+  "reusedRegistries": [
+    "docs/dependency-provenance/contract-schema.json",
+    "docs/dependency-provenance/rust-core.json"
+  ],
+  "versions": {
+    "uniffi": "0.32.2",
+    "tsify": "0.5.8",
+    "schemars": "1.2.2",
+    "wasm-bindgen": "0.2.129"
+  },
+  "localChanges": "Vorhandene gesperrte Generatoren und neutrale Primitive unverändert verwenden; eigene Rust-Verträge, optionales Scaffolding, getrenntes application-v2-SDK und Driftprüfung ergänzen.",
+  "foreignNotices": "Generatorhinweise und Fremdlizenzen erhalten; vollständiges Register weiterhin #72."
+}

@@ -38,6 +38,31 @@ export interface AggregateQuery {
     spaceId: EntityId;
 }
 
+export interface ApplicationCommandV2 {
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    command: Command;
+    expectedRevisions: Expectation[];
+    context: Context;
+}
+
+export interface ApplicationRequestV2 {
+    contractVersion: number;
+    domainSchemaVersion: number;
+    started: CommitContext;
+    current: CommitContext;
+    mode: AreaMode;
+    action: ApplicationActionV2;
+}
+
+export interface ApplicationReverseV2 {
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    expectedRevisions: Expectation[];
+    context: Context;
+    targets: NonEmptyVec<ReverseTarget>;
+}
+
 export interface ApplicationScope {
     profileId: PublicId;
     spaceId: PublicId;
@@ -102,6 +127,15 @@ export interface ChangeSet {
 export interface ClassificationRow {
     sourceRow: PositiveOrdinal;
     classification: Classification;
+}
+
+export interface CommitContext {
+    profileId: EntityId;
+    spaceId: EntityId;
+    epoch: EntityId;
+    profileRevision: Revision;
+    sessionGeneration: Revision;
+    generation: Revision;
 }
 
 export interface CommittedRevision {
@@ -784,6 +818,14 @@ export type Aggregate = ({ aggregateType: "account" } & Account) | ({ aggregateT
 
 export type AggregateKind = "Account" | "FinancialRevision" | "CategoryGroup" | "Category" | "Payee" | "Transaction" | "Transfer" | "Reconciliation" | "ImportMapping" | "ImportBatch" | "ImportFingerprint" | "Rule" | "Schedule" | "ScheduleOccurrence";
 
+export type ApplicationActionV2 = { actionType: "command"; request: ApplicationCommandV2 } | { actionType: "reverse"; request: ApplicationReverseV2 };
+
+export type ApplicationFailureCode = "UPDATE_REQUIRED" | "SCOPE_CHANGED" | "WRONG_AREA" | "INVALID_STATE" | "FINANCE_REJECTED";
+
+export type ApplicationPreparationV2 = { status: "prepared"; contractVersion: number; context: CommitContext; request: LocalCommitRequest } | { status: "unchanged"; contractVersion: number } | { status: "rejected"; contractVersion: number; code: ApplicationFailureCode; financeCode: string | null };
+
+export type AreaMode = "standalone" | "connected";
+
 export type Base64Url = string;
 
 export type CalculationOutcome = { status: "money"; contractVersion: number; value: MoneyCents } | { status: "ruleApplied"; contractVersion: number; candidate: ImportCandidate; appliedRuleIds: EntityId[] } | { status: "classified"; contractVersion: number; rows: ClassificationRow[] } | { status: "dueDates"; contractVersion: number; dates: FinanceDate[] };
@@ -969,6 +1011,8 @@ export function execute_json(request: string): string;
 
 export function execute_v2(input: Request): CommandOutcomeV2;
 
+export function prepare_application_v2(input: ApplicationRequestV2): ApplicationPreparationV2;
+
 export function project_json(request: string): string;
 
 export function project_v2(request: ProjectionRequest): ProjectionOutcome;
@@ -1014,6 +1058,7 @@ export interface InitOutput {
     readonly moneyresultv2_message: (a: number) => [number, number];
     readonly moneyresultv2_status: (a: number) => number;
     readonly moneyresultv2_value: (a: number) => [number, number];
+    readonly prepare_application_v2: (a: any) => [number, number, number];
     readonly project_json: (a: number, b: number) => [number, number];
     readonly project_v2: (a: any) => [number, number, number];
     readonly reverse_json: (a: number, b: number) => [number, number];

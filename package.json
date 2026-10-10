@@ -67,8 +67,8 @@
     "test:dal:proof": "node scripts/test-dal-proof.mjs",
     "check:contracts:generated": "node scripts/generate-contract-bindings.mjs --check",
     "generate:contracts:bindings": "node scripts/generate-contract-bindings.mjs --write",
-    "test:contracts:bindings:v2": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-typed-command-wasm.mjs --node-only && node scripts/test-typed-state-wasm.mjs --node-only && node scripts/test-private-contract-schema.mjs && node scripts/test-contract-schema-drift.mjs && node scripts/test-public-contracts.mjs && node scripts/test-local-contracts.mjs && node scripts/test-contract-bindings-v2.mjs",
-    "test:contracts:bindings:v2:all": "pnpm check:contracts:generated && cargo test --locked -p wimm-core-bindings && node scripts/test-typed-command-wasm.mjs --node-only && node scripts/test-typed-state-wasm.mjs --node-only && node scripts/test-private-contract-schema.mjs && node scripts/test-contract-schema-drift.mjs && node scripts/test-public-contracts.mjs && node scripts/test-local-contracts.mjs && node scripts/test-contract-bindings-v2.mjs --native-languages swift,kotlin",
+    "test:contracts:bindings:v2": "pnpm check:contracts:generated && node scripts/test-application-bindings.mjs && node scripts/test-application-schema-drift.mjs && cargo test --locked -p wimm-core-bindings && node scripts/test-typed-command-wasm.mjs --node-only && node scripts/test-typed-state-wasm.mjs --node-only && node scripts/test-private-contract-schema.mjs && node scripts/test-contract-schema-drift.mjs && node scripts/test-public-contracts.mjs && node scripts/test-local-contracts.mjs && node scripts/test-contract-bindings-v2.mjs",
+    "test:contracts:bindings:v2:all": "pnpm check:contracts:generated && node scripts/test-application-bindings.mjs --native-languages && node scripts/test-application-schema-drift.mjs && cargo test --locked -p wimm-core-bindings && node scripts/test-typed-command-wasm.mjs --node-only && node scripts/test-typed-state-wasm.mjs --node-only && node scripts/test-private-contract-schema.mjs && node scripts/test-contract-schema-drift.mjs && node scripts/test-public-contracts.mjs && node scripts/test-local-contracts.mjs && node scripts/test-contract-bindings-v2.mjs --native-languages swift,kotlin",
     "test:contracts:schema": "pnpm check:contracts:generated && node scripts/test-private-contract-schema.mjs && node scripts/test-contract-schema-drift.mjs",
     "test:contracts:snapshot:native": "node scripts/test-snapshot-contract-bindings.mjs",
     "test:contracts:ports:native": "node scripts/test-port-contract-bindings.mjs",
@@ -85,7 +85,8 @@
     "check:target:architecture": "node scripts/check-target-architecture.mjs",
     "test:target:architecture": "node --test scripts/check-target-architecture.test.mjs && node scripts/test-target-architecture-injection.mjs && node scripts/test-native-architecture-assertions.mjs",
     "test:crypto:rust": "node scripts/test-rust-crypto.mjs",
-    "test:storage:receipts": "node scripts/test-local-receipts.mjs"
+    "test:storage:receipts": "node scripts/test-local-receipts.mjs",
+    "test:contracts:application": "pnpm check:contracts:generated && node scripts/test-application-bindings.mjs --native-languages && node scripts/test-application-schema-drift.mjs && pnpm exec playwright test --config tests/contract-bindings/config.ts application-wasm.spec.ts"
   },
   "devDependencies": {
     "@babel/parser": "8.0.6",

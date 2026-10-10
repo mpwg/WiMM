@@ -7,8 +7,8 @@ import Foundation
 // Depending on the consumer's build setup, the low-level FFI code
 // might be in a separate module, or it might be compiled inline into
 // this module. This is a bit of light hackery to work with both.
-#if canImport(WiMMCoreFFI)
-import WiMMCoreFFI
+#if canImport(WiMMApplicationFFI)
+import WiMMApplicationFFI
 #endif
 
 fileprivate extension RustBuffer {
@@ -25,13 +25,13 @@ fileprivate extension RustBuffer {
     }
 
     static func from(_ ptr: UnsafeBufferPointer<UInt8>) -> RustBuffer {
-        try! rustCall { ffi_wimm_core_bindings_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
+        try! rustCall { ffi_wimm_client_application_rustbuffer_from_bytes(ForeignBytes(bufferPointer: ptr), $0) }
     }
 
     // Frees the buffer in place.
     // The buffer must not be used after this is called.
     func deallocate() {
-        try! rustCall { ffi_wimm_core_bindings_rustbuffer_free(self, $0) }
+        try! rustCall { ffi_wimm_client_application_rustbuffer_free(self, $0) }
     }
 }
 
@@ -327,7 +327,7 @@ private func makeRustCall<T, E: Swift.Error>(
     _ callback: (UnsafeMutablePointer<RustCallStatus>) -> T,
     errorHandler: ((RustBuffer) throws -> E)?
 ) throws -> T {
-    uniffiEnsureWimmCoreBindingsInitialized()
+    uniffiEnsureWimmClientApplicationInitialized()
     var callStatus = RustCallStatus.init()
     let returnedVal = callback(&callStatus)
     try uniffiCheckCallStatus(callStatus: callStatus, errorHandler: errorHandler)
@@ -541,19 +541,89 @@ fileprivate struct FfiConverterString: FfiConverter {
 }
 
 
-public struct MoneyRequestV2: Equatable, Hashable {
+public struct ApplicationCommandV2: Equatable, Hashable {
+    public var spaceId: EntityId
+    public var aggregates: [Aggregate]
+    public var command: Command
+    public var expectedRevisions: [Expectation]
+    public var context: Context
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(spaceId: EntityId, aggregates: [Aggregate], command: Command, expectedRevisions: [Expectation], context: Context) {
+        self.spaceId = spaceId
+        self.aggregates = aggregates
+        self.command = command
+        self.expectedRevisions = expectedRevisions
+        self.context = context
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ApplicationCommandV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeApplicationCommandV2: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ApplicationCommandV2 {
+        return
+            try ApplicationCommandV2(
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                aggregates: FfiConverterSequenceTypeAggregate.read(from: &buf),
+                command: FfiConverterTypeCommand.read(from: &buf),
+                expectedRevisions: FfiConverterSequenceTypeExpectation.read(from: &buf),
+                context: FfiConverterTypeContext.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ApplicationCommandV2, into buf: inout [UInt8]) {
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterSequenceTypeAggregate.write(value.aggregates, into: &buf)
+        FfiConverterTypeCommand.write(value.command, into: &buf)
+        FfiConverterSequenceTypeExpectation.write(value.expectedRevisions, into: &buf)
+        FfiConverterTypeContext.write(value.context, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeApplicationCommandV2_lift(_ buf: RustBuffer) throws -> ApplicationCommandV2 {
+    return try FfiConverterTypeApplicationCommandV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeApplicationCommandV2_lower(_ value: ApplicationCommandV2) -> RustBuffer {
+    return FfiConverterTypeApplicationCommandV2.lower(value)
+}
+
+
+public struct ApplicationRequestV2: Equatable, Hashable {
     public var contractVersion: UInt32
     public var domainSchemaVersion: UInt32
-    public var spaceId: String
-    public var text: String
+    public var started: CommitContext
+    public var current: CommitContext
+    public var mode: AreaMode
+    public var action: ApplicationActionV2
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(contractVersion: UInt32, domainSchemaVersion: UInt32, spaceId: String, text: String) {
+    public init(contractVersion: UInt32, domainSchemaVersion: UInt32, started: CommitContext, current: CommitContext, mode: AreaMode, action: ApplicationActionV2) {
         self.contractVersion = contractVersion
         self.domainSchemaVersion = domainSchemaVersion
-        self.spaceId = spaceId
-        self.text = text
+        self.started = started
+        self.current = current
+        self.mode = mode
+        self.action = action
     }
 
 
@@ -562,28 +632,32 @@ public struct MoneyRequestV2: Equatable, Hashable {
 }
 
 #if compiler(>=6)
-extension MoneyRequestV2: Sendable {}
+extension ApplicationRequestV2: Sendable {}
 #endif
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public struct FfiConverterTypeMoneyRequestV2: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> MoneyRequestV2 {
+public struct FfiConverterTypeApplicationRequestV2: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ApplicationRequestV2 {
         return
-            try MoneyRequestV2(
+            try ApplicationRequestV2(
                 contractVersion: FfiConverterUInt32.read(from: &buf),
                 domainSchemaVersion: FfiConverterUInt32.read(from: &buf),
-                spaceId: FfiConverterString.read(from: &buf),
-                text: FfiConverterString.read(from: &buf)
+                started: FfiConverterTypeCommitContext.read(from: &buf),
+                current: FfiConverterTypeCommitContext.read(from: &buf),
+                mode: FfiConverterTypeAreaMode.read(from: &buf),
+                action: FfiConverterTypeApplicationActionV2.read(from: &buf)
         )
     }
 
-    public static func write(_ value: MoneyRequestV2, into buf: inout [UInt8]) {
+    public static func write(_ value: ApplicationRequestV2, into buf: inout [UInt8]) {
         FfiConverterUInt32.write(value.contractVersion, into: &buf)
         FfiConverterUInt32.write(value.domainSchemaVersion, into: &buf)
-        FfiConverterString.write(value.spaceId, into: &buf)
-        FfiConverterString.write(value.text, into: &buf)
+        FfiConverterTypeCommitContext.write(value.started, into: &buf)
+        FfiConverterTypeCommitContext.write(value.current, into: &buf)
+        FfiConverterTypeAreaMode.write(value.mode, into: &buf)
+        FfiConverterTypeApplicationActionV2.write(value.action, into: &buf)
     }
 }
 
@@ -591,36 +665,33 @@ public struct FfiConverterTypeMoneyRequestV2: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public func FfiConverterTypeMoneyRequestV2_lift(_ buf: RustBuffer) throws -> MoneyRequestV2 {
-    return try FfiConverterTypeMoneyRequestV2.lift(buf)
+public func FfiConverterTypeApplicationRequestV2_lift(_ buf: RustBuffer) throws -> ApplicationRequestV2 {
+    return try FfiConverterTypeApplicationRequestV2.lift(buf)
 }
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public func FfiConverterTypeMoneyRequestV2_lower(_ value: MoneyRequestV2) -> RustBuffer {
-    return FfiConverterTypeMoneyRequestV2.lower(value)
+public func FfiConverterTypeApplicationRequestV2_lower(_ value: ApplicationRequestV2) -> RustBuffer {
+    return FfiConverterTypeApplicationRequestV2.lower(value)
 }
 
 
-/**
- * Nur Ausgabevertrag: ein Erfolg hat Cent, eine Ablehnung Code/Meldung.
- */
-public struct MoneyResultV2: Equatable, Hashable {
-    public var contractVersion: UInt32
-    public var status: MoneyStatusV2
-    public var value: Int64?
-    public var errorCode: String?
-    public var message: String?
+public struct ApplicationReverseV2: Equatable, Hashable {
+    public var spaceId: EntityId
+    public var aggregates: [Aggregate]
+    public var expectedRevisions: [Expectation]
+    public var context: Context
+    public var targets: ReverseTargets
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(contractVersion: UInt32, status: MoneyStatusV2, value: Int64?, errorCode: String?, message: String?) {
-        self.contractVersion = contractVersion
-        self.status = status
-        self.value = value
-        self.errorCode = errorCode
-        self.message = message
+    public init(spaceId: EntityId, aggregates: [Aggregate], expectedRevisions: [Expectation], context: Context, targets: ReverseTargets) {
+        self.spaceId = spaceId
+        self.aggregates = aggregates
+        self.expectedRevisions = expectedRevisions
+        self.context = context
+        self.targets = targets
     }
 
 
@@ -629,30 +700,30 @@ public struct MoneyResultV2: Equatable, Hashable {
 }
 
 #if compiler(>=6)
-extension MoneyResultV2: Sendable {}
+extension ApplicationReverseV2: Sendable {}
 #endif
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public struct FfiConverterTypeMoneyResultV2: FfiConverterRustBuffer {
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> MoneyResultV2 {
+public struct FfiConverterTypeApplicationReverseV2: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ApplicationReverseV2 {
         return
-            try MoneyResultV2(
-                contractVersion: FfiConverterUInt32.read(from: &buf),
-                status: FfiConverterTypeMoneyStatusV2.read(from: &buf),
-                value: FfiConverterOptionInt64.read(from: &buf),
-                errorCode: FfiConverterOptionString.read(from: &buf),
-                message: FfiConverterOptionString.read(from: &buf)
+            try ApplicationReverseV2(
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                aggregates: FfiConverterSequenceTypeAggregate.read(from: &buf),
+                expectedRevisions: FfiConverterSequenceTypeExpectation.read(from: &buf),
+                context: FfiConverterTypeContext.read(from: &buf),
+                targets: FfiConverterTypeReverseTargets.read(from: &buf)
         )
     }
 
-    public static func write(_ value: MoneyResultV2, into buf: inout [UInt8]) {
-        FfiConverterUInt32.write(value.contractVersion, into: &buf)
-        FfiConverterTypeMoneyStatusV2.write(value.status, into: &buf)
-        FfiConverterOptionInt64.write(value.value, into: &buf)
-        FfiConverterOptionString.write(value.errorCode, into: &buf)
-        FfiConverterOptionString.write(value.message, into: &buf)
+    public static func write(_ value: ApplicationReverseV2, into buf: inout [UInt8]) {
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterSequenceTypeAggregate.write(value.aggregates, into: &buf)
+        FfiConverterSequenceTypeExpectation.write(value.expectedRevisions, into: &buf)
+        FfiConverterTypeContext.write(value.context, into: &buf)
+        FfiConverterTypeReverseTargets.write(value.targets, into: &buf)
     }
 }
 
@@ -660,23 +731,95 @@ public struct FfiConverterTypeMoneyResultV2: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public func FfiConverterTypeMoneyResultV2_lift(_ buf: RustBuffer) throws -> MoneyResultV2 {
-    return try FfiConverterTypeMoneyResultV2.lift(buf)
+public func FfiConverterTypeApplicationReverseV2_lift(_ buf: RustBuffer) throws -> ApplicationReverseV2 {
+    return try FfiConverterTypeApplicationReverseV2.lift(buf)
 }
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public func FfiConverterTypeMoneyResultV2_lower(_ value: MoneyResultV2) -> RustBuffer {
-    return FfiConverterTypeMoneyResultV2.lower(value)
+public func FfiConverterTypeApplicationReverseV2_lower(_ value: ApplicationReverseV2) -> RustBuffer {
+    return FfiConverterTypeApplicationReverseV2.lower(value)
+}
+
+
+public struct CommitContext: Equatable, Hashable {
+    public var profileId: EntityId
+    public var spaceId: EntityId
+    public var epoch: EntityId
+    public var profileRevision: Revision
+    public var sessionGeneration: Revision
+    public var generation: Revision
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(profileId: EntityId, spaceId: EntityId, epoch: EntityId, profileRevision: Revision, sessionGeneration: Revision, generation: Revision) {
+        self.profileId = profileId
+        self.spaceId = spaceId
+        self.epoch = epoch
+        self.profileRevision = profileRevision
+        self.sessionGeneration = sessionGeneration
+        self.generation = generation
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension CommitContext: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCommitContext: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CommitContext {
+        return
+            try CommitContext(
+                profileId: FfiConverterTypeEntityId.read(from: &buf),
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                epoch: FfiConverterTypeEntityId.read(from: &buf),
+                profileRevision: FfiConverterTypeRevision.read(from: &buf),
+                sessionGeneration: FfiConverterTypeRevision.read(from: &buf),
+                generation: FfiConverterTypeRevision.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: CommitContext, into buf: inout [UInt8]) {
+        FfiConverterTypeEntityId.write(value.profileId, into: &buf)
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterTypeEntityId.write(value.epoch, into: &buf)
+        FfiConverterTypeRevision.write(value.profileRevision, into: &buf)
+        FfiConverterTypeRevision.write(value.sessionGeneration, into: &buf)
+        FfiConverterTypeRevision.write(value.generation, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommitContext_lift(_ buf: RustBuffer) throws -> CommitContext {
+    return try FfiConverterTypeCommitContext.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommitContext_lower(_ value: CommitContext) -> RustBuffer {
+    return FfiConverterTypeCommitContext.lower(value)
 }
 
 
 
-public enum MoneyStatusV2: Equatable, Hashable {
+public enum ApplicationActionV2: Equatable, Hashable {
 
-    case money
-    case rejected
+    case command(ApplicationCommandV2
+    )
+    case reverse(ApplicationReverseV2
+    )
 
 
 
@@ -685,36 +828,279 @@ public enum MoneyStatusV2: Equatable, Hashable {
 }
 
 #if compiler(>=6)
-extension MoneyStatusV2: Sendable {}
+extension ApplicationActionV2: Sendable {}
 #endif
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public struct FfiConverterTypeMoneyStatusV2: FfiConverterRustBuffer {
-    typealias SwiftType = MoneyStatusV2
+public struct FfiConverterTypeApplicationActionV2: FfiConverterRustBuffer {
+    typealias SwiftType = ApplicationActionV2
 
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> MoneyStatusV2 {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ApplicationActionV2 {
         let variant: Int32 = try readInt(&buf)
         switch variant {
 
-        case 1: return .money
+        case 1: return .command(try FfiConverterTypeApplicationCommandV2.read(from: &buf)
+        )
 
-        case 2: return .rejected
+        case 2: return .reverse(try FfiConverterTypeApplicationReverseV2.read(from: &buf)
+        )
 
         default: throw UniffiInternalError.unexpectedEnumCase
         }
     }
 
-    public static func write(_ value: MoneyStatusV2, into buf: inout [UInt8]) {
+    public static func write(_ value: ApplicationActionV2, into buf: inout [UInt8]) {
         switch value {
 
 
-        case .money:
+        case let .command(v1):
+            writeInt(&buf, Int32(1))
+            FfiConverterTypeApplicationCommandV2.write(v1, into: &buf)
+
+
+        case let .reverse(v1):
+            writeInt(&buf, Int32(2))
+            FfiConverterTypeApplicationReverseV2.write(v1, into: &buf)
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeApplicationActionV2_lift(_ buf: RustBuffer) throws -> ApplicationActionV2 {
+    return try FfiConverterTypeApplicationActionV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeApplicationActionV2_lower(_ value: ApplicationActionV2) -> RustBuffer {
+    return FfiConverterTypeApplicationActionV2.lower(value)
+}
+
+
+
+
+public enum ApplicationFailureCode: Equatable, Hashable {
+
+    case updateRequired
+    case scopeChanged
+    case wrongArea
+    case invalidState
+    case financeRejected
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ApplicationFailureCode: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeApplicationFailureCode: FfiConverterRustBuffer {
+    typealias SwiftType = ApplicationFailureCode
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ApplicationFailureCode {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .updateRequired
+
+        case 2: return .scopeChanged
+
+        case 3: return .wrongArea
+
+        case 4: return .invalidState
+
+        case 5: return .financeRejected
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: ApplicationFailureCode, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case .updateRequired:
             writeInt(&buf, Int32(1))
 
 
-        case .rejected:
+        case .scopeChanged:
+            writeInt(&buf, Int32(2))
+
+
+        case .wrongArea:
+            writeInt(&buf, Int32(3))
+
+
+        case .invalidState:
+            writeInt(&buf, Int32(4))
+
+
+        case .financeRejected:
+            writeInt(&buf, Int32(5))
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeApplicationFailureCode_lift(_ buf: RustBuffer) throws -> ApplicationFailureCode {
+    return try FfiConverterTypeApplicationFailureCode.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeApplicationFailureCode_lower(_ value: ApplicationFailureCode) -> RustBuffer {
+    return FfiConverterTypeApplicationFailureCode.lower(value)
+}
+
+
+
+
+public enum ApplicationPreparationV2: Equatable, Hashable {
+
+    case prepared(contractVersion: UInt32, context: CommitContext, request: LocalCommitRequest
+    )
+    case unchanged(contractVersion: UInt32
+    )
+    case rejected(contractVersion: UInt32, code: ApplicationFailureCode, financeCode: String?
+    )
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ApplicationPreparationV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeApplicationPreparationV2: FfiConverterRustBuffer {
+    typealias SwiftType = ApplicationPreparationV2
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ApplicationPreparationV2 {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .prepared(contractVersion: try FfiConverterUInt32.read(from: &buf), context: try FfiConverterTypeCommitContext.read(from: &buf), request: try FfiConverterTypeLocalCommitRequest.read(from: &buf)
+        )
+
+        case 2: return .unchanged(contractVersion: try FfiConverterUInt32.read(from: &buf)
+        )
+
+        case 3: return .rejected(contractVersion: try FfiConverterUInt32.read(from: &buf), code: try FfiConverterTypeApplicationFailureCode.read(from: &buf), financeCode: try FfiConverterOptionString.read(from: &buf)
+        )
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: ApplicationPreparationV2, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case let .prepared(contractVersion,context,request):
+            writeInt(&buf, Int32(1))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+            FfiConverterTypeCommitContext.write(context, into: &buf)
+            FfiConverterTypeLocalCommitRequest.write(request, into: &buf)
+
+
+        case let .unchanged(contractVersion):
+            writeInt(&buf, Int32(2))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+
+
+        case let .rejected(contractVersion,code,financeCode):
+            writeInt(&buf, Int32(3))
+            FfiConverterUInt32.write(contractVersion, into: &buf)
+            FfiConverterTypeApplicationFailureCode.write(code, into: &buf)
+            FfiConverterOptionString.write(financeCode, into: &buf)
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeApplicationPreparationV2_lift(_ buf: RustBuffer) throws -> ApplicationPreparationV2 {
+    return try FfiConverterTypeApplicationPreparationV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeApplicationPreparationV2_lower(_ value: ApplicationPreparationV2) -> RustBuffer {
+    return FfiConverterTypeApplicationPreparationV2.lower(value)
+}
+
+
+
+
+public enum AreaMode: Equatable, Hashable {
+
+    case standalone
+    case connected
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension AreaMode: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeAreaMode: FfiConverterRustBuffer {
+    typealias SwiftType = AreaMode
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> AreaMode {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .standalone
+
+        case 2: return .connected
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: AreaMode, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case .standalone:
+            writeInt(&buf, Int32(1))
+
+
+        case .connected:
             writeInt(&buf, Int32(2))
 
         }
@@ -725,41 +1111,17 @@ public struct FfiConverterTypeMoneyStatusV2: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public func FfiConverterTypeMoneyStatusV2_lift(_ buf: RustBuffer) throws -> MoneyStatusV2 {
-    return try FfiConverterTypeMoneyStatusV2.lift(buf)
+public func FfiConverterTypeAreaMode_lift(_ buf: RustBuffer) throws -> AreaMode {
+    return try FfiConverterTypeAreaMode.lift(buf)
 }
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
-public func FfiConverterTypeMoneyStatusV2_lower(_ value: MoneyStatusV2) -> RustBuffer {
-    return FfiConverterTypeMoneyStatusV2.lower(value)
+public func FfiConverterTypeAreaMode_lower(_ value: AreaMode) -> RustBuffer {
+    return FfiConverterTypeAreaMode.lower(value)
 }
 
-
-#if swift(>=5.8)
-@_documentation(visibility: private)
-#endif
-fileprivate struct FfiConverterOptionInt64: FfiConverterRustBuffer {
-    typealias SwiftType = Int64?
-
-    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
-        guard let value = value else {
-            writeInt(&buf, Int8(0))
-            return
-        }
-        writeInt(&buf, Int8(1))
-        FfiConverterInt64.write(value, into: &buf)
-    }
-
-    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
-        switch try readInt(&buf) as Int8 {
-        case 0: return nil
-        case 1: return try FfiConverterInt64.read(from: &buf)
-        default: throw UniffiInternalError.unexpectedOptionalTag
-        }
-    }
-}
 
 #if swift(>=5.8)
 @_documentation(visibility: private)
@@ -784,152 +1146,80 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
         }
     }
 }
-public func calculateJson(request: String) -> String  {
-    return try!  FfiConverterString.lift(try! rustCall() {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_calculate_json(
-        FfiConverterString.lower(request),uniffiCallStatus
-    )
-})
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeExpectation: FfiConverterRustBuffer {
+    typealias SwiftType = [Expectation]
+
+    public static func write(_ value: [Expectation], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeExpectation.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [Expectation] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [Expectation]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeExpectation.read(from: &buf))
+        }
+        return seq
+    }
 }
-/**
- * K01-JSON-Vertrag; alle Facharbeit verbleibt in der unabhängigen Kernbibliothek.
- */
-public func executeJson(request: String) -> String  {
-    return try!  FfiConverterString.lift(try! rustCall() {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_execute_json(
-        FfiConverterString.lower(request),uniffiCallStatus
-    )
-})
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeReverseTarget: FfiConverterRustBuffer {
+    typealias SwiftType = [ReverseTarget]
+
+    public static func write(_ value: [ReverseTarget], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeReverseTarget.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [ReverseTarget] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [ReverseTarget]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeReverseTarget.read(from: &buf))
+        }
+        return seq
+    }
 }
-public func projectJson(request: String) -> String  {
-    return try!  FfiConverterString.lift(try! rustCall() {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_project_json(
-        FfiConverterString.lower(request),uniffiCallStatus
-    )
-})
-}
-public func reverseJson(request: String) -> String  {
-    return try!  FfiConverterString.lift(try! rustCall() {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_reverse_json(
-        FfiConverterString.lower(request),uniffiCallStatus
-    )
-})
-}
-public func validateJson(request: String) -> String  {
-    return try!  FfiConverterString.lift(try! rustCall() {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_validate_json(
-        FfiConverterString.lower(request),uniffiCallStatus
-    )
-})
-}
-public func prepareApplicationV2(input: ApplicationRequestV2)throws  -> ApplicationPreparationV2  {
-    return try  FfiConverterTypeApplicationPreparationV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_prepare_application_v2(
-        FfiConverterTypeApplicationRequestV2_lower(input),uniffiCallStatus
-    )
-})
-}
-public func calculateV2(request: CalculationRequest)throws  -> CalculationOutcome  {
-    return try  FfiConverterTypeCalculationOutcome_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_calculate_v2(
-        FfiConverterTypeCalculationRequest_lower(request),uniffiCallStatus
-    )
-})
-}
-public func executeV2(request: Request)throws  -> CommandOutcomeV2  {
-    return try  FfiConverterTypeCommandOutcomeV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_execute_v2(
-        FfiConverterTypeRequest_lower(request),uniffiCallStatus
-    )
-})
-}
-public func roundtripLocalSnapshotV2(snapshot: LocalSnapshot)throws  -> SnapshotOutcomeV2  {
-    return try  FfiConverterTypeSnapshotOutcomeV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_roundtrip_local_snapshot_v2(
-        FfiConverterTypeLocalSnapshot_lower(snapshot),uniffiCallStatus
-    )
-})
-}
-public func roundtripStorageFailureV2(input: StorageFailure)throws  -> StorageFailure  {
-    return try  FfiConverterTypeStorageFailure_lift(try rustCallWithError(FfiConverterTypeLocalContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_roundtrip_storage_failure_v2(
-        FfiConverterTypeStorageFailure_lower(input),uniffiCallStatus
-    )
-})
-}
-public func validateLocalMigrationFormV2(plan: StorageMigrationPlan)throws  -> LocalFormOutcome  {
-    return try  FfiConverterTypeLocalFormOutcome_lift(try rustCallWithError(FfiConverterTypeLocalContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_validate_local_migration_form_v2(
-        FfiConverterTypeStorageMigrationPlan_lower(plan),uniffiCallStatus
-    )
-})
-}
-public func validateLocalPortFormV2(request: LocalPortRequestV2)throws  -> LocalFormOutcome  {
-    return try  FfiConverterTypeLocalFormOutcome_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_validate_local_port_form_v2(
-        FfiConverterTypeLocalPortRequestV2_lower(request),uniffiCallStatus
-    )
-})
-}
-public func validatePublicOperationFormV2(operation: EncryptedOperation)throws  -> PublicValidationOutcome  {
-    return try  FfiConverterTypePublicValidationOutcome_lift(try rustCallWithError(FfiConverterTypePublicContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_validate_public_operation_form_v2(
-        FfiConverterTypeEncryptedOperation_lower(operation),uniffiCallStatus
-    )
-})
-}
-public func validatePublicRosterFormV2(roster: SignedKeyRoster)throws  -> PublicValidationOutcome  {
-    return try  FfiConverterTypePublicValidationOutcome_lift(try rustCallWithError(FfiConverterTypePublicContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_validate_public_roster_form_v2(
-        FfiConverterTypeSignedKeyRoster_lower(roster),uniffiCallStatus
-    )
-})
-}
-public func reverseV2(request: ReverseRequest)throws  -> CommandOutcomeV2  {
-    return try  FfiConverterTypeCommandOutcomeV2_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_reverse_v2(
-        FfiConverterTypeReverseRequest_lower(request),uniffiCallStatus
-    )
-})
-}
-public func projectV2(request: ProjectionRequest)throws  -> ProjectionOutcome  {
-    return try  FfiConverterTypeProjectionOutcome_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_project_v2(
-        FfiConverterTypeProjectionRequest_lower(request),uniffiCallStatus
-    )
-})
-}
-public func validateV2(request: ValidationRequest)throws  -> ValidationOutcome  {
-    return try  FfiConverterTypeValidationOutcome_lift(try rustCallWithError(FfiConverterTypeContractError_lift) {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_validate_v2(
-        FfiConverterTypeValidationRequest_lower(request),uniffiCallStatus
-    )
-})
-}
-public func calculateMoneyV2(request: MoneyRequestV2) -> MoneyResultV2  {
-    return try!  FfiConverterTypeMoneyResultV2_lift(try! rustCall() {
-        uniffiCallStatus in
-    uniffi_wimm_core_bindings_fn_func_calculate_money_v2(
-        FfiConverterTypeMoneyRequestV2_lower(request),uniffiCallStatus
-    )
-})
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeAggregate: FfiConverterRustBuffer {
+    typealias SwiftType = [Aggregate]
+
+    public static func write(_ value: [Aggregate], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeAggregate.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [Aggregate] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [Aggregate]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeAggregate.read(from: &buf))
+        }
+        return seq
+    }
 }
 
 private enum InitializationResult {
@@ -943,75 +1233,19 @@ private let initializationResult: InitializationResult = {
     // Get the bindings contract version from our ComponentInterface
     let bindings_contract_version = 30
     // Get the scaffolding contract version by calling the into the dylib
-    let scaffolding_contract_version = ffi_wimm_core_bindings_uniffi_contract_version()
+    let scaffolding_contract_version = ffi_wimm_client_application_uniffi_contract_version()
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
-    if (uniffi_wimm_core_bindings_checksum_func_calculate_json() != 48531) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_execute_json() != 16437) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_project_json() != 19975) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_reverse_json() != 317) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_validate_json() != 63399) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_prepare_application_v2() != 2602) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_calculate_v2() != 7814) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_execute_v2() != 55143) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_roundtrip_local_snapshot_v2() != 43357) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_roundtrip_storage_failure_v2() != 60306) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_validate_local_migration_form_v2() != 59983) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_validate_local_port_form_v2() != 43583) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_validate_public_operation_form_v2() != 24232) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_validate_public_roster_form_v2() != 56443) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_reverse_v2() != 47223) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_project_v2() != 48756) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_validate_v2() != 56325) {
-        return InitializationResult.apiChecksumMismatch
-    }
-    if (uniffi_wimm_core_bindings_checksum_func_calculate_money_v2() != 822) {
-        return InitializationResult.apiChecksumMismatch
-    }
 
-    uniffiEnsureWimmClientApplicationInitialized()
     uniffiEnsureWimmFinanceTypesInitialized()
     uniffiEnsureWimmLocalContractsInitialized()
-    uniffiEnsureWimmPublicContractsInitialized()
     return InitializationResult.ok
 }()
 
 // Make the ensure init function public so that other modules which have external type references to
 // our types can call it.
-public func uniffiEnsureWimmCoreBindingsInitialized() {
+public func uniffiEnsureWimmClientApplicationInitialized() {
     switch initializationResult {
     case .ok:
         break

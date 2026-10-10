@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Plattformfreie gemeinsame Commitvorbereitung; sämtliche Finanzregeln im Kern.
 #![forbid(unsafe_code)]
+#[cfg(feature = "native-bindings")]
+uniffi::setup_scaffolding!();
 use std::collections::BTreeMap;
 use wimm_finance_types::{
     command_contracts::{ChangeSet, CommandResult, Request},
@@ -11,6 +13,9 @@ use wimm_local_contracts::{
     storage::*,
 };
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Record))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CommitContext {
     pub profile_id: EntityId,
@@ -30,7 +35,11 @@ impl CommitContext {
             && self.generation == current.generation
     }
 }
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[cfg_attr(feature = "native-bindings", derive(uniffi::Enum))]
+#[cfg_attr(feature = "wasm-bindings", derive(tsify::Tsify))]
+#[cfg_attr(feature = "contract-schema", derive(schemars::JsonSchema))]
 pub enum AreaMode {
     Standalone,
     Connected,
@@ -215,4 +224,5 @@ pub mod dispatch;
 
 pub mod history;
 
+pub mod api;
 pub mod recovery;

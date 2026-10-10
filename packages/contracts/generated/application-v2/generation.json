@@ -1,0 +1,23 @@
+{
+  "bindingVersion": 2,
+  "domainSchemaVersion": 1,
+  "scope": "application",
+  "source": "wimm-client-application",
+  "productSwitch": false,
+  "storageCommit": false,
+  "files": [
+    "swift/WiMMApplication.swift",
+    "swift/WiMMApplicationFFI.h",
+    "swift/WiMMApplicationFFI.modulemap",
+    "kotlin/org/wimm/application/wimm_client_application.kt",
+    "schema/application-request.schema.json",
+    "schema/application-preparation.schema.json",
+    "schema/manifest.json",
+    "wasm/application.d.ts"
+  ],
+  "generators": {
+    "uniffi": "0.32.2",
+    "wasmBindgen": "0.2.129",
+    "rustWasmCodegenUnits": 1
+  }
+}

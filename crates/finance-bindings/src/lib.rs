@@ -88,3 +88,6 @@ pub fn reverse_json(request: String) -> String {
 pub fn cache_json(request: String) -> String {
     wimm_finance_core::projection_cache::cache_json(&request)
 }
+
+mod application_v2;
+pub use application_v2::prepare_application_v2;

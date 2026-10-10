@@ -2,7 +2,7 @@
   "bindingVersion": 2,
   "domainSchemaVersion": 1,
   "legacyBindingVersion": 1,
-  "scope": "calculate, execute, reverse, project und validate nativ/WASM; private Modelle TS/Swift/Kotlin; vollständige private Engineaktionen",
+  "scope": "calculate, execute, reverse, project und validate nativ/WASM; private Modelle TS/Swift/Kotlin; vollständige private Engineaktionen und getrennte Anwendungs-V2-Vorbereitung",
   "generators": {
     "uniffi": "0.32.2",
     "wasmBindgen": "0.2.129",

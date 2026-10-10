@@ -1,0 +1,19 @@
+{
+  "bindingVersion": 2,
+  "domainSchemaVersion": 1,
+  "exports": [
+    {
+      "name": "prepare_application_v2",
+      "request": "application-request.schema.json",
+      "result": "application-preparation.schema.json",
+      "storageCommit": false
+    }
+  ],
+  "files": [
+    "application-request.schema.json",
+    "application-preparation.schema.json"
+  ],
+  "productSwitch": false,
+  "scope": "application",
+  "source": "wimm-client-application"
+}

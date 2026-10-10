@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[bindings.swift]
+module_name = "WiMMApplication"
+ffi_module_name = "WiMMApplicationFFI"
+generate_module_map = true
+
+[bindings.kotlin]
+package_name = "org.wimm.application"
+cdylib_name = "wimm_core_bindings"
+
+[bindings.kotlin.external_packages]
+wimm_finance_types = "org.wimm.privatecontracts"
+wimm_local_contracts = "org.wimm.localcontracts"

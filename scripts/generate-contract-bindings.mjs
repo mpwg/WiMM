@@ -70,8 +70,24 @@ for(const file of [...localFiles,'generation.json']){
  else{let actual;try{actual=await readFile(destination);}catch{throw new Error(`Generierter lokaler Vertrag fehlt: ${destination}`);}if(!actual.equals(await readFile(source)))throw new Error(`Vertragsdrift: ${destination}`);}
 }
 if(mode==='--check')await run(['run','--locked','-p','wimm-contract-schema','--','--local','--check',resolve(localRoot,'schema')]);
+// Eigene Anwendungsquelle und SDK-Modul; keine Produktaktivierung aus Vorbereitung.
+const applicationRoot=resolve(expectedRoot,'../application-v2');
+await run(['run','--locked','-p','wimm-contract-schema','--','--application','--write',resolve(staging,'application-schema')]);
+const applicationManifest=JSON.parse(await readFile(resolve(staging,'application-schema/manifest.json'),'utf8'));
+const applicationFiles=['swift/WiMMApplication.swift','swift/WiMMApplicationFFI.h','swift/WiMMApplicationFFI.modulemap','kotlin/org/wimm/application/wimm_client_application.kt',...applicationManifest.files.map(name=>`schema/${name}`),'schema/manifest.json','wasm/application.d.ts'];
+await mkdir(resolve(staging,'application-wasm'),{recursive:true});
+await writeFile(resolve(staging,'application-wasm/application.d.ts'),"// SPDX-License-Identifier: AGPL-3.0-or-later\n// Aus Rust-Tsify-Typen der gemeinsamen Bindingbibliothek.\nexport { prepare_application_v2 } from '../../private-v2/wasm/wimm_core_bindings.js';\nexport type { ApplicationActionV2, ApplicationCommandV2, ApplicationReverseV2, ApplicationRequestV2, ApplicationPreparationV2, ApplicationFailureCode, CommitContext, AreaMode } from '../../private-v2/wasm/wimm_core_bindings.js';\n");
+const applicationStaging=file=>file.startsWith('schema/')?resolve(staging,'application-schema',file.slice(7)):file.startsWith('wasm/')?resolve(staging,'application-wasm',file.slice(5)):resolve(staging,file);
+for(const file of applicationFiles){const path=applicationStaging(file);const original=await readFile(path,'utf8');await writeFile(path,original.replace(/\r\n/g,'\n').replace(/[\t ]+$/gm,'').replace(/\n*$/,'\n'));}
+await writeFile(resolve(staging,'application-generation.json'),JSON.stringify({bindingVersion:2,domainSchemaVersion:1,scope:'application',source:'wimm-client-application',productSwitch:false,storageCommit:false,files:applicationFiles,generators:{uniffi:'0.32.2',wasmBindgen:'0.2.129',rustWasmCodegenUnits:1}},null,2)+'\n');
+for(const file of [...applicationFiles,'generation.json']){
+ const source=file==='generation.json'?resolve(staging,'application-generation.json'):applicationStaging(file);const destination=resolve(applicationRoot,file);
+ if(mode==='--write'){await mkdir(dirname(destination),{recursive:true});await writeFile(destination,await readFile(source));}
+ else{let actual;try{actual=await readFile(destination);}catch{throw new Error(`Generierter Anwendungsvertrag fehlt: ${destination}`);}if(!actual.equals(await readFile(source)))throw new Error(`Vertragsdrift: ${destination}`);}
+}
+if(mode==='--check')await run(['run','--locked','-p','wimm-contract-schema','--','--application','--check',resolve(applicationRoot,'schema')]);
 // Versionen kennzeichnen den erzeugten Abschnitt, keine abgeschlossene Gesamt-ABI.
-await writeFile(resolve(staging, 'generation.json'), JSON.stringify({ bindingVersion: 2, domainSchemaVersion: 1, legacyBindingVersion: 1, scope: 'calculate, execute, reverse, project und validate nativ/WASM; private Modelle TS/Swift/Kotlin; vollständige private Engineaktionen', generators: { uniffi: '0.32.2', wasmBindgen: '0.2.129', rustWasmCodegenUnits: 1 }, files }, null, 2) + '\n');
+await writeFile(resolve(staging, 'generation.json'), JSON.stringify({ bindingVersion: 2, domainSchemaVersion: 1, legacyBindingVersion: 1, scope: 'calculate, execute, reverse, project und validate nativ/WASM; private Modelle TS/Swift/Kotlin; vollständige private Engineaktionen und getrennte Anwendungs-V2-Vorbereitung', generators: { uniffi: '0.32.2', wasmBindgen: '0.2.129', rustWasmCodegenUnits: 1 }, files }, null, 2) + '\n');
 for (const file of [...files, 'generation.json']) {
   const source = resolve(staging, file);
   const destination = resolve(expectedRoot, file);

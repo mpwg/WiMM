@@ -3,7 +3,7 @@
 
 @file:Suppress("NAME_SHADOWING")
 
-package org.wimm.core
+package org.wimm.application
 
 // Common helper code.
 //
@@ -30,75 +30,33 @@ import java.nio.CharBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
-import org.wimm.application.ApplicationPreparationV2
-import org.wimm.application.ApplicationRequestV2
-import org.wimm.application.FfiConverterTypeApplicationPreparationV2
-import org.wimm.application.FfiConverterTypeApplicationRequestV2
-import org.wimm.localcontracts.FfiConverterTypeLocalContractError
-import org.wimm.localcontracts.FfiConverterTypeLocalFormOutcome
-import org.wimm.localcontracts.FfiConverterTypeLocalPortRequestV2
-import org.wimm.localcontracts.FfiConverterTypeLocalSnapshot
-import org.wimm.localcontracts.FfiConverterTypeSnapshotOutcomeV2
-import org.wimm.localcontracts.FfiConverterTypeStorageFailure
-import org.wimm.localcontracts.FfiConverterTypeStorageMigrationPlan
-import org.wimm.localcontracts.LocalContractException
-import org.wimm.localcontracts.LocalFormOutcome
-import org.wimm.localcontracts.LocalPortRequestV2
-import org.wimm.localcontracts.LocalSnapshot
-import org.wimm.localcontracts.SnapshotOutcomeV2
-import org.wimm.localcontracts.StorageFailure
-import org.wimm.localcontracts.StorageMigrationPlan
-import org.wimm.privatecontracts.CalculationOutcome
-import org.wimm.privatecontracts.CalculationRequest
-import org.wimm.privatecontracts.CommandOutcomeV2
-import org.wimm.privatecontracts.ContractException
-import org.wimm.privatecontracts.FfiConverterTypeCalculationOutcome
-import org.wimm.privatecontracts.FfiConverterTypeCalculationRequest
-import org.wimm.privatecontracts.FfiConverterTypeCommandOutcomeV2
-import org.wimm.privatecontracts.FfiConverterTypeContractError
-import org.wimm.privatecontracts.FfiConverterTypeProjectionOutcome
-import org.wimm.privatecontracts.FfiConverterTypeProjectionRequest
-import org.wimm.privatecontracts.FfiConverterTypeRequest
-import org.wimm.privatecontracts.FfiConverterTypeReverseRequest
-import org.wimm.privatecontracts.FfiConverterTypeValidationOutcome
-import org.wimm.privatecontracts.FfiConverterTypeValidationRequest
-import org.wimm.privatecontracts.ProjectionOutcome
-import org.wimm.privatecontracts.ProjectionRequest
-import org.wimm.privatecontracts.Request
-import org.wimm.privatecontracts.ReverseRequest
-import org.wimm.privatecontracts.ValidationOutcome
-import org.wimm.privatecontracts.ValidationRequest
-import org.wimm.publiccontracts.EncryptedOperation
-import org.wimm.publiccontracts.FfiConverterTypeEncryptedOperation
-import org.wimm.publiccontracts.FfiConverterTypePublicContractError
-import org.wimm.publiccontracts.FfiConverterTypePublicValidationOutcome
-import org.wimm.publiccontracts.FfiConverterTypeSignedKeyRoster
-import org.wimm.publiccontracts.PublicContractException
-import org.wimm.publiccontracts.PublicValidationOutcome
-import org.wimm.publiccontracts.SignedKeyRoster
-import org.wimm.application.RustBuffer as RustBufferApplicationPreparationV2
-import org.wimm.application.RustBuffer as RustBufferApplicationRequestV2
-import org.wimm.localcontracts.RustBuffer as RustBufferLocalContractError
-import org.wimm.localcontracts.RustBuffer as RustBufferLocalFormOutcome
-import org.wimm.localcontracts.RustBuffer as RustBufferLocalPortRequestV2
-import org.wimm.localcontracts.RustBuffer as RustBufferLocalSnapshot
-import org.wimm.localcontracts.RustBuffer as RustBufferSnapshotOutcomeV2
-import org.wimm.localcontracts.RustBuffer as RustBufferStorageFailure
-import org.wimm.localcontracts.RustBuffer as RustBufferStorageMigrationPlan
-import org.wimm.privatecontracts.RustBuffer as RustBufferCalculationOutcome
-import org.wimm.privatecontracts.RustBuffer as RustBufferCalculationRequest
-import org.wimm.privatecontracts.RustBuffer as RustBufferCommandOutcomeV2
-import org.wimm.privatecontracts.RustBuffer as RustBufferContractError
-import org.wimm.privatecontracts.RustBuffer as RustBufferProjectionOutcome
-import org.wimm.privatecontracts.RustBuffer as RustBufferProjectionRequest
-import org.wimm.privatecontracts.RustBuffer as RustBufferRequest
-import org.wimm.privatecontracts.RustBuffer as RustBufferReverseRequest
-import org.wimm.privatecontracts.RustBuffer as RustBufferValidationOutcome
-import org.wimm.privatecontracts.RustBuffer as RustBufferValidationRequest
-import org.wimm.publiccontracts.RustBuffer as RustBufferEncryptedOperation
-import org.wimm.publiccontracts.RustBuffer as RustBufferPublicContractError
-import org.wimm.publiccontracts.RustBuffer as RustBufferPublicValidationOutcome
-import org.wimm.publiccontracts.RustBuffer as RustBufferSignedKeyRoster
+import org.wimm.localcontracts.FfiConverterTypeLocalCommitRequest
+import org.wimm.localcontracts.LocalCommitRequest
+import org.wimm.privatecontracts.Aggregate
+import org.wimm.privatecontracts.Command
+import org.wimm.privatecontracts.Context
+import org.wimm.privatecontracts.EntityId
+import org.wimm.privatecontracts.Expectation
+import org.wimm.privatecontracts.FfiConverterTypeAggregate
+import org.wimm.privatecontracts.FfiConverterTypeCommand
+import org.wimm.privatecontracts.FfiConverterTypeContext
+import org.wimm.privatecontracts.FfiConverterTypeEntityId
+import org.wimm.privatecontracts.FfiConverterTypeExpectation
+import org.wimm.privatecontracts.FfiConverterTypeReverseTarget
+import org.wimm.privatecontracts.FfiConverterTypeReverseTargets
+import org.wimm.privatecontracts.FfiConverterTypeRevision
+import org.wimm.privatecontracts.ReverseTarget
+import org.wimm.privatecontracts.ReverseTargets
+import org.wimm.privatecontracts.Revision
+import org.wimm.localcontracts.RustBuffer as RustBufferLocalCommitRequest
+import org.wimm.privatecontracts.RustBuffer as RustBufferAggregate
+import org.wimm.privatecontracts.RustBuffer as RustBufferCommand
+import org.wimm.privatecontracts.RustBuffer as RustBufferContext
+import org.wimm.privatecontracts.RustBuffer as RustBufferEntityId
+import org.wimm.privatecontracts.RustBuffer as RustBufferExpectation
+import org.wimm.privatecontracts.RustBuffer as RustBufferReverseTarget
+import org.wimm.privatecontracts.RustBuffer as RustBufferReverseTargets
+import org.wimm.privatecontracts.RustBuffer as RustBufferRevision
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
 // A rust-owned buffer is represented by its capacity, its current length, and a
@@ -127,7 +85,7 @@ open class RustBuffer : Structure() {
     companion object {
         internal fun alloc(size: ULong = 0UL) = uniffiRustCall() { status ->
             // Note: need to convert the size to a `Long` value to make this work with JVM.
-            UniffiLib.ffi_wimm_core_bindings_rustbuffer_alloc(size.toLong(), status)
+            UniffiLib.ffi_wimm_client_application_rustbuffer_alloc(size.toLong(), status)
         }.also {
             if(it.data == null) {
                throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=${size})")
@@ -143,7 +101,7 @@ open class RustBuffer : Structure() {
         }
 
         internal fun free(buf: RustBuffer.ByValue) = uniffiRustCall() { status ->
-            UniffiLib.ffi_wimm_core_bindings_rustbuffer_free(buf, status)
+            UniffiLib.ffi_wimm_client_application_rustbuffer_free(buf, status)
         }
     }
 
@@ -737,49 +695,13 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 // We now use JNA's "direct mapping" - unclear if same considerations apply exactly.
 internal object IntegrityCheckingUniffiLib {
     init {
-        Native.register(IntegrityCheckingUniffiLib::class.java, findLibraryName(componentName = "wimm_core_bindings"))
+        Native.register(IntegrityCheckingUniffiLib::class.java, findLibraryName(componentName = "wimm_client_application"))
         uniffiCheckContractApiVersion(this)
         uniffiCheckApiChecksums(this)
     }
 
     internal fun ensureInitialized() = Unit
-    external fun uniffi_wimm_core_bindings_checksum_func_calculate_json(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_execute_json(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_project_json(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_reverse_json(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_validate_json(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_prepare_application_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_calculate_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_execute_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_roundtrip_local_snapshot_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_roundtrip_storage_failure_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_validate_local_migration_form_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_validate_local_port_form_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_validate_public_operation_form_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_validate_public_roster_form_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_reverse_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_project_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_validate_v2(
-    ): Int
-    external fun uniffi_wimm_core_bindings_checksum_func_calculate_money_v2(
-    ): Int
-    external fun ffi_wimm_core_bindings_uniffi_contract_version(
+    external fun ffi_wimm_client_application_uniffi_contract_version(
     ): Int
 
 
@@ -789,154 +711,116 @@ internal object UniffiLib {
 
 
     init {
-        Native.register(UniffiLib::class.java, findLibraryName(componentName = "wimm_core_bindings"))
-        org.wimm.application.uniffiEnsureInitialized()
+        Native.register(UniffiLib::class.java, findLibraryName(componentName = "wimm_client_application"))
         org.wimm.localcontracts.uniffiEnsureInitialized()
         org.wimm.privatecontracts.uniffiEnsureInitialized()
-        org.wimm.publiccontracts.uniffiEnsureInitialized()
 
     }
 
     internal fun ensureInitialized() = Unit
-    external fun uniffi_wimm_core_bindings_fn_func_calculate_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_execute_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_project_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_reverse_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_validate_json(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_prepare_application_v2(`input`: RustBufferApplicationRequestV2.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferApplicationPreparationV2.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_calculate_v2(`request`: RustBufferCalculationRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferCalculationOutcome.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_execute_v2(`request`: RustBufferRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferCommandOutcomeV2.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_roundtrip_local_snapshot_v2(`snapshot`: RustBufferLocalSnapshot.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferSnapshotOutcomeV2.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_roundtrip_storage_failure_v2(`input`: RustBufferStorageFailure.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferStorageFailure.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_validate_local_migration_form_v2(`plan`: RustBufferStorageMigrationPlan.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferLocalFormOutcome.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_validate_local_port_form_v2(`request`: RustBufferLocalPortRequestV2.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferLocalFormOutcome.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_validate_public_operation_form_v2(`operation`: RustBufferEncryptedOperation.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferPublicValidationOutcome.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_validate_public_roster_form_v2(`roster`: RustBufferSignedKeyRoster.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferPublicValidationOutcome.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_reverse_v2(`request`: RustBufferReverseRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferCommandOutcomeV2.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_project_v2(`request`: RustBufferProjectionRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferProjectionOutcome.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_validate_v2(`request`: RustBufferValidationRequest.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBufferValidationOutcome.ByValue
-    external fun uniffi_wimm_core_bindings_fn_func_calculate_money_v2(`request`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-    external fun ffi_wimm_core_bindings_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-    external fun ffi_wimm_core_bindings_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus,
-    ): RustBuffer.ByValue
-    external fun ffi_wimm_core_bindings_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus,
     ): Unit
-    external fun ffi_wimm_core_bindings_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun ffi_wimm_core_bindings_rust_future_poll_u8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_u8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_u8(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_u8(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_u8(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_u8(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Int
-    external fun ffi_wimm_core_bindings_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_i8(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_i8(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_i8(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_i8(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Byte
-    external fun ffi_wimm_core_bindings_rust_future_poll_u16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_u16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_u16(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_u16(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_u16(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_u16(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Int
-    external fun ffi_wimm_core_bindings_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_i16(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_i16(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_i16(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_i16(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Short
-    external fun ffi_wimm_core_bindings_rust_future_poll_u32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_u32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_u32(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_u32(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_u32(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_u32(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Int
-    external fun ffi_wimm_core_bindings_rust_future_poll_i32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_i32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_i32(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_i32(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_i32(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_i32(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Int
-    external fun ffi_wimm_core_bindings_rust_future_poll_u64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_u64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_u64(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_u64(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_u64(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_u64(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Long
-    external fun ffi_wimm_core_bindings_rust_future_poll_i64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_i64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_i64(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_i64(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_i64(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_i64(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Long
-    external fun ffi_wimm_core_bindings_rust_future_poll_f32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_f32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_f32(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_f32(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_f32(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_f32(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Float
-    external fun ffi_wimm_core_bindings_rust_future_poll_f64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_f64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_f64(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_f64(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_f64(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_f64(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Double
-    external fun ffi_wimm_core_bindings_rust_future_poll_rust_buffer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_rust_buffer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_rust_buffer(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_rust_buffer(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_rust_buffer(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_rust_buffer(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): RustBuffer.ByValue
-    external fun ffi_wimm_core_bindings_rust_future_poll_void(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    external fun ffi_wimm_client_application_rust_future_poll_void(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_cancel_void(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_cancel_void(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_free_void(`handle`: Long,
+    external fun ffi_wimm_client_application_rust_future_free_void(`handle`: Long,
     ): Unit
-    external fun ffi_wimm_core_bindings_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
+    external fun ffi_wimm_client_application_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus,
     ): Unit
 
 
@@ -946,67 +830,13 @@ private fun uniffiCheckContractApiVersion(lib: IntegrityCheckingUniffiLib) {
     // Get the bindings contract version from our ComponentInterface
     val bindings_contract_version = 30
     // Get the scaffolding contract version by calling the into the dylib
-    val scaffolding_contract_version = lib.ffi_wimm_core_bindings_uniffi_contract_version()
+    val scaffolding_contract_version = lib.ffi_wimm_client_application_uniffi_contract_version()
     if (bindings_contract_version != scaffolding_contract_version) {
         throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
     }
 }
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_calculate_json() and 0xFFFF) != 48531) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_execute_json() and 0xFFFF) != 16437) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_project_json() and 0xFFFF) != 19975) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_reverse_json() and 0xFFFF) != 317) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_json() and 0xFFFF) != 63399) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_prepare_application_v2() and 0xFFFF) != 2602) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_calculate_v2() and 0xFFFF) != 7814) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_execute_v2() and 0xFFFF) != 55143) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_roundtrip_local_snapshot_v2() and 0xFFFF) != 43357) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_roundtrip_storage_failure_v2() and 0xFFFF) != 60306) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_local_migration_form_v2() and 0xFFFF) != 59983) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_local_port_form_v2() and 0xFFFF) != 43583) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_public_operation_form_v2() and 0xFFFF) != 24232) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_public_roster_form_v2() and 0xFFFF) != 56443) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_reverse_v2() and 0xFFFF) != 47223) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_project_v2() and 0xFFFF) != 48756) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_validate_v2() and 0xFFFF) != 56325) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if ((lib.uniffi_wimm_core_bindings_checksum_func_calculate_money_v2() and 0xFFFF) != 822) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
 }
 
 /**
@@ -1205,14 +1035,71 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
 
 
 
-data class MoneyRequestV2 (
+data class ApplicationCommandV2 (
+    var `spaceId`: EntityId
+    ,
+    var `aggregates`: List<Aggregate>
+    ,
+    var `command`: Command
+    ,
+    var `expectedRevisions`: List<Expectation>
+    ,
+    var `context`: Context
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeApplicationCommandV2: FfiConverterRustBuffer<ApplicationCommandV2> {
+    override fun read(buf: ByteBuffer): ApplicationCommandV2 {
+        return ApplicationCommandV2(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeAggregate.read(buf),
+            FfiConverterTypeCommand.read(buf),
+            FfiConverterSequenceTypeExpectation.read(buf),
+            FfiConverterTypeContext.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ApplicationCommandV2) = (
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterSequenceTypeAggregate.allocationSize(value.`aggregates`) +
+            FfiConverterTypeCommand.allocationSize(value.`command`) +
+            FfiConverterSequenceTypeExpectation.allocationSize(value.`expectedRevisions`) +
+            FfiConverterTypeContext.allocationSize(value.`context`)
+    )
+
+    override fun write(value: ApplicationCommandV2, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterSequenceTypeAggregate.write(value.`aggregates`, buf)
+            FfiConverterTypeCommand.write(value.`command`, buf)
+            FfiConverterSequenceTypeExpectation.write(value.`expectedRevisions`, buf)
+            FfiConverterTypeContext.write(value.`context`, buf)
+    }
+}
+
+
+
+data class ApplicationRequestV2 (
     var `contractVersion`: kotlin.UInt
     ,
     var `domainSchemaVersion`: kotlin.UInt
     ,
-    var `spaceId`: kotlin.String
+    var `started`: CommitContext
     ,
-    var `text`: kotlin.String
+    var `current`: CommitContext
+    ,
+    var `mode`: AreaMode
+    ,
+    var `action`: ApplicationActionV2
 
 ){
 
@@ -1226,46 +1113,49 @@ data class MoneyRequestV2 (
 /**
  * @suppress
  */
-public object FfiConverterTypeMoneyRequestV2: FfiConverterRustBuffer<MoneyRequestV2> {
-    override fun read(buf: ByteBuffer): MoneyRequestV2 {
-        return MoneyRequestV2(
+public object FfiConverterTypeApplicationRequestV2: FfiConverterRustBuffer<ApplicationRequestV2> {
+    override fun read(buf: ByteBuffer): ApplicationRequestV2 {
+        return ApplicationRequestV2(
             FfiConverterUInt.read(buf),
             FfiConverterUInt.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
+            FfiConverterTypeCommitContext.read(buf),
+            FfiConverterTypeCommitContext.read(buf),
+            FfiConverterTypeAreaMode.read(buf),
+            FfiConverterTypeApplicationActionV2.read(buf),
         )
     }
 
-    override fun allocationSize(value: MoneyRequestV2) = (
+    override fun allocationSize(value: ApplicationRequestV2) = (
             FfiConverterUInt.allocationSize(value.`contractVersion`) +
             FfiConverterUInt.allocationSize(value.`domainSchemaVersion`) +
-            FfiConverterString.allocationSize(value.`spaceId`) +
-            FfiConverterString.allocationSize(value.`text`)
+            FfiConverterTypeCommitContext.allocationSize(value.`started`) +
+            FfiConverterTypeCommitContext.allocationSize(value.`current`) +
+            FfiConverterTypeAreaMode.allocationSize(value.`mode`) +
+            FfiConverterTypeApplicationActionV2.allocationSize(value.`action`)
     )
 
-    override fun write(value: MoneyRequestV2, buf: ByteBuffer) {
+    override fun write(value: ApplicationRequestV2, buf: ByteBuffer) {
             FfiConverterUInt.write(value.`contractVersion`, buf)
             FfiConverterUInt.write(value.`domainSchemaVersion`, buf)
-            FfiConverterString.write(value.`spaceId`, buf)
-            FfiConverterString.write(value.`text`, buf)
+            FfiConverterTypeCommitContext.write(value.`started`, buf)
+            FfiConverterTypeCommitContext.write(value.`current`, buf)
+            FfiConverterTypeAreaMode.write(value.`mode`, buf)
+            FfiConverterTypeApplicationActionV2.write(value.`action`, buf)
     }
 }
 
 
 
-/**
- * Nur Ausgabevertrag: ein Erfolg hat Cent, eine Ablehnung Code/Meldung.
- */
-data class MoneyResultV2 (
-    var `contractVersion`: kotlin.UInt
+data class ApplicationReverseV2 (
+    var `spaceId`: EntityId
     ,
-    var `status`: MoneyStatusV2
+    var `aggregates`: List<Aggregate>
     ,
-    var `value`: kotlin.Long?
+    var `expectedRevisions`: List<Expectation>
     ,
-    var `errorCode`: kotlin.String?
+    var `context`: Context
     ,
-    var `message`: kotlin.String?
+    var `targets`: ReverseTargets
 
 ){
 
@@ -1279,41 +1169,185 @@ data class MoneyResultV2 (
 /**
  * @suppress
  */
-public object FfiConverterTypeMoneyResultV2: FfiConverterRustBuffer<MoneyResultV2> {
-    override fun read(buf: ByteBuffer): MoneyResultV2 {
-        return MoneyResultV2(
-            FfiConverterUInt.read(buf),
-            FfiConverterTypeMoneyStatusV2.read(buf),
-            FfiConverterOptionalLong.read(buf),
-            FfiConverterOptionalString.read(buf),
-            FfiConverterOptionalString.read(buf),
+public object FfiConverterTypeApplicationReverseV2: FfiConverterRustBuffer<ApplicationReverseV2> {
+    override fun read(buf: ByteBuffer): ApplicationReverseV2 {
+        return ApplicationReverseV2(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeAggregate.read(buf),
+            FfiConverterSequenceTypeExpectation.read(buf),
+            FfiConverterTypeContext.read(buf),
+            FfiConverterTypeReverseTargets.read(buf),
         )
     }
 
-    override fun allocationSize(value: MoneyResultV2) = (
-            FfiConverterUInt.allocationSize(value.`contractVersion`) +
-            FfiConverterTypeMoneyStatusV2.allocationSize(value.`status`) +
-            FfiConverterOptionalLong.allocationSize(value.`value`) +
-            FfiConverterOptionalString.allocationSize(value.`errorCode`) +
-            FfiConverterOptionalString.allocationSize(value.`message`)
+    override fun allocationSize(value: ApplicationReverseV2) = (
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterSequenceTypeAggregate.allocationSize(value.`aggregates`) +
+            FfiConverterSequenceTypeExpectation.allocationSize(value.`expectedRevisions`) +
+            FfiConverterTypeContext.allocationSize(value.`context`) +
+            FfiConverterTypeReverseTargets.allocationSize(value.`targets`)
     )
 
-    override fun write(value: MoneyResultV2, buf: ByteBuffer) {
-            FfiConverterUInt.write(value.`contractVersion`, buf)
-            FfiConverterTypeMoneyStatusV2.write(value.`status`, buf)
-            FfiConverterOptionalLong.write(value.`value`, buf)
-            FfiConverterOptionalString.write(value.`errorCode`, buf)
-            FfiConverterOptionalString.write(value.`message`, buf)
+    override fun write(value: ApplicationReverseV2, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterSequenceTypeAggregate.write(value.`aggregates`, buf)
+            FfiConverterSequenceTypeExpectation.write(value.`expectedRevisions`, buf)
+            FfiConverterTypeContext.write(value.`context`, buf)
+            FfiConverterTypeReverseTargets.write(value.`targets`, buf)
+    }
+}
+
+
+
+data class CommitContext (
+    var `profileId`: EntityId
+    ,
+    var `spaceId`: EntityId
+    ,
+    var `epoch`: EntityId
+    ,
+    var `profileRevision`: Revision
+    ,
+    var `sessionGeneration`: Revision
+    ,
+    var `generation`: Revision
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCommitContext: FfiConverterRustBuffer<CommitContext> {
+    override fun read(buf: ByteBuffer): CommitContext {
+        return CommitContext(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeRevision.read(buf),
+            FfiConverterTypeRevision.read(buf),
+            FfiConverterTypeRevision.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: CommitContext) = (
+            FfiConverterTypeEntityId.allocationSize(value.`profileId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`epoch`) +
+            FfiConverterTypeRevision.allocationSize(value.`profileRevision`) +
+            FfiConverterTypeRevision.allocationSize(value.`sessionGeneration`) +
+            FfiConverterTypeRevision.allocationSize(value.`generation`)
+    )
+
+    override fun write(value: CommitContext, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`profileId`, buf)
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterTypeEntityId.write(value.`epoch`, buf)
+            FfiConverterTypeRevision.write(value.`profileRevision`, buf)
+            FfiConverterTypeRevision.write(value.`sessionGeneration`, buf)
+            FfiConverterTypeRevision.write(value.`generation`, buf)
+    }
+}
+
+
+
+sealed class ApplicationActionV2 {
+
+    data class Command(
+        val v1: org.wimm.application.ApplicationCommandV2) : ApplicationActionV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Reverse(
+        val v1: org.wimm.application.ApplicationReverseV2) : ApplicationActionV2()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeApplicationActionV2 : FfiConverterRustBuffer<ApplicationActionV2>{
+    override fun read(buf: ByteBuffer): ApplicationActionV2 {
+        return when(buf.getInt()) {
+            1 -> ApplicationActionV2.Command(
+                FfiConverterTypeApplicationCommandV2.read(buf),
+                )
+            2 -> ApplicationActionV2.Reverse(
+                FfiConverterTypeApplicationReverseV2.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
+        }
+    }
+
+    override fun allocationSize(value: ApplicationActionV2): ULong = when(value) {
+        is ApplicationActionV2.Command -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeApplicationCommandV2.allocationSize(value.v1)
+            )
+        }
+        is ApplicationActionV2.Reverse -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterTypeApplicationReverseV2.allocationSize(value.v1)
+            )
+        }
+    }
+
+    override fun write(value: ApplicationActionV2, buf: ByteBuffer) {
+        when(value) {
+            is ApplicationActionV2.Command -> {
+                buf.putInt(1)
+                FfiConverterTypeApplicationCommandV2.write(value.v1, buf)
+                Unit
+            }
+            is ApplicationActionV2.Reverse -> {
+                buf.putInt(2)
+                FfiConverterTypeApplicationReverseV2.write(value.v1, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 }
 
 
 
 
-enum class MoneyStatusV2 {
 
-    MONEY,
-    REJECTED;
+
+enum class ApplicationFailureCode {
+
+    UPDATE_REQUIRED,
+    SCOPE_CHANGED,
+    WRONG_AREA,
+    INVALID_STATE,
+    FINANCE_REJECTED;
 
 
 
@@ -1325,16 +1359,16 @@ enum class MoneyStatusV2 {
 /**
  * @suppress
  */
-public object FfiConverterTypeMoneyStatusV2: FfiConverterRustBuffer<MoneyStatusV2> {
+public object FfiConverterTypeApplicationFailureCode: FfiConverterRustBuffer<ApplicationFailureCode> {
     override fun read(buf: ByteBuffer) = try {
-        MoneyStatusV2.values()[buf.getInt() - 1]
+        ApplicationFailureCode.values()[buf.getInt() - 1]
     } catch (e: IndexOutOfBoundsException) {
         throw RuntimeException("invalid enum value, something is very wrong!!", e)
     }
 
-    override fun allocationSize(value: MoneyStatusV2) = 4UL
+    override fun allocationSize(value: ApplicationFailureCode) = 4UL
 
-    override fun write(value: MoneyStatusV2, buf: ByteBuffer) {
+    override fun write(value: ApplicationFailureCode, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
     }
 }
@@ -1343,35 +1377,160 @@ public object FfiConverterTypeMoneyStatusV2: FfiConverterRustBuffer<MoneyStatusV
 
 
 
+sealed class ApplicationPreparationV2 {
+
+    data class Prepared(
+        val `contractVersion`: kotlin.UInt,
+        val `context`: org.wimm.application.CommitContext,
+        val `request`: LocalCommitRequest) : ApplicationPreparationV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Unchanged(
+        val `contractVersion`: kotlin.UInt) : ApplicationPreparationV2()
+
+    {
+
+
+        companion object
+    }
+
+    data class Rejected(
+        val `contractVersion`: kotlin.UInt,
+        val `code`: org.wimm.application.ApplicationFailureCode,
+        val `financeCode`: kotlin.String?) : ApplicationPreparationV2()
+
+    {
+
+
+        companion object
+    }
+
+
+
+
+
+
+
+
+    companion object
+}
 
 /**
  * @suppress
  */
-public object FfiConverterOptionalLong: FfiConverterRustBuffer<kotlin.Long?> {
-    override fun read(buf: ByteBuffer): kotlin.Long? {
-        if (buf.get().toInt() == 0) {
-            return null
+public object FfiConverterTypeApplicationPreparationV2 : FfiConverterRustBuffer<ApplicationPreparationV2>{
+    override fun read(buf: ByteBuffer): ApplicationPreparationV2 {
+        return when(buf.getInt()) {
+            1 -> ApplicationPreparationV2.Prepared(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypeCommitContext.read(buf),
+                FfiConverterTypeLocalCommitRequest.read(buf),
+                )
+            2 -> ApplicationPreparationV2.Unchanged(
+                FfiConverterUInt.read(buf),
+                )
+            3 -> ApplicationPreparationV2.Rejected(
+                FfiConverterUInt.read(buf),
+                FfiConverterTypeApplicationFailureCode.read(buf),
+                FfiConverterOptionalString.read(buf),
+                )
+            else -> throw RuntimeException("invalid enum value, something is very wrong!!")
         }
-        return FfiConverterLong.read(buf)
     }
 
-    override fun allocationSize(value: kotlin.Long?): ULong {
-        if (value == null) {
-            return 1UL
-        } else {
-            return 1UL + FfiConverterLong.allocationSize(value)
+    override fun allocationSize(value: ApplicationPreparationV2): ULong = when(value) {
+        is ApplicationPreparationV2.Prepared -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypeCommitContext.allocationSize(value.`context`)
+                + FfiConverterTypeLocalCommitRequest.allocationSize(value.`request`)
+            )
+        }
+        is ApplicationPreparationV2.Unchanged -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+            )
+        }
+        is ApplicationPreparationV2.Rejected -> {
+            // Add the size for the Int that specifies the variant plus the size needed for all fields
+            (
+                4UL
+                + FfiConverterUInt.allocationSize(value.`contractVersion`)
+                + FfiConverterTypeApplicationFailureCode.allocationSize(value.`code`)
+                + FfiConverterOptionalString.allocationSize(value.`financeCode`)
+            )
         }
     }
 
-    override fun write(value: kotlin.Long?, buf: ByteBuffer) {
-        if (value == null) {
-            buf.put(0)
-        } else {
-            buf.put(1)
-            FfiConverterLong.write(value, buf)
-        }
+    override fun write(value: ApplicationPreparationV2, buf: ByteBuffer) {
+        when(value) {
+            is ApplicationPreparationV2.Prepared -> {
+                buf.putInt(1)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypeCommitContext.write(value.`context`, buf)
+                FfiConverterTypeLocalCommitRequest.write(value.`request`, buf)
+                Unit
+            }
+            is ApplicationPreparationV2.Unchanged -> {
+                buf.putInt(2)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                Unit
+            }
+            is ApplicationPreparationV2.Rejected -> {
+                buf.putInt(3)
+                FfiConverterUInt.write(value.`contractVersion`, buf)
+                FfiConverterTypeApplicationFailureCode.write(value.`code`, buf)
+                FfiConverterOptionalString.write(value.`financeCode`, buf)
+                Unit
+            }
+        }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 }
+
+
+
+
+
+
+enum class AreaMode {
+
+    STANDALONE,
+    CONNECTED;
+
+
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeAreaMode: FfiConverterRustBuffer<AreaMode> {
+    override fun read(buf: ByteBuffer) = try {
+        AreaMode.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: AreaMode) = 4UL
+
+    override fun write(value: AreaMode, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
 
 
 
@@ -1408,289 +1567,83 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-object ContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<ContractException> {
-    override fun lift(error_buf: RustBuffer.ByValue): ContractException =
-        org.wimm.privatecontracts.ContractException.ErrorHandler.lift(
-            RustBufferContractError.ByValue().apply {
-                capacity = error_buf.capacity
-                len = error_buf.len
-                data = error_buf.data
-            }
-        )
-}
-
-
-
-
-
-object LocalContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<LocalContractException> {
-    override fun lift(error_buf: RustBuffer.ByValue): LocalContractException =
-        org.wimm.localcontracts.LocalContractException.ErrorHandler.lift(
-            RustBufferLocalContractError.ByValue().apply {
-                capacity = error_buf.capacity
-                len = error_buf.len
-                data = error_buf.data
-            }
-        )
-}
-
-
-
-object PublicContractExceptionExternalErrorHandler : UniffiRustCallStatusErrorHandler<PublicContractException> {
-    override fun lift(error_buf: RustBuffer.ByValue): PublicContractException =
-        org.wimm.publiccontracts.PublicContractException.ErrorHandler.lift(
-            RustBufferPublicContractError.ByValue().apply {
-                capacity = error_buf.capacity
-                len = error_buf.len
-                data = error_buf.data
-            }
-        )
-} fun `calculateJson`(`request`: kotlin.String): kotlin.String {
-            return FfiConverterString.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_calculate_json(
-
-
-        FfiConverterString.lower(`request`),_status)
-}
-    )
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeExpectation: FfiConverterRustBuffer<List<Expectation>> {
+    override fun read(buf: ByteBuffer): List<Expectation> {
+        val len = buf.getInt()
+        return List<Expectation>(len) {
+            FfiConverterTypeExpectation.read(buf)
+        }
     }
 
-
-        /**
-         * K01-JSON-Vertrag; alle Facharbeit verbleibt in der unabhängigen Kernbibliothek.
-         */ fun `executeJson`(`request`: kotlin.String): kotlin.String {
-            return FfiConverterString.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_execute_json(
-
-
-        FfiConverterString.lower(`request`),_status)
-}
-    )
+    override fun allocationSize(value: List<Expectation>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeExpectation.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
     }
 
- fun `projectJson`(`request`: kotlin.String): kotlin.String {
-            return FfiConverterString.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_project_json(
-
-
-        FfiConverterString.lower(`request`),_status)
+    override fun write(value: List<Expectation>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeExpectation.write(it, buf)
+        }
+    }
 }
-    )
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeReverseTarget: FfiConverterRustBuffer<List<ReverseTarget>> {
+    override fun read(buf: ByteBuffer): List<ReverseTarget> {
+        val len = buf.getInt()
+        return List<ReverseTarget>(len) {
+            FfiConverterTypeReverseTarget.read(buf)
+        }
     }
 
- fun `reverseJson`(`request`: kotlin.String): kotlin.String {
-            return FfiConverterString.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_reverse_json(
-
-
-        FfiConverterString.lower(`request`),_status)
-}
-    )
+    override fun allocationSize(value: List<ReverseTarget>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeReverseTarget.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
     }
 
- fun `validateJson`(`request`: kotlin.String): kotlin.String {
-            return FfiConverterString.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_validate_json(
-
-
-        FfiConverterString.lower(`request`),_status)
+    override fun write(value: List<ReverseTarget>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeReverseTarget.write(it, buf)
+        }
+    }
 }
-    )
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeAggregate: FfiConverterRustBuffer<List<Aggregate>> {
+    override fun read(buf: ByteBuffer): List<Aggregate> {
+        val len = buf.getInt()
+        return List<Aggregate>(len) {
+            FfiConverterTypeAggregate.read(buf)
+        }
     }
 
-
-    @Throws(ContractException::class) fun `prepareApplicationV2`(`input`: ApplicationRequestV2): ApplicationPreparationV2 {
-            return FfiConverterTypeApplicationPreparationV2.lift(
-    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_prepare_application_v2(
-
-
-        FfiConverterTypeApplicationRequestV2.lower(`input`),_status)
-}
-    )
+    override fun allocationSize(value: List<Aggregate>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeAggregate.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
     }
 
-
-    @Throws(ContractException::class) fun `calculateV2`(`request`: CalculationRequest): CalculationOutcome {
-            return FfiConverterTypeCalculationOutcome.lift(
-    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_calculate_v2(
-
-
-        FfiConverterTypeCalculationRequest.lower(`request`),_status)
-}
-    )
+    override fun write(value: List<Aggregate>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeAggregate.write(it, buf)
+        }
     }
-
-
-    @Throws(ContractException::class) fun `executeV2`(`request`: Request): CommandOutcomeV2 {
-            return FfiConverterTypeCommandOutcomeV2.lift(
-    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_execute_v2(
-
-
-        FfiConverterTypeRequest.lower(`request`),_status)
 }
-    )
-    }
-
-
-    @Throws(ContractException::class) fun `roundtripLocalSnapshotV2`(`snapshot`: LocalSnapshot): SnapshotOutcomeV2 {
-            return FfiConverterTypeSnapshotOutcomeV2.lift(
-    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_roundtrip_local_snapshot_v2(
-
-
-        FfiConverterTypeLocalSnapshot.lower(`snapshot`),_status)
-}
-    )
-    }
-
-
-    @Throws(LocalContractException::class) fun `roundtripStorageFailureV2`(`input`: StorageFailure): StorageFailure {
-            return FfiConverterTypeStorageFailure.lift(
-    uniffiRustCallWithError(LocalContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_roundtrip_storage_failure_v2(
-
-
-        FfiConverterTypeStorageFailure.lower(`input`),_status)
-}
-    )
-    }
-
-
-    @Throws(LocalContractException::class) fun `validateLocalMigrationFormV2`(`plan`: StorageMigrationPlan): LocalFormOutcome {
-            return FfiConverterTypeLocalFormOutcome.lift(
-    uniffiRustCallWithError(LocalContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_validate_local_migration_form_v2(
-
-
-        FfiConverterTypeStorageMigrationPlan.lower(`plan`),_status)
-}
-    )
-    }
-
-
-    @Throws(ContractException::class) fun `validateLocalPortFormV2`(`request`: LocalPortRequestV2): LocalFormOutcome {
-            return FfiConverterTypeLocalFormOutcome.lift(
-    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_validate_local_port_form_v2(
-
-
-        FfiConverterTypeLocalPortRequestV2.lower(`request`),_status)
-}
-    )
-    }
-
-
-    @Throws(PublicContractException::class) fun `validatePublicOperationFormV2`(`operation`: EncryptedOperation): PublicValidationOutcome {
-            return FfiConverterTypePublicValidationOutcome.lift(
-    uniffiRustCallWithError(PublicContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_validate_public_operation_form_v2(
-
-
-        FfiConverterTypeEncryptedOperation.lower(`operation`),_status)
-}
-    )
-    }
-
-
-    @Throws(PublicContractException::class) fun `validatePublicRosterFormV2`(`roster`: SignedKeyRoster): PublicValidationOutcome {
-            return FfiConverterTypePublicValidationOutcome.lift(
-    uniffiRustCallWithError(PublicContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_validate_public_roster_form_v2(
-
-
-        FfiConverterTypeSignedKeyRoster.lower(`roster`),_status)
-}
-    )
-    }
-
-
-    @Throws(ContractException::class) fun `reverseV2`(`request`: ReverseRequest): CommandOutcomeV2 {
-            return FfiConverterTypeCommandOutcomeV2.lift(
-    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_reverse_v2(
-
-
-        FfiConverterTypeReverseRequest.lower(`request`),_status)
-}
-    )
-    }
-
-
-    @Throws(ContractException::class) fun `projectV2`(`request`: ProjectionRequest): ProjectionOutcome {
-            return FfiConverterTypeProjectionOutcome.lift(
-    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_project_v2(
-
-
-        FfiConverterTypeProjectionRequest.lower(`request`),_status)
-}
-    )
-    }
-
-
-    @Throws(ContractException::class) fun `validateV2`(`request`: ValidationRequest): ValidationOutcome {
-            return FfiConverterTypeValidationOutcome.lift(
-    uniffiRustCallWithError(ContractExceptionExternalErrorHandler) { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_validate_v2(
-
-
-        FfiConverterTypeValidationRequest.lower(`request`),_status)
-}
-    )
-    }
-
- fun `calculateMoneyV2`(`request`: MoneyRequestV2): MoneyResultV2 {
-            return FfiConverterTypeMoneyResultV2.lift(
-    uniffiRustCall() { _status ->
-    UniffiLib.uniffi_wimm_core_bindings_fn_func_calculate_money_v2(
-
-
-        FfiConverterTypeMoneyRequestV2.lower(`request`),_status)
-}
-    )
-    }

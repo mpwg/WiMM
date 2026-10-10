@@ -9,3 +9,4 @@ cdylib_name = "wimm_core_bindings"
 
 [bindings.kotlin.external_packages]
 wimm_finance_types = "org.wimm.privatecontracts"
+wimm_client_application = "org.wimm.application"
