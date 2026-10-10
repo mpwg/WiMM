@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { Dexie } from 'dexie';
 import { expect, it } from 'vitest';
 import { decodeStorageFailure, normalizeStorageWriteFailure } from './storage-failure.js';
 it('bewahrt alle stabilen Codes ohne fremde Meldungen oder Nutzdaten', () => {
@@ -15,4 +16,11 @@ it('weist manipulierte, unbekannte und textuelle Antworten konservativ ab', () =
 it('klassifiziert Plattformfehler nach Typ ohne deren Text zu übernehmen', () => {
   for (const [name, code] of [['QuotaExceededError','QUOTA'],['AbortError','CANCELLED'],['InvalidStateError','RESOURCE_UNAVAILABLE']]) expect(normalizeStorageWriteFailure(new DOMException('secret',name)).code).toBe(code);
   expect(normalizeStorageWriteFailure(new Error('secret stale revision')).commitState).toBe('unknown');
+});
+
+it('unterscheidet kanonische IndexedDB-Schlüsselfehler von unklaren Text-/Objektfehlern', () => {
+  for (const error of [new Dexie.DataError('secret'), new DOMException('secret', 'DataError')]) {
+    const failure = normalizeStorageWriteFailure(error); expect(failure.code).toBe('WRITE_FAILED'); expect(failure.commitState).toBe('notCommitted'); expect(failure.message).not.toContain('secret');
+  }
+  for (const error of [new Error('DataError secret'), { name: 'DataError', message: 'secret' }]) expect(normalizeStorageWriteFailure(error).commitState).toBe('unknown');
 });
