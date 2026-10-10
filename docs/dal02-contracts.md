@@ -1,6 +1,6 @@
 # DAL02 — Getrennte Rust-Persistenzverträge und Memoryreferenz
 
-Stand: 10. Oktober 2026. [DAL02 #107](https://github.com/mpwg/WiMM/issues/107), Voraussetzungen DAL01/#106, AR02/#116 und AR03/#117 erfüllt. Geprüfter Abschnitt auf main, aktive CachyOS-Arbeitskopie Linux x86_64, Rust 1.99.0. [Verträge](core-contracts.md), ADR-054 in [Entscheidungen](decisions.md), [Adapter-README](../crates/local-dal/README.md).
+Stand: 10. Oktober 2026. [DAL02 #107](https://github.com/mpwg/WiMM/issues/107), Voraussetzungen DAL01/#106, AR02/#116 und AR03/#117 erfüllt. Abnahmecommit [eea3ae8](https://github.com/mpwg/WiMM/commit/eea3ae8a2cf4b8410cc1c3c4f011c4134deb146a) auf main; #107 und #133 als COMPLETED geschlossen, vollständige Beschreibungen und Schließungsgründe rückgelesen. Geprüfter Abschnitt in der aktive CachyOS-Arbeitskopie Linux x86_64, Rust 1.99.0. [Verträge](core-contracts.md), ADR-054 in [Entscheidungen](decisions.md), [Adapter-README](../crates/local-dal/README.md).
 
 ## Kriterienmatrix
 
