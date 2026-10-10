@@ -67,3 +67,5 @@ CI auf 2ee0cdf hat einen noch historischen positiven Checkpoint-Schema-Test mit 
 ## Bestätigte Gesamt-CI nach Schematestkorrektur
 
 Vollständige [Ubuntu-Gesamtprüfung 38068842828](https://github.com/mpwg/WiMM/actions/runs/38068842828) auf c4a0844 einschließlich aller drei Jobs erfolgreich, CodeQL 38068842956 ebenfalls erfolgreich. Die Korrektur #147 ist damit vollständig abgenommen; #108/#147 erneut CLOSED/COMPLETED. Nachfolgende PWA-/Bindingänderungen #109/#148 sind separat nachzuweisen.
+
+Aktuelle Initialisierung konfiguriert ausschließlich explizit neue objektfreie Dateien vor BEGIN auf 16-KiB-Pagerseiten; tatsächliche native PRAGMA-Assertion und Wiederöffnung geprüft. Konfigurations-PRAGMA als feste interne Engineoption, keine freie SQL-/Pfadoberfläche oder bestehende Datei-/DSLmigration. Nichtleere Dateien erneut innerhalb Transaktion abweisen, FULL-Synchronität/Journaling/CAS unverändert. Aktueller Adapterkatalog 41 Einträge.

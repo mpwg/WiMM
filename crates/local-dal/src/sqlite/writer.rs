@@ -126,8 +126,8 @@ fn write_batch(
             .on_conflict((aggregates::profile_id, aggregates::handle))
             .do_update()
             .set((
-                aggregates::revision.eq(a.aggregate.revision().value()),
-                aggregates::payload.eq(text(a)?),
+                aggregates::revision.eq(diesel::upsert::excluded(aggregates::revision)),
+                aggregates::payload.eq(diesel::upsert::excluded(aggregates::payload)),
             ))
             .execute(c)?;
     }

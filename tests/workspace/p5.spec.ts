@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import {profileSqliteWorker} from './worker-profiler.js';
 import {writeFile} from 'node:fs/promises';
 import { chromium, expect, test, type Page } from '@playwright/test';
 import { mkdirSync, mkdtempSync } from 'node:fs';
@@ -12,7 +13,10 @@ async function select(page: Page, data: string) {
   await view.getByRole('button', { name: 'Vorschau erstellen' }).click(); await expect(view.getByRole('status')).toContainText('Zeilen in der Vorschau'); await view.getByRole('button', { name: 'Übernahme prüfen' }).click(); await view.getByRole('button', { name: 'Entscheidungen bestätigen' }).click(); await expect(view.getByRole('status')).toContainText('Importentscheidungen gespeichert'); return view;
 }
 const csv = (count: number) => 'Datum;Betrag;Empfänger;Notiz;ID\n' + Array.from({ length: count }, (_, i) => `05.10.2026;-1,00;Bäckerei;Öl ${i};id-${i}`).join('\n');
+const cpuProfiles=new WeakMap<import('@playwright/test').Page,(path:string)=>Promise<void>>();
+test.beforeEach(async({page})=>{if(process.env.WIMM_SQLITE_CPU_PROFILE==='1')cpuProfiles.set(page,await profileSqliteWorker(page));});
 test.afterEach(async({page},info)=>{
+ const stop=cpuProfiles.get(page);if(stop!==undefined)await stop(info.outputPath('worker-cpu.json'));
  if(info.status!==info.expectedStatus||info.title.includes('Großimport')){const metrics=await page.evaluate(()=>window.workspaceTest?.timings()).catch(()=>undefined);if(metrics!==undefined){await info.attach('Phasen ohne Payload',{body:JSON.stringify(metrics),contentType:'application/json'});await writeFile(info.outputPath('phases.json'),JSON.stringify(metrics));}}
 });
 test('pausiert nach Gruppe und nimmt nach echtem Prozessneustart ohne Doppelbuchung wieder auf', async ({ baseURL }, info) => {

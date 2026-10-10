@@ -370,6 +370,18 @@ impl SqliteStore {
     ) -> Result<(), StorageFailure> {
         c.batch_execute("PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL;")
             .map_err(database)?;
+        // Seitengröße nur auf der explizit leeren Datei und vor BEGIN festlegen; bestehende Dateien unverändert lassen.
+        let objects: i64 = sqlite_master::table
+            .count()
+            .get_result(c)
+            .map_err(database)?;
+        if objects != 0 {
+            return Err(StorageFailure::not_committed(
+                StorageFailureCode::UpdateRequired,
+            ));
+        }
+        c.batch_execute("PRAGMA page_size=16384;")
+            .map_err(database)?;
         c.immediate_transaction::<_, ReadError, _>(|c| {
             let objects: i64 = sqlite_master::table.count().get_result(c)?;
             if objects != 0 {

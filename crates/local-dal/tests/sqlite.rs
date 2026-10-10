@@ -1755,3 +1755,31 @@ fn actual_current_sqlite_disk_full_rolls_back_batch_without_receipt_or_private_d
         CommitOutcome::Committed { .. }
     ));
 }
+#[test]
+fn fresh_current_schema_uses_actual_16k_pager_and_keeps_reopen_state() {
+    #[derive(QueryableByName)]
+    struct PageSize {
+        #[diesel(sql_type=diesel::sql_types::Integer)]
+        page_size: i32,
+    }
+    let file = path("actual-pager-16k");
+    SqliteStore::initialize_empty_file(&file).unwrap();
+    let mut connection = SqliteConnection::establish(file.to_str().unwrap()).unwrap();
+    assert_eq!(
+        diesel::sql_query("PRAGMA page_size")
+            .get_result::<PageSize>(&mut connection)
+            .unwrap()
+            .page_size,
+        16384
+    );
+    drop(connection);
+    let mut writer = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    writer.initialize_area(&id(2), &id(3)).unwrap();
+    let before = writer.export_snapshot(&id(2)).unwrap();
+    drop(writer);
+    let reopened = SqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    assert_eq!(
+        serde_json::to_value(reopened.export_snapshot(&id(2)).unwrap()).unwrap(),
+        serde_json::to_value(before).unwrap()
+    );
+}
