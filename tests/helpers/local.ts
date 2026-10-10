@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page, type BrowserContext } from '@playwright/test';
+import { build, createLogger } from 'vite';
+import { readFile, readdir } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { navigate, openBooking } from './ui.js';
 export const passphrase = 'ux-flow-synthetische-passphrase-2026';
 export async function createVault(page: Page) {
@@ -58,9 +61,47 @@ export async function details(page: Page, text: string | RegExp) {
   await rows(page).filter({ hasText: text }).getByRole('button', { name: /^Details:/ }).click();
   return page.getByRole('dialog');
 }
-const storageModule = '/@fs' + process.cwd() + '/packages/browser-adapters/src/sqlite-storage.ts';
+// Die Testseite lädt denselben unveränderten produktiven Adapter auch am Previewserver.
+// Sein eigener Client delegiert über die produktive verschlüsselte Tabkoordination an den SQL-Besitzer.
+const readerPrefix = `/__wimm_test_reader_${process.pid}/`;
+const readerDirectory = resolve(`test-results/ui-reader-${process.pid}`);
+let readerAssets: Promise<Map<string, Buffer>> | undefined;
+const readerContexts = new WeakSet<BrowserContext>();
+async function prepareReader(page: Page) {
+  readerAssets ??= (async () => {
+    const logger = createLogger('error');
+    logger.warn = logger.warnOnce = message => { throw new Error(`Testreader-Buildwarnung: ${message}`); };
+    await build({ configFile: false, root: process.cwd(), base: readerPrefix, customLogger: logger, logLevel: 'error',
+      worker: { format: 'es' }, build: { outDir: readerDirectory, emptyOutDir: true,
+        lib: { entry: resolve('packages/browser-adapters/src/sqlite-storage.ts'), formats: ['es'], fileName: 'reader' } } });
+    const assets = new Map<string, Buffer>();
+    for (const file of await readdir(readerDirectory, { recursive: true })) {
+      if (file.endsWith('.js') || file.endsWith('.wasm')) assets.set(file, await readFile(resolve(readerDirectory, file)));
+    }
+    return assets;
+  })();
+  const assets = await readerAssets;
+  const context = page.context();
+  if (!readerContexts.has(context)) {
+    await context.route(`**${readerPrefix}**`, async route => {
+      const file = new URL(route.request().url()).pathname.slice(readerPrefix.length);
+      const body = assets.get(file);
+      if (!body) throw new Error('Unbekanntes Testreaderartefakt');
+      await route.fulfill({ body, contentType: file.endsWith('.wasm') ? 'application/wasm' : 'application/javascript' });
+    });
+    readerContexts.add(context);
+  }
+  // Nur statische Inspektorartefakte zwischenspeichern; Produktassets und Finanzbestand bleiben unberührt.
+  // Der PWA-Service-Worker kann sie damit auch nach dem echten Offline-Browserneustart laden.
+  await page.evaluate(async urls => {
+    const cache = await caches.open('wimm-test-reader-assets');
+    for (const url of urls) if (!(await cache.match(url))) await cache.add(url);
+  }, [...assets.keys()].map(file => readerPrefix + file));
+  return readerPrefix + 'reader.js';
+}
 const profileKey = process.env.WIMM_CLIENT === 'desktop' ? 'wimm/desktop-profile/v1' : 'wimm/local-profile/v1';
 export async function readAggregates(page: Page) {
+  const storageModule = await prepareReader(page);
   return page.evaluate(async ({ url, key }) => {
     const profile = JSON.parse(localStorage.getItem(key)!) as { profileId: string; selectedAreaId: string };
     const { BrowserSqliteStorageAdapter } = await import(/* @vite-ignore */ url) as typeof import('../../packages/browser-adapters/src/sqlite-storage.js');

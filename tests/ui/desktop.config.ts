@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { defineConfig, devices } from '@playwright/test';
 
+const port = Number(process.env.WIMM_UI_PORT ?? '1420');
+if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Ungültiger Desktop-Frontend-Testport');
 export default defineConfig({
   outputDir: '../../test-results/ui-desktop',
   forbidOnly: true,
@@ -10,15 +12,15 @@ export default defineConfig({
   testIgnore: ['p4-1-7.spec.ts', 'p5-offline.spec.ts'],
   timeout: 45_000,
   use: {
-    baseURL: 'http://127.0.0.1:1420',
+    baseURL: `http://127.0.0.1:${port}`,
     trace: 'retain-on-failure'
   },
   projects: [{ name: 'Chromium-Desktop-Frontend', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: process.env.WIMM_BUILD === '1'
-      ? 'pnpm --filter @wimm/desktop exec vite preview --host 127.0.0.1 --port 1420 --strictPort'
-      : 'pnpm --filter @wimm/desktop exec vite --host 127.0.0.1 --port 1420 --strictPort',
-    url: 'http://127.0.0.1:1420',
+      ? `pnpm --filter @wimm/desktop exec vite preview --host 127.0.0.1 --port ${port} --strictPort`
+      : `pnpm --filter @wimm/desktop exec vite --host 127.0.0.1 --port ${port} --strictPort`,
+    url: `http://127.0.0.1:${port}`,
     reuseExistingServer: !process.env.CI && process.env.WIMM_BUILD !== '1'
   }
 });
