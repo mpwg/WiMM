@@ -32,7 +32,7 @@ fn invalid() -> ContractError {
     )
         .into()
 }
-fn checked(snapshot: LocalSnapshot) -> Result<SnapshotOutcomeV2, ContractError> {
+fn check_snapshot_ref(snapshot: &LocalSnapshot) -> Result<(), ContractError> {
     if !snapshot.check_versions() {
         return Err((
             "UPDATE_REQUIRED",
@@ -40,7 +40,7 @@ fn checked(snapshot: LocalSnapshot) -> Result<SnapshotOutcomeV2, ContractError> 
         )
             .into());
     }
-    if !wire_policy::check(&snapshot)
+    if !wire_policy::check(snapshot)
         || snapshot
             .sync_state
             .as_ref()
@@ -48,6 +48,10 @@ fn checked(snapshot: LocalSnapshot) -> Result<SnapshotOutcomeV2, ContractError> 
     {
         return Err(invalid());
     }
+    Ok(())
+}
+fn checked(snapshot: LocalSnapshot) -> Result<SnapshotOutcomeV2, ContractError> {
+    check_snapshot_ref(&snapshot)?;
     Ok(SnapshotOutcomeV2 {
         contract_version: 2,
         status: SnapshotStatus::Snapshot,
@@ -74,6 +78,9 @@ pub fn snapshot_to_v1_json(snapshot: LocalSnapshot) -> Result<String, ContractEr
     serde_json::to_string(&checked(snapshot)?.snapshot).map_err(|_| invalid())
 }
 pub fn check_port(request: LocalPortRequestV2) -> Result<(), ContractError> {
+    check_port_ref(&request)
+}
+pub fn check_port_ref(request: &LocalPortRequestV2) -> Result<(), ContractError> {
     if request.contract_version != 2 {
         return Err((
             "UPDATE_REQUIRED",
@@ -81,12 +88,12 @@ pub fn check_port(request: LocalPortRequestV2) -> Result<(), ContractError> {
         )
             .into());
     }
-    if !wire_policy::check(&request) {
+    if !wire_policy::check(request) {
         return Err(invalid());
     }
-    match request.command {
+    match &request.command {
         LocalPortCommand::ReplaceSnapshot { snapshot } => {
-            checked(snapshot)?;
+            check_snapshot_ref(snapshot)?;
         }
         LocalPortCommand::SaveSyncPage { page } if !page.state.check_cursor() => {
             return Err(invalid());

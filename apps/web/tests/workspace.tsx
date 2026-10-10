@@ -55,11 +55,15 @@ if (await adapter.readAggregate(accountId) === undefined) {
   }
   await adapter.applyAtomicBatch({ expectedRevisions: [], aggregates: initial.map(toStoredAggregate), outbox: performanceFixture ? Array.from({ length: 1000 }, (_, index) => ({ operationId:id(200000+index),spaceId,expectedRevisions:[],dependsOn:[],state:'blocked' as const,retryCount:0,createdAt:meta(0).createdAt,draft:{syntheticSharedExpenseLoad:true,id:id(200000+index),amount:100,source:'private_advance',reimbursementSource:'household',categoryId,shares:[{participantId:id(300000),amount:50},{participantId:id(300001),amount:50}]} })) : [], projections: [] });
 }
+const phaseTimings:{phase:string;at:number;duration?:number}[]=[];
+const actualPort=adapter.client.port.bind(adapter.client);
+adapter.client.port=async request=>{const start=performance.now();phaseTimings.push({phase:'transport-start',at:start});try{return await actualPort(request);}finally{phaseTimings.push({phase:'transport-completed',at:performance.now(),duration:performance.now()-start});}};
 let mode = 'normal'; let release: (() => void) | undefined; let releaseRequested=false;
 let coldListPaintedAt: number | undefined;
 const storage: WorkspaceStorage = {
   query: (query) => adapter.query(query),
   applyAtomicBatch: async (batch) => {
+    const start=performance.now();phaseTimings.push({phase:'storage-enter',at:start});
     if (mode === 'delay') await new Promise<void>((resolve) => { release=()=>{release=undefined;releaseRequested=false;resolve();};if(releaseRequested)release(); });
     if (mode === 'quota') throw new DOMException('QuotaExceededError', 'QuotaExceededError');
     if (mode === 'disk') throw new StorageFailureError('QUOTA', 'notCommitted');
@@ -70,14 +74,15 @@ const storage: WorkspaceStorage = {
       const invalid = { ...batch, aggregates: batch.aggregates.map((entry, index) => index === batch.aggregates.length - 1 ? { ...entry, handle: undefined } : entry) } as unknown as AtomicBatch<StoredAggregate, never, never>;
       await adapter.applyAtomicBatch(invalid); return;
     }
-    await adapter.applyAtomicBatch(batch);
+    const writeStart=performance.now();phaseTimings.push({phase:'storage-released',at:writeStart,duration:writeStart-start});
+    await adapter.applyAtomicBatch(batch);phaseTimings.push({phase:'storage-completed',at:performance.now(),duration:performance.now()-writeStart});
   }
 };
 declare global { interface Window { workspaceTest: {
-  mode(value: string): void; release(): void; read(): Promise<readonly StoredAggregate[]>; stale(id: string): Promise<void>; coldListPaintedAt(): number | undefined; fixture(): Promise<{ transactions: number; accounts: number; categories: number; months: number; sharedExpenseLoad: number }>;
+  timings():readonly {phase:string;at:number;duration?:number}[];mode(value: string): void; release(): void; read(): Promise<readonly StoredAggregate[]>; stale(id: string): Promise<void>; coldListPaintedAt(): number | undefined; fixture(): Promise<{ transactions: number; accounts: number; categories: number; months: number; sharedExpenseLoad: number }>;
 } } }
 window.workspaceTest = {
-  coldListPaintedAt: () => coldListPaintedAt,
+  coldListPaintedAt: () => coldListPaintedAt,timings:()=>phaseTimings,
   mode(value) { mode=value;if(value==='delay')releaseRequested=false; }, release() { if(release===undefined)releaseRequested=true;else release(); }, read: () => adapter.query({ spaceId }),
   async fixture() {
     const aggregates = await adapter.query({ spaceId });
@@ -94,7 +99,8 @@ window.workspaceTest = {
 };
 const area = { id: spaceId, kind: 'private', label: 'Synthetischer Bereich' } as const;
 const profileApplication = new ProfileApplication({ load: async () => ({ kind: 'missing' }), change: async () => { throw new Error('Keine Profiländerung im Finanzfixture'); } }, { next: () => crypto.randomUUID() }, new ApplicationActivity());
-const runtime = createBrowserApplicationRuntime(() => storage, profileApplication);
+const baseRuntime = createBrowserApplicationRuntime(() => storage, profileApplication);
+const runtime={...baseRuntime,importPreparation:{async execute(...args:Parameters<typeof baseRuntime.importPreparation.execute>){const start=performance.now();phaseTimings.push({phase:'preparation-start',at:start});try{const result=await baseRuntime.importPreparation.execute(...args);phaseTimings.push({phase:result===null?'preparation-unchanged':'preparation-changed',at:performance.now()});return result;}catch(error){phaseTimings.push({phase:'preparation-error',at:performance.now()});throw error;}finally{phaseTimings.push({phase:'preparation-completed',at:performance.now(),duration:performance.now()-start});}}}};
 const context = { runtime, activity: profileApplication.activity, profileChanging: false, isProfileChanging: () => false, platform: createBrowserPlatformServices(), activeArea: area, profile: { profileId, areas: [area] }, selectArea: () => undefined, createHousehold: async () => undefined, lock: async () => undefined } as unknown as UnlockedAppContext;
 const rootElement = document.getElementById('root')!;
 if (performanceFixture) {

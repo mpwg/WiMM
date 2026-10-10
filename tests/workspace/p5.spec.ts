@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import {writeFile} from 'node:fs/promises';
 import { chromium, expect, test, type Page } from '@playwright/test';
 import { mkdirSync, mkdtempSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -11,6 +12,9 @@ async function select(page: Page, data: string) {
   await view.getByRole('button', { name: 'Vorschau erstellen' }).click(); await expect(view.getByRole('status')).toContainText('Zeilen in der Vorschau'); await view.getByRole('button', { name: 'Übernahme prüfen' }).click(); await view.getByRole('button', { name: 'Entscheidungen bestätigen' }).click(); await expect(view.getByRole('status')).toContainText('Importentscheidungen gespeichert'); return view;
 }
 const csv = (count: number) => 'Datum;Betrag;Empfänger;Notiz;ID\n' + Array.from({ length: count }, (_, i) => `05.10.2026;-1,00;Bäckerei;Öl ${i};id-${i}`).join('\n');
+test.afterEach(async({page},info)=>{
+ if(info.status!==info.expectedStatus||info.title.includes('Großimport')){const metrics=await page.evaluate(()=>window.workspaceTest?.timings()).catch(()=>undefined);if(metrics!==undefined){await info.attach('Phasen ohne Payload',{body:JSON.stringify(metrics),contentType:'application/json'});await writeFile(info.outputPath('phases.json'),JSON.stringify(metrics));}}
+});
 test('pausiert nach Gruppe und nimmt nach echtem Prozessneustart ohne Doppelbuchung wieder auf', async ({ baseURL }, info) => {
   const root = resolve('.toolchain-checks'); mkdirSync(root, { recursive: true }); const profile = mkdtempSync(resolve(root, 'p5-wiederaufnahme-'));
   const url = `/tests/workspace.html?count=0&desktop=${info.project.name.startsWith('Desktop')}`;

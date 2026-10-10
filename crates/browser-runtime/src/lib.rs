@@ -42,7 +42,7 @@ impl StorageHost {
                 StorageFailureCode::UpdateRequired,
             ));
         }
-        wimm_local_contracts::storage_api::check_port(request.clone())
+        wimm_local_contracts::storage_api::check_port_ref(&request)
             .map_err(|_| StorageFailure::not_committed(StorageFailureCode::InvalidResponse))?;
         let contract_version = 2;
         Ok(match request.command {
