@@ -74,3 +74,9 @@ Sechs native Integrationsfälle plus tatsächlicher Child-Probe prüfen Commit/U
 Die elf katalogisierten Finanzspeichercommands verwenden jetzt den gemeinsamen ORM-DAL. Die bisherigen IPC-Namen und V1-Bestandsformen bleiben erhalten; bestehende Dateien werden nicht automatisch umgebaut. Ausschließlich frische leere Dateien erhalten den registrierten DSL-Initialstand. Historische Originalentwürfe mit flachen Handles und obsolete technische Cachearten bleiben im gekapselten V1-Kompatibilitätspfad erhalten; typisierte Snapshot-/Restoreguards bleiben streng.
 
 18 unveränderte gemeinsame Snapshot-/Neuaufbau-/Merge-/Versionsfälle laufen gegen echte SQLite über einen ausdrücklich ausgewählten ORM-Driver. `pnpm test:storage:native` enthält diesen Zielkatalog zusätzlich zu den bestehenden Fällen. Vollständige Schema-/Indexcommand- und Chiffratspeicherablösung sowie #108-Gesamtabnahme bleiben offen; die TS-Commitkoordination wird erst gemäß #119 umgestellt. [Aktueller Snapshot](../../docs/dal03-native.md).
+
+## DAL03 — ORM-Chiffratspeicher und Indexports
+
+Produktive Backupwrites/-reads und die drei Index-Abfragecommands verwenden jetzt den gemeinsamen ORM-DAL. Der Chiffratstore behält sein bestehendes Schema, prüft tatsächliche FULL-Durabilität, Duplikate und alle Receiptdimensionen und bestätigt erst nach tatsächlichem Commit plus bytegleichem Rücklesen. Keine Finanzklartexte/Schlüssel im Backupstore. Bestehende Dateien werden nicht automatisch umgebaut.
+
+Native Rust- und Prozessfälle sowie ein echter verschlüsselter P5-Neustartfall ergänzen den Zielkonformitätskatalog auf 19 Fälle; vollständiger gemeinsamer Lauf 49 echte SQLitefälle. Der bisherige Schema-Migrationswriter bleibt bis vollständiger ORM-/DSL-Ablösung offen. [Aktuelle Matrix](../../docs/dal03-native.md).

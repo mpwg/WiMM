@@ -84,6 +84,16 @@ Die separat nachverfolgten Bestandsdeltas [#144](https://github.com/mpwg/WiMM/is
 
 Versionsabweisung bei den elf Void-/Lesecommands geschieht vor jedem Write und liefert `UPDATE_REQUIRED/notCommitted`; der separate receiptfähige Commitport behält seine konservative Behandlung nicht belegter historischer Commitgewissheit. Keine Grenz-, Golden-, Formschema- oder Finanzregellockerung aus diesen Kompatibilitätskorrekturen.
 
+## Produktiver ORM-Chiffratspeicher und Indexcommands
+
+`SqliteBackupStore` bildet das vorhandene `backup_meta`-/`encrypted_backups`-Schema über Diesel ab. Neue leere Dateien werden ausschließlich durch den registrierten SeaQuery-Initialschritt erzeugt; bestehende Dateien werden nur geprüft, nicht beim Öffnen umgebaut. Metadaten binden Backup-ID, Profil, Bereich, Epoche und Hash. Die Tabelle enthält ausschließlich Chiffrat und diese technischen Bezüge, keine Finanzklartexte oder Schlüssel.
+
+`persist` prüft tatsächlich die verbindungsbezogene FULL-Durabilität, verweigert Duplikate vor Insert und schreibt in einer unmittelbaren SQLite-Transaktion. Erst tatsächlicher Commit und bytegleiches Rücklesen liefern das Receipt. Fehler vor der Commitgrenze sind notCommitted; nicht belegte Commit-/Rücklesegewissheit bleibt unknown. PRAGMA-Konfiguration und die tatsächliche PRAGMA-Abfrage sind gekapselte feste technische Ausnahmen; reguläre Reads/Writes sowie Schema-/Tabellenerzeugung verwenden ORM/DSL. Der normale Tauri-Startpfad und beide produktiven Backupcommands verwenden jetzt diesen Store. Frühere rusqlite-Backupwriter sind ausschließlich Testreferenzen.
+
+Vier native Rustfälle plus tatsächlich zweimal aufgerufener Child-Probe prüfen Kontextdimensionen und Duplikate, tatsächlichen SQLite-Triggerabort, bytegleichen Dateierhalt bei unzulässiger Initialisierung/future Schema, zwei getrennte Prozesse und tatsächliche verweigerte Speicherung nach `synchronous=OFF`. Der zusätzliche gemeinsame ORM-Tauri-Fall speichert einen echten verschlüsselten P5-Snapshot, startet das Rust-Portbinary neu, liest/entschlüsselt das ursprüngliche Cipher und prüft alle ursprünglichen Daten/Fehlerformen. Zielkatalog jetzt 19 Fälle, vollständiger gemeinsamer Speicherlauf insgesamt 49 echte SQLitefälle.
+
+Auch die drei produktiven Indexcommands delegieren nun an `LocalIndexQueryPort`; frühere rusqlite-Querywrapper sind entfernt und ihre historischen Queryreferenzen ausschließlich `cfg(test)`. Das frühere Schema-Migrationscommand verwendet vorläufig denselben neuen Chiffratleseport, besitzt jedoch noch seinen bisherigen Schema-/Journalwriter. Dieser letzte Produktionspfad muss vor #108-Abschluss durch den vollständigen ORM-/DSL-Migrationsadapter ersetzt und mit den unveränderten gemeinsamen Migrations-/Indexfällen geprüft werden. Keine Gesamt-/GUI-/Releaseabnahme aus dem Backupabschnitt.
+
 ## Kriterienmatrix
 
 | #108-Kriterium | Aktueller Nachweis |

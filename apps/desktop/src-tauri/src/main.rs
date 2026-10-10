@@ -167,8 +167,13 @@ fn main() {
             // Ausschließlich früherer Schema-/Indexprüfpfad bis dessen ORM-Ablösung, keine Finanzcommands.
             let connection = Connection::open(&storage_path)?;
             app.manage(StorageState(Mutex::new(connection)));
-            let backup_connection = Connection::open(directory.join("wimm-backups.sqlite3"))?;
-            backups::initialize_backups(&backup_connection)?;
+            let backup_path = directory.join("wimm-backups.sqlite3");
+            let backup_connection = if backup_path.exists() {
+                wimm_local_dal::sqlite_backup::SqliteBackupStore::open_existing(&backup_path)
+            } else {
+                wimm_local_dal::sqlite_backup::SqliteBackupStore::initialize_new(&backup_path)
+            }
+            .map_err(std::io::Error::other)?;
             app.manage(backups::BackupState(Mutex::new(backup_connection)));
             app.manage(migration::MigrationCancellationState::default());
             Ok(())
@@ -193,9 +198,9 @@ fn main() {
             backups::storage_read_encrypted_backup,
             migration::storage_migrate,
             migration::storage_cancel_migration,
-            migration::storage_query_indexed_transactions,
-            migration::storage_query_indexed_pending,
-            migration::storage_query_imported_transactions
+            orm_storage::orm_storage_query_indexed_transactions,
+            orm_storage::orm_storage_query_indexed_pending,
+            orm_storage::orm_storage_query_imported_transactions
         ])
         .run(tauri::generate_context!())
         .expect("Die Desktop-Anwendung konnte nicht gestartet werden.");

@@ -14,11 +14,31 @@ fn contract_driver() {
     } else {
         OrmStorageState::initialize_new(&path).unwrap()
     };
+    let backup_path = path.with_extension("backups.sqlite3");
+    let mut backups = if backup_path.exists() {
+        wimm_local_dal::sqlite_backup::SqliteBackupStore::open_existing(&backup_path)
+    } else {
+        wimm_local_dal::sqlite_backup::SqliteBackupStore::initialize_new(&backup_path)
+    }
+    .unwrap();
     for line in std::io::stdin().lock().lines() {
         let request: Value = serde_json::from_str(&line.unwrap()).unwrap();
         let args = &request["arguments"];
         let profile = args["profileId"].as_str().unwrap_or_default();
         let result: Result<Value, StorageFailure> = (|| match request["command"].as_str().unwrap() {
+            "storage_persist_encrypted_backup" => {
+                let input: crate::backups::BackupInput = decode(&args["input"])?;
+                backups.persist(
+                    crate::backups::typed_receipt(&input.receipt)?,
+                    &input.ciphertext,
+                )?;
+                serde_json::to_value(input.receipt).map_err(|_| invalid())
+            }
+            "storage_read_encrypted_backup" => {
+                let receipt: crate::backups::BackupReceipt = decode(&args["receipt"])?;
+                serde_json::to_value(backups.read(&crate::backups::typed_receipt(&receipt)?)?)
+                    .map_err(|_| invalid())
+            }
             "storage_apply_batch" => {
                 let b: StorageBatch = decode(&args["batch"])?;
                 state.with_profile(b.profile_id.as_str(), |p| {

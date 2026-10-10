@@ -56,3 +56,7 @@ Der vollständige Writer implementiert `LocalIndexQueryPort` über begrenzte Die
 ## DAL03 — V1-Kompatibilität im produktiven Tauri-Katalog
 
 Die elf bisherigen Tauri-Finanzspeichercommands verwenden den gemeinsamen ORM-DAL. Die registrierte leere Schemaerzeugung übernimmt das vorhandene Format; bestehende Dateien werden beim Start nicht umgebaut. 18 unveränderte gemeinsame Zielkonformitätsfälle und insgesamt 48 tatsächliche native SQLitefälle bestehen. [Bestandsdeltas #144/#145 und Grenzen](../../docs/dal03-native.md#produktive-finanzcommands-und-gemeinsame-bestandskonformität): reine/flache Originalaggregate ohne Umschreiben und explizite V1-Cachekompatibilität, während typisierte Snapshot-/Restoreguards streng bleiben. Vollständige Schema-/Indexcommand- und Chiffratspeicherablösung bleibt #108, produktive Commitkoordination #119.
+
+## DAL03 — Privater ORM-Chiffratstore
+
+`sqlite_backup::SqliteBackupStore` übernimmt vorhandene native verschlüsselte Backupbestände mit Diesel, expliziter leerer SeaQuery-Erzeugung und unverändertem Receipt-/Schemaformat. FULL-Durabilität wird tatsächlich abgefragt, IDs werden nicht überschrieben und erfolgreicher Commit benötigt bytegleiches Rücklesen. Native Assertions prüfen tatsächliche Fehler/Neustarts; [Matrix](../../docs/dal03-native.md#produktiver-orm-chiffratspeicher-und-indexcommands). Keine eigene Kryptografie, Finanzklartexte, UI-Dateipfade oder Öffnungs-Upgrades.

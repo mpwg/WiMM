@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Separater lokaler Chiffratspeicher: kein SQL-/Pfadport und kein Finanzklartext.
-use crate::storage_failure::{
-    StorageFailure, StorageFailureCode, commit_error, failure, storage_error,
-};
+use crate::storage_failure::{StorageFailure, StorageFailureCode, failure};
+#[cfg(test)]
+use crate::storage_failure::{commit_error, storage_error};
+#[cfg(test)]
 use rusqlite::{Connection, OptionalExtension, TransactionBehavior, params};
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 
-pub struct BackupState(pub Mutex<Connection>);
+pub struct BackupState(pub Mutex<wimm_local_dal::sqlite_backup::SqliteBackupStore>);
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -59,6 +60,7 @@ fn valid_receipt(receipt: &BackupReceipt) -> bool {
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-'))
 }
 
+#[cfg(test)]
 fn assert_schema(connection: &Connection) -> rusqlite::Result<()> {
     let exists: bool = connection.query_row(
         "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='backup_meta')",
@@ -83,6 +85,7 @@ fn assert_schema(connection: &Connection) -> rusqlite::Result<()> {
     Ok(())
 }
 
+#[cfg(test)]
 pub fn initialize_backups(connection: &Connection) -> rusqlite::Result<()> {
     assert_schema(connection)?;
     connection.pragma_update(None, "synchronous", "FULL")?;
@@ -96,6 +99,7 @@ pub fn initialize_backups(connection: &Connection) -> rusqlite::Result<()> {
     tx.commit()
 }
 
+#[cfg(test)]
 pub fn read_backup(
     connection: &Connection,
     receipt: &BackupReceipt,
@@ -110,6 +114,7 @@ pub fn read_backup(
         .and_then(|bytes| if bytes.is_empty() { Err(failure(StorageFailureCode::WriteFailed)) } else { Ok(bytes) })
 }
 
+#[cfg(test)]
 pub fn persist_backup(
     connection: &mut Connection,
     input: BackupInput,
@@ -139,28 +144,54 @@ pub fn persist_backup(
     Ok(input.receipt)
 }
 
+pub trait EncryptedBackupReader {
+    fn read_ciphertext(&self, receipt: &BackupReceipt) -> Result<Vec<u8>, StorageFailure>;
+}
+pub(crate) fn typed_receipt(
+    receipt: &BackupReceipt,
+) -> Result<wimm_local_contracts::models::EncryptedBackupReceipt, StorageFailure> {
+    if !valid_receipt(receipt) {
+        return Err(failure(StorageFailureCode::WriteFailed));
+    }
+    serde_json::from_value(
+        serde_json::to_value(receipt).map_err(|_| failure(StorageFailureCode::WriteFailed))?,
+    )
+    .map_err(|_| failure(StorageFailureCode::WriteFailed))
+}
+impl EncryptedBackupReader for wimm_local_dal::sqlite_backup::SqliteBackupStore {
+    fn read_ciphertext(&self, receipt: &BackupReceipt) -> Result<Vec<u8>, StorageFailure> {
+        self.read(&typed_receipt(receipt)?)
+    }
+}
+#[cfg(test)]
+impl EncryptedBackupReader for Connection {
+    fn read_ciphertext(&self, receipt: &BackupReceipt) -> Result<Vec<u8>, StorageFailure> {
+        read_backup(self, receipt)
+    }
+}
 #[tauri::command]
 pub fn storage_persist_encrypted_backup(
     state: tauri::State<'_, BackupState>,
     input: BackupInput,
 ) -> Result<BackupReceipt, StorageFailure> {
-    let mut connection = state
+    let typed = typed_receipt(&input.receipt)?;
+    state
         .0
         .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    persist_backup(&mut connection, input)
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?
+        .persist(typed, &input.ciphertext)?;
+    Ok(input.receipt)
 }
-
 #[tauri::command]
 pub fn storage_read_encrypted_backup(
     state: tauri::State<'_, BackupState>,
     receipt: BackupReceipt,
 ) -> Result<Vec<u8>, StorageFailure> {
-    let connection = state
+    state
         .0
         .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    read_backup(&connection, &receipt)
+        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?
+        .read_ciphertext(&receipt)
 }
 
 #[cfg(test)]

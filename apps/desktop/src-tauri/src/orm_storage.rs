@@ -189,3 +189,30 @@ pub fn orm_storage_rebuild_projections(
 }
 #[cfg(test)]
 mod tests;
+#[tauri::command(rename = "storage_query_indexed_transactions")]
+pub fn orm_storage_query_indexed_transactions(
+    state: tauri::State<'_, OrmStorageState>,
+    profile_id: String,
+    query: wimm_local_contracts::index_ports::TransactionIndexQuery,
+) -> Result<Vec<StoredAggregate>, StorageFailure> {
+    use wimm_local_contracts::index_ports::LocalIndexQueryPort;
+    state.with_profile(&profile_id, |p| p.query_transactions(query))
+}
+#[tauri::command(rename = "storage_query_indexed_pending")]
+pub fn orm_storage_query_indexed_pending(
+    state: tauri::State<'_, OrmStorageState>,
+    profile_id: String,
+    query: wimm_local_contracts::index_ports::PendingIndexQuery,
+) -> Result<Vec<PendingOperation>, StorageFailure> {
+    use wimm_local_contracts::index_ports::LocalIndexQueryPort;
+    state.with_profile(&profile_id, |p| p.query_pending(query))
+}
+#[tauri::command(rename = "storage_query_imported_transactions")]
+pub fn orm_storage_query_imported_transactions(
+    state: tauri::State<'_, OrmStorageState>,
+    profile_id: String,
+    query: wimm_local_contracts::index_ports::ImportSourceQuery,
+) -> Result<Vec<StoredAggregate>, StorageFailure> {
+    use wimm_local_contracts::index_ports::LocalIndexQueryPort;
+    state.with_profile(&profile_id, |p| p.query_imported(query))
+}

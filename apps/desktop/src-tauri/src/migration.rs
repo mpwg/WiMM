@@ -4,7 +4,7 @@ use crate::storage_failure::{
     StorageFailure, StorageFailureCode, commit_error, failure, storage_error,
 };
 use crate::{
-    backups::{BackupReceipt, BackupState, read_backup},
+    backups::{BackupReceipt, BackupState, EncryptedBackupReader},
     storage::{StorageState, assert_supported_schema, snapshot_in_transaction},
 };
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
@@ -87,7 +87,7 @@ CREATE TABLE storage_migrations(number INTEGER PRIMARY KEY,from_storage INTEGER 
 
 pub fn migrate(
     connection: &mut Connection,
-    backups: &Connection,
+    backups: &dyn EncryptedBackupReader,
     input: MigrationInput,
     cancelled: impl Fn() -> bool,
 ) -> Result<(), StorageFailure> {
@@ -135,7 +135,7 @@ pub fn migrate(
             return Err(failure(StorageFailureCode::WriteFailed));
         }
     }
-    read_backup(backups, &input.backup)?;
+    backups.read_ciphertext(&input.backup)?;
     assert_supported_schema(connection).map_err(storage_error)?;
     let tx = connection
         .transaction_with_behavior(TransactionBehavior::Immediate)
@@ -229,7 +229,7 @@ pub async fn storage_migrate(
             .0
             .lock()
             .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-        migrate(&mut connection, &backup_connection, input, || {
+        migrate(&mut connection, &*backup_connection, input, || {
             flag.load(Ordering::Acquire)
         })
     })
@@ -506,12 +506,14 @@ mod tests {
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg(test)]
 pub struct IndexCursor {
     date: String,
     handle: String,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg(test)]
 pub struct TransactionQuery {
     space_id: String,
     kind: String,
@@ -523,11 +525,13 @@ pub struct TransactionQuery {
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg(test)]
 pub struct PendingQuery {
     space_id: String,
     state: String,
     limit: u32,
 }
+#[cfg(test)]
 fn require_indexes(db: &Connection) -> Result<(), StorageFailure> {
     assert_supported_schema(db).map_err(storage_error)?;
     let version: String = db
@@ -542,6 +546,7 @@ fn require_indexes(db: &Connection) -> Result<(), StorageFailure> {
     }
     Ok(())
 }
+#[cfg(test)]
 pub fn query_transactions(
     db: &Connection,
     profile: &str,
@@ -612,6 +617,7 @@ pub fn query_transactions(
         .map(|row| serde_json::from_str(&row.map_err(storage_error)?).map_err(storage_error))
         .collect()
 }
+#[cfg(test)]
 pub fn query_pending(
     db: &Connection,
     profile: &str,
@@ -639,33 +645,10 @@ pub fn query_pending(
         .map(|row| serde_json::from_str(&row.map_err(storage_error)?).map_err(storage_error))
         .collect()
 }
-#[tauri::command]
-pub fn storage_query_indexed_transactions(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    query: TransactionQuery,
-) -> Result<Vec<Value>, StorageFailure> {
-    let db = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    query_transactions(&db, &profile_id, query)
-}
-#[tauri::command]
-pub fn storage_query_indexed_pending(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    query: PendingQuery,
-) -> Result<Vec<Value>, StorageFailure> {
-    let db = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    query_pending(&db, &profile_id, query)
-}
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[cfg(test)]
 pub struct ImportQuery {
     space_id: String,
     account_id: String,
@@ -673,6 +656,7 @@ pub struct ImportQuery {
     external_id: String,
     limit: u32,
 }
+#[cfg(test)]
 pub fn query_imported(
     db: &Connection,
     profile: &str,
@@ -705,16 +689,4 @@ pub fn query_imported(
         .map_err(storage_error)?
         .map(|row| serde_json::from_str(&row.map_err(storage_error)?).map_err(storage_error))
         .collect()
-}
-#[tauri::command]
-pub fn storage_query_imported_transactions(
-    state: tauri::State<'_, StorageState>,
-    profile_id: String,
-    query: ImportQuery,
-) -> Result<Vec<Value>, StorageFailure> {
-    let db = state
-        .0
-        .lock()
-        .map_err(|_| failure(StorageFailureCode::ResourceUnavailable))?;
-    query_imported(&db, &profile_id, query)
 }
