@@ -40,13 +40,29 @@ Restore vergleicht den vollständigen Originalcheckpoint erneut unter unmittelba
 
 Aktuelle neue Prüfungen: verbundener Restore mit unveränderten Serverbestätigungen/Cursor und getrenntem lokalem Wert, Standalone ohne erfundenen Cursor, Dateineuöffnen, alte/neue lokale Commitidentitäten, Erhalt sämtlicher historischer Receipts, Original-CAS bei konkurrierendem Commit oder Recoverywrite, ungelöste Referenzen, realer SQLite-Triggerfehler nach Löschungen, Abbruch nach begonnenem Ersatz und nach Epochenschreibschritt beim Drei-nach-vier-Upgrade. Schema-/Sprachmodelle werden direkt aus Rust erzeugt; negatives Enum-/Checkpointfelddriftverfahren überschreibt keine generierte Datei. Keine produktive Runtime-/Tauri-/Browseraktivierung aus diesen Fällen.
 
+## Konkrete native Runtimeports
+
+`apps/desktop/src-tauri/src/runtime_storage.rs` wird im normalen Tauri-Crate kompiliert. `NativeRuntimeStorage` stellt `MutationReadPort`, `CancellableLocalCommitPort` und `RecoveryJournalPort` bereit; klonbare Portansichten teilen einen profilgebundenen `LegacySqliteWriter` hinter demselben Mutex. Keine zweite Commitkoordination oder Finanzengine. `mutation_snapshot` liefert Finanzlesestand und lokale Schreibepoche aus einer tatsächlichen SQLite-Lesetransaktion. Der Host verlangt explizit aktivierten physischen Stand vier; weder Migration noch Rückfall auf den Bestand geschehen beim Öffnen.
+
+Das Journal speichert/liest den tatsächlichen streng deserialisierten `RecoveryTicket` über die private SQLite-Blobtabelle. Profilabweichung, kaputte Tickets und fehlende Schlüssel führen nicht zur Entfernung des Originals. `NativeRuntimeProtection` erhält einen bereits entsperrten Schlüssel vom aufrufenden Client-Keyport und benutzt dieselben bestehenden AR08-Domains/Primitive für Originalauftrag beziehungsweise Snapshot-/Checkpointsicherung. Es erzeugt keine Ersatzschlüssel und gibt keine Schlüsselmaterialfelder aus. Fach-/Cachevalidierung bleibt im Kern.
+
+Sechs native Integrationsfälle plus tatsächlich separat gestarteter Child-Probe im Tauri-Rust-Testbinary bestehen: gemeinsamer `ClientRuntime` mit tatsächlichem SQLite-Commit und Undo/Redo, echter dauerhafter Wiederanlauf nach simulierter Antwortverlustgrenze, neuer Runtime-/Prozessstart mit Originalentschlüsselung und unveränderten Finanzdaten/Receipts, falscher Schlüssel mit erhaltener Writesperre, reale lokale Restoreepoche neben unveränderter Serverepoche/Cursor sowie Profil-/Ticketnegativfälle. Die Antwortverlusthülle ist ausdrücklich synthetisch; Commit, Cipher, Journal und neuer Prozess sind tatsächlich. Der bisherige Tauri-Kommandokatalog/produktive Startpfad ist noch nicht umgestellt.
+
+```sh
+cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml runtime_storage::tests
+cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml
+cargo clippy --locked --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
+```
+
+Gesamte aktuelle Tauri-Rust-Suite: 36 bestanden, zwei vorhandene Contractdriver-Einstiege regulär ignoriert. Diese Driver werden für ihre jeweiligen gemeinsamen Konformitätsbefehle getrennt gestartet; die ignorierten Einträge sind kein Konformitätsnachweis. Keine GUI-/Produkt-/Swift-/Kotlin-/Browserruntime-Abnahme aus dem nativen Hostabschnitt. Der zusätzliche native Lockfileabschluss enthält ausschließlich schon im Workspace gesperrte Paketversionen mit identischen Checksummen; keine bisherige native Paketversion wurde entfernt.
+
 ## Kriterienmatrix
 
 | #108-Kriterium | Aktueller Nachweis |
 | --- | --- |
 | Vorhandene SQLite-Bestände ohne Format-/Schemaumbau öffnen | Native synthetische Dateien im unveränderten Tauri-Schema eins und zwei; Bytevergleich vor/nach Lesen und Neuöffnen. Vollständige produktive Bestandsabnahme folgt mit Integration. |
 | Alle lokalen Ports und konsistente Snapshots | Alle elf `LocalStoragePort`-Methoden implementiert und nativ gegen echte SQLite geprüft. Konsistente Lesetransaktion und gemeinsame atomare Syncdaten; vollständige gemeinsame Tauri-Konformität noch offen. |
-| Atomare Batches/CAS/Snapshot-/Projektionsersatz | Tatsächliche ORM-Transaktionen prüfen Batch-/Sync-/Snapshotrollback nach begonnenen Writes, konkurrierende CAS-Verbindungen, Finanzrevisionsanker und vollständigen Ausgangsvergleich beim Cacheersatz. Integrierte Original-/Receipts und private Recoverybytes ebenfalls geprüft; vollständige Runtime-/Tauriintegration noch offen. |
+| Atomare Batches/CAS/Snapshot-/Projektionsersatz | Tatsächliche ORM-Transaktionen prüfen Batch-/Sync-/Snapshotrollback nach begonnenen Writes, konkurrierende CAS-Verbindungen, Finanzrevisionsanker und vollständigen Ausgangsvergleich beim Cacheersatz. Integrierte Original-/Receipts und private Recoverybytes ebenfalls geprüft; konkrete native Runtimeports geprüft; vollständige Tauri-/Konformitätsintegration noch offen. |
 | Gesicherte versionierte Migration | Registrierte SeaQuery-Erweiterung mit tatsächlich verschlüsselten/rückgelesenen Originalen, Vergleich aller Bereiche, Sicherungsjournal und DDL-/Abbruchrollback geprüft. Vollständiger V2-Checkpoint-/Restorepfad und gesicherter Drei-nach-vier-Schritt umgesetzt; Runtime-/Tauri-/Aktivierungsabnahme noch offen. |
 | Reguläre ORM-Abfragen, Rust-DSL-Migrationen | Leseabfragen durch Diesel umgesetzt. Registrierte DSL-Erweiterung vorhanden; reguläre Writes ebenfalls durch ORM. Verbindungs-PRAGMAs und registrierte DDL bleiben gekapselte technische Ausnahmen. |
 | Native Assertions, Neustart, Fehler, Leistung | 36 native Testfälle plus zwei tatsächlich separat gestartete Child-Probes; Receipt und verschlüsselter Originalauftrag überleben Prozessneustart. Keine GUI-/Disk-full-/Abfrageleistungsabnahme. |

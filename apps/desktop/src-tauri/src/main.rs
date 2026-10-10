@@ -8,6 +8,7 @@ mod backups;
 #[cfg(test)]
 mod core_contract;
 mod migration;
+pub mod runtime_storage;
 mod storage;
 mod storage_failure;
 use storage::{StorageState, initialize_storage};

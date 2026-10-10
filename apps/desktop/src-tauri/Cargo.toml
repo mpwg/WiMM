@@ -21,6 +21,11 @@ tauri-plugin-opener = "=2.7.0"
 url = "=2.5.8"
 tempfile = "=3.27.0"
 
+wimm-finance-types = { path = "../../../crates/finance-types" }
+wimm-local-dal = { path = "../../../crates/local-dal", features = ["sqlite"] }
+wimm-client-application = { path = "../../../crates/client-application" }
+wimm-client-crypto = { path = "../../../crates/client-crypto" }
+
 wimm-local-contracts = { path = "../../../crates/local-contracts" }
 
 wimm-finance-core = { path = "../../../crates/finance-core" }

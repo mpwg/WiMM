@@ -180,6 +180,39 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
             validator,
         })
     }
+    /// Runtimewrites benötigen ausdrücklich den aktivierten physischen Stand vier.
+    pub fn ensure_runtime_schema(&self) -> Result<(), StorageFailure> {
+        self.store
+            .connection
+            .borrow_mut()
+            .transaction::<_, ReadError, _>(|c| {
+                supported(c)?;
+                let physical: String = storage_meta::table
+                    .find("storageSchemaVersion")
+                    .select(storage_meta::value)
+                    .first(c)?;
+                if physical != "4" {
+                    return Err(fail(StorageFailureCode::UpdateRequired));
+                }
+                Ok(())
+            })
+            .map_err(|e| e.0)
+    }
+    /// Finanzlesestand und lokale Schreibepoche stammen aus derselben tatsächlichen Lesetransaktion.
+    pub fn mutation_snapshot(
+        &self,
+        space: &EntityId,
+    ) -> Result<(LocalSnapshot, EntityId), StorageFailure> {
+        self.store
+            .connection
+            .borrow_mut()
+            .transaction::<_, ReadError, _>(|c| {
+                let snapshot = snapshot(c, &self.store.profile, space)?;
+                let epoch = local_write_epoch(c, &self.store.profile, space)?;
+                Ok((snapshot, epoch))
+            })
+            .map_err(|e| e.0)
+    }
     fn write<T>(
         &mut self,
         work: impl FnOnce(&mut SqliteConnection, &EntityId, &V) -> Result<T, ReadError>,

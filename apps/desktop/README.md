@@ -62,3 +62,9 @@ Historische UX-Abnahme vom 5. Oktober 2026: [Kriterien und Prüfbelege](https://
 ## Architekturstand vom 9. Oktober 2026
 
 Bestand und Ziel sind getrennt: [gemeinsame Rust-Architektur](../../docs/architecture.md). Hier dokumentierte Funktionen und Arbeitsregeln beziehen sich auf den Bestand; neue Rust-Anwendungs-/DAL-/Serverumstellung ist noch nicht implementiert. Aktuelle Aufträge und Kriterien in tasks.md/GitHub; historische Belege ersetzen keine Zielabnahme.
+
+## DAL03 — Native Runtimeports
+
+Die konkrete Rust-Plattformanbindung in `src-tauri/src/runtime_storage.rs` verbindet dieselbe gemeinsame `ClientRuntime` mit dem vollständigen profilgebundenen ORM-DAL, dauerhaften Originalreceipts und echtem privatem SQLite-RecoveryTicket. Mutationlesestand und lokale Schreibepoche werden konsistent gelesen; Serverepoche und Cursor werden nicht als lokale Scopewerte verwendet. Bereits entsperrte Schlüssel kommen vom Client-Keyport. Öffnen verlangt aktiviertes physisches Schema vier und migriert nicht automatisch.
+
+Sechs native Integrationsfälle plus tatsächlicher Child-Probe prüfen Commit/Undo/Redo, simulierter Antwortverlust nach echtem Commit, echter Prozesswiederanlauf mit Originalentschlüsselung ohne Finanzreplay, falscher Schlüssel/Writesperre, Profil-/Ticketnegativfälle und getrennte lokale/Serverepochen. [Aktuelle Matrix und Befehle](../../docs/dal03-native.md). Die normale Tauri-Compilation enthält die Ports; der produktive Kommandokatalog/Startpfad wird damit noch nicht aktiviert. Vollständige Umschaltung/Konformität bleibt [#108](https://github.com/mpwg/WiMM/issues/108), Entfernung produktiver TS-Commitduplikate [#119](https://github.com/mpwg/WiMM/issues/119).

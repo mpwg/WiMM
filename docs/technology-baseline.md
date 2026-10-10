@@ -66,6 +66,10 @@ Stand: 9. Oktober 2026, aus tatsächlichen Manifesten dieses Checkouts. Exakte a
 | `Tauri Cargo.toml` | `url` | `=2.5.8` |
 | `Tauri Cargo.toml` | `tempfile` | `=3.27.0` |
 | `Tauri Cargo.toml` | `wimm-finance-core` | `../../../crates/finance-core` |
+| `Tauri Cargo.toml` | `wimm-finance-types` | `../../../crates/finance-types` |
+| `Tauri Cargo.toml` | `wimm-client-application` | `../../../crates/client-application` |
+| `Tauri Cargo.toml` | `wimm-client-crypto` | `../../../crates/client-crypto` |
+| `Tauri Cargo.toml` | `wimm-local-dal` (sqlite) | `../../../crates/local-dal` |
 | `Tauri build` | `tauri-build` | `=2.7.1` |
 
 ## Zielbibliotheken und offene Nachweise
