@@ -273,8 +273,8 @@ fn supported(c: &mut SqliteConnection) -> Result<u32, ReadError> {
     let version = match storage.as_deref() {
         Some("1") => 1,
         Some("2") => 2,
-        Some("3") => {
-            writer::receipts::schema(c)?;
+        Some("3" | "4") => {
+            writer::receipts::read_schema(c)?;
             let original: i32 = wimm_native_schema::table
                 .select(wimm_native_schema::original_version)
                 .first(c)?;
@@ -286,7 +286,7 @@ fn supported(c: &mut SqliteConnection) -> Result<u32, ReadError> {
         }
         _ => return Err(StorageFailure::unknown(StorageFailureCode::UpdateRequired).into()),
     };
-    if storage.as_deref() != Some("3") {
+    if !matches!(storage.as_deref(), Some("3" | "4")) {
         let extension: i64 = sqlite_master::table
             .filter(sqlite_master::name.eq_any([
                 "wimm_native_schema",

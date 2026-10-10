@@ -850,7 +850,7 @@ fn registered_dsl_extension_requires_real_encrypted_backup_and_preserves_all_sco
     )
     .get_result(&mut raw)
     .unwrap();
-    assert_eq!(physical.payload, "3");
+    assert_eq!(physical.payload, "4");
     let version: Payload = diesel::sql_query("SELECT sqlite_version() AS payload")
         .get_result(&mut raw)
         .unwrap();
@@ -988,9 +988,12 @@ fn native_receipts_bind_original_hash_and_survive_reopen_without_repeat_write() 
     }
     db.replace_snapshot(snapshot).unwrap();
     assert!(matches!(db.commit(r), CommitOutcome::Committed { .. }));
+    let mut wrong = request(32, 3);
+    wrong.identity.epoch = id(99);
     assert!(
-        matches!(db.commit(request(32,3)),CommitOutcome::NotCommitted{error} if error.code==StorageFailureCode::EpochMismatch)
+        matches!(db.commit(wrong),CommitOutcome::NotCommitted{error} if error.code==StorageFailureCode::EpochMismatch)
     );
+    assert_eq!(db.initialize_area(&id(2), &id(80)).unwrap(), id(3));
 }
 #[test]
 fn sqlite_receipt_abort_rolls_back_financial_write_and_preserves_private_recovery() {
@@ -1179,7 +1182,7 @@ fn integrated_receipt_and_encrypted_original_survive_actual_process_restart() {
 #[test]
 fn corrupt_or_future_extension_headers_never_allow_receipt_or_journal_writes() {
     for sql in [
-        "UPDATE wimm_native_schema SET version=2",
+        "UPDATE wimm_native_schema SET version=99",
         "UPDATE wimm_native_schema SET backups='[]'",
         "UPDATE wimm_native_schema SET original_version=99",
         "UPDATE storage_meta SET value='1' WHERE key='storageSchemaVersion'",
@@ -1192,5 +1195,470 @@ fn corrupt_or_future_extension_headers_never_allow_receipt_or_journal_writes() {
         assert!(db.save_recovery_if_absent(b"opaque").is_err());
         assert!(db.lookup_result(&request(31, 2).identity).is_err());
         assert!(LegacySqliteStore::open(&file, id(1)).is_err());
+    }
+}
+
+use wimm_local_contracts::checkpoint_v2::LocalCheckpointV2;
+impl SnapshotProtectionPort<LocalCheckpointV2> for NativeProtection {
+    type Error = wimm_local_contracts::persistence_errors::StorageFailure;
+    fn seal(&self, value: LocalCheckpointV2) -> Result<Vec<u8>, Self::Error> {
+        wimm_client_crypto::vault::seal_snapshot(&self.0, &serde_json::to_vec(&value).unwrap())
+            .map_err(|_| Self::Error::not_committed(StorageFailureCode::WriteFailed))
+    }
+    fn unseal(&self, bytes: &[u8]) -> Result<LocalCheckpointV2, Self::Error> {
+        let clear = wimm_client_crypto::vault::open_snapshot(&self.0, bytes)
+            .map_err(|_| Self::Error::not_committed(StorageFailureCode::InvalidResponse))?;
+        serde_json::from_slice(&clear)
+            .map_err(|_| Self::Error::not_committed(StorageFailureCode::InvalidResponse))
+    }
+}
+#[test]
+fn complete_checkpoint_preserves_confirmations_cursor_receipts_and_private_recovery() {
+    use wimm_persistence_contracts::CommitOutcome;
+    let file = path("native-complete-checkpoint");
+    drop(fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    let r = request(31, 2);
+    assert!(matches!(
+        db.commit(r.clone()),
+        CommitOutcome::Committed { .. }
+    ));
+    db.save_sync_page(sync_page(2)).unwrap();
+    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let key = wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap();
+    let encrypted = wimm_client_crypto::encrypt(
+        &key,
+        b"wimm/local/application-recovery/v1",
+        &serde_json::to_vec(&r).unwrap(),
+    )
+    .unwrap();
+    let recovery = serde_json::to_vec(
+        &serde_json::json!({"nonce":encrypted.nonce,"ciphertext":encrypted.ciphertext}),
+    )
+    .unwrap();
+    db.save_recovery_if_absent(&recovery).unwrap();
+    let checkpoint = db.checkpoint_v2(&id(2)).unwrap();
+    assert_eq!(checkpoint.checkpoint_version, 2);
+    assert_eq!(checkpoint.physical_schema_version, 4);
+    assert_eq!(checkpoint.snapshot.confirmed.len(), 1);
+    assert_eq!(checkpoint.operations.len(), 1);
+    assert_eq!(checkpoint.recovery.as_ref().unwrap(), &recovery);
+    assert_eq!(
+        checkpoint.snapshot.sync_state.as_ref().unwrap().cursor,
+        "9007199254740993"
+    );
+    let b = NativeBackup::new();
+    let receipt = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
+    let saved: LocalCheckpointV2 = p.unseal(&b.read(&receipt).unwrap()).unwrap();
+    assert_eq!(
+        serde_json::to_value(&saved).unwrap(),
+        serde_json::to_value(&checkpoint).unwrap()
+    );
+    drop(db);
+    let reopened = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    assert_eq!(
+        serde_json::to_value(reopened.checkpoint_v2(&id(2)).unwrap()).unwrap(),
+        serde_json::to_value(&checkpoint).unwrap()
+    );
+    // V1 ist weiterhin seine alte eingeschränkte Form und wird nicht still erweitert.
+    assert!(
+        serde_json::from_value::<wimm_local_contracts::checkpoint::LocalCommitCheckpoint>(
+            serde_json::to_value(&checkpoint).unwrap()
+        )
+        .is_err()
+    );
+}
+#[test]
+fn complete_checkpoint_structural_negatives_and_corrupt_receipts_are_rejected() {
+    use wimm_local_contracts::Validate;
+    let file = path("native-checkpoint-negative");
+    let mut raw = fixture(&file);
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    db.commit(request(31, 2));
+    let original = db.checkpoint_v2(&id(2)).unwrap();
+    for field in ["checkpointVersion", "physicalSchemaVersion"] {
+        let mut bad = serde_json::to_value(&original).unwrap();
+        bad[field] = 99.into();
+        assert!(serde_json::from_value::<LocalCheckpointV2>(bad).is_err());
+    }
+    for field in ["recovery", "extra"] {
+        let mut bad = serde_json::to_value(&original).unwrap();
+        bad[field] = serde_json::Value::Null;
+        assert!(serde_json::from_value::<LocalCheckpointV2>(bad).is_err());
+    }
+    let mut v = original.clone();
+    v.operations.push(v.operations[0].clone());
+    assert!(v.validate().is_err());
+    let mut v = original.clone();
+    v.snapshot.confirmed[0].epoch = id(99);
+    assert!(v.validate().is_err());
+    raw.batch_execute("UPDATE wimm_native_receipts SET receipt=json_set(receipt,'$.contentHash','0000000000000000000000000000000000000000000000000000000000000000')").unwrap();
+    assert_eq!(
+        db.checkpoint_v2(&id(2)).unwrap_err().code,
+        StorageFailureCode::InvalidResponse
+    );
+}
+struct AlteredBackup(NativeBackup);
+impl BackupPort for AlteredBackup {
+    type Error = wimm_local_contracts::persistence_errors::StorageFailure;
+    fn persist(&self, r: EncryptedBackupRequest) -> Result<EncryptedBackupReceipt, Self::Error> {
+        self.0.persist(r)
+    }
+}
+impl BackupReadPort for AlteredBackup {
+    fn read(&self, r: &EncryptedBackupReceipt) -> Result<Vec<u8>, Self::Error> {
+        let mut bytes = self.0.read(r)?;
+        bytes.push(0);
+        Ok(bytes)
+    }
+}
+#[test]
+fn full_checkpoint_backup_requires_actual_byte_identical_readback_without_mutation() {
+    let file = path("native-checkpoint-readback");
+    drop(fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    let before = serde_json::to_value(db.checkpoint_v2(&id(2)).unwrap()).unwrap();
+    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let bad = AlteredBackup(NativeBackup::new());
+    assert_eq!(
+        db.backup_checkpoint_v2(&id(2), &p, &bad).unwrap_err().code,
+        StorageFailureCode::InvalidResponse
+    );
+    assert_eq!(
+        serde_json::to_value(db.checkpoint_v2(&id(2)).unwrap()).unwrap(),
+        before
+    );
+}
+
+use wimm_local_contracts::checkpoint_v2::LocalCheckpointRestoreV2;
+fn checkpoint_value(db: &LegacySqliteWriter<CoreValidator>) -> serde_json::Value {
+    serde_json::to_value(db.checkpoint_v2(&id(2)).unwrap()).unwrap()
+}
+#[test]
+fn connected_restore_rotates_only_local_write_epoch_and_retains_all_historical_receipts() {
+    use wimm_persistence_contracts::CommitOutcome;
+    let file = path("native-connected-restore");
+    drop(fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    assert!(matches!(
+        db.commit(request(31, 2)),
+        CommitOutcome::Committed { .. }
+    ));
+    db.save_sync_page(sync_page(2)).unwrap();
+    let target = db.checkpoint_v2(&id(2)).unwrap();
+    assert!(matches!(
+        db.commit(request(32, 3)),
+        CommitOutcome::Committed { .. }
+    ));
+    let expected = db.checkpoint_v2(&id(2)).unwrap();
+    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let b = NativeBackup::new();
+    let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
+    db.restore_checkpoint_v2(
+        LocalCheckpointRestoreV2 {
+            expected,
+            original_backup: proof,
+            ciphertext: p.seal(target.clone()).unwrap(),
+            restored_local_epoch: id(99),
+        },
+        &p,
+        &b,
+        &NeverCancel,
+    )
+    .unwrap();
+    let restored = db.checkpoint_v2(&id(2)).unwrap();
+    assert_eq!(restored.local_write_epoch, id(99));
+    assert_eq!(restored.snapshot.epoch, id(3));
+    assert_eq!(
+        serde_json::to_value(&restored.snapshot.confirmed).unwrap(),
+        serde_json::to_value(&target.snapshot.confirmed).unwrap()
+    );
+    assert_eq!(
+        serde_json::to_value(&restored.snapshot.sync_state).unwrap(),
+        serde_json::to_value(&target.snapshot.sync_state).unwrap()
+    );
+    assert_eq!(restored.operations.len(), 2);
+    assert_eq!(db.initialize_area(&id(2), &id(80)).unwrap(), id(99));
+    assert!(
+        db.lookup_result(&request(32, 3).identity)
+            .unwrap()
+            .is_some()
+    );
+    assert!(
+        matches!(db.commit(request(33,3)),CommitOutcome::NotCommitted{error} if error.code==StorageFailureCode::EpochMismatch)
+    );
+    let mut next = request(33, 3);
+    next.identity.epoch = id(99);
+    assert!(matches!(db.commit(next), CommitOutcome::Committed { .. }));
+    drop(db);
+    let mut reopened = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    assert_eq!(reopened.initialize_area(&id(2), &id(80)).unwrap(), id(99));
+    assert_eq!(
+        reopened
+            .export_snapshot(&id(2))
+            .unwrap()
+            .sync_state
+            .unwrap()
+            .epoch,
+        id(3)
+    );
+}
+#[test]
+fn full_restore_cas_covers_receipts_and_profile_wide_private_recovery() {
+    for change in ["commit", "journal"] {
+        let file = path("native-restore-cas");
+        drop(fixture(&file));
+        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+        migrate_commit(&mut db);
+        let expected = db.checkpoint_v2(&id(2)).unwrap();
+        let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+        let b = NativeBackup::new();
+        let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
+        if change == "commit" {
+            db.commit(request(31, 2));
+        } else {
+            db.save_recovery_if_absent(b"synthetic-opaque-pending")
+                .unwrap();
+        }
+        let before = checkpoint_value(&db);
+        let cipher = p.seal(expected.clone()).unwrap();
+        assert_eq!(
+            db.restore_checkpoint_v2(
+                LocalCheckpointRestoreV2 {
+                    expected,
+                    original_backup: proof,
+                    ciphertext: cipher,
+                    restored_local_epoch: id(99)
+                },
+                &p,
+                &b,
+                &NeverCancel
+            )
+            .unwrap_err()
+            .code,
+            StorageFailureCode::RevisionConflict
+        );
+        assert_eq!(checkpoint_value(&db), before);
+    }
+}
+#[test]
+fn full_restore_preserves_unresolved_original_and_rejects_conflicting_recovery() {
+    let file = path("native-restore-journal");
+    drop(fixture(&file));
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    let old = db.checkpoint_v2(&id(2)).unwrap();
+    db.save_recovery_if_absent(b"synthetic-opaque-current")
+        .unwrap();
+    let expected = db.checkpoint_v2(&id(2)).unwrap();
+    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let b = NativeBackup::new();
+    let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
+    let mut conflicting = old.clone();
+    conflicting.recovery = Some(b"synthetic-different".to_vec());
+    let before = checkpoint_value(&db);
+    assert_eq!(
+        db.restore_checkpoint_v2(
+            LocalCheckpointRestoreV2 {
+                expected: expected.clone(),
+                original_backup: proof.clone(),
+                ciphertext: p.seal(conflicting).unwrap(),
+                restored_local_epoch: id(99)
+            },
+            &p,
+            &b,
+            &NeverCancel
+        )
+        .unwrap_err()
+        .code,
+        StorageFailureCode::RevisionConflict
+    );
+    assert_eq!(checkpoint_value(&db), before);
+    db.restore_checkpoint_v2(
+        LocalCheckpointRestoreV2 {
+            expected,
+            original_backup: proof,
+            ciphertext: p.seal(old).unwrap(),
+            restored_local_epoch: id(99),
+        },
+        &p,
+        &b,
+        &NeverCancel,
+    )
+    .unwrap();
+    assert_eq!(
+        db.load_recovery().unwrap().unwrap(),
+        b"synthetic-opaque-current"
+    );
+}
+#[test]
+fn full_restore_abort_after_deletion_rolls_back_local_epoch_server_state_and_receipts() {
+    for injected in [false, true] {
+        let file = path("native-full-restore-rollback");
+        let mut raw = fixture(&file);
+        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+        migrate_commit(&mut db);
+        db.commit(request(31, 2));
+        let original = db.checkpoint_v2(&id(2)).unwrap();
+        let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+        let b = NativeBackup::new();
+        let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
+        let before = checkpoint_value(&db);
+        if injected {
+            raw.batch_execute("CREATE TRIGGER synthetic_restore_failure BEFORE INSERT ON confirmed BEGIN SELECT RAISE(ABORT,'synthetic-private-error'); END;").unwrap();
+        }
+        let cancel = CancelAt {
+            at: if injected { 99 } else { 3 },
+            calls: std::cell::Cell::new(0),
+        };
+        let error = db
+            .restore_checkpoint_v2(
+                LocalCheckpointRestoreV2 {
+                    expected: original.clone(),
+                    original_backup: proof,
+                    ciphertext: p.seal(original).unwrap(),
+                    restored_local_epoch: id(99),
+                },
+                &p,
+                &b,
+                &cancel,
+            )
+            .unwrap_err();
+        if !injected {
+            assert_eq!(error.code, StorageFailureCode::Cancelled);
+        }
+        assert_eq!(checkpoint_value(&db), before);
+        assert_eq!(db.initialize_area(&id(2), &id(80)).unwrap(), id(3));
+    }
+}
+#[test]
+fn standalone_restore_rotates_local_snapshot_epoch_without_fabricated_sync_cursor() {
+    let file = path("native-standalone-restore");
+    let mut raw = fixture(&file);
+    raw.batch_execute("DELETE FROM confirmed").unwrap();
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    let original = db.checkpoint_v2(&id(2)).unwrap();
+    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let b = NativeBackup::new();
+    let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
+    db.restore_checkpoint_v2(
+        LocalCheckpointRestoreV2 {
+            expected: original.clone(),
+            original_backup: proof,
+            ciphertext: p.seal(original).unwrap(),
+            restored_local_epoch: id(99),
+        },
+        &p,
+        &b,
+        &NeverCancel,
+    )
+    .unwrap();
+    let result = db.checkpoint_v2(&id(2)).unwrap();
+    assert_eq!(result.local_write_epoch, id(99));
+    assert_eq!(result.snapshot.epoch, id(99));
+    assert!(result.snapshot.sync_state.is_none());
+    assert!(result.snapshot.confirmed.is_empty());
+}
+#[test]
+fn physical_three_upgrade_preserves_receipts_recovery_and_requires_full_original_backup() {
+    let file = path("native-three-upgrade");
+    let mut raw = fixture(&file);
+    let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+    migrate_commit(&mut db);
+    db.commit(request(31, 2));
+    db.save_recovery_if_absent(b"synthetic-opaque-original")
+        .unwrap();
+    // Tatsächlich früherer registrierter physischer Stand drei, ohne getrennten lokalen Marker.
+    raw.batch_execute("UPDATE storage_meta SET value='3' WHERE key='storageSchemaVersion'; DELETE FROM storage_meta WHERE key LIKE 'localWriteEpoch:%'; UPDATE wimm_native_schema SET version=1;").unwrap();
+    let original = db.checkpoint_v2(&id(2)).unwrap();
+    assert_eq!(original.physical_schema_version, 3);
+    assert!(db.apply_atomic_batch(request(32, 3).batch).is_err());
+    let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+    let b = NativeBackup::new();
+    let proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
+    let cancel = CancelAt {
+        at: 2,
+        calls: std::cell::Cell::new(0),
+    };
+    assert_eq!(
+        db.upgrade_local_epoch_schema(
+            vec![original.clone()],
+            std::slice::from_ref(&proof),
+            &p,
+            &b,
+            &cancel
+        )
+        .unwrap_err()
+        .code,
+        StorageFailureCode::Cancelled
+    );
+    assert_eq!(
+        checkpoint_value(&db),
+        serde_json::to_value(&original).unwrap()
+    );
+    db.upgrade_local_epoch_schema(vec![original.clone()], &[proof], &p, &b, &NeverCancel)
+        .unwrap();
+    let mut expected = original;
+    expected.physical_schema_version = 4;
+    assert_eq!(
+        checkpoint_value(&db),
+        serde_json::to_value(expected).unwrap()
+    );
+}
+
+#[test]
+fn full_restore_missing_backup_wrong_key_bad_scope_hash_and_version_preserve_original() {
+    for fault in ["missing", "key", "hash", "scope", "version", "sameEpoch"] {
+        let file = path("native-restore-input-negative");
+        drop(fixture(&file));
+        let mut db = LegacySqliteWriter::open(&file, id(1), CoreValidator).unwrap();
+        migrate_commit(&mut db);
+        db.commit(request(31, 2));
+        let expected = db.checkpoint_v2(&id(2)).unwrap();
+        let p = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[42; 32]).unwrap());
+        let b = NativeBackup::new();
+        let mut proof = db.backup_checkpoint_v2(&id(2), &p, &b).unwrap();
+        let before = checkpoint_value(&db);
+        let mut target = expected.clone();
+        if fault == "missing" {
+            std::fs::remove_file(b.directory.join(proof.backup_id.as_str())).unwrap();
+        }
+        if fault == "hash" {
+            proof.snapshot_hash = LocalHash::new("ab".repeat(32)).unwrap();
+        }
+        if fault == "scope" {
+            target.snapshot.profile_id = id(90);
+        }
+        if fault == "version" {
+            target.physical_schema_version = 99;
+        }
+        let cipher = p.seal(target).unwrap();
+        let wrong = NativeProtection(wimm_client_crypto::SecretKey::from_bytes(&[99; 32]).unwrap());
+        let selected = if fault == "key" { &wrong } else { &p };
+        let epoch = if fault == "sameEpoch" {
+            expected.local_write_epoch.clone()
+        } else {
+            id(99)
+        };
+        assert!(
+            db.restore_checkpoint_v2(
+                LocalCheckpointRestoreV2 {
+                    expected,
+                    original_backup: proof,
+                    ciphertext: cipher,
+                    restored_local_epoch: epoch
+                },
+                selected,
+                &b,
+                &NeverCancel
+            )
+            .is_err()
+        );
+        assert_eq!(checkpoint_value(&db), before);
     }
 }

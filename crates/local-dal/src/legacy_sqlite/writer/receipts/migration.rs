@@ -7,7 +7,7 @@ use wimm_local_contracts::{
     models::EncryptedBackupReceipt,
     storage_port::{BackupReadPort, SnapshotProtectionPort},
 };
-fn originals(c: &mut SqliteConnection) -> Result<Vec<LocalSnapshot>, ReadError> {
+pub(super) fn originals(c: &mut SqliteConnection) -> Result<Vec<LocalSnapshot>, ReadError> {
     let mut areas = BTreeSet::new();
     areas.extend(
         aggregates::table
@@ -136,6 +136,13 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
             if existing != 0 {
                 return Err(fail(StorageFailureCode::UpdateRequired));
             }
+            let write_keys: i64 = storage_meta::table
+                .filter(storage_meta::key.like("localWriteEpoch:%"))
+                .count()
+                .get_result(c)?;
+            if write_keys != 0 {
+                return Err(fail(StorageFailureCode::UpdateRequired));
+            }
             let original_version = supported(c)?;
             let current = originals(c)?;
             if text(&current)? != text(&expected)? {
@@ -211,15 +218,18 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
             }
             diesel::insert_into(wimm_native_schema::table)
                 .values((
-                    wimm_native_schema::version.eq(1),
+                    wimm_native_schema::version.eq(2),
                     wimm_native_schema::original_version.eq(original_version as i32),
                     wimm_native_schema::backups.eq(text(receipts)?),
                 ))
                 .execute(c)?;
             // Alte Apps kennen nur die physischen Werte eins/zwei und müssen neue Writes verweigern.
             diesel::update(storage_meta::table.find("storageSchemaVersion"))
-                .set(storage_meta::value.eq("3"))
+                .set(storage_meta::value.eq("4"))
                 .execute(c)?;
+            for original in &expected {
+                write_local_epoch(c, &original.profile_id, &original.space_id, &original.epoch)?;
+            }
             let after = originals(c)?;
             let after_metadata: Vec<(String, String)> = storage_meta::table
                 .order(storage_meta::key)
@@ -228,9 +238,16 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
             let mut preserved_metadata = metadata;
             for (key, value) in &mut preserved_metadata {
                 if key == "storageSchemaVersion" {
-                    *value = "3".into();
+                    *value = "4".into();
                 }
             }
+            for original in &expected {
+                preserved_metadata.push((
+                    local_write_key(&original.profile_id, &original.space_id),
+                    original.epoch.as_str().into(),
+                ));
+            }
+            preserved_metadata.sort();
             if text(&after)? != text(&expected)? || after_metadata != preserved_metadata {
                 return Err(fail(StorageFailureCode::InvalidResponse));
             }

@@ -914,6 +914,7 @@ mod tests {
             ("storageSchemaVersion", "999"),
             ("domainSchemaVersion", "999"),
             ("storageSchemaVersion", "3"),
+            ("storageSchemaVersion", "4"),
         ] {
             let directory = tempfile::tempdir_in(".").unwrap();
             let path = directory.path().join("schema.sqlite3");

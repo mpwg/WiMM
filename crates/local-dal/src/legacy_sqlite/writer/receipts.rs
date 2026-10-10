@@ -10,7 +10,7 @@ use wimm_local_contracts::{
 use wimm_persistence_contracts::CommitOutcome;
 diesel::table! { wimm_native_receipts (identity) { identity -> Text, profile -> Text, space -> Text, request -> Text, receipt -> Text, } }
 diesel::table! { wimm_native_recovery (profile) { profile -> Text, ticket -> Binary, } }
-pub(in crate::legacy_sqlite) fn schema(c: &mut SqliteConnection) -> Result<(), ReadError> {
+pub(in crate::legacy_sqlite) fn read_schema(c: &mut SqliteConnection) -> Result<(), ReadError> {
     let exists: bool = diesel::select(diesel::dsl::exists(
         sqlite_master::table
             .filter(sqlite_master::type_.eq("table"))
@@ -40,8 +40,32 @@ pub(in crate::legacy_sqlite) fn schema(c: &mut SqliteConnection) -> Result<(), R
         .select(storage_meta::value)
         .first(c)
         .optional()?;
-    if rows.len() != 1 || rows[0].0 != 1 || physical.as_deref() != Some("3") {
+    if rows.len() != 1
+        || !matches!(
+            (rows[0].0, physical.as_deref()),
+            (1, Some("3")) | (2, Some("4"))
+        )
+    {
         return Err(fail(StorageFailureCode::UpdateRequired));
+    }
+    if physical.as_deref() == Some("4") {
+        let keys: Vec<String> = storage_meta::table
+            .filter(storage_meta::key.like("localEpoch:%"))
+            .select(storage_meta::key)
+            .load(c)?;
+        for key in keys {
+            let parts: [String; 2] = decode(key.strip_prefix("localEpoch:").ok_or_else(invalid)?)?;
+            let profile = EntityId::new(parts[0].clone()).map_err(|_| invalid())?;
+            let space = EntityId::new(parts[1].clone()).map_err(|_| invalid())?;
+            let epoch: Option<String> = storage_meta::table
+                .find(local_write_key(&profile, &space))
+                .select(storage_meta::value)
+                .first(c)
+                .optional()?;
+            if epoch.is_none() || epoch.is_some_and(|e| EntityId::new(e).is_err()) {
+                return Err(fail(StorageFailureCode::UpdateRequired));
+            }
+        }
     }
     let backups: Vec<wimm_local_contracts::models::EncryptedBackupReceipt> = decode(&rows[0].1)?;
     if backups.is_empty()
@@ -82,7 +106,7 @@ fn lookup(
     c: &mut SqliteConnection,
     id: &LocalOperationIdentity,
 ) -> Result<Option<(String, LocalCommitReceipt)>, ReadError> {
-    schema(c)?;
+    read_schema(c)?;
     let row: Option<(String, String, String)> = wimm_native_receipts::table
         .filter(wimm_native_receipts::profile.eq(id.profile_id.as_str()))
         .filter(wimm_native_receipts::identity.eq(text(id)?))
@@ -154,8 +178,7 @@ impl<V: SnapshotValidationPort> CancellableLocalCommitPort for LegacySqliteWrite
             if cancel.is_cancelled() {
                 return Err(fail(StorageFailureCode::Cancelled));
             }
-            let current = snapshot(c, p, &identity.space_id)?;
-            if current.epoch != identity.epoch {
+            if local_write_epoch(c, p, &identity.space_id)? != identity.epoch {
                 return Err(fail(StorageFailureCode::EpochMismatch));
             }
             if request
@@ -226,7 +249,7 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
             .borrow_mut()
             .transaction::<_, ReadError, _>(|c| {
                 supported(c)?;
-                schema(c)?;
+                read_schema(c)?;
                 Ok(wimm_native_recovery::table
                     .find(self.store.profile.as_str())
                     .select(wimm_native_recovery::ticket)
@@ -242,7 +265,7 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
             ));
         }
         self.write(|c, p, _| {
-            schema(c)?;
+            read_schema(c)?;
             let current: Option<Vec<u8>> = wimm_native_recovery::table
                 .find(p.as_str())
                 .select(wimm_native_recovery::ticket)
@@ -265,7 +288,7 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
     }
     pub fn clear_recovery(&mut self, expected: &[u8]) -> Result<(), StorageFailure> {
         self.write(|c, p, _| {
-            schema(c)?;
+            read_schema(c)?;
             let current: Option<Vec<u8>> = wimm_native_recovery::table
                 .find(p.as_str())
                 .select(wimm_native_recovery::ticket)
@@ -280,3 +303,5 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
     }
 }
 mod migration;
+
+mod checkpoint;

@@ -8,6 +8,8 @@
     "swift/WiMMLocalTypesFFI.modulemap",
     "kotlin/org/wimm/localcontracts/wimm_local_contracts.kt",
     "wasm/wimm_local_contracts.d.ts",
+    "schema/local-checkpoint-restore-v2.schema.json",
+    "schema/local-checkpoint-v2.schema.json",
     "schema/local-checkpoint-restore.schema.json",
     "schema/local-commit-checkpoint.schema.json",
     "schema/local-receipt-entry.schema.json",

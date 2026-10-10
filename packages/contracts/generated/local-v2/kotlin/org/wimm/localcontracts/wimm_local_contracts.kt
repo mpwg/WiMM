@@ -1684,6 +1684,112 @@ public object FfiConverterTypeLocalCheckpointRestoreRequest: FfiConverterRustBuf
 
 
 
+data class LocalCheckpointRestoreV2 (
+    var `expected`: LocalCheckpointV2
+    ,
+    var `originalBackup`: EncryptedBackupReceipt
+    ,
+    var `ciphertext`: kotlin.ByteArray
+    ,
+    var `restoredLocalEpoch`: EntityId
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalCheckpointRestoreV2: FfiConverterRustBuffer<LocalCheckpointRestoreV2> {
+    override fun read(buf: ByteBuffer): LocalCheckpointRestoreV2 {
+        return LocalCheckpointRestoreV2(
+            FfiConverterTypeLocalCheckpointV2.read(buf),
+            FfiConverterTypeEncryptedBackupReceipt.read(buf),
+            FfiConverterByteArray.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalCheckpointRestoreV2) = (
+            FfiConverterTypeLocalCheckpointV2.allocationSize(value.`expected`) +
+            FfiConverterTypeEncryptedBackupReceipt.allocationSize(value.`originalBackup`) +
+            FfiConverterByteArray.allocationSize(value.`ciphertext`) +
+            FfiConverterTypeEntityId.allocationSize(value.`restoredLocalEpoch`)
+    )
+
+    override fun write(value: LocalCheckpointRestoreV2, buf: ByteBuffer) {
+            FfiConverterTypeLocalCheckpointV2.write(value.`expected`, buf)
+            FfiConverterTypeEncryptedBackupReceipt.write(value.`originalBackup`, buf)
+            FfiConverterByteArray.write(value.`ciphertext`, buf)
+            FfiConverterTypeEntityId.write(value.`restoredLocalEpoch`, buf)
+    }
+}
+
+
+
+data class LocalCheckpointV2 (
+    var `checkpointVersion`: kotlin.UInt
+    ,
+    var `physicalSchemaVersion`: kotlin.UInt
+    ,
+    var `snapshot`: LocalSnapshot
+    ,
+    var `localWriteEpoch`: EntityId
+    ,
+    var `operations`: List<LocalReceiptEntry>
+    ,
+    var `recovery`: kotlin.ByteArray?
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalCheckpointV2: FfiConverterRustBuffer<LocalCheckpointV2> {
+    override fun read(buf: ByteBuffer): LocalCheckpointV2 {
+        return LocalCheckpointV2(
+            FfiConverterUInt.read(buf),
+            FfiConverterUInt.read(buf),
+            FfiConverterTypeLocalSnapshot.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterSequenceTypeLocalReceiptEntry.read(buf),
+            FfiConverterOptionalByteArray.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalCheckpointV2) = (
+            FfiConverterUInt.allocationSize(value.`checkpointVersion`) +
+            FfiConverterUInt.allocationSize(value.`physicalSchemaVersion`) +
+            FfiConverterTypeLocalSnapshot.allocationSize(value.`snapshot`) +
+            FfiConverterTypeEntityId.allocationSize(value.`localWriteEpoch`) +
+            FfiConverterSequenceTypeLocalReceiptEntry.allocationSize(value.`operations`) +
+            FfiConverterOptionalByteArray.allocationSize(value.`recovery`)
+    )
+
+    override fun write(value: LocalCheckpointV2, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`checkpointVersion`, buf)
+            FfiConverterUInt.write(value.`physicalSchemaVersion`, buf)
+            FfiConverterTypeLocalSnapshot.write(value.`snapshot`, buf)
+            FfiConverterTypeEntityId.write(value.`localWriteEpoch`, buf)
+            FfiConverterSequenceTypeLocalReceiptEntry.write(value.`operations`, buf)
+            FfiConverterOptionalByteArray.write(value.`recovery`, buf)
+    }
+}
+
+
+
 data class LocalCommitCheckpoint (
     var `checkpointVersion`: kotlin.UInt
     ,
@@ -4181,6 +4287,38 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
         } else {
             buf.put(1)
             FfiConverterString.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalByteArray: FfiConverterRustBuffer<kotlin.ByteArray?> {
+    override fun read(buf: ByteBuffer): kotlin.ByteArray? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterByteArray.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.ByteArray?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterByteArray.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.ByteArray?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterByteArray.write(value, buf)
         }
     }
 }

@@ -1369,6 +1369,138 @@ public func FfiConverterTypeLocalCheckpointRestoreRequest_lower(_ value: LocalCh
 }
 
 
+public struct LocalCheckpointRestoreV2: Equatable, Hashable {
+    public var expected: LocalCheckpointV2
+    public var originalBackup: EncryptedBackupReceipt
+    public var ciphertext: Data
+    public var restoredLocalEpoch: EntityId
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(expected: LocalCheckpointV2, originalBackup: EncryptedBackupReceipt, ciphertext: Data, restoredLocalEpoch: EntityId) {
+        self.expected = expected
+        self.originalBackup = originalBackup
+        self.ciphertext = ciphertext
+        self.restoredLocalEpoch = restoredLocalEpoch
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension LocalCheckpointRestoreV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLocalCheckpointRestoreV2: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> LocalCheckpointRestoreV2 {
+        return
+            try LocalCheckpointRestoreV2(
+                expected: FfiConverterTypeLocalCheckpointV2.read(from: &buf),
+                originalBackup: FfiConverterTypeEncryptedBackupReceipt.read(from: &buf),
+                ciphertext: FfiConverterData.read(from: &buf),
+                restoredLocalEpoch: FfiConverterTypeEntityId.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: LocalCheckpointRestoreV2, into buf: inout [UInt8]) {
+        FfiConverterTypeLocalCheckpointV2.write(value.expected, into: &buf)
+        FfiConverterTypeEncryptedBackupReceipt.write(value.originalBackup, into: &buf)
+        FfiConverterData.write(value.ciphertext, into: &buf)
+        FfiConverterTypeEntityId.write(value.restoredLocalEpoch, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCheckpointRestoreV2_lift(_ buf: RustBuffer) throws -> LocalCheckpointRestoreV2 {
+    return try FfiConverterTypeLocalCheckpointRestoreV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCheckpointRestoreV2_lower(_ value: LocalCheckpointRestoreV2) -> RustBuffer {
+    return FfiConverterTypeLocalCheckpointRestoreV2.lower(value)
+}
+
+
+public struct LocalCheckpointV2: Equatable, Hashable {
+    public var checkpointVersion: UInt32
+    public var physicalSchemaVersion: UInt32
+    public var snapshot: LocalSnapshot
+    public var localWriteEpoch: EntityId
+    public var operations: [LocalReceiptEntry]
+    public var recovery: Data?
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(checkpointVersion: UInt32, physicalSchemaVersion: UInt32, snapshot: LocalSnapshot, localWriteEpoch: EntityId, operations: [LocalReceiptEntry], recovery: Data?) {
+        self.checkpointVersion = checkpointVersion
+        self.physicalSchemaVersion = physicalSchemaVersion
+        self.snapshot = snapshot
+        self.localWriteEpoch = localWriteEpoch
+        self.operations = operations
+        self.recovery = recovery
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension LocalCheckpointV2: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLocalCheckpointV2: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> LocalCheckpointV2 {
+        return
+            try LocalCheckpointV2(
+                checkpointVersion: FfiConverterUInt32.read(from: &buf),
+                physicalSchemaVersion: FfiConverterUInt32.read(from: &buf),
+                snapshot: FfiConverterTypeLocalSnapshot.read(from: &buf),
+                localWriteEpoch: FfiConverterTypeEntityId.read(from: &buf),
+                operations: FfiConverterSequenceTypeLocalReceiptEntry.read(from: &buf),
+                recovery: FfiConverterOptionData.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: LocalCheckpointV2, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.checkpointVersion, into: &buf)
+        FfiConverterUInt32.write(value.physicalSchemaVersion, into: &buf)
+        FfiConverterTypeLocalSnapshot.write(value.snapshot, into: &buf)
+        FfiConverterTypeEntityId.write(value.localWriteEpoch, into: &buf)
+        FfiConverterSequenceTypeLocalReceiptEntry.write(value.operations, into: &buf)
+        FfiConverterOptionData.write(value.recovery, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCheckpointV2_lift(_ buf: RustBuffer) throws -> LocalCheckpointV2 {
+    return try FfiConverterTypeLocalCheckpointV2.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCheckpointV2_lower(_ value: LocalCheckpointV2) -> RustBuffer {
+    return FfiConverterTypeLocalCheckpointV2.lower(value)
+}
+
+
 public struct LocalCommitCheckpoint: Equatable, Hashable {
     public var checkpointVersion: UInt32
     public var physicalSchemaVersion: UInt32
@@ -4141,6 +4273,30 @@ fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterString.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionData: FfiConverterRustBuffer {
+    typealias SwiftType = Data?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterData.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterData.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }

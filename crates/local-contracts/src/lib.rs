@@ -3,6 +3,7 @@
 #![forbid(unsafe_code)]
 pub mod api;
 pub mod checkpoint;
+pub mod checkpoint_v2;
 pub mod commit;
 pub mod errors;
 pub mod index_ports;

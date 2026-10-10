@@ -191,6 +191,13 @@ impl<V: SnapshotValidationPort> LegacySqliteWriter<V> {
             .get_mut()
             .immediate_transaction::<_, ReadError, _>(|c| {
                 supported(c)?;
+                let physical: String = storage_meta::table
+                    .find("storageSchemaVersion")
+                    .select(storage_meta::value)
+                    .first(c)?;
+                if physical == "3" {
+                    return Err(fail(StorageFailureCode::UpdateRequired));
+                }
                 work(c, profile, validator)
             })
             .map_err(|e| e.0)
@@ -264,6 +271,20 @@ impl<V: SnapshotValidationPort> LocalStoragePort for LegacySqliteWriter<V> {
         proposed: &EntityId,
     ) -> Result<EntityId, StorageFailure> {
         self.write(|c, profile, _| {
+            let physical: String = storage_meta::table
+                .find("storageSchemaVersion")
+                .select(storage_meta::value)
+                .first(c)?;
+            if physical == "4" {
+                let write: Option<String> = storage_meta::table
+                    .find(local_write_key(profile, space))
+                    .select(storage_meta::value)
+                    .first(c)
+                    .optional()?;
+                if let Some(epoch) = write {
+                    return EntityId::new(epoch).map_err(|_| invalid().into());
+                }
+            }
             let local: Option<String> = storage_meta::table
                 .find(epoch_key(profile, space))
                 .select(storage_meta::value)
@@ -285,6 +306,9 @@ impl<V: SnapshotValidationPort> LocalStoragePort for LegacySqliteWriter<V> {
                 .map_err(|_| invalid())?
                 .unwrap_or_else(|| proposed.clone());
             write_epoch(c, profile, space, &epoch)?;
+            if physical == "4" {
+                write_local_epoch(c, profile, space, &epoch)?;
+            }
             Ok(epoch)
         })
     }
@@ -397,142 +421,7 @@ impl<V: SnapshotValidationPort> LocalStoragePort for LegacySqliteWriter<V> {
         })
     }
     fn replace_snapshot(&mut self, s: LocalSnapshot) -> Result<(), StorageFailure> {
-        self.write(|c, p, v| {
-            if !s.check_versions() || s.storage_schema_version.value() != supported(c)? {
-                return Err(fail(StorageFailureCode::UpdateRequired));
-            }
-            if s.profile_id != *p
-                || !unique(s.aggregates.iter().map(|a| a.handle.as_str()))
-                || !unique(s.confirmed.iter().map(|a| a.aggregate.handle.as_str()))
-                || !unique(s.pending.iter().map(|a| a.operation_id.as_str()))
-                || !unique(s.projections.iter().map(projection_key))
-            {
-                return Err(fail(StorageFailureCode::WriteFailed));
-            }
-            if s.aggregates
-                .iter()
-                .any(|a| a.aggregate.space_id() != &s.space_id || a.aggregate.id() != &a.handle)
-                || s.confirmed.iter().any(|a| {
-                    a.space_id != s.space_id
-                        || a.epoch != s.epoch
-                        || a.aggregate.aggregate.space_id() != &s.space_id
-                        || a.aggregate.aggregate.id() != &a.aggregate.handle
-                })
-                || s.pending.iter().any(|a| a.space_id != s.space_id)
-                || s.projections
-                    .iter()
-                    .any(|a| projection_key(a).0 != &s.space_id)
-                || s.sync_state.as_ref().is_some_and(|a| {
-                    a.profile_id != *p
-                        || a.space_id != s.space_id
-                        || a.epoch != s.epoch
-                        || !a.check_cursor()
-                })
-            {
-                return Err(fail(StorageFailureCode::WriteFailed));
-            }
-            for pending in &s.pending {
-                check_pending(pending)?;
-            }
-            v.validate(&s)?;
-            // Fremde Bereichshandles prüfen, bevor der vorhandene Bereich gelöscht wird.
-            for a in &s.aggregates {
-                let old: Option<String> = aggregates::table
-                    .filter(aggregates::profile_id.eq(p.as_str()))
-                    .filter(aggregates::handle.eq(a.handle.as_str()))
-                    .select(aggregates::space_id)
-                    .first(c)
-                    .optional()?;
-                if old.as_ref().is_some_and(|x| x != s.space_id.as_str()) {
-                    return Err(fail(StorageFailureCode::WriteFailed));
-                }
-            }
-            for a in &s.confirmed {
-                let old: Option<String> = confirmed::table
-                    .filter(confirmed::profile_id.eq(p.as_str()))
-                    .filter(confirmed::handle.eq(a.aggregate.handle.as_str()))
-                    .select(confirmed::space_id)
-                    .first(c)
-                    .optional()?;
-                if old.as_ref().is_some_and(|x| x != s.space_id.as_str()) {
-                    return Err(fail(StorageFailureCode::WriteFailed));
-                }
-            }
-            for a in &s.pending {
-                let old: Option<String> = outbox::table
-                    .filter(outbox::profile_id.eq(p.as_str()))
-                    .filter(outbox::operation_id.eq(a.operation_id.as_str()))
-                    .select(outbox::space_id)
-                    .first(c)
-                    .optional()?;
-                if old.as_ref().is_some_and(|x| x != s.space_id.as_str()) {
-                    return Err(fail(StorageFailureCode::WriteFailed));
-                }
-            }
-            diesel::delete(
-                aggregates::table
-                    .filter(aggregates::profile_id.eq(p.as_str()))
-                    .filter(aggregates::space_id.eq(s.space_id.as_str())),
-            )
-            .execute(c)?;
-            diesel::delete(
-                confirmed::table
-                    .filter(confirmed::profile_id.eq(p.as_str()))
-                    .filter(confirmed::space_id.eq(s.space_id.as_str())),
-            )
-            .execute(c)?;
-            diesel::delete(
-                outbox::table
-                    .filter(outbox::profile_id.eq(p.as_str()))
-                    .filter(outbox::space_id.eq(s.space_id.as_str())),
-            )
-            .execute(c)?;
-            diesel::delete(
-                projections::table
-                    .filter(projections::profile_id.eq(p.as_str()))
-                    .filter(projections::space_id.eq(s.space_id.as_str())),
-            )
-            .execute(c)?;
-            diesel::delete(
-                sync_state::table
-                    .filter(sync_state::profile_id.eq(p.as_str()))
-                    .filter(sync_state::space_id.eq(s.space_id.as_str())),
-            )
-            .execute(c)?;
-            write_batch(
-                c,
-                p,
-                &AtomicBatch {
-                    expected_revisions: vec![],
-                    aggregates: s.aggregates.clone(),
-                    outbox: s.pending.clone(),
-                    projections: s.projections.clone(),
-                },
-            )?;
-            for a in &s.confirmed {
-                diesel::insert_into(confirmed::table)
-                    .values((
-                        confirmed::profile_id.eq(p.as_str()),
-                        confirmed::handle.eq(a.aggregate.handle.as_str()),
-                        confirmed::space_id.eq(s.space_id.as_str()),
-                        confirmed::epoch.eq(a.epoch.as_str()),
-                        confirmed::revision.eq(a.aggregate.aggregate.revision().value()),
-                        confirmed::payload.eq(text(a)?),
-                    ))
-                    .execute(c)?;
-            }
-            if let Some(state) = &s.sync_state {
-                diesel::insert_into(sync_state::table)
-                    .values((
-                        sync_state::profile_id.eq(p.as_str()),
-                        sync_state::space_id.eq(s.space_id.as_str()),
-                        sync_state::epoch.eq(state.epoch.as_str()),
-                        sync_state::cursor.eq(&state.cursor),
-                    ))
-                    .execute(c)?;
-            }
-            write_epoch(c, p, &s.space_id, &s.epoch)
-        })
+        self.write(|c, p, v| replace_in_transaction(c, p, v, &s))
     }
     fn rebuild_projections(&mut self, r: ProjectionRebuild) -> Result<(), StorageFailure> {
         self.write(|c, p, v| {
@@ -617,3 +506,187 @@ fn check_pending(p: &PendingOperation) -> Result<(), ReadError> {
 }
 
 pub(super) mod receipts;
+
+fn local_write_key(profile: &EntityId, space: &EntityId) -> String {
+    format!(
+        "localWriteEpoch:{}",
+        serde_json::json!([profile.as_str(), space.as_str()])
+    )
+}
+fn write_local_epoch(
+    c: &mut SqliteConnection,
+    profile: &EntityId,
+    space: &EntityId,
+    epoch: &EntityId,
+) -> Result<(), ReadError> {
+    diesel::insert_into(storage_meta::table)
+        .values((
+            storage_meta::key.eq(local_write_key(profile, space)),
+            storage_meta::value.eq(epoch.as_str()),
+        ))
+        .on_conflict(storage_meta::key)
+        .do_update()
+        .set(storage_meta::value.eq(epoch.as_str()))
+        .execute(c)?;
+    Ok(())
+}
+fn local_write_epoch(
+    c: &mut SqliteConnection,
+    profile: &EntityId,
+    space: &EntityId,
+) -> Result<EntityId, ReadError> {
+    let physical: String = storage_meta::table
+        .find("storageSchemaVersion")
+        .select(storage_meta::value)
+        .first(c)?;
+    if physical == "3" {
+        return Ok(snapshot(c, profile, space)?.epoch);
+    }
+    let epoch: String = storage_meta::table
+        .find(local_write_key(profile, space))
+        .select(storage_meta::value)
+        .first(c)?;
+    EntityId::new(epoch).map_err(|_| invalid().into())
+}
+
+fn replace_in_transaction(
+    c: &mut SqliteConnection,
+    p: &EntityId,
+    v: &dyn SnapshotValidationPort,
+    s: &LocalSnapshot,
+) -> Result<(), ReadError> {
+    if !s.check_versions() || s.storage_schema_version.value() != supported(c)? {
+        return Err(fail(StorageFailureCode::UpdateRequired));
+    }
+    if s.profile_id != *p
+        || !unique(s.aggregates.iter().map(|a| a.handle.as_str()))
+        || !unique(s.confirmed.iter().map(|a| a.aggregate.handle.as_str()))
+        || !unique(s.pending.iter().map(|a| a.operation_id.as_str()))
+        || !unique(s.projections.iter().map(projection_key))
+    {
+        return Err(fail(StorageFailureCode::WriteFailed));
+    }
+    if s.aggregates
+        .iter()
+        .any(|a| a.aggregate.space_id() != &s.space_id || a.aggregate.id() != &a.handle)
+        || s.confirmed.iter().any(|a| {
+            a.space_id != s.space_id
+                || a.epoch != s.epoch
+                || a.aggregate.aggregate.space_id() != &s.space_id
+                || a.aggregate.aggregate.id() != &a.aggregate.handle
+        })
+        || s.pending.iter().any(|a| a.space_id != s.space_id)
+        || s.projections
+            .iter()
+            .any(|a| projection_key(a).0 != &s.space_id)
+        || s.sync_state.as_ref().is_some_and(|a| {
+            a.profile_id != *p
+                || a.space_id != s.space_id
+                || a.epoch != s.epoch
+                || !a.check_cursor()
+        })
+    {
+        return Err(fail(StorageFailureCode::WriteFailed));
+    }
+    for pending in &s.pending {
+        check_pending(pending)?;
+    }
+    v.validate(s)?;
+    // Fremde Bereichshandles prüfen, bevor der vorhandene Bereich gelöscht wird.
+    for a in &s.aggregates {
+        let old: Option<String> = aggregates::table
+            .filter(aggregates::profile_id.eq(p.as_str()))
+            .filter(aggregates::handle.eq(a.handle.as_str()))
+            .select(aggregates::space_id)
+            .first(c)
+            .optional()?;
+        if old.as_ref().is_some_and(|x| x != s.space_id.as_str()) {
+            return Err(fail(StorageFailureCode::WriteFailed));
+        }
+    }
+    for a in &s.confirmed {
+        let old: Option<String> = confirmed::table
+            .filter(confirmed::profile_id.eq(p.as_str()))
+            .filter(confirmed::handle.eq(a.aggregate.handle.as_str()))
+            .select(confirmed::space_id)
+            .first(c)
+            .optional()?;
+        if old.as_ref().is_some_and(|x| x != s.space_id.as_str()) {
+            return Err(fail(StorageFailureCode::WriteFailed));
+        }
+    }
+    for a in &s.pending {
+        let old: Option<String> = outbox::table
+            .filter(outbox::profile_id.eq(p.as_str()))
+            .filter(outbox::operation_id.eq(a.operation_id.as_str()))
+            .select(outbox::space_id)
+            .first(c)
+            .optional()?;
+        if old.as_ref().is_some_and(|x| x != s.space_id.as_str()) {
+            return Err(fail(StorageFailureCode::WriteFailed));
+        }
+    }
+    diesel::delete(
+        aggregates::table
+            .filter(aggregates::profile_id.eq(p.as_str()))
+            .filter(aggregates::space_id.eq(s.space_id.as_str())),
+    )
+    .execute(c)?;
+    diesel::delete(
+        confirmed::table
+            .filter(confirmed::profile_id.eq(p.as_str()))
+            .filter(confirmed::space_id.eq(s.space_id.as_str())),
+    )
+    .execute(c)?;
+    diesel::delete(
+        outbox::table
+            .filter(outbox::profile_id.eq(p.as_str()))
+            .filter(outbox::space_id.eq(s.space_id.as_str())),
+    )
+    .execute(c)?;
+    diesel::delete(
+        projections::table
+            .filter(projections::profile_id.eq(p.as_str()))
+            .filter(projections::space_id.eq(s.space_id.as_str())),
+    )
+    .execute(c)?;
+    diesel::delete(
+        sync_state::table
+            .filter(sync_state::profile_id.eq(p.as_str()))
+            .filter(sync_state::space_id.eq(s.space_id.as_str())),
+    )
+    .execute(c)?;
+    write_batch(
+        c,
+        p,
+        &AtomicBatch {
+            expected_revisions: vec![],
+            aggregates: s.aggregates.clone(),
+            outbox: s.pending.clone(),
+            projections: s.projections.clone(),
+        },
+    )?;
+    for a in &s.confirmed {
+        diesel::insert_into(confirmed::table)
+            .values((
+                confirmed::profile_id.eq(p.as_str()),
+                confirmed::handle.eq(a.aggregate.handle.as_str()),
+                confirmed::space_id.eq(s.space_id.as_str()),
+                confirmed::epoch.eq(a.epoch.as_str()),
+                confirmed::revision.eq(a.aggregate.aggregate.revision().value()),
+                confirmed::payload.eq(text(a)?),
+            ))
+            .execute(c)?;
+    }
+    if let Some(state) = &s.sync_state {
+        diesel::insert_into(sync_state::table)
+            .values((
+                sync_state::profile_id.eq(p.as_str()),
+                sync_state::space_id.eq(s.space_id.as_str()),
+                sync_state::epoch.eq(state.epoch.as_str()),
+                sync_state::cursor.eq(&state.cursor),
+            ))
+            .execute(c)?;
+    }
+    write_epoch(c, p, &s.space_id, &s.epoch)
+}

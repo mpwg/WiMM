@@ -336,6 +336,22 @@ export interface LocalCheckpointRestoreRequest {
     restoredEpoch: EntityId;
 }
 
+export interface LocalCheckpointRestoreV2 {
+    expected: LocalCheckpointV2;
+    originalBackup: EncryptedBackupReceipt;
+    ciphertext: number[];
+    restoredLocalEpoch: EntityId;
+}
+
+export interface LocalCheckpointV2 {
+    checkpointVersion: number;
+    physicalSchemaVersion: number;
+    snapshot: LocalSnapshot;
+    localWriteEpoch: EntityId;
+    operations: LocalReceiptEntry[];
+    recovery?: number[];
+}
+
 export interface LocalCommitCheckpoint {
     checkpointVersion: number;
     physicalSchemaVersion: number;
