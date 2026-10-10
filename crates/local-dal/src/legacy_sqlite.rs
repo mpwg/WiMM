@@ -48,6 +48,14 @@ impl LegacySqliteStore {
     /// Öffnet ausschließlich eine existierende Datei. Unbekannte Versionen werden abgewiesen.
     #[cfg(not(target_family = "wasm"))]
     pub fn open(path: &std::path::Path, profile: EntityId) -> Result<Self, StorageFailure> {
+        Self::open_mode(path, profile, false)
+    }
+    #[cfg(not(target_family = "wasm"))]
+    fn open_mode(
+        path: &std::path::Path,
+        profile: EntityId,
+        writable: bool,
+    ) -> Result<Self, StorageFailure> {
         if !path.is_file() {
             return Err(StorageFailure::unknown(
                 StorageFailureCode::ResourceUnavailable,
@@ -68,13 +76,18 @@ impl LegacySqliteStore {
                 }
             })
             .collect::<String>();
-        // SQLite selbst öffnet read-only; auch ein Rennen mit Dateientfernung erzeugt keinen Bestand.
-        let location = format!("file:{encoded}?mode=ro");
+        // SQLite erzwingt den gewählten Modus; auch ein Rennen mit Dateientfernung erzeugt keinen Bestand.
+        let mode = if writable { "rw" } else { "ro" };
+        let location = format!("file:{encoded}?mode={mode}");
         let mut connection = SqliteConnection::establish(&location)
             .map_err(|_| StorageFailure::unknown(StorageFailureCode::ResourceUnavailable))?;
         // Verbindungsoptionen besitzen keine Diesel-Query-DSL; kein Schema-/Datenwrite.
         connection
-            .batch_execute("PRAGMA query_only=ON; PRAGMA busy_timeout=3000;")
+            .batch_execute(if writable {
+                "PRAGMA foreign_keys=ON; PRAGMA synchronous=FULL; PRAGMA busy_timeout=3000;"
+            } else {
+                "PRAGMA query_only=ON; PRAGMA busy_timeout=3000;"
+            })
             .map_err(database)?;
         connection
             .transaction::<_, ReadError, _>(|c| {
@@ -114,154 +127,115 @@ impl LegacySqliteStore {
     pub fn export_snapshot(&self, space: &EntityId) -> Result<LocalSnapshot, StorageFailure> {
         self.connection
             .borrow_mut()
-            .transaction::<_, ReadError, _>(|c| {
-                let version = supported(c)?;
-                let rows: Vec<(String, String, i64, String)> = aggregates::table
-                    .filter(aggregates::profile_id.eq(self.profile.as_str()))
-                    .filter(aggregates::space_id.eq(space.as_str()))
-                    .order(aggregates::handle)
-                    .select((
-                        aggregates::handle,
-                        aggregates::space_id,
-                        aggregates::revision,
-                        aggregates::payload,
-                    ))
-                    .load(c)?;
-                let aggregates = rows
-                    .into_iter()
-                    .map(aggregate)
-                    .collect::<Result<Vec<_>, _>>()?;
-                let rows: Vec<(String, String, String, i64, String)> = confirmed::table
-                    .filter(confirmed::profile_id.eq(self.profile.as_str()))
-                    .filter(confirmed::space_id.eq(space.as_str()))
-                    .order(confirmed::handle)
-                    .select((
-                        confirmed::handle,
-                        confirmed::space_id,
-                        confirmed::epoch,
-                        confirmed::revision,
-                        confirmed::payload,
-                    ))
-                    .load(c)?;
-                let mut confirmed = Vec::new();
-                for (handle, area, epoch, revision, payload) in rows {
-                    let row: ConfirmedAggregate = decode(&payload)?;
-                    if row.space_id.as_str() != area
-                        || row.epoch.as_str() != epoch
-                        || row.aggregate.handle.as_str() != handle
-                        || row.aggregate.aggregate.space_id().as_str() != area
-                        || row.aggregate.aggregate.id() != &row.aggregate.handle
-                        || row.aggregate.aggregate.revision().value() != revision
-                    {
-                        return Err(invalid().into());
-                    }
-                    confirmed.push(row);
-                }
-                let rows: Vec<(String, String, String)> = outbox::table
-                    .filter(outbox::profile_id.eq(self.profile.as_str()))
-                    .filter(outbox::space_id.eq(space.as_str()))
-                    .order(outbox::operation_id)
-                    .select((outbox::operation_id, outbox::state, outbox::payload))
-                    .load(c)?;
-                let mut pending = Vec::new();
-                for (id, state, payload) in rows {
-                    let row: PendingOperation = decode(&payload)?;
-                    let encoded = serde_json::to_value(row.state).map_err(|_| invalid())?;
-                    if row.operation_id.as_str() != id
-                        || &row.space_id != space
-                        || encoded.as_str() != Some(state.as_str())
-                    {
-                        return Err(invalid().into());
-                    }
-                    pending.push(row);
-                }
-                let rows: Vec<(String, String, String)> = projections::table
-                    .filter(projections::profile_id.eq(self.profile.as_str()))
-                    .filter(projections::space_id.eq(space.as_str()))
-                    .order((projections::projection_kind, projections::projection_key))
-                    .select((
-                        projections::projection_kind,
-                        projections::projection_key,
-                        projections::payload,
-                    ))
-                    .load(c)?;
-                let mut projections = Vec::new();
-                for (kind, key, payload) in rows {
-                    let row: StoredProjection = decode(&payload)?;
-                    let (area, actual_kind, actual_key) = match &row {
-                        StoredProjection::Balance { space_id, key, .. } => {
-                            (space_id, "balance", key.as_str())
-                        }
-                        StoredProjection::AccountBalance { space_id, key, .. } => {
-                            (space_id, "accountBalance", key.as_str())
-                        }
-                        StoredProjection::Consumption { space_id, key, .. } => {
-                            (space_id, "consumption", key.as_str())
-                        }
-                    };
-                    if area != space || kind != actual_kind || key != actual_key {
-                        return Err(invalid().into());
-                    }
-                    projections.push(row);
-                }
-                let state: Option<(String, String)> = sync_state::table
-                    .filter(sync_state::profile_id.eq(self.profile.as_str()))
-                    .filter(sync_state::space_id.eq(space.as_str()))
-                    .select((sync_state::epoch, sync_state::cursor))
-                    .first(c)
-                    .optional()?;
-                let sync_state = state
-                    .map(|(epoch, cursor)| -> Result<_, StorageFailure> {
-                        let s = SyncState {
-                            profile_id: self.profile.clone(),
-                            space_id: space.clone(),
-                            epoch: EntityId::new(epoch).map_err(|_| invalid())?,
-                            cursor,
-                        };
-                        if !s.check_cursor() {
-                            return Err(invalid());
-                        }
-                        Ok(s)
-                    })
-                    .transpose()?;
-                let epoch_key = format!(
-                    "localEpoch:{}",
-                    serde_json::json!([self.profile.as_str(), space.as_str()])
-                );
-                let local: Option<String> = storage_meta::table
-                    .find(epoch_key)
-                    .select(storage_meta::value)
-                    .first(c)
-                    .optional()?;
-                let epoch = sync_state
-                    .as_ref()
-                    .map(|s| s.epoch.clone())
-                    .or(local
-                        .map(EntityId::new)
-                        .transpose()
-                        .map_err(|_| invalid())?)
-                    .or_else(|| confirmed.first().map(|s| s.epoch.clone()))
-                    .ok_or_else(|| StorageFailure::unknown(StorageFailureCode::EpochMismatch))?;
-                if confirmed.iter().any(|s| s.epoch != epoch) {
-                    return Err(invalid().into());
-                }
-                Ok(LocalSnapshot {
-                    storage_schema_version: SnapshotStorageVersion::new(version)
-                        .map_err(|_| invalid())?,
-                    domain_schema_version: SnapshotDomainVersion::new(1).map_err(|_| invalid())?,
-                    profile_id: self.profile.clone(),
-                    space_id: space.clone(),
-                    epoch,
-                    aggregates,
-                    confirmed,
-                    pending,
-                    projections,
-                    sync_state,
-                })
-            })
+            .transaction::<_, ReadError, _>(|c| snapshot(c, &self.profile, space))
             .map_err(|e| e.0)
     }
 }
+fn snapshot(
+    c: &mut SqliteConnection,
+    profile: &EntityId,
+    space: &EntityId,
+) -> Result<LocalSnapshot, ReadError> {
+    let version = supported(c)?;
+    let rows: Vec<(String, String, i64, String)> = aggregates::table
+        .filter(aggregates::profile_id.eq(profile.as_str()))
+        .filter(aggregates::space_id.eq(space.as_str()))
+        .order(aggregates::handle)
+        .select((
+            aggregates::handle,
+            aggregates::space_id,
+            aggregates::revision,
+            aggregates::payload,
+        ))
+        .load(c)?;
+    let aggregates = rows
+        .into_iter()
+        .map(aggregate)
+        .collect::<Result<Vec<_>, _>>()?;
+    let confirmed = read_confirmed(c, profile, space)?;
+    let pending = read_pending(c, profile, space)?;
+    let rows: Vec<(String, String, String)> = projections::table
+        .filter(projections::profile_id.eq(profile.as_str()))
+        .filter(projections::space_id.eq(space.as_str()))
+        .order((projections::projection_kind, projections::projection_key))
+        .select((
+            projections::projection_kind,
+            projections::projection_key,
+            projections::payload,
+        ))
+        .load(c)?;
+    let mut projections = Vec::new();
+    for (kind, key, payload) in rows {
+        let row: StoredProjection = decode(&payload)?;
+        let (area, actual_kind, actual_key) = match &row {
+            StoredProjection::Balance { space_id, key, .. } => (space_id, "balance", key.as_str()),
+            StoredProjection::AccountBalance { space_id, key, .. } => {
+                (space_id, "accountBalance", key.as_str())
+            }
+            StoredProjection::Consumption { space_id, key, .. } => {
+                (space_id, "consumption", key.as_str())
+            }
+        };
+        if area != space || kind != actual_kind || key != actual_key {
+            return Err(invalid().into());
+        }
+        projections.push(row);
+    }
+    let state: Option<(String, String)> = sync_state::table
+        .filter(sync_state::profile_id.eq(profile.as_str()))
+        .filter(sync_state::space_id.eq(space.as_str()))
+        .select((sync_state::epoch, sync_state::cursor))
+        .first(c)
+        .optional()?;
+    let sync_state = state
+        .map(|(epoch, cursor)| -> Result<_, StorageFailure> {
+            let s = SyncState {
+                profile_id: profile.clone(),
+                space_id: space.clone(),
+                epoch: EntityId::new(epoch).map_err(|_| invalid())?,
+                cursor,
+            };
+            if !s.check_cursor() {
+                return Err(invalid());
+            }
+            Ok(s)
+        })
+        .transpose()?;
+    let epoch_key = format!(
+        "localEpoch:{}",
+        serde_json::json!([profile.as_str(), space.as_str()])
+    );
+    let local: Option<String> = storage_meta::table
+        .find(epoch_key)
+        .select(storage_meta::value)
+        .first(c)
+        .optional()?;
+    let epoch = sync_state
+        .as_ref()
+        .map(|s| s.epoch.clone())
+        .or(local
+            .map(EntityId::new)
+            .transpose()
+            .map_err(|_| invalid())?)
+        .or_else(|| confirmed.first().map(|s| s.epoch.clone()))
+        .ok_or_else(|| StorageFailure::unknown(StorageFailureCode::EpochMismatch))?;
+    if confirmed.iter().any(|s| s.epoch != epoch) {
+        return Err(invalid().into());
+    }
+    Ok(LocalSnapshot {
+        storage_schema_version: SnapshotStorageVersion::new(version).map_err(|_| invalid())?,
+        domain_schema_version: SnapshotDomainVersion::new(1).map_err(|_| invalid())?,
+        profile_id: profile.clone(),
+        space_id: space.clone(),
+        epoch,
+        aggregates,
+        confirmed,
+        pending,
+        projections,
+        sync_state,
+    })
+}
+
 fn aggregate(
     (handle, space, revision, payload): (String, String, i64, String),
 ) -> Result<StoredAggregate, StorageFailure> {
@@ -334,4 +308,69 @@ fn supported(c: &mut SqliteConnection) -> Result<u32, ReadError> {
         }
     }
     Ok(version)
+}
+
+mod writer;
+pub use writer::LegacySqliteWriter;
+
+fn read_confirmed(
+    c: &mut SqliteConnection,
+    profile: &EntityId,
+    space: &EntityId,
+) -> Result<Vec<ConfirmedAggregate>, ReadError> {
+    let rows: Vec<(String, String, String, i64, String)> = confirmed::table
+        .filter(confirmed::profile_id.eq(profile.as_str()))
+        .filter(confirmed::space_id.eq(space.as_str()))
+        .order(confirmed::handle)
+        .select((
+            confirmed::handle,
+            confirmed::space_id,
+            confirmed::epoch,
+            confirmed::revision,
+            confirmed::payload,
+        ))
+        .load(c)?;
+    let mut confirmed = Vec::new();
+    for (handle, area, epoch, revision, payload) in rows {
+        let row: ConfirmedAggregate = decode(&payload)?;
+        if row.space_id.as_str() != area
+            || row.epoch.as_str() != epoch
+            || row.aggregate.handle.as_str() != handle
+            || row.aggregate.aggregate.space_id().as_str() != area
+            || row.aggregate.aggregate.id() != &row.aggregate.handle
+            || row.aggregate.aggregate.revision().value() != revision
+        {
+            return Err(invalid().into());
+        }
+        confirmed.push(row);
+    }
+
+    Ok(confirmed)
+}
+
+fn read_pending(
+    c: &mut SqliteConnection,
+    profile: &EntityId,
+    space: &EntityId,
+) -> Result<Vec<PendingOperation>, ReadError> {
+    let rows: Vec<(String, String, String)> = outbox::table
+        .filter(outbox::profile_id.eq(profile.as_str()))
+        .filter(outbox::space_id.eq(space.as_str()))
+        .order(outbox::operation_id)
+        .select((outbox::operation_id, outbox::state, outbox::payload))
+        .load(c)?;
+    let mut pending = Vec::new();
+    for (id, state, payload) in rows {
+        let row: PendingOperation = decode(&payload)?;
+        let encoded = serde_json::to_value(row.state).map_err(|_| invalid())?;
+        if row.operation_id.as_str() != id
+            || &row.space_id != space
+            || encoded.as_str() != Some(state.as_str())
+        {
+            return Err(invalid().into());
+        }
+        pending.push(row);
+    }
+
+    Ok(pending)
 }
