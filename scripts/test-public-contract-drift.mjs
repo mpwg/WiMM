@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import './warnings-as-errors.mjs';
 import assert from 'node:assert/strict';
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -24,5 +24,6 @@ try {
 assert.equal(await readFile(source, 'utf8'), original);
 const restored = spawnSync('cargo', ['run', '--locked', '-p', 'wimm-contract-schema', '--', '--public', '--check', resolve(root)], { encoding: 'utf8' });
 assert.equal(restored.status, 0, restored.stderr); assert.deepEqual(await hashes(), before);
+await mkdir('test-results/public-contracts', { recursive: true });
 await writeFile('test-results/public-contracts/source-drift.log', result.stderr + '\nÖffentliche Quelle wiederhergestellt; unveränderte Hashes; Prüfmodus erfolgreich.\n');
 console.log('Öffentlicher Rust-Quellendrift erkannt, Quelle wiederhergestellt, kein Schema überschrieben.');

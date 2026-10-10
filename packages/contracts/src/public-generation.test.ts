@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -40,5 +40,6 @@ it('Öffentliche Formen: Zodreferenz, tatsächliches Rust/WASM und strukturelles
     if (actual) accepted += 1;
   }
   expect(accepted).toBe(9); expect(relationalRejected).toBe(5);
+  mkdirSync('test-results/public-contracts', { recursive: true });
   writeFileSync('test-results/public-contracts/results.json', JSON.stringify({ catalogCases: 42, accepted, relationalRejected, runtimes: ['Zod-Bestandsreferenz', 'Rust nativ', 'tatsächliches unabhängiges öffentliches WASM/Node'], structuralSchemasAloneAreNotSufficient: true }, null, 2) + '\n');
 });
