@@ -2322,6 +2322,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "wimm-client-application"
+version = "0.0.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "wimm-finance-core",
+ "wimm-finance-types",
+ "wimm-local-contracts",
+]
+
+[[package]]
 name = "wimm-client-crypto"
 version = "0.0.0"
 dependencies = [

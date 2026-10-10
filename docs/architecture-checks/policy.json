@@ -278,6 +278,13 @@
       "nativeAssertionFeatures": [
         "receipt-probe"
       ]
+    },
+    "wimm-client-application": {
+      "role": "client",
+      "features": [],
+      "checkClosure": true,
+      "bindings": false,
+      "nativeAssertions": "crates/client-application/tests/commit_preparation.rs"
     }
   },
   "plannedServerRoots": [
