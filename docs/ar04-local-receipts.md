@@ -38,6 +38,6 @@ Ein breiter zusätzlicher `pnpm check:ci`-Versuch scheiterte am bestehenden sepa
 
 ## Abschlussgrenze
 
-#118 bleibt offen für vollständige gesicherte Schema-/Receiptbackup-/Restore-Kompatibilität, den verlangten Nachweis der Abbruchsemantik . Keine Produktumschaltung, keine vollständige Implementierung aller SQLite-Storage-/Index-/Migrationsports und keine #108/#109-/Gesamtarchitektur-/P6–P11-/Releaseabnahme aus diesem Abschnitt. Fortschritt und alle verbleibenden Kriterien ausschließlich in #118.
+#118 bleibt offen für vollständige gesicherte Schema-/Receiptbackup-/Restore-Kompatibilität und den verlangten Nachweis der Abbruchsemantik. Keine Produktumschaltung, keine vollständige Implementierung aller SQLite-Storage-/Index-/Migrationsports und keine #108/#109-/Gesamtarchitektur-/P6–P11-/Releaseabnahme aus diesem Abschnitt. Fortschritt und alle verbleibenden Kriterien ausschließlich in #118.
 
 Der separate [Ubuntu-Leistungsjob desselben Commits](https://github.com/mpwg/WiMM/actions/runs/38031346187/job/114152813867) ist fehlgeschlagen: Web kalt 2.463,0 ms statt unter 2.000 ms, Desktop-Frontend kalt 1.429,8 ms. Warme Reaktionen innerhalb Grenzen. Neuer aktueller Befund [#136](https://github.com/mpwg/WiMM/issues/136); keine Ursachenzuordnung zum nicht produktiv angeschlossenen Rust-DAL aus diesem Einzelvergleich und keine Gesamt-CI-Freigabe aus dem erfolgreichen DAL-Job.
