@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use wimm_client_application::*;
 use wimm_finance_types::{command_contracts::Request, scalars::*};
+mod support;
 fn context(r: &Request) -> CommitContext {
     CommitContext {
         profile_id: EntityId::new("50000000-0000-4000-8000-000000000001".into()).unwrap(),
@@ -34,6 +35,7 @@ fn all_existing_command_oracles_keep_core_results_and_atomically_prepared_data()
         };
         let ctx = context(&r);
         let core = wimm_finance_core::execute(r.clone());
+        let before = r.aggregates.clone();
         let result = prepare_command(r, &ctx, &ctx, AreaMode::Standalone);
         if core.is_err() {
             assert!(result.is_err());
@@ -60,12 +62,13 @@ fn all_existing_command_oracles_keep_core_results_and_atomically_prepared_data()
                 value.change().aggregates.len()
             );
             assert!(!value.request().batch.projections.is_empty());
+            support::persist(value, &before);
         }
     }
     assert_eq!(covered, 176);
     assert_eq!(incomplete, 1);
     assert_eq!(command_types.len(), 22);
-    assert!(prepared > 40);
+    assert_eq!(prepared, 63);
 }
 #[test]
 fn changed_profile_epoch_or_generation_rejects_before_preparation() {
@@ -108,6 +111,7 @@ fn complete_reconciliation_seed_preserves_confirmed_opening_balance_and_connecte
     extended["aggregates"].as_array_mut().unwrap().push(serde_json::json!({"id":"b0000000-0000-4000-8000-000000000099","spaceId":"b0000000-0000-4000-8000-000000000001","revision":1,"createdAt":"2026-10-08T12:00:00Z","updatedAt":"2026-10-08T12:00:00Z","aggregateType":"reconciliation","accountId":"b0000000-0000-4000-8000-000000000002","statementDate":"2026-10-08","statementBalance":100000,"transactionIds":["b0000000-0000-4000-8000-000000000010"]}));
     let r = wimm_finance_core::decode_command_request_v1(&extended.to_string()).unwrap();
     let ctx = context(&r);
+    let before = r.aggregates.clone();
     let prepared = prepare_command(r, &ctx, &ctx, AreaMode::Connected)
         .unwrap()
         .unwrap();
@@ -121,4 +125,5 @@ fn complete_reconciliation_seed_preserves_confirmed_opening_balance_and_connecte
         prepared.request().identity.operation_id
     );
     assert_eq!(prepared.request().batch.aggregates.len(), 2);
+    support::persist(prepared, &before);
 }

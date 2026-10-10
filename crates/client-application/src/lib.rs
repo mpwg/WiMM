@@ -70,6 +70,24 @@ pub fn prepare_command(
         CommandResult::Unchanged => Ok(None),
     }
 }
+/// Gegenbefehle werden fachlich im Kern erzeugt und wie Normalbefehle atomar vorbereitet.
+pub fn prepare_reverse(
+    request: wimm_finance_types::reverse_contracts::ReverseRequest,
+    started: &CommitContext,
+    current: &CommitContext,
+    mode: AreaMode,
+) -> Result<PreparedCommit, PreparationFailure> {
+    if !started.is_current(current) {
+        return Err(PreparationFailure::ScopeChanged);
+    }
+    if request.space_id != started.space_id {
+        return Err(PreparationFailure::WrongArea);
+    }
+    let before = request.aggregates.clone();
+    let change = wimm_finance_core::reverse(request)
+        .map_err(|(code, _)| PreparationFailure::FinanceRejected(code))?;
+    prepare_change(change, &before, started, current, mode)
+}
 /// Normalbefehle, Importgruppen und Kern-Gegenbefehle erhalten denselben Speicherpfad.
 fn prepare_change(
     change: ChangeSet,
