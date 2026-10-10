@@ -36,7 +36,7 @@ export function checkUiSource(source, filename, exceptions=[]) {
   for(const entry of uiBoundaries(source,filename)) {const key=JSON.stringify(entry);const index=remaining.findIndex(e=>JSON.stringify(e)===key);if(index>=0)remaining.splice(index,1);else violations.push(`Neue UI-Fach-/Speicherkante: ${filename}: ${key}`);}
   return violations;
 }
-const ownAllowed={primitive:[],privateTypes:['wimm-contract-primitives'],core:['wimm-finance-types','wimm-contract-primitives'],publicTypes:['wimm-contract-primitives'],localTypes:['wimm-contract-primitives','wimm-finance-types','wimm-public-contracts']};
+const ownAllowed={primitive:[],privateTypes:['wimm-contract-primitives'],core:['wimm-finance-types','wimm-contract-primitives'],publicTypes:['wimm-contract-primitives','wimm-persistence-contracts'],localTypes:['wimm-contract-primitives','wimm-finance-types','wimm-public-contracts','wimm-persistence-contracts']};
 const forbiddenTechnical=/^(?:diesel(?:_|$)|sqlx(?:-|_|$)|rusqlite$|sea-query$|sea-orm$|axum$|tokio$|tauri(?:-|$)|reqwest$|hyper$|gtk$|react$)/;
 const privateServer=/^(?:wimm-finance-(?:core|types)$|wimm-local-|wimm-client-|wimm-core-bindings$|wimm-crypto$|wimm-private-crypto$|wimm-dal-proof$)/;
 export function checkRustClosure(role, names, binding=false, roles={}) {

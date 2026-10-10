@@ -15,6 +15,9 @@
     }
   ],
   "files": [
+    "public-commit-result.schema.json",
+    "public-persistence-error.schema.json",
+    "public-expected-head.schema.json",
     "public-aggregate-head.schema.json",
     "public-operation-key.schema.json",
     "public-operation-receipt.schema.json",

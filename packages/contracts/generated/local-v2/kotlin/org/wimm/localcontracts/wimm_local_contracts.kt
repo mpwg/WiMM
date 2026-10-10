@@ -38,24 +38,33 @@ import org.wimm.privatecontracts.FfiConverterTypeAggregate
 import org.wimm.privatecontracts.FfiConverterTypeConsumption
 import org.wimm.privatecontracts.FfiConverterTypeEngineBindingVersion
 import org.wimm.privatecontracts.FfiConverterTypeEntityId
+import org.wimm.privatecontracts.FfiConverterTypeFileHash
+import org.wimm.privatecontracts.FfiConverterTypeFinanceDate
 import org.wimm.privatecontracts.FfiConverterTypeMoneyCents
 import org.wimm.privatecontracts.FfiConverterTypeNonEmptyText
 import org.wimm.privatecontracts.FfiConverterTypeOrdinal
 import org.wimm.privatecontracts.FfiConverterTypeRevision
+import org.wimm.privatecontracts.FfiConverterTypeStoredRevision
 import org.wimm.privatecontracts.FfiConverterTypeUtcTimestamp
+import org.wimm.privatecontracts.FileHash
+import org.wimm.privatecontracts.FinanceDate
 import org.wimm.privatecontracts.MoneyCents
 import org.wimm.privatecontracts.NonEmptyText
 import org.wimm.privatecontracts.Ordinal
 import org.wimm.privatecontracts.Revision
+import org.wimm.privatecontracts.StoredRevision
 import org.wimm.privatecontracts.UtcTimestamp
 import org.wimm.privatecontracts.RustBuffer as RustBufferAggregate
 import org.wimm.privatecontracts.RustBuffer as RustBufferConsumption
 import org.wimm.privatecontracts.RustBuffer as RustBufferEngineBindingVersion
 import org.wimm.privatecontracts.RustBuffer as RustBufferEntityId
+import org.wimm.privatecontracts.RustBuffer as RustBufferFileHash
+import org.wimm.privatecontracts.RustBuffer as RustBufferFinanceDate
 import org.wimm.privatecontracts.RustBuffer as RustBufferMoneyCents
 import org.wimm.privatecontracts.RustBuffer as RustBufferNonEmptyText
 import org.wimm.privatecontracts.RustBuffer as RustBufferOrdinal
 import org.wimm.privatecontracts.RustBuffer as RustBufferRevision
+import org.wimm.privatecontracts.RustBuffer as RustBufferStoredRevision
 import org.wimm.privatecontracts.RustBuffer as RustBufferUtcTimestamp
 
 // This is a helper for safely working with byte buffers returned from the Rust code.
@@ -1243,6 +1252,44 @@ public object FfiConverterTypeBalancePayload: FfiConverterRustBuffer<BalancePayl
 
 
 
+data class CommittedRevision (
+    var `handle`: EntityId
+    ,
+    var `revision`: StoredRevision
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCommittedRevision: FfiConverterRustBuffer<CommittedRevision> {
+    override fun read(buf: ByteBuffer): CommittedRevision {
+        return CommittedRevision(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeStoredRevision.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: CommittedRevision) = (
+            FfiConverterTypeEntityId.allocationSize(value.`handle`) +
+            FfiConverterTypeStoredRevision.allocationSize(value.`revision`)
+    )
+
+    override fun write(value: CommittedRevision, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`handle`, buf)
+            FfiConverterTypeStoredRevision.write(value.`revision`, buf)
+    }
+}
+
+
+
 data class ConfirmedAggregate (
     var `spaceId`: EntityId
     ,
@@ -1493,6 +1540,59 @@ public object FfiConverterTypeImportFileRequest: FfiConverterRustBuffer<ImportFi
 
 
 
+data class ImportSourceQuery (
+    var `spaceId`: EntityId
+    ,
+    var `accountId`: EntityId
+    ,
+    var `parserSource`: kotlin.String
+    ,
+    var `externalId`: kotlin.String
+    ,
+    var `limit`: kotlin.UInt
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeImportSourceQuery: FfiConverterRustBuffer<ImportSourceQuery> {
+    override fun read(buf: ByteBuffer): ImportSourceQuery {
+        return ImportSourceQuery(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterUInt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ImportSourceQuery) = (
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`accountId`) +
+            FfiConverterString.allocationSize(value.`parserSource`) +
+            FfiConverterString.allocationSize(value.`externalId`) +
+            FfiConverterUInt.allocationSize(value.`limit`)
+    )
+
+    override fun write(value: ImportSourceQuery, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterTypeEntityId.write(value.`accountId`, buf)
+            FfiConverterString.write(value.`parserSource`, buf)
+            FfiConverterString.write(value.`externalId`, buf)
+            FfiConverterUInt.write(value.`limit`, buf)
+    }
+}
+
+
+
 data class ImportedFile (
     var `name`: kotlin.String
     ,
@@ -1531,6 +1631,87 @@ public object FfiConverterTypeImportedFile: FfiConverterRustBuffer<ImportedFile>
             FfiConverterString.write(value.`name`, buf)
             FfiConverterOptionalString.write(value.`mediaType`, buf)
             FfiConverterByteArray.write(value.`bytes`, buf)
+    }
+}
+
+
+
+data class LocalCommitReceipt (
+    var `identity`: LocalOperationIdentity
+    ,
+    var `contentHash`: FileHash
+    ,
+    var `committedRevisions`: List<CommittedRevision>
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalCommitReceipt: FfiConverterRustBuffer<LocalCommitReceipt> {
+    override fun read(buf: ByteBuffer): LocalCommitReceipt {
+        return LocalCommitReceipt(
+            FfiConverterTypeLocalOperationIdentity.read(buf),
+            FfiConverterTypeFileHash.read(buf),
+            FfiConverterSequenceTypeCommittedRevision.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalCommitReceipt) = (
+            FfiConverterTypeLocalOperationIdentity.allocationSize(value.`identity`) +
+            FfiConverterTypeFileHash.allocationSize(value.`contentHash`) +
+            FfiConverterSequenceTypeCommittedRevision.allocationSize(value.`committedRevisions`)
+    )
+
+    override fun write(value: LocalCommitReceipt, buf: ByteBuffer) {
+            FfiConverterTypeLocalOperationIdentity.write(value.`identity`, buf)
+            FfiConverterTypeFileHash.write(value.`contentHash`, buf)
+            FfiConverterSequenceTypeCommittedRevision.write(value.`committedRevisions`, buf)
+    }
+}
+
+
+
+data class LocalCommitRequest (
+    var `identity`: LocalOperationIdentity
+    ,
+    var `batch`: AtomicBatch
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalCommitRequest: FfiConverterRustBuffer<LocalCommitRequest> {
+    override fun read(buf: ByteBuffer): LocalCommitRequest {
+        return LocalCommitRequest(
+            FfiConverterTypeLocalOperationIdentity.read(buf),
+            FfiConverterTypeAtomicBatch.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalCommitRequest) = (
+            FfiConverterTypeLocalOperationIdentity.allocationSize(value.`identity`) +
+            FfiConverterTypeAtomicBatch.allocationSize(value.`batch`)
+    )
+
+    override fun write(value: LocalCommitRequest, buf: ByteBuffer) {
+            FfiConverterTypeLocalOperationIdentity.write(value.`identity`, buf)
+            FfiConverterTypeAtomicBatch.write(value.`batch`, buf)
     }
 }
 
@@ -1612,6 +1793,59 @@ public object FfiConverterTypeLocalMigrationRequest: FfiConverterRustBuffer<Loca
             FfiConverterTypeStorageMigrationPlan.write(value.`plan`, buf)
             FfiConverterTypeLocalSnapshot.write(value.`expectedSnapshot`, buf)
             FfiConverterOptionalTypeEncryptedBackupReceipt.write(value.`backup`, buf)
+    }
+}
+
+
+
+data class LocalOperationIdentity (
+    var `operationContractVersion`: kotlin.UInt
+    ,
+    var `profileId`: EntityId
+    ,
+    var `spaceId`: EntityId
+    ,
+    var `epoch`: EntityId
+    ,
+    var `operationId`: EntityId
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalOperationIdentity: FfiConverterRustBuffer<LocalOperationIdentity> {
+    override fun read(buf: ByteBuffer): LocalOperationIdentity {
+        return LocalOperationIdentity(
+            FfiConverterUInt.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalOperationIdentity) = (
+            FfiConverterUInt.allocationSize(value.`operationContractVersion`) +
+            FfiConverterTypeEntityId.allocationSize(value.`profileId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterTypeEntityId.allocationSize(value.`epoch`) +
+            FfiConverterTypeEntityId.allocationSize(value.`operationId`)
+    )
+
+    override fun write(value: LocalOperationIdentity, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`operationContractVersion`, buf)
+            FfiConverterTypeEntityId.write(value.`profileId`, buf)
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterTypeEntityId.write(value.`epoch`, buf)
+            FfiConverterTypeEntityId.write(value.`operationId`, buf)
     }
 }
 
@@ -1728,6 +1962,49 @@ public object FfiConverterTypeLocalSnapshot: FfiConverterRustBuffer<LocalSnapsho
             FfiConverterSequenceTypePendingOperation.write(value.`pending`, buf)
             FfiConverterSequenceTypeStoredProjection.write(value.`projections`, buf)
             FfiConverterOptionalTypeSyncState.write(value.`syncState`, buf)
+    }
+}
+
+
+
+data class PendingIndexQuery (
+    var `spaceId`: EntityId
+    ,
+    var `state`: PendingState
+    ,
+    var `limit`: kotlin.UInt
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePendingIndexQuery: FfiConverterRustBuffer<PendingIndexQuery> {
+    override fun read(buf: ByteBuffer): PendingIndexQuery {
+        return PendingIndexQuery(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypePendingState.read(buf),
+            FfiConverterUInt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: PendingIndexQuery) = (
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterTypePendingState.allocationSize(value.`state`) +
+            FfiConverterUInt.allocationSize(value.`limit`)
+    )
+
+    override fun write(value: PendingIndexQuery, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterTypePendingState.write(value.`state`, buf)
+            FfiConverterUInt.write(value.`limit`, buf)
     }
 }
 
@@ -2272,6 +2549,107 @@ public object FfiConverterTypeSyncState: FfiConverterRustBuffer<SyncState> {
             FfiConverterTypeEntityId.write(value.`spaceId`, buf)
             FfiConverterTypeEntityId.write(value.`epoch`, buf)
             FfiConverterString.write(value.`cursor`, buf)
+    }
+}
+
+
+
+data class TransactionCursor (
+    var `date`: FinanceDate
+    ,
+    var `handle`: EntityId
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTransactionCursor: FfiConverterRustBuffer<TransactionCursor> {
+    override fun read(buf: ByteBuffer): TransactionCursor {
+        return TransactionCursor(
+            FfiConverterTypeFinanceDate.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TransactionCursor) = (
+            FfiConverterTypeFinanceDate.allocationSize(value.`date`) +
+            FfiConverterTypeEntityId.allocationSize(value.`handle`)
+    )
+
+    override fun write(value: TransactionCursor, buf: ByteBuffer) {
+            FfiConverterTypeFinanceDate.write(value.`date`, buf)
+            FfiConverterTypeEntityId.write(value.`handle`, buf)
+    }
+}
+
+
+
+data class TransactionIndexQuery (
+    var `spaceId`: EntityId
+    ,
+    var `kind`: ReferenceKind
+    ,
+    var `reference`: kotlin.String
+    ,
+    var `fromDate`: FinanceDate?
+    ,
+    var `throughDate`: FinanceDate?
+    ,
+    var `after`: TransactionCursor?
+    ,
+    var `limit`: kotlin.UInt
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTransactionIndexQuery: FfiConverterRustBuffer<TransactionIndexQuery> {
+    override fun read(buf: ByteBuffer): TransactionIndexQuery {
+        return TransactionIndexQuery(
+            FfiConverterTypeEntityId.read(buf),
+            FfiConverterTypeReferenceKind.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalTypeFinanceDate.read(buf),
+            FfiConverterOptionalTypeFinanceDate.read(buf),
+            FfiConverterOptionalTypeTransactionCursor.read(buf),
+            FfiConverterUInt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TransactionIndexQuery) = (
+            FfiConverterTypeEntityId.allocationSize(value.`spaceId`) +
+            FfiConverterTypeReferenceKind.allocationSize(value.`kind`) +
+            FfiConverterString.allocationSize(value.`reference`) +
+            FfiConverterOptionalTypeFinanceDate.allocationSize(value.`fromDate`) +
+            FfiConverterOptionalTypeFinanceDate.allocationSize(value.`throughDate`) +
+            FfiConverterOptionalTypeTransactionCursor.allocationSize(value.`after`) +
+            FfiConverterUInt.allocationSize(value.`limit`)
+    )
+
+    override fun write(value: TransactionIndexQuery, buf: ByteBuffer) {
+            FfiConverterTypeEntityId.write(value.`spaceId`, buf)
+            FfiConverterTypeReferenceKind.write(value.`kind`, buf)
+            FfiConverterString.write(value.`reference`, buf)
+            FfiConverterOptionalTypeFinanceDate.write(value.`fromDate`, buf)
+            FfiConverterOptionalTypeFinanceDate.write(value.`throughDate`, buf)
+            FfiConverterOptionalTypeTransactionCursor.write(value.`after`, buf)
+            FfiConverterUInt.write(value.`limit`, buf)
     }
 }
 
@@ -3272,6 +3650,41 @@ public object FfiConverterTypeProfileLoadOutcome : FfiConverterRustBuffer<Profil
 
 
 
+enum class ReferenceKind {
+
+    ACCOUNT,
+    CATEGORY,
+    IMPORT;
+
+
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeReferenceKind: FfiConverterRustBuffer<ReferenceKind> {
+    override fun read(buf: ByteBuffer) = try {
+        ReferenceKind.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: ReferenceKind) = 4UL
+
+    override fun write(value: ReferenceKind, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+
 enum class SnapshotStatus {
 
     SNAPSHOT;
@@ -3740,6 +4153,38 @@ public object FfiConverterOptionalTypeSyncState: FfiConverterRustBuffer<SyncStat
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeTransactionCursor: FfiConverterRustBuffer<TransactionCursor?> {
+    override fun read(buf: ByteBuffer): TransactionCursor? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeTransactionCursor.read(buf)
+    }
+
+    override fun allocationSize(value: TransactionCursor?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeTransactionCursor.allocationSize(value)
+        }
+    }
+
+    override fun write(value: TransactionCursor?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeTransactionCursor.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeEntityId: FfiConverterRustBuffer<EntityId?> {
     override fun read(buf: ByteBuffer): EntityId? {
         if (buf.get().toInt() == 0) {
@@ -3762,6 +4207,38 @@ public object FfiConverterOptionalTypeEntityId: FfiConverterRustBuffer<EntityId?
         } else {
             buf.put(1)
             FfiConverterTypeEntityId.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeFinanceDate: FfiConverterRustBuffer<FinanceDate?> {
+    override fun read(buf: ByteBuffer): FinanceDate? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeFinanceDate.read(buf)
+    }
+
+    override fun allocationSize(value: FinanceDate?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeFinanceDate.allocationSize(value)
+        }
+    }
+
+    override fun write(value: FinanceDate?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeFinanceDate.write(value, buf)
         }
     }
 }
@@ -3854,6 +4331,34 @@ public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.Str
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterString.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeCommittedRevision: FfiConverterRustBuffer<List<CommittedRevision>> {
+    override fun read(buf: ByteBuffer): List<CommittedRevision> {
+        val len = buf.getInt()
+        return List<CommittedRevision>(len) {
+            FfiConverterTypeCommittedRevision.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<CommittedRevision>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeCommittedRevision.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<CommittedRevision>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeCommittedRevision.write(it, buf)
         }
     }
 }

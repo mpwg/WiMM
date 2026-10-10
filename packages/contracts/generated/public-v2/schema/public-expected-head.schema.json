@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExpectedHead",
+  "type": "object",
+  "properties": {
+    "expectedRevision": {
+      "$ref": "#/$defs/PublicRevision"
+    },
+    "handle": {
+      "$ref": "#/$defs/PublicId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "handle",
+    "expectedRevision"
+  ],
+  "$defs": {
+    "PublicId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    },
+    "PublicRevision": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ImportSourceQuery",
+  "type": "object",
+  "properties": {
+    "accountId": {
+      "$ref": "#/$defs/EntityId"
+    },
+    "externalId": {
+      "type": "string"
+    },
+    "limit": {
+      "type": "integer",
+      "format": "uint32",
+      "maximum": 1000,
+      "minimum": 1
+    },
+    "parserSource": {
+      "type": "string"
+    },
+    "spaceId": {
+      "$ref": "#/$defs/EntityId"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "spaceId",
+    "accountId",
+    "parserSource",
+    "externalId",
+    "limit"
+  ],
+  "$defs": {
+    "EntityId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    }
+  }
+}

@@ -943,6 +943,60 @@ public func FfiConverterTypeExistingHandle_lower(_ value: ExistingHandle) -> Rus
 }
 
 
+public struct ExpectedHead: Equatable, Hashable {
+    public var handle: PublicId
+    public var expectedRevision: PublicRevision
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(handle: PublicId, expectedRevision: PublicRevision) {
+        self.handle = handle
+        self.expectedRevision = expectedRevision
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ExpectedHead: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeExpectedHead: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ExpectedHead {
+        return
+            try ExpectedHead(
+                handle: FfiConverterTypePublicId.read(from: &buf),
+                expectedRevision: FfiConverterTypePublicRevision.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ExpectedHead, into buf: inout [UInt8]) {
+        FfiConverterTypePublicId.write(value.handle, into: &buf)
+        FfiConverterTypePublicRevision.write(value.expectedRevision, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeExpectedHead_lift(_ buf: RustBuffer) throws -> ExpectedHead {
+    return try FfiConverterTypeExpectedHead.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeExpectedHead_lower(_ value: ExpectedHead) -> RustBuffer {
+    return FfiConverterTypeExpectedHead.lower(value)
+}
+
+
 public struct KeyRoster: Equatable, Hashable {
     public var protocolVersion: ProtocolVersion
     public var cryptoSuite: CryptoSuite
@@ -1428,6 +1482,60 @@ public func FfiConverterTypeServerOperationKey_lift(_ buf: RustBuffer) throws ->
 #endif
 public func FfiConverterTypeServerOperationKey_lower(_ value: ServerOperationKey) -> RustBuffer {
     return FfiConverterTypeServerOperationKey.lower(value)
+}
+
+
+public struct ServerPersistenceFailure: Equatable, Hashable {
+    public var contractVersion: UInt32
+    public var code: ServerPersistenceCode
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(contractVersion: UInt32, code: ServerPersistenceCode) {
+        self.contractVersion = contractVersion
+        self.code = code
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ServerPersistenceFailure: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeServerPersistenceFailure: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ServerPersistenceFailure {
+        return
+            try ServerPersistenceFailure(
+                contractVersion: FfiConverterUInt32.read(from: &buf),
+                code: FfiConverterTypeServerPersistenceCode.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ServerPersistenceFailure, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.contractVersion, into: &buf)
+        FfiConverterTypeServerPersistenceCode.write(value.code, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeServerPersistenceFailure_lift(_ buf: RustBuffer) throws -> ServerPersistenceFailure {
+    return try FfiConverterTypeServerPersistenceFailure.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeServerPersistenceFailure_lower(_ value: ServerPersistenceFailure) -> RustBuffer {
+    return FfiConverterTypeServerPersistenceFailure.lower(value)
 }
 
 
@@ -1935,6 +2043,114 @@ public func FfiConverterTypeRole_lift(_ buf: RustBuffer) throws -> Role {
 #endif
 public func FfiConverterTypeRole_lower(_ value: Role) -> RustBuffer {
     return FfiConverterTypeRole.lower(value)
+}
+
+
+
+
+public enum ServerPersistenceCode: Equatable, Hashable {
+
+    case revisionConflict
+    case quota
+    case writeFailed
+    case updateRequired
+    case epochMismatch
+    case operationIdReused
+    case cancelled
+    case resourceUnavailable
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ServerPersistenceCode: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeServerPersistenceCode: FfiConverterRustBuffer {
+    typealias SwiftType = ServerPersistenceCode
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ServerPersistenceCode {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .revisionConflict
+
+        case 2: return .quota
+
+        case 3: return .writeFailed
+
+        case 4: return .updateRequired
+
+        case 5: return .epochMismatch
+
+        case 6: return .operationIdReused
+
+        case 7: return .cancelled
+
+        case 8: return .resourceUnavailable
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: ServerPersistenceCode, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case .revisionConflict:
+            writeInt(&buf, Int32(1))
+
+
+        case .quota:
+            writeInt(&buf, Int32(2))
+
+
+        case .writeFailed:
+            writeInt(&buf, Int32(3))
+
+
+        case .updateRequired:
+            writeInt(&buf, Int32(4))
+
+
+        case .epochMismatch:
+            writeInt(&buf, Int32(5))
+
+
+        case .operationIdReused:
+            writeInt(&buf, Int32(6))
+
+
+        case .cancelled:
+            writeInt(&buf, Int32(7))
+
+
+        case .resourceUnavailable:
+            writeInt(&buf, Int32(8))
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeServerPersistenceCode_lift(_ buf: RustBuffer) throws -> ServerPersistenceCode {
+    return try FfiConverterTypeServerPersistenceCode.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeServerPersistenceCode_lower(_ value: ServerPersistenceCode) -> RustBuffer {
+    return FfiConverterTypeServerPersistenceCode.lower(value)
 }
 
 

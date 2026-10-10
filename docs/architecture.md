@@ -65,6 +65,10 @@ Lokale Commitidentität bindet Profil, Bereich, Epoche, Operations-ID und unver�
 
 Fehlercodes werden strukturiert durch sämtliche Bindings übertragen; Texte sind ausschließlich Darstellung. Projektionen tragen Ausgangsrevision und eigene Projektionsversion. Stale Caches werden kontrolliert neu berechnet, erhaltene Finanzdaten nie still korrigiert. Atomarer Cacheersatz prüft den zugrunde liegenden Bestand. Finanzrevision bleibt lokal und ist weder Syncaggregat noch Undo-Ziel.
 
+## DAL02-Vertragsgrundlage
+
+Die geprüfte Rust-Vertragsgrundlage besteht aus neutralen `wimm-persistence-contracts`, privaten `wimm-local-contracts` und öffentlichen `wimm-public-contracts::storage_port`. `wimm-local-dal` implementiert dieselben lokalen Datenports als reine Memoryreferenz. Snapshot-Fach-/Cachevalidierung ist ein verpflichtender injizierter Clientport; der Adapter importiert keine Finanzhandler. Öffentliches Transaktionscallback erhält ausschließlich Ciphertext-/Verwaltungsdatenmethoden. Neue lokale Operationsdimension eins bleibt von Bindingversion zwei und bestehenden Storage-/Fach-/Crypto-/Transportformen getrennt. [DAL02-Abnahme](dal02-contracts.md), ADR-054. Die konkrete gemeinsame ORM-/Schema-/Treiber-/Journalbasis und echten lokalen/öffentlichen Datenbanken sind nachfolgende Adapterarbeit.
+
 ## DAL und Migrationen
 
 Diesel ist bevorzugter Kandidat für typisierte Zugriffe und denselben nativen/WASM-Code. SQLite ist lokales Ziel auf Desktop und PWA; PostgreSQL/MySQL sind ausschließlich Serverbackends. Schemaänderungen verwenden eine etablierte Rust-DSL, zunächst SeaQuery prüfen. Die Verbindung von DSL, Diesel, Ausführung, Journal und den realen Backendgarantien ist nachzuweisen. Keine selbstgebaute DbContext-/LINQ-Engine, kein Lazy Loading und kein implizites Objektgraphsave.

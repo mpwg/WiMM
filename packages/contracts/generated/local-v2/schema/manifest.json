@@ -21,6 +21,13 @@
     }
   ],
   "files": [
+    "local-commit-result.schema.json",
+    "local-operation-identity.schema.json",
+    "local-commit-request.schema.json",
+    "local-commit-receipt.schema.json",
+    "local-index-transaction.schema.json",
+    "local-index-pending.schema.json",
+    "local-index-import-source.schema.json",
     "local-storage-failure.schema.json",
     "local-snapshot.schema.json",
     "local-stored-aggregate.schema.json",

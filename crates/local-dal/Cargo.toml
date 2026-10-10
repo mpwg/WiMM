@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+[package]
+name = "wimm-local-dal"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+[dependencies]
+wimm-local-contracts = { path = "../local-contracts" }
+wimm-finance-types = { path = "../finance-types" }
+wimm-persistence-contracts = { path = "../persistence-contracts" }
+serde.workspace = true
+serde_json.workspace = true
+sha2 = "=0.11.0"
+[dev-dependencies]
+wimm-finance-core = { path = "../finance-core" }
+[lints]
+workspace = true

@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CommitOutcome",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "committed"
+        },
+        "value": {
+          "$ref": "#/$defs/OperationReceiptRecord"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "value"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "error": {
+          "$ref": "#/$defs/ServerPersistenceFailure"
+        },
+        "status": {
+          "type": "string",
+          "const": "notCommitted"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "error"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/ServerOperationKey"
+        },
+        "status": {
+          "type": "string",
+          "const": "unknown"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "identity"
+      ]
+    }
+  ],
+  "$defs": {
+    "Base64Url": {
+      "type": "string",
+      "maxLength": 65536,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "OperationReceiptRecord": {
+      "type": "object",
+      "properties": {
+        "contentHash": {
+          "$ref": "#/$defs/Base64Url"
+        },
+        "cursor": {
+          "type": "string"
+        },
+        "key": {
+          "$ref": "#/$defs/ServerOperationKey"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "contentHash",
+        "cursor"
+      ]
+    },
+    "PublicBindingVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "PublicId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    },
+    "ServerOperationKey": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/PublicId"
+        },
+        "operationId": {
+          "$ref": "#/$defs/PublicId"
+        },
+        "spaceId": {
+          "$ref": "#/$defs/PublicId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "spaceId",
+        "epoch",
+        "operationId"
+      ]
+    },
+    "ServerPersistenceCode": {
+      "type": "string",
+      "enum": [
+        "REVISION_CONFLICT",
+        "QUOTA",
+        "WRITE_FAILED",
+        "UPDATE_REQUIRED",
+        "EPOCH_MISMATCH",
+        "OPERATION_ID_REUSED",
+        "CANCELLED",
+        "RESOURCE_UNAVAILABLE"
+      ]
+    },
+    "ServerPersistenceFailure": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/ServerPersistenceCode"
+        },
+        "contractVersion": {
+          "$ref": "#/$defs/PublicBindingVersion"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "contractVersion",
+        "code"
+      ]
+    }
+  }
+}

@@ -8,6 +8,7 @@ pub mod persistence;
 pub mod scalars;
 #[cfg(feature = "contract-schema")]
 pub mod schema;
+pub mod storage_port;
 #[cfg(feature = "native-bindings")]
 uniffi::setup_scaffolding!();
 #[cfg(feature = "native-bindings")]

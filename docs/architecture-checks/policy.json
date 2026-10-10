@@ -256,6 +256,22 @@
       "checkClosure": true,
       "bindings": false,
       "nativeAssertions": "crates/public-crypto/src/lib.rs"
+    },
+    "wimm-persistence-contracts": {
+      "role": "primitive",
+      "features": [
+        "contract-schema"
+      ],
+      "checkClosure": true,
+      "bindings": false,
+      "nativeAssertions": "crates/persistence-contracts/src/lib.rs"
+    },
+    "wimm-local-dal": {
+      "role": "localDal",
+      "features": [],
+      "checkClosure": true,
+      "bindings": false,
+      "nativeAssertions": "crates/local-dal/tests/memory_contract.rs"
     }
   },
   "plannedServerRoots": [
@@ -288,6 +304,10 @@
     "crates/public-contracts/tests/fixtures/public-forms.json": {
       "count": 42,
       "sha256": "6ede9a9dda33a808c60b0c52f733fbee916997255bf080cfffc80a876d89417e"
+    },
+    "crates/local-contracts/tests/fixtures/dal-forms.json": {
+      "count": 28,
+      "sha256": "949ad3d9ec2ef2d1a0690c455e2cd56d1498de6178c21a89c97b6c7e556d8086"
     }
   },
   "plannedRoles": {

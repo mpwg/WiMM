@@ -47,6 +47,18 @@ schema!(
 pub fn exports() -> Vec<(&'static str, Schema)> {
     vec![
         (
+            "public-commit-result.schema.json",
+            schemars::schema_for!(wimm_persistence_contracts::CommitOutcome<crate::persistence::OperationReceiptRecord,crate::storage_port::ServerPersistenceFailure,crate::persistence::ServerOperationKey>),
+        ),
+        (
+            "public-persistence-error.schema.json",
+            schemars::schema_for!(crate::storage_port::ServerPersistenceFailure),
+        ),
+        (
+            "public-expected-head.schema.json",
+            schemars::schema_for!(crate::storage_port::ExpectedHead),
+        ),
+        (
             "public-aggregate-head.schema.json",
             schemars::schema_for!(crate::persistence::OpaqueAggregateHead),
         ),

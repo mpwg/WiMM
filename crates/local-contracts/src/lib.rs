@@ -2,7 +2,9 @@
 //! Lokale Port-/Migrationsmetadaten; keine Speicherung oder Finanzregeln.
 #![forbid(unsafe_code)]
 pub mod api;
+pub mod commit;
 pub mod errors;
+pub mod index_ports;
 pub mod models;
 #[cfg(feature = "native-bindings")]
 mod native;

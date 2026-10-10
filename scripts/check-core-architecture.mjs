@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-const metadata = JSON.parse(execFileSync('cargo', ['metadata', '--locked', '--format-version=1'], { encoding: 'utf8' }));
+const metadata = JSON.parse(execFileSync('cargo', ['metadata', '--locked', '--format-version=1'], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 }));
 const core = metadata.packages.find((entry) => entry.name === 'wimm-finance-core');
 if (!core) throw new Error('Der eigenständige Rust-Fachkern fehlt.');
 const pureDependencies = new Set(['serde', 'serde_json', 'uuid', 'chrono', 'time', 'unicode-normalization', 'num-bigint', 'num-traits', 'schemars', 'wimm-finance-types', 'wimm-contract-primitives']);

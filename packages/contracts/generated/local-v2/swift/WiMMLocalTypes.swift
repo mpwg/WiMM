@@ -811,6 +811,60 @@ public func FfiConverterTypeBalancePayload_lower(_ value: BalancePayload) -> Rus
 }
 
 
+public struct CommittedRevision: Equatable, Hashable {
+    public var handle: EntityId
+    public var revision: StoredRevision
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(handle: EntityId, revision: StoredRevision) {
+        self.handle = handle
+        self.revision = revision
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension CommittedRevision: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeCommittedRevision: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> CommittedRevision {
+        return
+            try CommittedRevision(
+                handle: FfiConverterTypeEntityId.read(from: &buf),
+                revision: FfiConverterTypeStoredRevision.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: CommittedRevision, into buf: inout [UInt8]) {
+        FfiConverterTypeEntityId.write(value.handle, into: &buf)
+        FfiConverterTypeStoredRevision.write(value.revision, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommittedRevision_lift(_ buf: RustBuffer) throws -> CommittedRevision {
+    return try FfiConverterTypeCommittedRevision.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeCommittedRevision_lower(_ value: CommittedRevision) -> RustBuffer {
+    return FfiConverterTypeCommittedRevision.lower(value)
+}
+
+
 public struct ConfirmedAggregate: Equatable, Hashable {
     public var spaceId: EntityId
     public var epoch: EntityId
@@ -1129,6 +1183,72 @@ public func FfiConverterTypeImportFileRequest_lower(_ value: ImportFileRequest) 
 }
 
 
+public struct ImportSourceQuery: Equatable, Hashable {
+    public var spaceId: EntityId
+    public var accountId: EntityId
+    public var parserSource: String
+    public var externalId: String
+    public var limit: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(spaceId: EntityId, accountId: EntityId, parserSource: String, externalId: String, limit: UInt32) {
+        self.spaceId = spaceId
+        self.accountId = accountId
+        self.parserSource = parserSource
+        self.externalId = externalId
+        self.limit = limit
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ImportSourceQuery: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeImportSourceQuery: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ImportSourceQuery {
+        return
+            try ImportSourceQuery(
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                accountId: FfiConverterTypeEntityId.read(from: &buf),
+                parserSource: FfiConverterString.read(from: &buf),
+                externalId: FfiConverterString.read(from: &buf),
+                limit: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: ImportSourceQuery, into buf: inout [UInt8]) {
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterTypeEntityId.write(value.accountId, into: &buf)
+        FfiConverterString.write(value.parserSource, into: &buf)
+        FfiConverterString.write(value.externalId, into: &buf)
+        FfiConverterUInt32.write(value.limit, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeImportSourceQuery_lift(_ buf: RustBuffer) throws -> ImportSourceQuery {
+    return try FfiConverterTypeImportSourceQuery.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeImportSourceQuery_lower(_ value: ImportSourceQuery) -> RustBuffer {
+    return FfiConverterTypeImportSourceQuery.lower(value)
+}
+
+
 public struct ImportedFile: Equatable, Hashable {
     public var name: String
     public var mediaType: String?
@@ -1184,6 +1304,118 @@ public func FfiConverterTypeImportedFile_lift(_ buf: RustBuffer) throws -> Impor
 #endif
 public func FfiConverterTypeImportedFile_lower(_ value: ImportedFile) -> RustBuffer {
     return FfiConverterTypeImportedFile.lower(value)
+}
+
+
+public struct LocalCommitReceipt: Equatable, Hashable {
+    public var identity: LocalOperationIdentity
+    public var contentHash: FileHash
+    public var committedRevisions: [CommittedRevision]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(identity: LocalOperationIdentity, contentHash: FileHash, committedRevisions: [CommittedRevision]) {
+        self.identity = identity
+        self.contentHash = contentHash
+        self.committedRevisions = committedRevisions
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension LocalCommitReceipt: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLocalCommitReceipt: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> LocalCommitReceipt {
+        return
+            try LocalCommitReceipt(
+                identity: FfiConverterTypeLocalOperationIdentity.read(from: &buf),
+                contentHash: FfiConverterTypeFileHash.read(from: &buf),
+                committedRevisions: FfiConverterSequenceTypeCommittedRevision.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: LocalCommitReceipt, into buf: inout [UInt8]) {
+        FfiConverterTypeLocalOperationIdentity.write(value.identity, into: &buf)
+        FfiConverterTypeFileHash.write(value.contentHash, into: &buf)
+        FfiConverterSequenceTypeCommittedRevision.write(value.committedRevisions, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCommitReceipt_lift(_ buf: RustBuffer) throws -> LocalCommitReceipt {
+    return try FfiConverterTypeLocalCommitReceipt.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCommitReceipt_lower(_ value: LocalCommitReceipt) -> RustBuffer {
+    return FfiConverterTypeLocalCommitReceipt.lower(value)
+}
+
+
+public struct LocalCommitRequest: Equatable, Hashable {
+    public var identity: LocalOperationIdentity
+    public var batch: AtomicBatch
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(identity: LocalOperationIdentity, batch: AtomicBatch) {
+        self.identity = identity
+        self.batch = batch
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension LocalCommitRequest: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLocalCommitRequest: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> LocalCommitRequest {
+        return
+            try LocalCommitRequest(
+                identity: FfiConverterTypeLocalOperationIdentity.read(from: &buf),
+                batch: FfiConverterTypeAtomicBatch.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: LocalCommitRequest, into buf: inout [UInt8]) {
+        FfiConverterTypeLocalOperationIdentity.write(value.identity, into: &buf)
+        FfiConverterTypeAtomicBatch.write(value.batch, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCommitRequest_lift(_ buf: RustBuffer) throws -> LocalCommitRequest {
+    return try FfiConverterTypeLocalCommitRequest.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCommitRequest_lower(_ value: LocalCommitRequest) -> RustBuffer {
+    return FfiConverterTypeLocalCommitRequest.lower(value)
 }
 
 
@@ -1296,6 +1528,72 @@ public func FfiConverterTypeLocalMigrationRequest_lift(_ buf: RustBuffer) throws
 #endif
 public func FfiConverterTypeLocalMigrationRequest_lower(_ value: LocalMigrationRequest) -> RustBuffer {
     return FfiConverterTypeLocalMigrationRequest.lower(value)
+}
+
+
+public struct LocalOperationIdentity: Equatable, Hashable {
+    public var operationContractVersion: UInt32
+    public var profileId: EntityId
+    public var spaceId: EntityId
+    public var epoch: EntityId
+    public var operationId: EntityId
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(operationContractVersion: UInt32, profileId: EntityId, spaceId: EntityId, epoch: EntityId, operationId: EntityId) {
+        self.operationContractVersion = operationContractVersion
+        self.profileId = profileId
+        self.spaceId = spaceId
+        self.epoch = epoch
+        self.operationId = operationId
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension LocalOperationIdentity: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLocalOperationIdentity: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> LocalOperationIdentity {
+        return
+            try LocalOperationIdentity(
+                operationContractVersion: FfiConverterUInt32.read(from: &buf),
+                profileId: FfiConverterTypeEntityId.read(from: &buf),
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                epoch: FfiConverterTypeEntityId.read(from: &buf),
+                operationId: FfiConverterTypeEntityId.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: LocalOperationIdentity, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.operationContractVersion, into: &buf)
+        FfiConverterTypeEntityId.write(value.profileId, into: &buf)
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterTypeEntityId.write(value.epoch, into: &buf)
+        FfiConverterTypeEntityId.write(value.operationId, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalOperationIdentity_lift(_ buf: RustBuffer) throws -> LocalOperationIdentity {
+    return try FfiConverterTypeLocalOperationIdentity.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalOperationIdentity_lower(_ value: LocalOperationIdentity) -> RustBuffer {
+    return FfiConverterTypeLocalOperationIdentity.lower(value)
 }
 
 
@@ -1436,6 +1734,64 @@ public func FfiConverterTypeLocalSnapshot_lift(_ buf: RustBuffer) throws -> Loca
 #endif
 public func FfiConverterTypeLocalSnapshot_lower(_ value: LocalSnapshot) -> RustBuffer {
     return FfiConverterTypeLocalSnapshot.lower(value)
+}
+
+
+public struct PendingIndexQuery: Equatable, Hashable {
+    public var spaceId: EntityId
+    public var state: PendingState
+    public var limit: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(spaceId: EntityId, state: PendingState, limit: UInt32) {
+        self.spaceId = spaceId
+        self.state = state
+        self.limit = limit
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension PendingIndexQuery: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypePendingIndexQuery: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> PendingIndexQuery {
+        return
+            try PendingIndexQuery(
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                state: FfiConverterTypePendingState.read(from: &buf),
+                limit: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: PendingIndexQuery, into buf: inout [UInt8]) {
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterTypePendingState.write(value.state, into: &buf)
+        FfiConverterUInt32.write(value.limit, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePendingIndexQuery_lift(_ buf: RustBuffer) throws -> PendingIndexQuery {
+    return try FfiConverterTypePendingIndexQuery.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypePendingIndexQuery_lower(_ value: PendingIndexQuery) -> RustBuffer {
+    return FfiConverterTypePendingIndexQuery.lower(value)
 }
 
 
@@ -2155,6 +2511,134 @@ public func FfiConverterTypeSyncState_lift(_ buf: RustBuffer) throws -> SyncStat
 #endif
 public func FfiConverterTypeSyncState_lower(_ value: SyncState) -> RustBuffer {
     return FfiConverterTypeSyncState.lower(value)
+}
+
+
+public struct TransactionCursor: Equatable, Hashable {
+    public var date: FinanceDate
+    public var handle: EntityId
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(date: FinanceDate, handle: EntityId) {
+        self.date = date
+        self.handle = handle
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TransactionCursor: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTransactionCursor: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TransactionCursor {
+        return
+            try TransactionCursor(
+                date: FfiConverterTypeFinanceDate.read(from: &buf),
+                handle: FfiConverterTypeEntityId.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TransactionCursor, into buf: inout [UInt8]) {
+        FfiConverterTypeFinanceDate.write(value.date, into: &buf)
+        FfiConverterTypeEntityId.write(value.handle, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTransactionCursor_lift(_ buf: RustBuffer) throws -> TransactionCursor {
+    return try FfiConverterTypeTransactionCursor.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTransactionCursor_lower(_ value: TransactionCursor) -> RustBuffer {
+    return FfiConverterTypeTransactionCursor.lower(value)
+}
+
+
+public struct TransactionIndexQuery: Equatable, Hashable {
+    public var spaceId: EntityId
+    public var kind: ReferenceKind
+    public var reference: String
+    public var fromDate: FinanceDate?
+    public var throughDate: FinanceDate?
+    public var after: TransactionCursor?
+    public var limit: UInt32
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(spaceId: EntityId, kind: ReferenceKind, reference: String, fromDate: FinanceDate?, throughDate: FinanceDate?, after: TransactionCursor?, limit: UInt32) {
+        self.spaceId = spaceId
+        self.kind = kind
+        self.reference = reference
+        self.fromDate = fromDate
+        self.throughDate = throughDate
+        self.after = after
+        self.limit = limit
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension TransactionIndexQuery: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeTransactionIndexQuery: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> TransactionIndexQuery {
+        return
+            try TransactionIndexQuery(
+                spaceId: FfiConverterTypeEntityId.read(from: &buf),
+                kind: FfiConverterTypeReferenceKind.read(from: &buf),
+                reference: FfiConverterString.read(from: &buf),
+                fromDate: FfiConverterOptionTypeFinanceDate.read(from: &buf),
+                throughDate: FfiConverterOptionTypeFinanceDate.read(from: &buf),
+                after: FfiConverterOptionTypeTransactionCursor.read(from: &buf),
+                limit: FfiConverterUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: TransactionIndexQuery, into buf: inout [UInt8]) {
+        FfiConverterTypeEntityId.write(value.spaceId, into: &buf)
+        FfiConverterTypeReferenceKind.write(value.kind, into: &buf)
+        FfiConverterString.write(value.reference, into: &buf)
+        FfiConverterOptionTypeFinanceDate.write(value.fromDate, into: &buf)
+        FfiConverterOptionTypeFinanceDate.write(value.throughDate, into: &buf)
+        FfiConverterOptionTypeTransactionCursor.write(value.after, into: &buf)
+        FfiConverterUInt32.write(value.limit, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTransactionIndexQuery_lift(_ buf: RustBuffer) throws -> TransactionIndexQuery {
+    return try FfiConverterTypeTransactionIndexQuery.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeTransactionIndexQuery_lower(_ value: TransactionIndexQuery) -> RustBuffer {
+    return FfiConverterTypeTransactionIndexQuery.lower(value)
 }
 
 
@@ -3028,6 +3512,79 @@ public func FfiConverterTypeProfileLoadOutcome_lower(_ value: ProfileLoadOutcome
 
 
 
+public enum ReferenceKind: Equatable, Hashable {
+
+    case account
+    case category
+    case `import`
+
+
+
+
+
+}
+
+#if compiler(>=6)
+extension ReferenceKind: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeReferenceKind: FfiConverterRustBuffer {
+    typealias SwiftType = ReferenceKind
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> ReferenceKind {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        case 1: return .account
+
+        case 2: return .category
+
+        case 3: return .`import`
+
+        default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: ReferenceKind, into buf: inout [UInt8]) {
+        switch value {
+
+
+        case .account:
+            writeInt(&buf, Int32(1))
+
+
+        case .category:
+            writeInt(&buf, Int32(2))
+
+
+        case .`import`:
+            writeInt(&buf, Int32(3))
+
+        }
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeReferenceKind_lift(_ buf: RustBuffer) throws -> ReferenceKind {
+    return try FfiConverterTypeReferenceKind.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeReferenceKind_lower(_ value: ReferenceKind) -> RustBuffer {
+    return FfiConverterTypeReferenceKind.lower(value)
+}
+
+
+
+
 public enum SnapshotStatus: Equatable, Hashable {
 
     case snapshot
@@ -3486,6 +4043,30 @@ fileprivate struct FfiConverterOptionTypeSyncState: FfiConverterRustBuffer {
 #if swift(>=5.8)
 @_documentation(visibility: private)
 #endif
+fileprivate struct FfiConverterOptionTypeTransactionCursor: FfiConverterRustBuffer {
+    typealias SwiftType = TransactionCursor?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeTransactionCursor.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeTransactionCursor.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
 fileprivate struct FfiConverterOptionTypeEntityId: FfiConverterRustBuffer {
     typealias SwiftType = EntityId?
 
@@ -3502,6 +4083,30 @@ fileprivate struct FfiConverterOptionTypeEntityId: FfiConverterRustBuffer {
         switch try readInt(&buf) as Int8 {
         case 0: return nil
         case 1: return try FfiConverterTypeEntityId.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterOptionTypeFinanceDate: FfiConverterRustBuffer {
+    typealias SwiftType = FinanceDate?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterTypeFinanceDate.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterTypeFinanceDate.read(from: &buf)
         default: throw UniffiInternalError.unexpectedOptionalTag
         }
     }
@@ -3575,6 +4180,31 @@ fileprivate struct FfiConverterSequenceString: FfiConverterRustBuffer {
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterString.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeCommittedRevision: FfiConverterRustBuffer {
+    typealias SwiftType = [CommittedRevision]
+
+    public static func write(_ value: [CommittedRevision], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeCommittedRevision.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [CommittedRevision] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [CommittedRevision]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeCommittedRevision.read(from: &buf))
         }
         return seq
     }

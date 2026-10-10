@@ -1,0 +1,79 @@
+{
+  "snapshotDate": "2026-10-10",
+  "scope": "DAL02 lokale SHA-256-Inhaltsbindung; vorhandene gesperrte Tauri-Versionen unverändert übernommen, keine Gesamtabnahme Herkunft #72",
+  "projectLicense": "AGPL-3.0-or-later",
+  "dependencies": [
+    {
+      "name": "block-buffer",
+      "version": "0.12.1",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "d2f6c7dbe95a6ed67ad9f18e57daf93a2f034c524b99fd2b76d18fdfeb6660aa",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "priorLockfile": "apps/desktop/src-tauri/Cargo.lock",
+      "priorCommit": "c09903663a751773dd4d3d2be5f28bb04585f247"
+    },
+    {
+      "name": "const-oid",
+      "version": "0.10.2",
+      "license": "Apache-2.0 OR MIT",
+      "checksum": "a6ef517f0926dd24a1582492c791b6a4818a4d94e789a334894aa15b0d12f55c",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "priorLockfile": "apps/desktop/src-tauri/Cargo.lock",
+      "priorCommit": "c09903663a751773dd4d3d2be5f28bb04585f247"
+    },
+    {
+      "name": "cpufeatures",
+      "version": "0.3.1",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "5ca28b0ae3115b884660db4118d803791fd6756b6e88f39c0f3f7859060d7566",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "priorLockfile": "apps/desktop/src-tauri/Cargo.lock",
+      "priorCommit": "c09903663a751773dd4d3d2be5f28bb04585f247"
+    },
+    {
+      "name": "crypto-common",
+      "version": "0.2.2",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "ce6e4c961d6cd6c9a86db418387425e8bdeaf05b3c8bc1411e6dca4c252f1453",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "priorLockfile": "apps/desktop/src-tauri/Cargo.lock",
+      "priorCommit": "c09903663a751773dd4d3d2be5f28bb04585f247"
+    },
+    {
+      "name": "digest",
+      "version": "0.11.3",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "f1dd6dbb5841937940781866fa1281a1ff7bd3bf827091440879f9994983d5c2",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "priorLockfile": "apps/desktop/src-tauri/Cargo.lock",
+      "priorCommit": "c09903663a751773dd4d3d2be5f28bb04585f247"
+    },
+    {
+      "name": "hybrid-array",
+      "version": "0.4.15",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "27f864f10dfb56725ce5ce5472bc52252c8f93a4ab86327122cebf62c5f59a17",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "priorLockfile": "apps/desktop/src-tauri/Cargo.lock",
+      "priorCommit": "c09903663a751773dd4d3d2be5f28bb04585f247"
+    },
+    {
+      "name": "sha2",
+      "version": "0.11.0",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "446ba717509524cb3f22f17ecc096f10f4822d76ab5c0b9822c5f9c284e825f4",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "priorLockfile": "apps/desktop/src-tauri/Cargo.lock",
+      "priorCommit": "c09903663a751773dd4d3d2be5f28bb04585f247"
+    },
+    {
+      "name": "typenum",
+      "version": "1.20.1",
+      "license": "MIT OR Apache-2.0",
+      "checksum": "b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "priorLockfile": "apps/desktop/src-tauri/Cargo.lock",
+      "priorCommit": "c09903663a751773dd4d3d2be5f28bb04585f247"
+    }
+  ]
+}

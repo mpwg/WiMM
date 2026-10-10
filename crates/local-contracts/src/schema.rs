@@ -5,6 +5,34 @@ use schemars::Schema;
 pub fn exports() -> Vec<(&'static str, Schema)> {
     vec![
         (
+            "local-commit-result.schema.json",
+            schemars::schema_for!(crate::commit::LocalCommitOutcome),
+        ),
+        (
+            "local-operation-identity.schema.json",
+            schemars::schema_for!(crate::commit::LocalOperationIdentity),
+        ),
+        (
+            "local-commit-request.schema.json",
+            schemars::schema_for!(crate::commit::LocalCommitRequest),
+        ),
+        (
+            "local-commit-receipt.schema.json",
+            schemars::schema_for!(crate::commit::LocalCommitReceipt),
+        ),
+        (
+            "local-index-transaction.schema.json",
+            schemars::schema_for!(crate::index_ports::TransactionIndexQuery),
+        ),
+        (
+            "local-index-pending.schema.json",
+            schemars::schema_for!(crate::index_ports::PendingIndexQuery),
+        ),
+        (
+            "local-index-import-source.schema.json",
+            schemars::schema_for!(crate::index_ports::ImportSourceQuery),
+        ),
+        (
             "local-storage-failure.schema.json",
             schemars::schema_for!(crate::persistence_errors::StorageFailure),
         ),

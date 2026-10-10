@@ -4547,7 +4547,15 @@ dependencies = [
  "serde_json",
  "wimm-contract-primitives",
  "wimm-finance-types",
+ "wimm-persistence-contracts",
  "wimm-public-contracts",
+]
+
+[[package]]
+name = "wimm-persistence-contracts"
+version = "0.0.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]
@@ -4556,6 +4564,7 @@ version = "0.0.0"
 dependencies = [
  "serde",
  "wimm-contract-primitives",
+ "wimm-persistence-contracts",
 ]
 
 [[package]]

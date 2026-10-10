@@ -51,6 +51,16 @@ Ein Finanzwrite hat folgenden Ablauf:
 
 `CancellationPort` enthält ausschließlich Beobachtung/Abonnement. Abbruch vor Commit verhindert neue Writes und erhält den Entwurf. Nach bestätigt abgeschlossenem Commit muss das Ergebnis als committed behandelt werden; spätes Abbruchsignal oder Workerantwort erzeugt weder zweiten Write noch vermeintlichen Rollback. Hintergrundausführung und Zeitlimit werden injiziert, statt einen Browser-Worker in der Anwendung vorauszusetzen.
 
+## DAL02 — Rust-Persistenzports und Operationsdimension
+
+Die ausgeführte Vertragsreferenz trennt `wimm-persistence-contracts` (neutrale Commit-/Migrationscheckpointdaten), `wimm-local-contracts` (private lokale Daten-/Index-/Commitports), `wimm-public-contracts::storage_port` (öffentliche Ciphertext-/Verwaltungstransaktion) und `wimm-local-dal` (Memoryreferenz). Die normale Abhängigkeit des lokalen DAL enthält Datenformen, keine Finanzhandler. Snapshotersatz benötigt einen injizierten `SnapshotValidationPort`, der Fach- und Cacheprüfung im Fachkern ausführt; vorbereitete Projektionen werden lediglich atomar gespeichert. Profile, Schlüsselablage, Backup und Migration bleiben eigene Ports.
+
+`LocalOperationIdentity.operationContractVersion` ist die neue getrennte Dimension **eins**. Profil-ID, Bereichs-ID, Epoche und Operations-ID bilden die Identität; der vollständige typisierte Request bindet zusätzlich den Inhalt einschließlich CAS, Entwürfen und Projektionen. `LocalCommitReceipt` enthält diese Identität, SHA-256-Inhaltshash und die tatsächlich geschriebenen Revisionen. Der private Memory-Referenzhash verwendet die Serde-JSONbytes des Requests; keine Umdeutung öffentlicher JCS-/Signatur-/Cryptoformate. Identischer Request liefert das ursprüngliche Receipt, abweichender Inhalt `OPERATION_ID_REUSED`. Unklarer Commit trägt die ursprüngliche Identität und verlangt zuerst `lookup_result`. Die dauerhafte Umsetzung und Wiederanlaufprüfung folgen in AR04/#118.
+
+Der neutrale `CommitOutcome<T,E,K>` wird mit konkreten getrennten lokalen oder öffentlichen Wert-/Fehler-/Identitätstypen eingesetzt. Servertransaktionen stellen ausschließlich Datenmethoden über `ServerPersistenceTransaction` bereit; kein Verbindungs-/SQL-/Treiberzugriff aus dem Callback. Bindingversion zwei und sämtliche bisherigen Methoden/Storage-/Fach-/Crypto-/Transport-/Exportdimensionen bleiben erhalten; die neue Operationsdimension migriert keinen Bestandsdatensatz. Begrenzte lokale Sekundärreferenzabfragen besitzen typisierte Datum-/Handlecursor und Seitengröße 1–1.000. Standardschemas benötigen weiterhin die relationalen Rust-Guards.
+
+[Kriterienmatrix und tatsächliche Belege](dal02-contracts.md). Die flüchtige Memoryreferenz beweist keine dauerhaften Receipts, physische Schemajournal-/SQLmigration, Browserpersistenz oder Serverdatenbank.
+
 ## Migration und Sicherung
 
 `StorageMigrationPlan` nennt die erwartete letzte Migrationsnummer, getrennte Ausgangsversionen und lückenlos nummerierte registrierte Schritte. Jede Versionsdimension bleibt gleich oder steigt, mindestens eine steigt pro Schritt; Rückwärtsmigration ist unzulässig. Die Formprüfung beweist keine vorhandene Implementierung eines Zielschemas. Der Adapter darf ausschließlich registrierte, unterstützte Schritte ausführen; unbekannte Ziele werden vor Mutation abgewiesen.

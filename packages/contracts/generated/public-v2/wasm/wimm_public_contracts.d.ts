@@ -45,6 +45,11 @@ export interface ExistingHandle {
     previousCiphertextHash: Base64Url;
 }
 
+export interface ExpectedHead {
+    handle: PublicId;
+    expectedRevision: PublicRevision;
+}
+
 export interface KeyRoster {
     protocolVersion: ProtocolVersion;
     cryptoSuite: CryptoSuite;
@@ -99,6 +104,11 @@ export interface ServerOperationKey {
     operationId: PublicId;
 }
 
+export interface ServerPersistenceFailure {
+    contractVersion: number;
+    code: ServerPersistenceCode;
+}
+
 export interface SignedKeyRoster {
     roster: KeyRoster;
     signature: Base64Url;
@@ -132,6 +142,8 @@ export type PublicRevision = number;
 export type PublicValidationStatus = "formValid";
 
 export type Role = "admin" | "member" | "viewer";
+
+export type ServerPersistenceCode = "REVISION_CONFLICT" | "QUOTA" | "WRITE_FAILED" | "UPDATE_REQUIRED" | "EPOCH_MISMATCH" | "OPERATION_ID_REUSED" | "CANCELLED" | "RESOURCE_UNAVAILABLE";
 
 
 export function validate_public_operation_form_v2(input: EncryptedOperation): PublicValidationOutcome;

@@ -1,0 +1,380 @@
+[
+  {
+    "name": "Identität eins",
+    "schema": "local-operation-identity",
+    "value": {
+      "operationContractVersion": 1,
+      "profileId": "50000000-0000-4000-8000-000000000001",
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "epoch": "50000000-0000-4000-8000-000000000003",
+      "operationId": "50000000-0000-4000-8000-000000000030"
+    },
+    "valid": true
+  },
+  {
+    "name": "Unbekannte Operationsdimension 0",
+    "schema": "local-operation-identity",
+    "value": {
+      "operationContractVersion": 0,
+      "profileId": "50000000-0000-4000-8000-000000000001",
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "epoch": "50000000-0000-4000-8000-000000000003",
+      "operationId": "50000000-0000-4000-8000-000000000030"
+    },
+    "valid": false
+  },
+  {
+    "name": "Unbekannte Operationsdimension 2",
+    "schema": "local-operation-identity",
+    "value": {
+      "operationContractVersion": 2,
+      "profileId": "50000000-0000-4000-8000-000000000001",
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "epoch": "50000000-0000-4000-8000-000000000003",
+      "operationId": "50000000-0000-4000-8000-000000000030"
+    },
+    "valid": false
+  },
+  {
+    "name": "Unbekannte Operationsdimension 1",
+    "schema": "local-operation-identity",
+    "value": {
+      "operationContractVersion": "1",
+      "profileId": "50000000-0000-4000-8000-000000000001",
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "epoch": "50000000-0000-4000-8000-000000000003",
+      "operationId": "50000000-0000-4000-8000-000000000030"
+    },
+    "valid": false
+  },
+  {
+    "name": "Unbekannte Operationsdimension None",
+    "schema": "local-operation-identity",
+    "value": {
+      "operationContractVersion": null,
+      "profileId": "50000000-0000-4000-8000-000000000001",
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "epoch": "50000000-0000-4000-8000-000000000003",
+      "operationId": "50000000-0000-4000-8000-000000000030"
+    },
+    "valid": false
+  },
+  {
+    "name": "Zusatzfeld kein Pfad",
+    "schema": "local-operation-identity",
+    "value": {
+      "operationContractVersion": 1,
+      "profileId": "50000000-0000-4000-8000-000000000001",
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "epoch": "50000000-0000-4000-8000-000000000003",
+      "operationId": "50000000-0000-4000-8000-000000000030",
+      "path": "/tmp/x"
+    },
+    "valid": false
+  },
+  {
+    "name": "Profil UUID",
+    "schema": "local-operation-identity",
+    "value": {
+      "operationContractVersion": 1,
+      "profileId": "invalid",
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "epoch": "50000000-0000-4000-8000-000000000003",
+      "operationId": "50000000-0000-4000-8000-000000000030"
+    },
+    "valid": false
+  },
+  {
+    "name": "Leerer technischer Batch",
+    "schema": "local-commit-request",
+    "value": {
+      "identity": {
+        "operationContractVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "operationId": "50000000-0000-4000-8000-000000000030"
+      },
+      "batch": {
+        "expectedRevisions": [],
+        "aggregates": [],
+        "outbox": [],
+        "projections": []
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "Receipt",
+    "schema": "local-commit-receipt",
+    "value": {
+      "identity": {
+        "operationContractVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "operationId": "50000000-0000-4000-8000-000000000030"
+      },
+      "contentHash": "abababababababababababababababababababababababababababababababab",
+      "committedRevisions": [
+        {
+          "handle": "50000000-0000-4000-8000-000000000002",
+          "revision": 1
+        }
+      ]
+    },
+    "valid": true
+  },
+  {
+    "name": "Receipt unsichere Revision",
+    "schema": "local-commit-receipt",
+    "value": {
+      "identity": {
+        "operationContractVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "operationId": "50000000-0000-4000-8000-000000000030"
+      },
+      "contentHash": "abababababababababababababababababababababababababababababababab",
+      "committedRevisions": [
+        {
+          "handle": "50000000-0000-4000-8000-000000000002",
+          "revision": 9007199254740992
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "Falscher Inhaltshash",
+    "schema": "local-commit-receipt",
+    "value": {
+      "identity": {
+        "operationContractVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "operationId": "50000000-0000-4000-8000-000000000030"
+      },
+      "contentHash": "ABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABABAB",
+      "committedRevisions": [
+        {
+          "handle": "50000000-0000-4000-8000-000000000002",
+          "revision": 1
+        }
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "Bestätigtes Ergebnis",
+    "schema": "local-commit-result",
+    "value": {
+      "status": "committed",
+      "value": {
+        "identity": {
+          "operationContractVersion": 1,
+          "profileId": "50000000-0000-4000-8000-000000000001",
+          "spaceId": "50000000-0000-4000-8000-000000000002",
+          "epoch": "50000000-0000-4000-8000-000000000003",
+          "operationId": "50000000-0000-4000-8000-000000000030"
+        },
+        "contentHash": "abababababababababababababababababababababababababababababababab",
+        "committedRevisions": [
+          {
+            "handle": "50000000-0000-4000-8000-000000000002",
+            "revision": 1
+          }
+        ]
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "Unklares Ergebnis",
+    "schema": "local-commit-result",
+    "value": {
+      "status": "unknown",
+      "identity": {
+        "operationContractVersion": 1,
+        "profileId": "50000000-0000-4000-8000-000000000001",
+        "spaceId": "50000000-0000-4000-8000-000000000002",
+        "epoch": "50000000-0000-4000-8000-000000000003",
+        "operationId": "50000000-0000-4000-8000-000000000030"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "Abgelehntes Ergebnis",
+    "schema": "local-commit-result",
+    "value": {
+      "status": "notCommitted",
+      "error": {
+        "contractVersion": 2,
+        "code": "QUOTA",
+        "commitState": "notCommitted"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "Unklarer Commit ohne Identität",
+    "schema": "local-commit-result",
+    "value": {
+      "status": "unknown"
+    },
+    "valid": false
+  },
+  {
+    "name": "Begrenzte Transaktionen",
+    "schema": "local-index-transaction",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "kind": "import",
+      "reference": "Quelle β",
+      "limit": 1
+    },
+    "valid": true
+  },
+  {
+    "name": "Optionales Datum null verboten",
+    "schema": "local-index-transaction",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "kind": "import",
+      "reference": "Quelle β",
+      "limit": 1,
+      "fromDate": null
+    },
+    "valid": false
+  },
+  {
+    "name": "Optionaler Cursor null verboten",
+    "schema": "local-index-transaction",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "kind": "import",
+      "reference": "Quelle β",
+      "limit": 1,
+      "after": null
+    },
+    "valid": false
+  },
+  {
+    "name": "Datum und Cursor",
+    "schema": "local-index-transaction",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "kind": "import",
+      "reference": "Quelle β",
+      "limit": 1,
+      "fromDate": "2026-10-10",
+      "after": {
+        "date": "2026-10-10",
+        "handle": "50000000-0000-4000-8000-000000000001"
+      }
+    },
+    "valid": true
+  },
+  {
+    "name": "Seitengrenze null",
+    "schema": "local-index-transaction",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "kind": "import",
+      "reference": "Quelle β",
+      "limit": 0
+    },
+    "valid": false
+  },
+  {
+    "name": "Seitengrenze über Maximum",
+    "schema": "local-index-transaction",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "kind": "import",
+      "reference": "Quelle β",
+      "limit": 1001
+    },
+    "valid": false
+  },
+  {
+    "name": "Pending",
+    "schema": "local-index-pending",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "state": "queued",
+      "limit": 1000
+    },
+    "valid": true
+  },
+  {
+    "name": "Pending Grenze",
+    "schema": "local-index-pending",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "state": "queued",
+      "limit": 0
+    },
+    "valid": false
+  },
+  {
+    "name": "Importquelle",
+    "schema": "local-index-import-source",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "accountId": "50000000-0000-4000-8000-000000000001",
+      "parserSource": "csv",
+      "externalId": "row-1",
+      "limit": 1000
+    },
+    "valid": true
+  },
+  {
+    "name": "Importquelle Grenze",
+    "schema": "local-index-import-source",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "accountId": "50000000-0000-4000-8000-000000000001",
+      "parserSource": "csv",
+      "externalId": "row-1",
+      "limit": 1001
+    },
+    "valid": false
+  },
+  {
+    "name": "Identität eins als ganzzahlige JSONzahl",
+    "schema": "local-operation-identity",
+    "value": {
+      "operationContractVersion": 1.0,
+      "profileId": "50000000-0000-4000-8000-000000000001",
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "epoch": "50000000-0000-4000-8000-000000000003",
+      "operationId": "50000000-0000-4000-8000-000000000030"
+    },
+    "valid": true
+  },
+  {
+    "name": "Begrenzte Transaktionen als ganzzahlige JSONzahl",
+    "schema": "local-index-transaction",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "kind": "import",
+      "reference": "Quelle β",
+      "limit": 1.0
+    },
+    "valid": true
+  },
+  {
+    "name": "Pending als ganzzahlige JSONzahl",
+    "schema": "local-index-pending",
+    "value": {
+      "spaceId": "50000000-0000-4000-8000-000000000002",
+      "state": "queued",
+      "limit": 1000.0
+    },
+    "valid": true
+  }
+]

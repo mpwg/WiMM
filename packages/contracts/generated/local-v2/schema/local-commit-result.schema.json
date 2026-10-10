@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CommitOutcome",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "const": "committed"
+        },
+        "value": {
+          "$ref": "#/$defs/LocalCommitReceipt"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "value"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "error": {
+          "$ref": "#/$defs/StorageFailure"
+        },
+        "status": {
+          "type": "string",
+          "const": "notCommitted"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "error"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/LocalOperationIdentity"
+        },
+        "status": {
+          "type": "string",
+          "const": "unknown"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "identity"
+      ]
+    }
+  ],
+  "$defs": {
+    "CommittedRevision": {
+      "type": "object",
+      "properties": {
+        "handle": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "revision": {
+          "$ref": "#/$defs/StoredRevision"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "handle",
+        "revision"
+      ]
+    },
+    "EntityId": {
+      "type": "string",
+      "maxLength": 36,
+      "minLength": 36,
+      "pattern": "^(?:00000000-0000-0000-0000-000000000000|[fF]{8}-[fF]{4}-[fF]{4}-[fF]{4}-[fF]{12}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$"
+    },
+    "FailureCommitState": {
+      "type": "string",
+      "enum": [
+        "notCommitted",
+        "unknown"
+      ]
+    },
+    "FileHash": {
+      "type": "string",
+      "maxLength": 64,
+      "minLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "LocalCommitReceipt": {
+      "type": "object",
+      "properties": {
+        "committedRevisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CommittedRevision"
+          }
+        },
+        "contentHash": {
+          "$ref": "#/$defs/FileHash"
+        },
+        "identity": {
+          "$ref": "#/$defs/LocalOperationIdentity"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "identity",
+        "contentHash",
+        "committedRevisions"
+      ]
+    },
+    "LocalOperationContractVersion": {
+      "type": "integer",
+      "const": 1
+    },
+    "LocalOperationIdentity": {
+      "type": "object",
+      "properties": {
+        "epoch": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "operationContractVersion": {
+          "$ref": "#/$defs/LocalOperationContractVersion"
+        },
+        "operationId": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "profileId": {
+          "$ref": "#/$defs/EntityId"
+        },
+        "spaceId": {
+          "$ref": "#/$defs/EntityId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "operationContractVersion",
+        "profileId",
+        "spaceId",
+        "epoch",
+        "operationId"
+      ]
+    },
+    "PublicBindingVersion": {
+      "type": "integer",
+      "const": 2
+    },
+    "StorageFailure": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/StorageFailureCode"
+        },
+        "commitState": {
+          "$ref": "#/$defs/FailureCommitState"
+        },
+        "contractVersion": {
+          "$ref": "#/$defs/PublicBindingVersion"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "contractVersion",
+        "code",
+        "commitState"
+      ]
+    },
+    "StorageFailureCode": {
+      "type": "string",
+      "enum": [
+        "REVISION_CONFLICT",
+        "QUOTA",
+        "RESOURCE_UNAVAILABLE",
+        "WRITE_FAILED",
+        "UPDATE_REQUIRED",
+        "EPOCH_MISMATCH",
+        "CANCELLED",
+        "COMMIT_UNKNOWN",
+        "INVALID_RESPONSE",
+        "OPERATION_ID_REUSED"
+      ]
+    },
+    "StoredRevision": {
+      "type": "integer",
+      "maximum": 9007199254740991,
+      "minimum": 1
+    }
+  }
+}

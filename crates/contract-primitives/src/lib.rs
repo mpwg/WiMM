@@ -101,6 +101,11 @@ macro_rules! record {
     }
 }
 
+/// Ganzzahlige JSON-Zahlen bleiben auch in u32-Portfeldern sprachübergreifend äquivalent.
+pub fn unsigned32<'de, D: Deserializer<'de>>(d: D) -> Result<u32, D::Error> {
+    u32::try_from(integer(d)?).map_err(serde::de::Error::custom)
+}
+
 pub trait Validate {
     fn validate(&self) -> Result<(), &'static str>;
 }

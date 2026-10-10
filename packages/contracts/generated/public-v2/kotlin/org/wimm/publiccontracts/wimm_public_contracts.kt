@@ -1328,6 +1328,44 @@ public object FfiConverterTypeExistingHandle: FfiConverterRustBuffer<ExistingHan
 
 
 
+data class ExpectedHead (
+    var `handle`: PublicId
+    ,
+    var `expectedRevision`: PublicRevision
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeExpectedHead: FfiConverterRustBuffer<ExpectedHead> {
+    override fun read(buf: ByteBuffer): ExpectedHead {
+        return ExpectedHead(
+            FfiConverterTypePublicId.read(buf),
+            FfiConverterTypePublicRevision.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ExpectedHead) = (
+            FfiConverterTypePublicId.allocationSize(value.`handle`) +
+            FfiConverterTypePublicRevision.allocationSize(value.`expectedRevision`)
+    )
+
+    override fun write(value: ExpectedHead, buf: ByteBuffer) {
+            FfiConverterTypePublicId.write(value.`handle`, buf)
+            FfiConverterTypePublicRevision.write(value.`expectedRevision`, buf)
+    }
+}
+
+
+
 data class KeyRoster (
     var `protocolVersion`: ProtocolVersion
     ,
@@ -1702,6 +1740,44 @@ public object FfiConverterTypeServerOperationKey: FfiConverterRustBuffer<ServerO
 
 
 
+data class ServerPersistenceFailure (
+    var `contractVersion`: kotlin.UInt
+    ,
+    var `code`: ServerPersistenceCode
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeServerPersistenceFailure: FfiConverterRustBuffer<ServerPersistenceFailure> {
+    override fun read(buf: ByteBuffer): ServerPersistenceFailure {
+        return ServerPersistenceFailure(
+            FfiConverterUInt.read(buf),
+            FfiConverterTypeServerPersistenceCode.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ServerPersistenceFailure) = (
+            FfiConverterUInt.allocationSize(value.`contractVersion`) +
+            FfiConverterTypeServerPersistenceCode.allocationSize(value.`code`)
+    )
+
+    override fun write(value: ServerPersistenceFailure, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`contractVersion`, buf)
+            FfiConverterTypeServerPersistenceCode.write(value.`code`, buf)
+    }
+}
+
+
+
 data class SignedKeyRoster (
     var `roster`: KeyRoster
     ,
@@ -1995,6 +2071,46 @@ public object FfiConverterTypeRole: FfiConverterRustBuffer<Role> {
     override fun allocationSize(value: Role) = 4UL
 
     override fun write(value: Role, buf: ByteBuffer) {
+        buf.putInt(value.ordinal + 1)
+    }
+}
+
+
+
+
+
+
+enum class ServerPersistenceCode {
+
+    REVISION_CONFLICT,
+    QUOTA,
+    WRITE_FAILED,
+    UPDATE_REQUIRED,
+    EPOCH_MISMATCH,
+    OPERATION_ID_REUSED,
+    CANCELLED,
+    RESOURCE_UNAVAILABLE;
+
+
+
+
+    companion object
+}
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeServerPersistenceCode: FfiConverterRustBuffer<ServerPersistenceCode> {
+    override fun read(buf: ByteBuffer) = try {
+        ServerPersistenceCode.values()[buf.getInt() - 1]
+    } catch (e: IndexOutOfBoundsException) {
+        throw RuntimeException("invalid enum value, something is very wrong!!", e)
+    }
+
+    override fun allocationSize(value: ServerPersistenceCode) = 4UL
+
+    override fun write(value: ServerPersistenceCode, buf: ByteBuffer) {
         buf.putInt(value.ordinal + 1)
     }
 }

@@ -90,6 +90,11 @@ export interface CategoryGroup {
     archived: boolean;
 }
 
+export interface CommittedRevision {
+    handle: EntityId;
+    revision: StoredRevision;
+}
+
 export interface ConfirmedAggregate {
     spaceId: EntityId;
     epoch: EntityId;
@@ -241,6 +246,14 @@ export interface ImportRow {
     issues: string[];
 }
 
+export interface ImportSourceQuery {
+    spaceId: EntityId;
+    accountId: EntityId;
+    parserSource: string;
+    externalId: string;
+    limit: number;
+}
+
 export interface ImportedFile {
     name: string;
     mediaType?: string;
@@ -264,6 +277,17 @@ export interface KeyRosterMember {
     role: Role;
 }
 
+export interface LocalCommitReceipt {
+    identity: LocalOperationIdentity;
+    contentHash: FileHash;
+    committedRevisions: CommittedRevision[];
+}
+
+export interface LocalCommitRequest {
+    identity: LocalOperationIdentity;
+    batch: AtomicBatch;
+}
+
 export interface LocalFormOutcome {
     contractVersion: number;
     status: LocalFormStatus;
@@ -273,6 +297,14 @@ export interface LocalMigrationRequest {
     plan: StorageMigrationPlan;
     expectedSnapshot: LocalSnapshot;
     backup?: EncryptedBackupReceipt;
+}
+
+export interface LocalOperationIdentity {
+    operationContractVersion: number;
+    profileId: EntityId;
+    spaceId: EntityId;
+    epoch: EntityId;
+    operationId: EntityId;
 }
 
 export interface LocalPortRequestV2 {
@@ -309,6 +341,12 @@ export interface PayeeMerge {
     targetId: EntityId;
     sourceIds: NonEmptyVec<EntityId>;
     transactionIds: EntityId[];
+}
+
+export interface PendingIndexQuery {
+    spaceId: EntityId;
+    state: PendingState;
+    limit: number;
 }
 
 export interface PendingOperation {
@@ -535,6 +573,21 @@ export interface Transaction {
     scheduleOccurrenceId?: EntityId;
 }
 
+export interface TransactionCursor {
+    date: FinanceDate;
+    handle: EntityId;
+}
+
+export interface TransactionIndexQuery {
+    spaceId: EntityId;
+    kind: ReferenceKind;
+    reference: string;
+    fromDate?: FinanceDate;
+    throughDate?: FinanceDate;
+    after?: TransactionCursor;
+    limit: number;
+}
+
 export interface TransactionTemplate {
     accountId: EntityId;
     amount: MoneyCents;
@@ -678,6 +731,8 @@ export type PublicId = string;
 export type PublicRevision = number;
 
 export type PublicValidationStatus = "formValid";
+
+export type ReferenceKind = "account" | "category" | "import";
 
 export type Revision = number;
 
