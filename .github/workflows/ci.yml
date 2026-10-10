@@ -90,6 +90,7 @@ jobs:
           path: |
             test-results/dal-proof/browser/
             test-results/ar04/browser/
+            test-results/ar04/browser-report.json
           if-no-files-found: ignore
           retention-days: 7
   ubuntu:

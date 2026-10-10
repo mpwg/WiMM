@@ -30,3 +30,7 @@ Ubuntu x64, tatsächliches Chromium/IndexedDB, AMD EPYC 9V74, 16,77 GB gemeldete
 | Desktop-Frontend | 1.318,7 ms | 16,9 ms | 50,0 ms | 33,5 ms | 66,5 ms |
 
 Die Browsermarker fehlen vor Öffnung und nach Reload; die tatsächliche vollständige sichtbare Liste wird vor Festhalten des Zeitpunkts geprüft. Kein Retry oder Warmwert-Ersatz. Gesicherte CI-Dateien unter test-results/architecture-implementation/performance-ci-970b913, ausgewertete Werte in performance-ci-970b913-metrics.json. Keine Aussage, dass der alte CI-Lauf die Appgrenze erfüllte, und kein nativer Tauri-/Gerätebeleg.
+
+## Neuer aktueller Befund vom 10. Oktober 2026
+
+[Leistungsdelta #136](https://github.com/mpwg/WiMM/issues/136), tatsächlicher [Ubuntu-Job auf 34094b4](https://github.com/mpwg/WiMM/actions/runs/38031346187/job/114152813867) mit unveränderten Grenzen/Orakeln fehlgeschlagen. JSONreport und Webtrace abgerufen/rückgelesen: Web kalt 2.463,0 ms, Desktop-Frontend kalt 1.429,8 ms. Web warm öffnen 20,6 ms, Filter-/Scroll-p95 57,7/33,9 ms; Frontend warm öffnen 31,9 ms, Filter-/Scroll-p95 50,0/33,6 ms. Chromium 153.0.8010.12, Linux 6.17.0-1022-azure/x64, Xeon Platinum 8573C. Frühere #129-Greens bleiben historische Belege; aktueller Web-Kaltöffnungsbefund verhindert Leistungs-/Gesamt-CI-Freigabe. Keine Ursachenbehauptung aus dem Einzelvergleich und kein nativer GUI-Beleg. Reproduktion `pnpm test:ui:performance`; Fortschritt/Kriterien ausschließlich #136.
