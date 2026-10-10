@@ -9,6 +9,14 @@ use std::collections::BTreeSet;
 use wimm_finance_types::scalars::{EntityId, FileHash};
 use wimm_local_contracts::{Validate, commit::*, persistence_errors::*, storage::*};
 use wimm_persistence_contracts::CommitOutcome;
+mod checkpoint_store;
+use wimm_local_contracts::storage_port::{CancellationPort, NeverCancel};
+#[cfg(feature = "receipt-probe")]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum CommitBoundary {
+    AfterWrites,
+    AfterCommit,
+}
 
 diesel::table! { wimm_local_schema (number) { number -> Integer, profile -> Text, } }
 diesel::table! { wimm_local_areas (space) { space -> Text, epoch -> Text, } }
@@ -78,6 +86,8 @@ pub struct SqliteCommitStore {
     profile: EntityId,
     fail_before_receipt: bool,
     lose_response: bool,
+    #[cfg(feature = "receipt-probe")]
+    observer: Option<Box<dyn Fn(CommitBoundary)>>,
 }
 impl SqliteCommitStore {
     #[cfg(not(target_family = "wasm"))]
@@ -112,6 +122,8 @@ impl SqliteCommitStore {
             profile,
             fail_before_receipt: false,
             lose_response: false,
+            #[cfg(feature = "receipt-probe")]
+            observer: None,
         })
     }
     /// Nur die registrierte leere Initialschemaerzeugung eins; keine Bestandsmigration beim Öffnen.
@@ -296,8 +308,16 @@ fn supported(conn: &mut SqliteConnection, profile: &EntityId) -> Result<(), Tran
     }
     Ok(())
 }
-impl LocalCommitPort for SqliteCommitStore {
-    fn commit(&mut self, request: LocalCommitRequest) -> LocalCommitOutcome {
+impl SqliteCommitStore {
+    #[cfg(feature = "receipt-probe")]
+    pub fn observe_commit(&mut self, observer: impl Fn(CommitBoundary) + 'static) {
+        self.observer = Some(Box::new(observer));
+    }
+    fn commit_observing(
+        &mut self,
+        request: LocalCommitRequest,
+        cancellation: &dyn CancellationPort,
+    ) -> LocalCommitOutcome {
         let identity = request.identity.clone();
         if identity.validate().is_err() {
             return CommitOutcome::NotCommitted {
@@ -376,6 +396,9 @@ impl LocalCommitPort for SqliteCommitStore {
                     .optional()?;
                 if epoch.as_deref() != Some(identity.epoch.as_str()) {
                     return Err(failure(StorageFailureCode::EpochMismatch).into());
+                }
+                if cancellation.is_cancelled() {
+                    return Err(failure(StorageFailureCode::Cancelled).into());
                 }
                 for expected in &request.batch.expected_revisions {
                     let actual: Option<(String, i64)> = wimm_local_aggregates::table
@@ -462,6 +485,13 @@ impl LocalCommitPort for SqliteCommitStore {
                         .set(wimm_local_projections::payload.eq(encode(p)?))
                         .execute(conn)?;
                 }
+                #[cfg(feature = "receipt-probe")]
+                if let Some(observer) = &self.observer {
+                    observer(CommitBoundary::AfterWrites);
+                }
+                if cancellation.is_cancelled() {
+                    return Err(failure(StorageFailureCode::Cancelled).into());
+                }
                 if inject {
                     return Err(failure(StorageFailureCode::WriteFailed).into());
                 }
@@ -474,6 +504,12 @@ impl LocalCommitPort for SqliteCommitStore {
                     .execute(conn)?;
                 Ok(receipt.clone())
             });
+        #[cfg(feature = "receipt-probe")]
+        if result.is_ok()
+            && let Some(observer) = &self.observer
+        {
+            observer(CommitBoundary::AfterCommit);
+        }
         match result {
             Ok(_value) if std::mem::take(&mut self.lose_response) => {
                 CommitOutcome::Unknown { identity }
@@ -488,6 +524,20 @@ impl LocalCommitPort for SqliteCommitStore {
             // COMMIT-/Rollback-/IOfehler lassen den Ausgang konservativ offen; nie Meldungsanalyse.
             Err(TransactionError::Database) => CommitOutcome::Unknown { identity },
         }
+    }
+}
+impl CancellableLocalCommitPort for SqliteCommitStore {
+    fn commit_cancellable(
+        &mut self,
+        request: LocalCommitRequest,
+        cancellation: &dyn CancellationPort,
+    ) -> LocalCommitOutcome {
+        self.commit_observing(request, cancellation)
+    }
+}
+impl LocalCommitPort for SqliteCommitStore {
+    fn commit(&mut self, request: LocalCommitRequest) -> LocalCommitOutcome {
+        self.commit_observing(request, &NeverCancel)
     }
     fn lookup_result(
         &self,

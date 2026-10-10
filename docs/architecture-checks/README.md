@@ -42,3 +42,5 @@ Aktive CachyOS Linux x86_64-Arbeitskopie, dokumentierte gesperrte Toolchain. 41 
 DAL02 registriert zusätzlich die neutrale technische Persistenzquelle und den lokalen Memoryadapter mit nativen Assertions. Der neue getrennte Katalog enthält 28 Operations-/Receipt-/Commit-/Indexformfälle mit festem Hash. Keine bestehenden Goldenbytes geändert; Memory-/WASM-Build ist kein neuer SQL-/Browserpersistenznachweis. [DAL02-Matrix](../dal02-contracts.md).
 
 AR04 erweitert den lokalen DAL um registrierte optionale SQLite-/Prüffeatures. `nativeAssertionFeatures` aktiviert ausdrücklich den tatsächlichen SQL-/Prozessprüfeinstieg in der nativen Prüfkette; Default-Memorytests gelten nicht als SQLbeleg. [Aktueller AR04-Abschnitt](../ar04-local-receipts.md).
+
+[#137](https://github.com/mpwg/WiMM/issues/137) hält den tatsächlichen Ubuntu-Befund maschinenabhängig fehlender Tsify-Customsections fest. Der Generator verwendet für seine WASM-Builds einen gemeinsamen Codegen-Unit und behält byteweise/negative Driftkontrolle. Keine Golden-/unsafe-/Fach-/Leistungsgrenze geändert; vollständige Deklarationen ergänzen die bisherigen Formen.

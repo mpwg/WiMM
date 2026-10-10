@@ -1307,6 +1307,130 @@ public func FfiConverterTypeImportedFile_lower(_ value: ImportedFile) -> RustBuf
 }
 
 
+public struct LocalCheckpointRestoreRequest: Equatable, Hashable {
+    public var expected: LocalCommitCheckpoint
+    public var originalBackup: EncryptedBackupReceipt
+    public var ciphertext: Data
+    public var restoredEpoch: EntityId
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(expected: LocalCommitCheckpoint, originalBackup: EncryptedBackupReceipt, ciphertext: Data, restoredEpoch: EntityId) {
+        self.expected = expected
+        self.originalBackup = originalBackup
+        self.ciphertext = ciphertext
+        self.restoredEpoch = restoredEpoch
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension LocalCheckpointRestoreRequest: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLocalCheckpointRestoreRequest: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> LocalCheckpointRestoreRequest {
+        return
+            try LocalCheckpointRestoreRequest(
+                expected: FfiConverterTypeLocalCommitCheckpoint.read(from: &buf),
+                originalBackup: FfiConverterTypeEncryptedBackupReceipt.read(from: &buf),
+                ciphertext: FfiConverterData.read(from: &buf),
+                restoredEpoch: FfiConverterTypeEntityId.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: LocalCheckpointRestoreRequest, into buf: inout [UInt8]) {
+        FfiConverterTypeLocalCommitCheckpoint.write(value.expected, into: &buf)
+        FfiConverterTypeEncryptedBackupReceipt.write(value.originalBackup, into: &buf)
+        FfiConverterData.write(value.ciphertext, into: &buf)
+        FfiConverterTypeEntityId.write(value.restoredEpoch, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCheckpointRestoreRequest_lift(_ buf: RustBuffer) throws -> LocalCheckpointRestoreRequest {
+    return try FfiConverterTypeLocalCheckpointRestoreRequest.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCheckpointRestoreRequest_lower(_ value: LocalCheckpointRestoreRequest) -> RustBuffer {
+    return FfiConverterTypeLocalCheckpointRestoreRequest.lower(value)
+}
+
+
+public struct LocalCommitCheckpoint: Equatable, Hashable {
+    public var checkpointVersion: UInt32
+    public var physicalSchemaVersion: UInt32
+    public var snapshot: LocalSnapshot
+    public var operations: [LocalReceiptEntry]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(checkpointVersion: UInt32, physicalSchemaVersion: UInt32, snapshot: LocalSnapshot, operations: [LocalReceiptEntry]) {
+        self.checkpointVersion = checkpointVersion
+        self.physicalSchemaVersion = physicalSchemaVersion
+        self.snapshot = snapshot
+        self.operations = operations
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension LocalCommitCheckpoint: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLocalCommitCheckpoint: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> LocalCommitCheckpoint {
+        return
+            try LocalCommitCheckpoint(
+                checkpointVersion: FfiConverterUInt32.read(from: &buf),
+                physicalSchemaVersion: FfiConverterUInt32.read(from: &buf),
+                snapshot: FfiConverterTypeLocalSnapshot.read(from: &buf),
+                operations: FfiConverterSequenceTypeLocalReceiptEntry.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: LocalCommitCheckpoint, into buf: inout [UInt8]) {
+        FfiConverterUInt32.write(value.checkpointVersion, into: &buf)
+        FfiConverterUInt32.write(value.physicalSchemaVersion, into: &buf)
+        FfiConverterTypeLocalSnapshot.write(value.snapshot, into: &buf)
+        FfiConverterSequenceTypeLocalReceiptEntry.write(value.operations, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCommitCheckpoint_lift(_ buf: RustBuffer) throws -> LocalCommitCheckpoint {
+    return try FfiConverterTypeLocalCommitCheckpoint.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalCommitCheckpoint_lower(_ value: LocalCommitCheckpoint) -> RustBuffer {
+    return FfiConverterTypeLocalCommitCheckpoint.lower(value)
+}
+
+
 public struct LocalCommitReceipt: Equatable, Hashable {
     public var identity: LocalOperationIdentity
     public var contentHash: FileHash
@@ -1648,6 +1772,60 @@ public func FfiConverterTypeLocalPortRequestV2_lift(_ buf: RustBuffer) throws ->
 #endif
 public func FfiConverterTypeLocalPortRequestV2_lower(_ value: LocalPortRequestV2) -> RustBuffer {
     return FfiConverterTypeLocalPortRequestV2.lower(value)
+}
+
+
+public struct LocalReceiptEntry: Equatable, Hashable {
+    public var request: LocalCommitRequest
+    public var receipt: LocalCommitReceipt
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(request: LocalCommitRequest, receipt: LocalCommitReceipt) {
+        self.request = request
+        self.receipt = receipt
+    }
+
+
+
+
+}
+
+#if compiler(>=6)
+extension LocalReceiptEntry: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeLocalReceiptEntry: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> LocalReceiptEntry {
+        return
+            try LocalReceiptEntry(
+                request: FfiConverterTypeLocalCommitRequest.read(from: &buf),
+                receipt: FfiConverterTypeLocalCommitReceipt.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: LocalReceiptEntry, into buf: inout [UInt8]) {
+        FfiConverterTypeLocalCommitRequest.write(value.request, into: &buf)
+        FfiConverterTypeLocalCommitReceipt.write(value.receipt, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalReceiptEntry_lift(_ buf: RustBuffer) throws -> LocalReceiptEntry {
+    return try FfiConverterTypeLocalReceiptEntry.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeLocalReceiptEntry_lower(_ value: LocalReceiptEntry) -> RustBuffer {
+    return FfiConverterTypeLocalReceiptEntry.lower(value)
 }
 
 
@@ -4230,6 +4408,31 @@ fileprivate struct FfiConverterSequenceTypeConfirmedAggregate: FfiConverterRustB
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeConfirmedAggregate.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeLocalReceiptEntry: FfiConverterRustBuffer {
+    typealias SwiftType = [LocalReceiptEntry]
+
+    public static func write(_ value: [LocalReceiptEntry], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeLocalReceiptEntry.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [LocalReceiptEntry] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [LocalReceiptEntry]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeLocalReceiptEntry.read(from: &buf))
         }
         return seq
     }

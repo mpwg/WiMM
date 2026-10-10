@@ -104,6 +104,11 @@ export interface ClassificationRow {
     classification: Classification;
 }
 
+export interface CommittedRevision {
+    handle: EntityId;
+    revision: StoredRevision;
+}
+
 export interface ConfirmedAggregate {
     spaceId: EntityId;
     epoch: EntityId;
@@ -136,6 +141,19 @@ export interface EncryptedBackupReceipt {
     snapshotHash: Base64Url;
 }
 
+export interface EncryptedBackupRequest {
+    profileId: LocalId;
+    spaceId: LocalId;
+    epoch: LocalId;
+    snapshotHash: LocalHash;
+    ciphertext: number[];
+}
+
+export interface EncryptedChangeRecord {
+    cursor: string;
+    operation: EncryptedOperation;
+}
+
 export interface EncryptedOperation {
     header: EncryptedOperationHeader;
     nonce: Base64Url;
@@ -157,6 +175,14 @@ export interface EncryptedOperationHeader {
     writes: WriteHandle[];
 }
 
+export interface EncryptedSnapshotRecord {
+    spaceId: PublicId;
+    epoch: PublicId;
+    cursor: string;
+    ciphertextHash: Base64Url;
+    bytes: number[];
+}
+
 export interface ExistingHandle {
     handle: PublicId;
     expectedRevision: PositiveRevision;
@@ -166,6 +192,17 @@ export interface ExistingHandle {
 export interface Expectation {
     id: EntityId;
     expectedRevision: Revision;
+}
+
+export interface ExpectedHead {
+    handle: PublicId;
+    expectedRevision: PublicRevision;
+}
+
+export interface ExportFileRequest {
+    suggestedName: string;
+    mediaType: string;
+    bytes: number[];
 }
 
 export interface FinancialRevision {
@@ -207,6 +244,15 @@ export interface ImportCandidate {
 
 export interface ImportCommit {
     importId: EntityId;
+}
+
+export interface ImportFileRequest {
+    acceptedMediaTypes: string[];
+    acceptedExtensions: string[];
+    multiple: boolean;
+    maxBytes?: LocalPositive;
+    maxFiles?: LocalPositive;
+    maxTotalBytes?: LocalPositive;
 }
 
 export interface ImportFingerprint {
@@ -252,6 +298,20 @@ export interface ImportRow {
     issues: string[];
 }
 
+export interface ImportSourceQuery {
+    spaceId: EntityId;
+    accountId: EntityId;
+    parserSource: string;
+    externalId: string;
+    limit: number;
+}
+
+export interface ImportedFile {
+    name: string;
+    mediaType?: string;
+    bytes: number[];
+}
+
 export interface KeyRoster {
     protocolVersion: ProtocolVersion;
     cryptoSuite: CryptoSuite;
@@ -269,14 +329,58 @@ export interface KeyRosterMember {
     role: Role;
 }
 
+export interface LocalCheckpointRestoreRequest {
+    expected: LocalCommitCheckpoint;
+    originalBackup: EncryptedBackupReceipt;
+    ciphertext: number[];
+    restoredEpoch: EntityId;
+}
+
+export interface LocalCommitCheckpoint {
+    checkpointVersion: number;
+    physicalSchemaVersion: number;
+    snapshot: LocalSnapshot;
+    operations: LocalReceiptEntry[];
+}
+
+export interface LocalCommitReceipt {
+    identity: LocalOperationIdentity;
+    contentHash: FileHash;
+    committedRevisions: CommittedRevision[];
+}
+
+export interface LocalCommitRequest {
+    identity: LocalOperationIdentity;
+    batch: AtomicBatch;
+}
+
 export interface LocalFormOutcome {
     contractVersion: number;
     status: LocalFormStatus;
 }
 
+export interface LocalMigrationRequest {
+    plan: StorageMigrationPlan;
+    expectedSnapshot: LocalSnapshot;
+    backup?: EncryptedBackupReceipt;
+}
+
+export interface LocalOperationIdentity {
+    operationContractVersion: number;
+    profileId: EntityId;
+    spaceId: EntityId;
+    epoch: EntityId;
+    operationId: EntityId;
+}
+
 export interface LocalPortRequestV2 {
     contractVersion: EngineBindingVersion;
     command: LocalPortCommand;
+}
+
+export interface LocalReceiptEntry {
+    request: LocalCommitRequest;
+    receipt: LocalCommitReceipt;
 }
 
 export interface LocalSnapshot {
@@ -299,6 +403,18 @@ export interface MoneyParseRequest {
     text: string;
 }
 
+export interface OpaqueAggregateHead {
+    handle: PublicId;
+    revision: PublicRevision;
+    ciphertextHash: Base64Url;
+}
+
+export interface OperationReceiptRecord {
+    key: ServerOperationKey;
+    contentHash: Base64Url;
+    cursor: string;
+}
+
 export interface Payee {
     id: EntityId;
     spaceId: EntityId;
@@ -317,6 +433,12 @@ export interface PayeeMerge {
     transactionIds: EntityId[];
 }
 
+export interface PendingIndexQuery {
+    spaceId: EntityId;
+    state: PendingState;
+    limit: number;
+}
+
 export interface PendingOperation {
     operationId: EntityId;
     spaceId: EntityId;
@@ -326,6 +448,12 @@ export interface PendingOperation {
     draft: LegacyJson;
     retryCount: Ordinal;
     createdAt?: UtcTimestamp;
+}
+
+export interface PlatformCommand {
+    id: string;
+    title: string;
+    enabled: boolean;
 }
 
 export interface ProjectionOutcome {
@@ -357,6 +485,13 @@ export interface PublicError {
     message: NonEmptyString;
     fields?: ContractIssue[];
     requestId?: NonEmptyString;
+}
+
+export interface PublicIdentityRecord {
+    identityId: PublicId;
+    revision: PublicRevision;
+    issuer: string;
+    subject: string;
 }
 
 export interface PublicValidationOutcome {
@@ -502,6 +637,17 @@ export interface ScheduleSkip {
     dueDate: FinanceDate;
 }
 
+export interface ServerOperationKey {
+    spaceId: PublicId;
+    epoch: PublicId;
+    operationId: PublicId;
+}
+
+export interface ServerPersistenceFailure {
+    contractVersion: number;
+    code: ServerPersistenceCode;
+}
+
 export interface SignedKeyRoster {
     roster: KeyRoster;
     signature: Base64Url;
@@ -575,6 +721,21 @@ export interface Transaction {
     date: FinanceDate;
     importReference?: NonEmptyText;
     scheduleOccurrenceId?: EntityId;
+}
+
+export interface TransactionCursor {
+    date: FinanceDate;
+    handle: EntityId;
+}
+
+export interface TransactionIndexQuery {
+    spaceId: EntityId;
+    kind: ReferenceKind;
+    reference: string;
+    fromDate?: FinanceDate;
+    throughDate?: FinanceDate;
+    after?: TransactionCursor;
+    limit: number;
 }
 
 export interface TransactionTemplate {
@@ -713,6 +874,8 @@ export type PositiveOrdinal = number;
 
 export type PositiveRevision = number;
 
+export type ProfileLoadOutcome = { kind: "missing" } | { kind: "loaded"; profile: LegacyJson } | { kind: "corrupt" } | { kind: "unreadable" };
+
 export type ProjectionStatus = "projected";
 
 export type ProtocolVersion = number;
@@ -727,11 +890,15 @@ export type PublicRevision = number;
 
 export type PublicValidationStatus = "formValid";
 
+export type ReferenceKind = "account" | "category" | "import";
+
 export type Revision = number;
 
 export type Role = "admin" | "member" | "viewer";
 
 export type RuleAction = { field: "categoryId"; value: EntityId } | { field: "payeeId"; value: EntityId } | { field: "clearance"; value: ImportClearance };
+
+export type ServerPersistenceCode = "REVISION_CONFLICT" | "QUOTA" | "WRITE_FAILED" | "UPDATE_REQUIRED" | "EPOCH_MISMATCH" | "OPERATION_ID_REUSED" | "CANCELLED" | "RESOURCE_UNAVAILABLE";
 
 export type SnapshotDomainVersion = number;
 
@@ -740,6 +907,8 @@ export type SnapshotStatus = "snapshot";
 export type SnapshotStorageVersion = number;
 
 export type StorageFailureCode = "REVISION_CONFLICT" | "QUOTA" | "RESOURCE_UNAVAILABLE" | "WRITE_FAILED" | "UPDATE_REQUIRED" | "EPOCH_MISMATCH" | "CANCELLED" | "COMMIT_UNKNOWN" | "INVALID_RESPONSE" | "OPERATION_ID_REUSED";
+
+export type StoragePersistenceOutcome = { status: "unsupported"; supported: UnsupportedFlag } | { status: "granted"; supported: SupportedFlag } | { status: "denied"; supported: SupportedFlag } | { status: "error"; supported: SupportedFlag };
 
 export type StoredProjection = { kind: "balance"; spaceId: EntityId; key: EntityId; payload: MoneyCents } | { kind: "accountBalance"; spaceId: EntityId; key: EntityId; payload: BalancePayload } | { kind: "consumption"; spaceId: EntityId; key: NonEmptyText; payload: Consumption };
 

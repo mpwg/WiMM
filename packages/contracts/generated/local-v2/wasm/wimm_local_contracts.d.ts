@@ -90,6 +90,20 @@ export interface CategoryGroup {
     archived: boolean;
 }
 
+export interface ChangeSet {
+    spaceId: EntityId;
+    commandType: string;
+    operationId: EntityId;
+    occurredAt: UtcTimestamp;
+    expectedRevisions: Expectation[];
+    aggregates: Aggregate[];
+}
+
+export interface ClassificationRow {
+    sourceRow: PositiveOrdinal;
+    classification: Classification;
+}
+
 export interface CommittedRevision {
     handle: EntityId;
     revision: StoredRevision;
@@ -106,6 +120,12 @@ export interface Consumption {
     expense: MoneyCents;
     net: MoneyCents;
     categories: CategoryConsumption[];
+}
+
+export interface Context {
+    operationId: EntityId;
+    occurredAt: UtcTimestamp;
+    generatedIds: EntityId[];
 }
 
 export interface ContractIssue {
@@ -129,6 +149,11 @@ export interface EncryptedBackupRequest {
     ciphertext: number[];
 }
 
+export interface EncryptedChangeRecord {
+    cursor: string;
+    operation: EncryptedOperation;
+}
+
 export interface EncryptedOperation {
     header: EncryptedOperationHeader;
     nonce: Base64Url;
@@ -150,10 +175,28 @@ export interface EncryptedOperationHeader {
     writes: WriteHandle[];
 }
 
+export interface EncryptedSnapshotRecord {
+    spaceId: PublicId;
+    epoch: PublicId;
+    cursor: string;
+    ciphertextHash: Base64Url;
+    bytes: number[];
+}
+
 export interface ExistingHandle {
     handle: PublicId;
     expectedRevision: PositiveRevision;
     previousCiphertextHash: Base64Url;
+}
+
+export interface Expectation {
+    id: EntityId;
+    expectedRevision: Revision;
+}
+
+export interface ExpectedHead {
+    handle: PublicId;
+    expectedRevision: PublicRevision;
 }
 
 export interface ExportFileRequest {
@@ -239,6 +282,15 @@ export interface ImportMapping {
     mapping: unknown;
 }
 
+export interface ImportRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    accountId: EntityId;
+    candidates: ImportCandidate[];
+}
+
 export interface ImportRow {
     sourceRow: PositiveOrdinal;
     candidate: ImportCandidate | null;
@@ -277,6 +329,20 @@ export interface KeyRosterMember {
     role: Role;
 }
 
+export interface LocalCheckpointRestoreRequest {
+    expected: LocalCommitCheckpoint;
+    originalBackup: EncryptedBackupReceipt;
+    ciphertext: number[];
+    restoredEpoch: EntityId;
+}
+
+export interface LocalCommitCheckpoint {
+    checkpointVersion: number;
+    physicalSchemaVersion: number;
+    snapshot: LocalSnapshot;
+    operations: LocalReceiptEntry[];
+}
+
 export interface LocalCommitReceipt {
     identity: LocalOperationIdentity;
     contentHash: FileHash;
@@ -312,6 +378,11 @@ export interface LocalPortRequestV2 {
     command: LocalPortCommand;
 }
 
+export interface LocalReceiptEntry {
+    request: LocalCommitRequest;
+    receipt: LocalCommitReceipt;
+}
+
 export interface LocalSnapshot {
     storageSchemaVersion: SnapshotStorageVersion;
     domainSchemaVersion: SnapshotDomainVersion;
@@ -323,6 +394,25 @@ export interface LocalSnapshot {
     pending: PendingOperation[];
     projections: StoredProjection[];
     syncState?: SyncState;
+}
+
+export interface MoneyParseRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    text: string;
+}
+
+export interface OpaqueAggregateHead {
+    handle: PublicId;
+    revision: PublicRevision;
+    ciphertextHash: Base64Url;
+}
+
+export interface OperationReceiptRecord {
+    key: ServerOperationKey;
+    contentHash: Base64Url;
+    cursor: string;
 }
 
 export interface Payee {
@@ -397,6 +487,13 @@ export interface PublicError {
     requestId?: NonEmptyString;
 }
 
+export interface PublicIdentityRecord {
+    identityId: PublicId;
+    revision: PublicRevision;
+    issuer: string;
+    subject: string;
+}
+
 export interface PublicValidationOutcome {
     contractVersion: number;
     status: PublicValidationStatus;
@@ -426,6 +523,31 @@ export interface ReconciliationUnlock {
     reconciliationId: EntityId;
 }
 
+export interface Request {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    command: Command;
+    expectedRevisions: Expectation[];
+    context: Context;
+}
+
+export interface ReverseRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    expectedRevisions: Expectation[];
+    context: Context;
+    targets: NonEmptyVec<ReverseTarget>;
+}
+
+export interface ReverseTarget {
+    id: EntityId;
+    previous?: Aggregate;
+}
+
 export interface RevisionExpectation {
     handle: EntityId;
     expectedRevision: Revision;
@@ -453,6 +575,14 @@ export interface RuleCondition {
 
 export interface RuleReorder {
     ruleIds: EntityId[];
+}
+
+export interface RuleRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    aggregates: Aggregate[];
+    candidate: ImportCandidate;
 }
 
 export interface SaveCommand {
@@ -493,9 +623,29 @@ export interface ScheduleOccurrence {
     transactionId?: EntityId;
 }
 
+export interface ScheduleRequest {
+    contractVersion: EngineBindingVersion;
+    domainSchemaVersion: DomainSchemaVersion;
+    spaceId: EntityId;
+    scheduleId: EntityId;
+    aggregates: Aggregate[];
+    through: FinanceDate;
+}
+
 export interface ScheduleSkip {
     scheduleId: EntityId;
     dueDate: FinanceDate;
+}
+
+export interface ServerOperationKey {
+    spaceId: PublicId;
+    epoch: PublicId;
+    operationId: PublicId;
+}
+
+export interface ServerPersistenceFailure {
+    contractVersion: number;
+    code: ServerPersistenceCode;
 }
 
 export interface SignedKeyRoster {
@@ -636,11 +786,19 @@ export type AggregateKind = "Account" | "FinancialRevision" | "CategoryGroup" | 
 
 export type Base64Url = string;
 
+export type CalculationOutcome = { status: "money"; contractVersion: number; value: MoneyCents } | { status: "ruleApplied"; contractVersion: number; candidate: ImportCandidate; appliedRuleIds: EntityId[] } | { status: "classified"; contractVersion: number; rows: ClassificationRow[] } | { status: "dueDates"; contractVersion: number; dates: FinanceDate[] };
+
+export type CalculationRequest = ({ calculationType: "money.parse" } & MoneyParseRequest) | ({ calculationType: "rule.apply" } & RuleRequest) | ({ calculationType: "import.classify" } & ImportRequest) | ({ calculationType: "schedule.dueDates" } & ScheduleRequest);
+
 export type CategorySystem = "uncategorized";
+
+export type Classification = "new" | "duplicate" | "conflict";
 
 export type Clearance = "uncleared" | "cleared" | "reconciled";
 
 export type Command = ({ commandType: "account.save" } & SaveCommand) | ({ commandType: "categoryGroup.save" } & SaveCommand) | ({ commandType: "category.save" } & SaveCommand) | ({ commandType: "payee.save" } & SaveCommand) | ({ commandType: "transaction.save" } & SaveCommand) | ({ commandType: "transfer.save" } & SaveCommand) | ({ commandType: "importMapping.save" } & SaveCommand) | ({ commandType: "importBatch.save" } & SaveCommand) | ({ commandType: "rule.save" } & SaveCommand) | ({ commandType: "schedule.save" } & SaveCommand) | ({ commandType: "account.archive" } & AggregateCommand) | ({ commandType: "category.archive" } & AggregateCommand) | ({ commandType: "transaction.delete" } & AggregateCommand) | ({ commandType: "transfer.delete" } & AggregateCommand) | ({ commandType: "rule.delete" } & AggregateCommand) | ({ commandType: "payee.merge" } & PayeeMerge) | ({ commandType: "reconciliation.confirm" } & ReconciliationConfirm) | ({ commandType: "reconciliation.unlock" } & ReconciliationUnlock) | ({ commandType: "rule.reorder" } & RuleReorder) | ({ commandType: "import.commit" } & ImportCommit) | ({ commandType: "schedule.confirm" } & ScheduleConfirm) | ({ commandType: "schedule.skip" } & ScheduleSkip);
+
+export type CommandOutcomeV2 = { status: "changed"; contractVersion: number; changeSet: ChangeSet } | { status: "unchanged"; contractVersion: number };
 
 export type CommitOutcomeV2 = { status: "committed"; contractVersion: number; value: LocalPortOutcomeV2 } | { status: "notCommitted"; contractVersion: number; code: PersistenceErrorCode } | { status: "unknown"; contractVersion: number; operationId: EntityId };
 
@@ -739,6 +897,8 @@ export type Revision = number;
 export type Role = "admin" | "member" | "viewer";
 
 export type RuleAction = { field: "categoryId"; value: EntityId } | { field: "payeeId"; value: EntityId } | { field: "clearance"; value: ImportClearance };
+
+export type ServerPersistenceCode = "REVISION_CONFLICT" | "QUOTA" | "WRITE_FAILED" | "UPDATE_REQUIRED" | "EPOCH_MISMATCH" | "OPERATION_ID_REUSED" | "CANCELLED" | "RESOURCE_UNAVAILABLE";
 
 export type SnapshotDomainVersion = number;
 

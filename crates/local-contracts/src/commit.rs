@@ -68,7 +68,7 @@ pub trait SnapshotValidationPort {
 }
 
 #[cfg(feature = "contract-schema")]
-struct OperationContractVersionSchema;
+pub(crate) struct OperationContractVersionSchema;
 #[cfg(feature = "contract-schema")]
 impl schemars::JsonSchema for OperationContractVersionSchema {
     fn schema_name() -> std::borrow::Cow<'static, str> {
@@ -77,4 +77,13 @@ impl schemars::JsonSchema for OperationContractVersionSchema {
     fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
         schemars::json_schema!({"type":"integer","const":1})
     }
+}
+
+/// Abbruch wird vor dem neuen Commit beobachtet; bereits bestätigte Receipts bleiben bestätigt.
+pub trait CancellableLocalCommitPort: LocalCommitPort {
+    fn commit_cancellable(
+        &mut self,
+        request: LocalCommitRequest,
+        cancellation: &dyn crate::storage_port::CancellationPort,
+    ) -> LocalCommitOutcome;
 }

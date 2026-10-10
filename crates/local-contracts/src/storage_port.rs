@@ -23,10 +23,10 @@ pub trait LocalStoragePort {
 pub trait CancellationPort {
     fn is_cancelled(&self) -> bool;
 }
-pub trait SnapshotProtectionPort {
+pub trait SnapshotProtectionPort<S = LocalSnapshot> {
     type Error;
-    fn seal(&self, snapshot: LocalSnapshot) -> Result<Vec<u8>, Self::Error>;
-    fn unseal(&self, bytes: &[u8]) -> Result<LocalSnapshot, Self::Error>;
+    fn seal(&self, snapshot: S) -> Result<Vec<u8>, Self::Error>;
+    fn unseal(&self, bytes: &[u8]) -> Result<S, Self::Error>;
 }
 pub trait BackupPort {
     type Error;
@@ -51,4 +51,16 @@ pub trait ProfileStorePort {
         expected_revision: crate::scalars::LocalRevision,
         profile: LegacyJson,
     ) -> Result<LegacyJson, Self::Error>;
+}
+
+/// Rücklesen bestätigt die tatsächliche Speicherung des verschlüsselten Originals.
+pub trait BackupReadPort: BackupPort {
+    fn read(&self, receipt: &crate::models::EncryptedBackupReceipt)
+    -> Result<Vec<u8>, Self::Error>;
+}
+pub struct NeverCancel;
+impl CancellationPort for NeverCancel {
+    fn is_cancelled(&self) -> bool {
+        false
+    }
 }

@@ -28,6 +28,7 @@
   ],
   "generators": {
     "uniffi": "0.32.2",
-    "wasmBindgen": "0.2.129"
+    "wasmBindgen": "0.2.129",
+    "rustWasmCodegenUnits": 1
   }
 }

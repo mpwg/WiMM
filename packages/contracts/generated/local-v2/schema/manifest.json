@@ -21,6 +21,9 @@
     }
   ],
   "files": [
+    "local-checkpoint-restore.schema.json",
+    "local-commit-checkpoint.schema.json",
+    "local-receipt-entry.schema.json",
     "local-commit-result.schema.json",
     "local-operation-identity.schema.json",
     "local-commit-request.schema.json",

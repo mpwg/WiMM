@@ -5,7 +5,8 @@
   "scope": "calculate, execute, reverse, project und validate nativ/WASM; private Modelle TS/Swift/Kotlin; vollständige private Engineaktionen",
   "generators": {
     "uniffi": "0.32.2",
-    "wasmBindgen": "0.2.129"
+    "wasmBindgen": "0.2.129",
+    "rustWasmCodegenUnits": 1
   },
   "files": [
     "swift/WiMMCore.swift",

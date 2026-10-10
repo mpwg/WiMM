@@ -5,6 +5,18 @@ use schemars::Schema;
 pub fn exports() -> Vec<(&'static str, Schema)> {
     vec![
         (
+            "local-checkpoint-restore.schema.json",
+            schemars::schema_for!(crate::checkpoint::LocalCheckpointRestoreRequest),
+        ),
+        (
+            "local-commit-checkpoint.schema.json",
+            schemars::schema_for!(crate::checkpoint::LocalCommitCheckpoint),
+        ),
+        (
+            "local-receipt-entry.schema.json",
+            schemars::schema_for!(crate::checkpoint::LocalReceiptEntry),
+        ),
+        (
             "local-commit-result.schema.json",
             schemars::schema_for!(crate::commit::LocalCommitOutcome),
         ),

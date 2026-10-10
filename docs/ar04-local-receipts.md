@@ -41,3 +41,28 @@ Ein breiter zusätzlicher `pnpm check:ci`-Versuch scheiterte am bestehenden sepa
 #118 bleibt offen für vollständige gesicherte Schema-/Receiptbackup-/Restore-Kompatibilität und den verlangten Nachweis der Abbruchsemantik. Keine Produktumschaltung, keine vollständige Implementierung aller SQLite-Storage-/Index-/Migrationsports und keine #108/#109-/Gesamtarchitektur-/P6–P11-/Releaseabnahme aus diesem Abschnitt. Fortschritt und alle verbleibenden Kriterien ausschließlich in #118.
 
 Der separate [Ubuntu-Leistungsjob desselben Commits](https://github.com/mpwg/WiMM/actions/runs/38031346187/job/114152813867) ist fehlgeschlagen: Web kalt 2.463,0 ms statt unter 2.000 ms, Desktop-Frontend kalt 1.429,8 ms. Warme Reaktionen innerhalb Grenzen. Neuer aktueller Befund [#136](https://github.com/mpwg/WiMM/issues/136); keine Ursachenzuordnung zum nicht produktiv angeschlossenen Rust-DAL aus diesem Einzelvergleich und keine Gesamt-CI-Freigabe aus dem erfolgreichen DAL-Job.
+
+## Vollständiger Folgeabschnitt — lokale Abnahme am 10. Oktober 2026
+
+Neue private `LocalCommitCheckpoint`-Form eins mit physischer Schemaversion eins bewahrt konsistenten Datenstand und ursprüngliche Request-/Receipteinträge. Bestehende Snapshot-/Export-/Crypto-/Bindingdimensionen bleiben unverändert. Der erste Commitstore weist bestätigte/Syncdaten ausdrücklich ab; diese werden bis zum vollständigen DAL-Ausbau nicht still verworfen. ADR-055 beschreibt die technische Konkretisierung.
+
+`backup_checkpoint` prüft den tatsächlichen Fach-/Cachestand über den injizierten Fachkern, verschlüsselt über den vorhandenen SnapshotProtectionPort und verlangt dauerhaftes Speichern und bytegleiches Rücklesen durch BackupReadPort. Vor destruktivem Restore müssen Receiptmetadaten und gesamter Checkpointhash zum Original passen. Der aktuelle SQLite-Stand wird einschließlich Receiptbestand unter derselben Transaktion erneut verglichen. Restore verwendet ausschließlich die vorbereitete Clientepoche, erhält bekannte historische Receipts und weist Inhaltskollisionen/fremde Bereiche ab. Fehler und Abbruch rollen alle Datenänderungen zurück. Keine Klartext-Sicherungsdatei oder produktive Speicherumschaltung.
+
+Tatsächliche native Abnahme: elf Memorytests, sechs SQLite-Receiptfälle und vier zusätzliche SQLite-Abbruch-/Backup-/Restore-/Schemafälle. Darin mehrere negative Unterfälle: fehlende Ausgangssicherung, Backupfehler, falscher Schlüssel, manipuliertes Chiffrat, fremdes Profil, ungültiger Finanzcache, Abbruch, Fehler nach tatsächlichem Datenersatz, konkurrierender Write zwischen Sicherung/Restore und unsupported/fremdes Schema. Native Tests verschlüsseln mit der tatsächlichen bestehenden Rust/libsodium-Implementierung, speichern Chiffrat in einer echten Datei und rufen sync_all vor Rücklesen auf. Finanzvalidierung bleibt ausschließlich im tatsächlich injizierten Rust-Fachkern.
+
+Chromium/Firefox lokal: je sieben echte SQLite/WASM-/OPFS-Fälle mit dauerhaften Browserprofilen, unabhängigem Rust-Cryptomodul und tatsächlichem OPFS-SyncAccessHandle für verschlüsselte Ausgangssicherung (write/flush/read). Nach Restore wird die Verbindung neu geöffnet; ursprüngliche Receipts bleiben unverändert auffindbar. Vor COMMIT beobachteter Abbruch erzeugt notCommitted/CANCELLED und Rollback; nach tatsächlichem COMMIT beobachteter Abbruch bleibt committed. Verspäteter Abbruch bei bekannter Wiederholung deutet das ursprüngliche Ergebnis nicht um. Ein unabhängiger vollständiger Drei-Browser-Lauf folgt nach Veröffentlichung, bis dahin kein neuer lokaler WebKitbeleg.
+
+Native Checkpoint-Serde-/Versions-/Scope-/Receiptkorrelationsguards und ein ergänzender AJV-Schematest bestehen. Neue drei Formschemas und Swift-/Kotlin-/TS-Datenmodelle aus Rust generiert; vorhandene Swift/Kotlin-Portorakel tatsächlich erneut ausgeführt. Relationale Guards und Inhaltshashprüfung bleiben zusätzlich zum Standardschema Pflicht.
+
+Reproduktion:
+
+```sh
+cargo test --locked -p wimm-local-dal --all-features
+cargo test --locked -p wimm-local-contracts
+pnpm test:storage:receipts
+pnpm test:contracts:ports:native
+pnpm test:contracts:local
+pnpm check:contracts:generated
+```
+
+Zusätzlicher CI-Befund [#137](https://github.com/mpwg/WiMM/issues/137): Tsify-Deklarationscustomsections wurden abhängig von der Codegen-Aufteilung teilweise verworfen. Der Vertragsgenerator baut WASM nun ausdrücklich mit einem gemeinsamen Codegen-Unit, erfasst vollständige unveränderte Rust-Deklarationen und erhält die strenge byteweise/negative Driftprüfung. Kein Entfernen zusätzlicher Typen, Abschwächen von unsafe/Warnungen oder Ändern von Golden-Katalogen. Lokale Generierung und Checkmodus bestanden; unabhängiger Ubuntu-Nachweis folgt. Die normale Produkt-Runtime-Buildkonfiguration wird dadurch nicht global geändert.

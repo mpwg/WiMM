@@ -1636,6 +1636,102 @@ public object FfiConverterTypeImportedFile: FfiConverterRustBuffer<ImportedFile>
 
 
 
+data class LocalCheckpointRestoreRequest (
+    var `expected`: LocalCommitCheckpoint
+    ,
+    var `originalBackup`: EncryptedBackupReceipt
+    ,
+    var `ciphertext`: kotlin.ByteArray
+    ,
+    var `restoredEpoch`: EntityId
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalCheckpointRestoreRequest: FfiConverterRustBuffer<LocalCheckpointRestoreRequest> {
+    override fun read(buf: ByteBuffer): LocalCheckpointRestoreRequest {
+        return LocalCheckpointRestoreRequest(
+            FfiConverterTypeLocalCommitCheckpoint.read(buf),
+            FfiConverterTypeEncryptedBackupReceipt.read(buf),
+            FfiConverterByteArray.read(buf),
+            FfiConverterTypeEntityId.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalCheckpointRestoreRequest) = (
+            FfiConverterTypeLocalCommitCheckpoint.allocationSize(value.`expected`) +
+            FfiConverterTypeEncryptedBackupReceipt.allocationSize(value.`originalBackup`) +
+            FfiConverterByteArray.allocationSize(value.`ciphertext`) +
+            FfiConverterTypeEntityId.allocationSize(value.`restoredEpoch`)
+    )
+
+    override fun write(value: LocalCheckpointRestoreRequest, buf: ByteBuffer) {
+            FfiConverterTypeLocalCommitCheckpoint.write(value.`expected`, buf)
+            FfiConverterTypeEncryptedBackupReceipt.write(value.`originalBackup`, buf)
+            FfiConverterByteArray.write(value.`ciphertext`, buf)
+            FfiConverterTypeEntityId.write(value.`restoredEpoch`, buf)
+    }
+}
+
+
+
+data class LocalCommitCheckpoint (
+    var `checkpointVersion`: kotlin.UInt
+    ,
+    var `physicalSchemaVersion`: kotlin.UInt
+    ,
+    var `snapshot`: LocalSnapshot
+    ,
+    var `operations`: List<LocalReceiptEntry>
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalCommitCheckpoint: FfiConverterRustBuffer<LocalCommitCheckpoint> {
+    override fun read(buf: ByteBuffer): LocalCommitCheckpoint {
+        return LocalCommitCheckpoint(
+            FfiConverterUInt.read(buf),
+            FfiConverterUInt.read(buf),
+            FfiConverterTypeLocalSnapshot.read(buf),
+            FfiConverterSequenceTypeLocalReceiptEntry.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalCommitCheckpoint) = (
+            FfiConverterUInt.allocationSize(value.`checkpointVersion`) +
+            FfiConverterUInt.allocationSize(value.`physicalSchemaVersion`) +
+            FfiConverterTypeLocalSnapshot.allocationSize(value.`snapshot`) +
+            FfiConverterSequenceTypeLocalReceiptEntry.allocationSize(value.`operations`)
+    )
+
+    override fun write(value: LocalCommitCheckpoint, buf: ByteBuffer) {
+            FfiConverterUInt.write(value.`checkpointVersion`, buf)
+            FfiConverterUInt.write(value.`physicalSchemaVersion`, buf)
+            FfiConverterTypeLocalSnapshot.write(value.`snapshot`, buf)
+            FfiConverterSequenceTypeLocalReceiptEntry.write(value.`operations`, buf)
+    }
+}
+
+
+
 data class LocalCommitReceipt (
     var `identity`: LocalOperationIdentity
     ,
@@ -1884,6 +1980,44 @@ public object FfiConverterTypeLocalPortRequestV2: FfiConverterRustBuffer<LocalPo
     override fun write(value: LocalPortRequestV2, buf: ByteBuffer) {
             FfiConverterTypeEngineBindingVersion.write(value.`contractVersion`, buf)
             FfiConverterTypeLocalPortCommand.write(value.`command`, buf)
+    }
+}
+
+
+
+data class LocalReceiptEntry (
+    var `request`: LocalCommitRequest
+    ,
+    var `receipt`: LocalCommitReceipt
+
+){
+
+
+
+
+
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeLocalReceiptEntry: FfiConverterRustBuffer<LocalReceiptEntry> {
+    override fun read(buf: ByteBuffer): LocalReceiptEntry {
+        return LocalReceiptEntry(
+            FfiConverterTypeLocalCommitRequest.read(buf),
+            FfiConverterTypeLocalCommitReceipt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: LocalReceiptEntry) = (
+            FfiConverterTypeLocalCommitRequest.allocationSize(value.`request`) +
+            FfiConverterTypeLocalCommitReceipt.allocationSize(value.`receipt`)
+    )
+
+    override fun write(value: LocalReceiptEntry, buf: ByteBuffer) {
+            FfiConverterTypeLocalCommitRequest.write(value.`request`, buf)
+            FfiConverterTypeLocalCommitReceipt.write(value.`receipt`, buf)
     }
 }
 
@@ -4387,6 +4521,34 @@ public object FfiConverterSequenceTypeConfirmedAggregate: FfiConverterRustBuffer
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeConfirmedAggregate.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeLocalReceiptEntry: FfiConverterRustBuffer<List<LocalReceiptEntry>> {
+    override fun read(buf: ByteBuffer): List<LocalReceiptEntry> {
+        val len = buf.getInt()
+        return List<LocalReceiptEntry>(len) {
+            FfiConverterTypeLocalReceiptEntry.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<LocalReceiptEntry>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeLocalReceiptEntry.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<LocalReceiptEntry>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeLocalReceiptEntry.write(it, buf)
         }
     }
 }

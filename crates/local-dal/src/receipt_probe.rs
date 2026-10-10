@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Ausschließlich synthetischer AR04-Prüfeinstieg; keine Produkt-/Bindingumschaltung.
-use crate::sqlite_commit::SqliteCommitStore;
+use crate::sqlite_commit::{CommitBoundary, SqliteCommitStore};
+use std::{cell::Cell, rc::Rc};
 use wimm_finance_types::scalars::EntityId;
+use wimm_local_contracts::storage_port::CancellationPort;
 use wimm_local_contracts::{commit::*, persistence_errors::*};
 #[derive(serde::Deserialize)]
 #[serde(
@@ -21,6 +23,12 @@ enum Request {
         fail_before_receipt: bool,
         #[serde(default)]
         lose_response: bool,
+        #[serde(default)]
+        cancel_before_commit: bool,
+        #[serde(default)]
+        cancel_after_commit: bool,
+        #[serde(default)]
+        cancel_before_start: bool,
     },
     Lookup {
         identity: LocalOperationIdentity,
@@ -42,6 +50,9 @@ pub fn run(db: &mut SqliteCommitStore, json: &str) -> Result<String, StorageFail
             request,
             fail_before_receipt,
             lose_response,
+            cancel_before_commit,
+            cancel_after_commit,
+            cancel_before_start,
         } => {
             if fail_before_receipt {
                 db.inject_before_receipt_failure();
@@ -49,7 +60,18 @@ pub fn run(db: &mut SqliteCommitStore, json: &str) -> Result<String, StorageFail
             if lose_response {
                 db.inject_after_commit_response_loss();
             }
-            serde_json::to_value(db.commit(request))
+            let flag = Rc::new(Cell::new(cancel_before_start));
+            let token = ProbeCancellation(flag.clone());
+            db.observe_commit(move |event| {
+                if cancel_before_commit && event == CommitBoundary::AfterWrites
+                    || cancel_after_commit && event == CommitBoundary::AfterCommit
+                {
+                    flag.set(true)
+                }
+            });
+            let result = db.commit_cancellable(request, &token);
+            db.observe_commit(|_| {});
+            serde_json::to_value(result)
                 .map_err(|_| StorageFailure::unknown(StorageFailureCode::InvalidResponse))?
         }
         Request::Lookup { identity } => serde_json::to_value(db.lookup_result(&identity)?)
@@ -60,9 +82,16 @@ pub fn run(db: &mut SqliteCommitStore, json: &str) -> Result<String, StorageFail
     };
     Ok(value.to_string())
 }
+struct ProbeCancellation(Rc<Cell<bool>>);
+impl CancellationPort for ProbeCancellation {
+    fn is_cancelled(&self) -> bool {
+        self.0.get()
+    }
+}
 #[cfg(target_family = "wasm")]
 mod browser {
     use super::*;
+    mod checkpoint_environment;
     use std::cell::RefCell;
     use wasm_bindgen::prelude::*;
     thread_local! { static DB:RefCell<Option<SqliteCommitStore>>=const {RefCell::new(None)}; }
@@ -84,12 +113,25 @@ mod browser {
     }
     #[wasm_bindgen]
     pub fn receipt_probe_request(json: &str) -> Result<String, JsValue> {
-        DB.with(|slot| slot.borrow_mut().as_mut().map(|db| run(db, json)))
-            .ok_or_else(|| {
-                error(StorageFailure::not_committed(
-                    StorageFailureCode::ResourceUnavailable,
-                ))
-            })?
-            .map_err(error)
+        DB.with(|slot| {
+            slot.borrow_mut().as_mut().map(|db| {
+                let method: serde_json::Value = serde_json::from_str(json).map_err(|_| {
+                    StorageFailure::not_committed(StorageFailureCode::InvalidResponse)
+                })?;
+                if ["checkpoint", "sealCheckpoint", "backup", "restore"]
+                    .contains(&method["method"].as_str().unwrap_or(""))
+                {
+                    checkpoint_environment::run(db, json)
+                } else {
+                    run(db, json)
+                }
+            })
+        })
+        .ok_or_else(|| {
+            error(StorageFailure::not_committed(
+                StorageFailureCode::ResourceUnavailable,
+            ))
+        })?
+        .map_err(error)
     }
 }

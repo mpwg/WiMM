@@ -2460,6 +2460,7 @@ dependencies = [
  "sqlite-wasm-vfs",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "wimm-client-crypto",
  "wimm-finance-core",
  "wimm-finance-types",
  "wimm-local-contracts",

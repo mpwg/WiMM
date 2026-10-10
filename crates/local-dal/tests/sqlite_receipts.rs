@@ -1,35 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 #![forbid(unsafe_code)]
 #![cfg(feature = "sqlite")]
-use wimm_finance_types::scalars::*;
 use wimm_local_contracts::{commit::*, persistence_errors::*};
 use wimm_local_dal::sqlite_commit::SqliteCommitStore;
 use wimm_persistence_contracts::CommitOutcome;
-fn id(n: u32) -> EntityId {
-    EntityId::new(format!("50000000-0000-4000-8000-{n:012}")).unwrap()
-}
-fn path(name: &str) -> std::path::PathBuf {
-    let root =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../test-results/ar04/native");
-    std::fs::create_dir_all(&root).unwrap();
-    root.join(format!(
-        "{name}-{}-{}.sqlite3",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_nanos()
-    ))
-}
-fn request(operation: u32, revision: u32) -> LocalCommitRequest {
-    let mut value: serde_json::Value =
-        serde_json::from_str(include_str!("fixtures/receipt-request.json")).unwrap();
-    value["identity"]["operationId"] = serde_json::to_value(id(operation)).unwrap();
-    value["batch"]["aggregates"][0]["revision"] = revision.into();
-    value["batch"]["expectedRevisions"][0]["expectedRevision"] = (revision - 1).into();
-    value["batch"]["outbox"][0]["operationId"] = serde_json::to_value(id(operation + 100)).unwrap();
-    serde_json::from_value(value).unwrap()
-}
+mod support;
+use support::*;
 
 #[test]
 fn persisted_receipt_resolves_lost_answer_without_repeating_write_after_reopen() {

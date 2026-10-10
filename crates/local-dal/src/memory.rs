@@ -458,8 +458,12 @@ impl<V: SnapshotValidationPort> wimm_local_contracts::storage_port::LocalStorage
         self.publish(next)
     }
 }
-impl<V: SnapshotValidationPort> LocalCommitPort for MemoryStorage<V> {
-    fn commit(&mut self, request: LocalCommitRequest) -> LocalCommitOutcome {
+impl<V: SnapshotValidationPort> MemoryStorage<V> {
+    fn commit_observing(
+        &mut self,
+        request: LocalCommitRequest,
+        cancellation: &dyn wimm_local_contracts::storage_port::CancellationPort,
+    ) -> LocalCommitOutcome {
         use sha2::{Digest, Sha256};
         use wimm_local_contracts::{Validate, storage_port::LocalStoragePort};
         use wimm_persistence_contracts::CommitOutcome as Outcome;
@@ -540,6 +544,11 @@ impl<V: SnapshotValidationPort> LocalCommitPort for MemoryStorage<V> {
             content_hash: wimm_finance_types::scalars::FileHash::new(hash).expect("SHA256-Hex"),
             committed_revisions: revisions,
         };
+        if cancellation.is_cancelled() {
+            return Outcome::NotCommitted {
+                error: error(StorageFailureCode::Cancelled),
+            };
+        }
         if let Err(error) = self.apply_atomic_batch(request.batch.clone()) {
             return Outcome::NotCommitted { error };
         }
@@ -551,6 +560,20 @@ impl<V: SnapshotValidationPort> LocalCommitPort for MemoryStorage<V> {
         } else {
             Outcome::Committed { value: receipt }
         }
+    }
+}
+impl<V: SnapshotValidationPort> CancellableLocalCommitPort for MemoryStorage<V> {
+    fn commit_cancellable(
+        &mut self,
+        request: LocalCommitRequest,
+        cancellation: &dyn wimm_local_contracts::storage_port::CancellationPort,
+    ) -> LocalCommitOutcome {
+        self.commit_observing(request, cancellation)
+    }
+}
+impl<V: SnapshotValidationPort> LocalCommitPort for MemoryStorage<V> {
+    fn commit(&mut self, request: LocalCommitRequest) -> LocalCommitOutcome {
+        self.commit_observing(request, &wimm_local_contracts::storage_port::NeverCancel)
     }
     fn lookup_result(
         &self,

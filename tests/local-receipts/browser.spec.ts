@@ -73,3 +73,50 @@ test('Tatsächlicher Browserprozessneustart löst verlorenes Ergebnis aus dauerh
     expect(await inspect(after)).toEqual(before);
   } finally { await context.close(); await rm(directory, { recursive: true, force: true }); }
 });
+test('OPFS: Abbruch an realen Write-/Commitgrenzen erhält die Commitgewissheit', async ({ page }) => {
+  const profile=randomUUID();await open(page,profile);await initialize(page);const original=request(profile);
+  const cancelled=await call(page,{method:'commit',request:original,cancelBeforeCommit:true});
+  expect(cancelled.status).toBe('notCommitted');expect(cancelled.error).toMatchObject({code:'CANCELLED'});
+  expect(await inspect(page)).toEqual({aggregate:null,pending:[],projections:[]});
+  expect(await call(page,{method:'lookup',identity:original.identity})).toBeNull();
+  const late=await call(page,{method:'commit',request:original,cancelAfterCommit:true});
+  expect(late.status).toBe('committed');expect(await call(page,{method:'lookup',identity:original.identity})).toEqual(late.value);
+  expect(await call(page,{method:'commit',request:original,cancelBeforeStart:true})).toEqual(late);
+});
+test('OPFS: verschlüsseltes Original, Restore-CAS/Rollback und erhaltene Receipts', async ({ page }) => {
+  const profile=randomUUID();await open(page,profile);await initialize(page);const first=request(profile);
+  expect((await call(page,{method:'commit',request:first})).status).toBe('committed');
+  const old=await call(page,{method:'checkpoint',spaceId:id(2)});
+  const cipher=await call(page,{method:'sealCheckpoint',checkpoint:old});
+  const second=request(profile,31,2);expect((await call(page,{method:'commit',request:second})).status).toBe('committed');
+  const before=await call(page,{method:'checkpoint',spaceId:id(2)});
+  expect((await call(page,{method:'backup',spaceId:id(2),testFailBackup:true})).status).toBe('notCommitted');
+  expect(await call(page,{method:'checkpoint',spaceId:id(2)})).toEqual(before);
+  const saved=await call(page,{method:'backup',spaceId:id(2)});expect(saved,JSON.stringify(saved)).toHaveProperty('checkpoint');
+  const restore={expected:saved.checkpoint,originalBackup:saved.receipt,ciphertext:cipher,restoredEpoch:id(99)};
+  expect((await call(page,{method:'restore',request:restore,testWrongKey:true})).status).toBe('notCommitted');
+  const foreign=structuredClone(restore);(foreign.originalBackup as {profileId:string}).profileId=randomUUID();
+  expect((await call(page,{method:'restore',request:foreign})).status).toBe('notCommitted');
+  const tampered=structuredClone(restore);const bytes=tampered.ciphertext as unknown as number[];bytes[15]=bytes[15]!^1;
+  expect((await call(page,{method:'restore',request:tampered})).status).toBe('notCommitted');
+  expect((await call(page,{method:'restore',request:restore,cancelled:true})).status).toBe('notCommitted');
+  expect((await call(page,{method:'restore',request:restore,failBeforeReceipt:true})).status).toBe('notCommitted');
+  expect(await call(page,{method:'checkpoint',spaceId:id(2)})).toEqual(before);
+  const restored=await call(page,{method:'restore',request:restore});expect(restored,JSON.stringify(restored)).toMatchObject({status:'restored'});
+  await page.reload();await expect.poll(()=>page.evaluate(()=>window.receiptProofStatus)).toBe('ready');
+  expect(await call(page,{method:'lookup',identity:first.identity})).not.toBeNull();
+  expect(await call(page,{method:'commit',request:second})).toMatchObject({status:'committed'});
+  const state=await inspect(page);expect(state.aggregate).toMatchObject({revision:1});
+  expect((await call(page,{method:'restore',request:restore})).error).toMatchObject({code:'REVISION_CONFLICT'});
+});
+
+test('OPFS: zwischen Sicherung und Restore geschriebene Daten bleiben vollständig erhalten', async ({page})=>{
+  const profile=randomUUID();await open(page,profile);await initialize(page);
+  const first=request(profile);expect((await call(page,{method:'commit',request:first})).status).toBe('committed');
+  const saved=await call(page,{method:'backup',spaceId:id(2)});expect(saved).toHaveProperty('checkpoint');
+  const cipher=await call(page,{method:'sealCheckpoint',checkpoint:saved.checkpoint});
+  const second=request(profile,31,2);expect((await call(page,{method:'commit',request:second})).status).toBe('committed');
+  const before=await call(page,{method:'checkpoint',spaceId:id(2)});
+  const result=await call(page,{method:'restore',request:{expected:saved.checkpoint,originalBackup:saved.receipt,ciphertext:cipher,restoredEpoch:id(99)}});
+  expect(result.error).toMatchObject({code:'REVISION_CONFLICT'});expect(await call(page,{method:'checkpoint',spaceId:id(2)})).toEqual(before);
+});

@@ -8,6 +8,9 @@
     "swift/WiMMLocalTypesFFI.modulemap",
     "kotlin/org/wimm/localcontracts/wimm_local_contracts.kt",
     "wasm/wimm_local_contracts.d.ts",
+    "schema/local-checkpoint-restore.schema.json",
+    "schema/local-commit-checkpoint.schema.json",
+    "schema/local-receipt-entry.schema.json",
     "schema/local-commit-result.schema.json",
     "schema/local-operation-identity.schema.json",
     "schema/local-commit-request.schema.json",
@@ -49,6 +52,7 @@
   ],
   "generators": {
     "uniffi": "0.32.2",
-    "wasmBindgen": "0.2.129"
+    "wasmBindgen": "0.2.129",
+    "rustWasmCodegenUnits": 1
   }
 }

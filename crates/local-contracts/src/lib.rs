@@ -2,6 +2,7 @@
 //! Lokale Port-/Migrationsmetadaten; keine Speicherung oder Finanzregeln.
 #![forbid(unsafe_code)]
 pub mod api;
+pub mod checkpoint;
 pub mod commit;
 pub mod errors;
 pub mod index_ports;
