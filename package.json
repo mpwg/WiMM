@@ -1,15 +1,23 @@
 {
-  "name": "WiMM",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "wimm",
+  "version": "0.1.0",
+  "description": "Portable personal finance core and browser bindings",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cargo test --workspace --locked",
+    "check": "cargo fmt --all --check && cargo clippy --workspace --all-targets --locked -- -D warnings",
+    "build:browser": "node scripts/build-browser.mjs",
+    "test:browser": "sh scripts/test-browser.sh"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "AGPL-3.0-only",
   "dependencies": {
     "turbo": "^2.11.8"
-  }
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  },
+  "private": true,
+  "packageManager": "pnpm@12.10.1"
 }

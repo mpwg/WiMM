@@ -1,0 +1,61 @@
+name: libWiMM
+on: [push, pull_request]
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
+      - run: cargo test --workspace --locked
+
+  mobile:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-linux-android
+      - uses: android-actions/setup-android@v3
+      - name: Install Android NDK
+        run: sdkmanager 'ndk;28.2.13676358'
+      - run: cargo check -p libwimm --locked --target aarch64-apple-ios
+      - name: Check Android core
+        env:
+          CC_aarch64_linux_android: aarch64-linux-android24-clang
+          AR_aarch64_linux_android: llvm-ar
+        run: |
+          export PATH="$ANDROID_HOME/ndk/28.2.13676358/toolchains/llvm/prebuilt/darwin-x86_64/bin:$PATH"
+          cargo check -p libwimm --locked --target aarch64-linux-android
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pnpm install --frozen-lockfile
+      - run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - run: cargo clippy -p wimm-wasm --target wasm32-unknown-unknown --locked -- -D warnings
+      - run: pnpm build:browser
+      - run: python3 -m pip install -r tests/browser/requirements.txt
+      - run: python3 -m playwright install --with-deps chromium firefox webkit
+      - run: sh scripts/test-browser.sh

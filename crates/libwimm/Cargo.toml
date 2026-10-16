@@ -1,0 +1,21 @@
+[package]
+name = "libwimm"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+diesel = { version = "~2.3.14", default-features = false, features = ["sqlite"] }
+diesel_migrations = { version = "2.3", features = ["sqlite"] }
+serde.workspace = true
+serde_json.workspace = true
+thiserror = "2"
+uuid = { version = "1", features = ["v4", "serde", "js"] }
+chrono = { version = "0.4", default-features = false, features = ["std"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+libsqlite3-sys = { version = "0.38", features = ["bundled"] }
+
+[dev-dependencies]
+tempfile = "3"
