@@ -1,0 +1,50 @@
+name: wimm
+x-runtime: &runtime
+  image: ${WIMM_IMAGE:?Set an immutable image reference}
+  user: "10001:10001"
+  env_file: .env
+  environment:
+    NODE_ENV: production
+    NITRO_HOST: 0.0.0.0
+    NITRO_PORT: "3000"
+    NUXT_DATABASE_PATH: /data/wimm.sqlite
+    NUXT_RECEIPTS_PATH: /data/receipts
+    NUXT_ACCESS_CONFIG_PATH: /config/access.json
+  volumes:
+    - data:/data
+    - ./deploy/access.json:/config/access.json:ro
+  init: true
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+services:
+  migrate:
+    <<: *runtime
+    command: [node, tools/manage.mjs, migrate]
+    restart: "no"
+  app:
+    <<: *runtime
+    command: [node, .output/server/index.mjs]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports: ["127.0.0.1:3000:3000"]
+    restart: unless-stopped
+    stop_grace_period: 30s
+    healthcheck:
+      test: [CMD, node, tools/manage.mjs, healthcheck]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+  ops:
+    <<: *runtime
+    profiles: [maintenance]
+    command: [node, tools/manage.mjs, help]
+    restart: "no"
+volumes:
+  data:

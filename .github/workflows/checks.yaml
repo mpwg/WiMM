@@ -1,0 +1,26 @@
+name: Checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  application:
+    runs-on: ubuntu-latest
+    env:
+      NUXT_SESSION_PASSWORD: ci-session-password-at-least-32-characters
+      NUXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@dd23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: cp deploy/access.example.json deploy/access.json
+      - run: pnpm db:migrate
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - run: docker build -t wimm:ci .

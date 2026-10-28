@@ -8,7 +8,7 @@ WiMM ist eine mobile-first Webanwendung für Einnahmen und Ausgaben. Mehrere Ben
 
 **Die Zielarchitektur ist eine Nuxt-Fullstack-Anwendung mit SQLite, betrieben als einzelner Anwendungscontainer hinter einem vorhandenen HTTPS-Reverse-Proxy.** Docker Compose installiert und startet die Anwendung einschließlich Datenbankmigrationen. Ein vorhandener OpenID-Connect-Dienst übernimmt die Anmeldung und liefert Gruppen für die Zugriffsrechte.
 
-Dieses Dokument legt die Architektur fest. Die beschriebenen Dateien, Befehle und Endpunkte sind Verträge für die folgende Implementierung; Anwendung, Containerimage, Compose-Datei und Verwaltungsbefehle existieren noch nicht. Der bisherige Repo-Inhalt ist experimentell und begründet keine Architekturentscheidung.
+Dieses Dokument legt die Zielarchitektur fest. Die technische Basis mit Nuxt, Datenbankschema, Migrationen, Containerdefinition, Compose und grundlegenden Verwaltungsbefehlen ist angelegt. Der aktuelle Umfang und die noch offenen Fachabläufe sind in der [README](../../README.md) dokumentiert. Die hier beschriebenen vollständigen Endpunkte, OIDC-, Import-, Beleg- und Backup-Abläufe bleiben bis zu ihrer Umsetzung verbindliche Implementierungsverträge.
 
 ### Annahmen und Grenzen
 

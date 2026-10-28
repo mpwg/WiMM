@@ -1,0 +1,16 @@
+import { test, expect } from '@playwright/test'
+test('application shell and health endpoints', async ({ page, request }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Einnahmen und Ausgaben')
+  await expect(page.getByText('Die Anwendung wird eingerichtet')).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+  expect((await request.get('/health/live')).status()).toBe(200)
+  const session = await request.get('/api/session')
+  expect(session.status()).toBe(401)
+  expect(session.headers()['cache-control']).toBe('no-store')
+  expect((await session.json()).error.code).toBe('unauthenticated')
+  expect((await request.get('/api/_auth/session')).status()).toBe(404)
+  const ready = await request.get('/health/ready')
+  expect(ready.status()).toBe(200)
+  expect(ready.headers()['cache-control']).toBe('no-store')
+})

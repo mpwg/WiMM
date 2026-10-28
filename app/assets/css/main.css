@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+:root { font-family: "Trebuchet MS", sans-serif; color: #17324d; background: #f3f7fb; }
+.shell { max-width: 64rem; margin: auto; padding: clamp(1.25rem, 5vw, 4rem); }
+header { display: flex; gap: 1.5rem; align-items: baseline; flex-wrap: wrap; padding-bottom: 2rem; border-bottom: 2px solid #cedce9; }
+.brand { font-size: 2rem; font-weight: 800; color: #255c85; }
+section { max-width: 42rem; padding-top: clamp(3rem, 10vw, 7rem); }
+h1 { font-size: clamp(2rem, 5vw, 3.25rem); line-height: 1.15; font-weight: 700; letter-spacing: -0.035em; }
+p { margin: 1.5rem 0 2.5rem; line-height: 1.6; }

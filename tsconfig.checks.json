@@ -1,0 +1,20 @@
+{
+  "extends": "./.nuxt/tsconfig.server.json",
+  "include": [
+    "tools/**/*.ts",
+    "tests/**/*.ts",
+    ".nuxt/types/**/*.d.ts",
+    "server/types.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".output"
+  ],
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": [
+      "ESNext",
+      "DOM"
+    ]
+  }
+}

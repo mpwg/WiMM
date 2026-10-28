@@ -1,0 +1,26 @@
+{
+  "workspaces": [
+    {
+      "id": "5ec8df94-adc0-4874-807a-98343ac9cff2",
+      "name": "Haushalt",
+      "currency": "EUR"
+    }
+  ],
+  "groupMappings": [
+    {
+      "group": "wimm-haushalt-owner",
+      "workspaceId": "5ec8df94-adc0-4874-807a-98343ac9cff2",
+      "role": "owner"
+    },
+    {
+      "group": "wimm-haushalt-editor",
+      "workspaceId": "5ec8df94-adc0-4874-807a-98343ac9cff2",
+      "role": "editor"
+    },
+    {
+      "group": "wimm-haushalt-reader",
+      "workspaceId": "5ec8df94-adc0-4874-807a-98343ac9cff2",
+      "role": "reader"
+    }
+  ]
+}
