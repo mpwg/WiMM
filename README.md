@@ -15,7 +15,7 @@ Die Oberfläche zeigt den Einrichtungszustand. Noch offen sind der vollständige
 
 ## Lokal starten
 
-Voraussetzungen: Node.js 24 (siehe `.node-version`) und pnpm 12.14.0.
+Voraussetzungen: Node.js 24 (siehe `.node-version`) und die in `package.json` angegebene pnpm-Version.
 
 ```sh
 pnpm install --frozen-lockfile
