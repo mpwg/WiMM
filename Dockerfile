@@ -2,7 +2,7 @@ FROM node:24.22.1-bookworm-slim@sha256:be8204d4bd327363357f532187b752ff62759c31b
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 WORKDIR /app
-RUN npm install --global pnpm@12.14.0
+RUN npm install --global pnpm@12.16.1
 
 FROM base AS build
 COPY . .
