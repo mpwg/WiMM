@@ -25,7 +25,7 @@
     "better-sqlite3": "13.0.3",
     "csv-parse": "7.0.3",
     "drizzle-orm": "0.45.4",
-    "jose": "6.2.13",
+    "jose": "6.2.14",
     "nuxt": "4.6.3",
     "nuxt-auth-utils": "0.5.33",
     "tailwindcss": "4.3.3",
