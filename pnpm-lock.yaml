@@ -201,8 +201,8 @@ importers:
         version: 4.6.7
     devDependencies:
       '@iconify-json/lucide':
-        specifier: 1.2.147
-        version: 1.2.147
+        specifier: 1.2.149
+        version: 1.2.149
       '@nuxt/test-utils':
         specifier: 4.3.4
         version: 4.3.4(c51c1ecd62942eab4dee0640ba60fbaa)
@@ -1043,8 +1043,8 @@ packages:
     peerDependencies:
       vue: '>=3.3.0'
 
-  '@iconify-json/lucide@1.2.147':
-    resolution: {integrity: sha512-7Qqa/joSBeUxihWsQJx5nKcqMWtV3YrH90Jldxcx4J9ciTLavRUlpexQwRTcx9dcb7CJpISfjZTj42zD/30sqA==}
+  '@iconify-json/lucide@1.2.149':
+    resolution: {integrity: sha512-5NG9YdbtRS03hG1A+EIE6nLhhdAYsf0mKu1ZRi6kLMlCG8DxmDsRM6DAhwlNMLiSiQKFbHpKTJ2VddZdwUkUyw==}
 
   '@iconify/collections@1.0.756':
     resolution: {integrity: sha512-Myq4OZLEeIyXqrrgHDxd5CnZZogEIVanGw6pwzcKaOKARobfiGaokZeVy0G/0iV8/AtUsNIsj8ETftt/K5B50w==}
@@ -5571,7 +5571,7 @@ snapshots:
       '@floating-ui/utils': 0.2.12
       vue: 3.5.44(typescript@6.0.3)
 
-  '@iconify-json/lucide@1.2.147':
+  '@iconify-json/lucide@1.2.149':
     dependencies:
       '@iconify/types': 2.0.0
 
