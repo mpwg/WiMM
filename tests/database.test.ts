@@ -1,7 +1,7 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, expect, it } from 'vitest'
+import { afterEach, expect, it } from 'bun:test'
 import { eq } from 'drizzle-orm'
 import { migrateDatabase, verifyDatabase } from '../server/db/lifecycle'
 import { openDatabase, type Connection } from '../server/db/client'
@@ -21,9 +21,9 @@ function setup() {
 it('migrates an empty file idempotently and detects mismatching migration history', () => {
   const connection = setup()
   verifyDatabase(connection)
-  expect(Number(connection.sqlite.pragma('foreign_keys', { simple: true }))).toBe(1)
-  expect(connection.sqlite.pragma('journal_mode', { simple: true })).toBe('wal')
-  expect(Number(connection.sqlite.pragma('synchronous', { simple: true }))).toBe(2)
+  expect(Number(connection.sqlite.query('PRAGMA foreign_keys').values()[0]?.[0])).toBe(1)
+  expect(connection.sqlite.query('PRAGMA journal_mode').values()[0]?.[0]).toBe('wal')
+  expect(Number(connection.sqlite.query('PRAGMA synchronous').values()[0]?.[0])).toBe(2)
   connection.sqlite.exec("UPDATE __drizzle_migrations SET hash = 'wrong'")
   expect(() => verifyDatabase(connection)).toThrow('migrations')
 })

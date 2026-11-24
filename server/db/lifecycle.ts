@@ -1,6 +1,6 @@
 import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
+import { migrate } from 'drizzle-orm/bun-sqlite/migrator'
 import { readMigrationFiles } from 'drizzle-orm/migrator'
 import { eq } from 'drizzle-orm'
 import type { AccessConfig } from '../../shared/schemas/access'
@@ -21,10 +21,10 @@ export function migrateDatabase(path: string, access: AccessConfig, folder = './
 
 export function verifyDatabase(connection: Connection, folder = './migrations') {
   const expected = readMigrationFiles({ migrationsFolder: folder })
-  const actual = connection.sqlite.prepare('SELECT hash FROM __drizzle_migrations ORDER BY id').all() as { hash: string }[]
+  const actual = connection.sqlite.query<{ hash: string }, []>('SELECT hash FROM __drizzle_migrations ORDER BY id').all()
   if (actual.length !== expected.length || actual.some((row, index) => row.hash !== expected[index]!.hash)) throw new Error('Database migrations do not match this application')
-  if (connection.sqlite.pragma('quick_check', { simple: true }) !== 'ok') throw new Error('Database integrity check failed')
-  if ((connection.sqlite.pragma('foreign_key_check') as unknown[]).length) throw new Error('Foreign key check failed')
+  if (connection.sqlite.query('PRAGMA quick_check').values()[0]?.[0] !== 'ok') throw new Error('Database integrity check failed')
+  if (connection.sqlite.query('PRAGMA foreign_key_check').all().length) throw new Error('Foreign key check failed')
 }
 
 export function verifyWorkspaces(connection: Connection, access: AccessConfig) {

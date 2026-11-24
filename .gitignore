@@ -12,4 +12,3 @@ playwright-report/
 test-results/
 *.log
 *.tsbuildinfo
-.pnpm-store/

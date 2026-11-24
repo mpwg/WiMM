@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm'
 import { sqliteTable, text, customType, unique, foreignKey, index, check } from 'drizzle-orm/sqlite-core'
 
-// better-sqlite3 returns every SQL integer as bigint to avoid losing money precision.
+// Bun SQLite in safe-integer mode returns every SQL integer as bigint to avoid losing money precision.
 // Narrow non-monetary integers explicitly at the schema boundary.
 const integer = customType<{ data: number, driverData: number | bigint }>({ dataType: () => 'integer', fromDriver: value => Number(value) })
 const boolean = customType<{ data: boolean, driverData: number | bigint }>({ dataType: () => 'integer', toDriver: value => value ? 1 : 0, fromDriver: value => value === 1 || value === 1n })

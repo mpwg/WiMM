@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'bun:test'
 import { decimalToCents, sumCents } from '../server/modules/finance/money'
 import { amountCentsSchema, bookingDateSchema } from '../shared/schemas/finance'
 describe('exact money and booking dates', () => {

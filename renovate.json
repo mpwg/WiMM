@@ -1,39 +1,39 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^Dockerfile$/"],
-      "matchStrings": ["npm install --global pnpm@(?<currentValue>[^\\s]+)"],
-      "depNameTemplate": "pnpm",
-      "datasourceTemplate": "npm"
-    }
+  "extends": [
+    "config:recommended"
   ],
   "packageRules": [
     {
-      "matchDatasources": ["npm"],
+      "matchDatasources": [
+        "npm"
+      ],
       "minimumReleaseAge": "1 day",
       "internalChecksFilter": "strict"
     },
     {
       "description": "Keep TypeScript on v6 until vue-tsc supports v7",
-      "matchDatasources": ["npm"],
-      "matchPackageNames": ["typescript"],
+      "matchDatasources": [
+        "npm"
+      ],
+      "matchPackageNames": [
+        "typescript"
+      ],
       "allowedVersions": "<7"
     },
     {
-      "matchPackageNames": ["pnpm"],
-      "groupName": "pnpm"
+      "matchPackageNames": [
+        "bun",
+        "oven/bun",
+        "@types/bun"
+      ],
+      "groupName": "Bun"
     },
     {
-      "matchPackageNames": ["node"],
-      "groupName": "Node.js"
-    },
-    {
-      "matchPackageNames": ["node", "@types/node"],
-      "matchUpdateTypes": ["major"],
-      "enabled": false
+      "matchPackageNames": [
+        "h3"
+      ],
+      "allowedVersions": "<2"
     }
   ]
 }

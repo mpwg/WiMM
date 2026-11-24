@@ -10,17 +10,15 @@ jobs:
       NUXT_TELEMETRY_DISABLED: "1"
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version-file: .node-version
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm test
+          bun-version-file: .bun-version
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run test
       - run: cp deploy/access.example.json deploy/access.json
-      - run: pnpm db:migrate
-      - run: pnpm build
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - run: bun run db:migrate
+      - run: bun run build
+      - run: bunx --bun --no-install playwright install --with-deps chromium
+      - run: bun run test:e2e
       - run: docker build -t wimm:ci .

@@ -2,10 +2,10 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-10-28',
   ssr: false,
   devtools: { enabled: false },
-  modules: ['@nuxt/ui', 'nuxt-auth-utils'],
+  modules: ['@nuxt/ui'],
   css: ['~/assets/css/main.css'],
   ui: { fonts: false },
-  nitro: { preset: 'node-server' },
+  nitro: { preset: 'node-server', ignore: ['modules/**'] },
   runtimeConfig: {
     databasePath: './.data/wimm.sqlite',
     receiptsPath: './.data/receipts',

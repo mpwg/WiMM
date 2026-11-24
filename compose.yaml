@@ -24,11 +24,11 @@ x-runtime: &runtime
 services:
   migrate:
     <<: *runtime
-    command: [node, tools/manage.mjs, migrate]
+    command: [bun, tools/manage.mjs, migrate]
     restart: "no"
   app:
     <<: *runtime
-    command: [node, .output/server/index.mjs]
+    command: [bun, .output/server/index.mjs]
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
     stop_grace_period: 30s
     healthcheck:
-      test: [CMD, node, tools/manage.mjs, healthcheck]
+      test: [CMD, bun, tools/manage.mjs, healthcheck]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -44,7 +44,7 @@ services:
   ops:
     <<: *runtime
     profiles: [maintenance]
-    command: [node, tools/manage.mjs, help]
+    command: [bun, tools/manage.mjs, help]
     restart: "no"
 volumes:
   data:

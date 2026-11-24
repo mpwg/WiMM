@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest'
+import { expect, it } from 'bun:test'
 import { accessConfigSchema } from '../shared/schemas/access'
 import { requireAccess } from '../server/modules/identity/access'
 const a = '5ec8df94-adc0-4874-807a-98343ac9cff2'
