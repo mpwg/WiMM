@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 test('application shell and health endpoints', async ({ page, request }) => {
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Einnahmen und Ausgaben')
-  await expect(page.getByText('Die Anwendung wird eingerichtet')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Anmelden' })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
   expect((await request.get('/health/live')).status()).toBe(200)
   const session = await request.get('/api/session')

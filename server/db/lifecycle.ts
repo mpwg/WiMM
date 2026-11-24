@@ -11,18 +11,29 @@ export function migrateDatabase(path: string, access: AccessConfig, folder = './
   mkdirSync(dirname(path), { recursive: true })
   const connection = openDatabase(path)
   try {
+    verifyMigrationHistory(connection, folder, true)
     migrate(connection.db, { migrationsFolder: folder })
+    verifyDatabase(connection, folder)
     connection.db.transaction(tx => {
       for (const workspace of access.workspaces) tx.insert(workspaces).values(workspace).onConflictDoUpdate({ target: workspaces.id, set: { name: workspace.name, currency: workspace.currency } }).run()
     })
-    verifyDatabase(connection, folder)
   } finally { connection.sqlite.close() }
 }
 
-export function verifyDatabase(connection: Connection, folder = './migrations') {
+function verifyMigrationHistory(connection: Connection, folder: string, allowPending = false) {
   const expected = readMigrationFiles({ migrationsFolder: folder })
-  const actual = connection.sqlite.query<{ hash: string }, []>('SELECT hash FROM __drizzle_migrations ORDER BY id').all()
-  if (actual.length !== expected.length || actual.some((row, index) => row.hash !== expected[index]!.hash)) throw new Error('Database migrations do not match this application')
+  const hasHistory = connection.sqlite.query("SELECT 1 FROM sqlite_schema WHERE type = 'table' AND name = '__drizzle_migrations'").get()
+  const actual = hasHistory ? connection.sqlite.query<{ hash: string, created_at: bigint }, []>(
+    'SELECT hash, created_at FROM __drizzle_migrations ORDER BY created_at, rowid',
+  ).all() : []
+  if ((!allowPending && actual.length !== expected.length) ||
+    actual.some((row, index) => row.hash !== expected[index]?.hash || Number(row.created_at) !== expected[index]?.folderMillis)) {
+    throw new Error('Database migrations do not match this application')
+  }
+}
+
+export function verifyDatabase(connection: Connection, folder = './migrations') {
+  verifyMigrationHistory(connection, folder)
   if (connection.sqlite.query('PRAGMA quick_check').values()[0]?.[0] !== 'ok') throw new Error('Database integrity check failed')
   if (connection.sqlite.query('PRAGMA foreign_key_check').all().length) throw new Error('Foreign key check failed')
 }

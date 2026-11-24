@@ -1,56 +1,27 @@
 # WiMM
 
-Mobile-first Webanwendung für gemeinsame Einnahmen und Ausgaben. Die [Referenzarchitektur](docs/architecture/reference-architecture.md) beschreibt die Zielarchitektur; dieses Repository enthält deren technische Basis.
+WiMM ist eine mobile Webanwendung für gemeinsame Einnahmen und Ausgaben. Jeder Bereich hat eigene Konten, Kategorien, Buchungen und Belege. Ein OpenID-Connect-Provider liefert Gruppen für die Rollen Leser, Bearbeiter und Besitzer.
 
-## Umgesetzte Basis
-
-- Nuxt 4 mit Vue, TypeScript, Nuxt UI und Tailwind; clientseitige Oberfläche mit Nitro-Server unter Bun.
-- Bun SQLite/Drizzle mit versionierter SQL-Migration für Identitäten, Sitzungen, Bereiche, Konten, Kategorien, Buchungen, Importvorschauen und Belege.
-- Bereichsübergreifende Fremdschlüssel, WAL, `foreign_keys=ON`, `busy_timeout=5000`, `synchronous=FULL` und exakte 64-Bit-Centbeträge.
-- Validierte Bereichskonfiguration, Rollenrangfolge, Sitzungs- und Gruppenablauf als serverseitige Fachlogik.
-- Startprüfung von Migrationshistorie, Datenbankintegrität und Bereichskonfiguration; `/health/live` und `/health/ready`.
-- Verwaltungsbefehle, Docker-Image, Compose einschließlich Migrationsdienst, Proxy-Vorlagen und automatisierte Prüfungen.
-
-Die Oberfläche zeigt den Einrichtungszustand. Noch offen sind der vollständige OIDC-Adapter mit SQLite-Sitzungen und CSRF, die geschützten Fachendpunkte und Bedienabläufe, CSV-Import, Belegspeicherung einschließlich Wiederanlauf, Backup/Restore und Installationsmanifest. `jose` und `csv-parse` sind dafür als Abhängigkeiten vorbereitet. Es gibt keinen Entwicklungslogin und keine freigegebenen Finanzdaten. `/api/session` antwortet mit 401; die eingebauten Cookie-Sitzungsendpunkte sind gesperrt, bis der Datenbankadapter existiert. Diese Basis ist noch keine produktiv nutzbare Finanzanwendung.
+Buchungen lassen sich erfassen, filtern, ändern und löschen. CSV-Dateien werden zuerst als Vorschau geprüft. Belege bleiben im privaten Dateispeicher und sind nur mit Bereichszugriff abrufbar. Über das Web-App-Manifest lässt sich WiMM in unterstützten Browsern zum Startbildschirm hinzufügen. Die Anwendung benötigt eine Serververbindung.
 
 ## Lokal starten
 
-Voraussetzung ist die in `.bun-version` festgelegte Bun-Version.
+Voraussetzung ist die in [`.bun-version`](.bun-version) festgelegte Bun-Version.
 
 ```sh
 bun install --frozen-lockfile
 cp .env.example .env
 cp deploy/access.example.json deploy/access.json
 chmod 600 .env
-```
-
-In `.env` insbesondere `NUXT_SESSION_PASSWORD` durch mindestens 32 zufällige Zeichen ersetzen. Für lokale Entwicklung `NUXT_PUBLIC_APP_URL=http://localhost:3000` setzen. Die lokalen Speicherpfade aus der Vorlage können bleiben. Das Gruppenmapping steht in `deploy/access.json`; diese Datei und `.env` werden nicht eingecheckt.
-
-```sh
 bun run db:migrate
 bun run dev
 ```
 
-Nuxt lädt `.env` im Entwicklungsbetrieb. Die Verwaltungsbefehle lesen `.env` ebenfalls, vorhandene Umgebungsvariablen haben Vorrang. Änderungen an Bereichen benötigen einen erneuten Migrations-/Konfigurationslauf; entfernte Bereiche werden nicht gelöscht. Fehlerhafte oder fehlende Konfiguration und nicht angewandte Migrationen verhindern den Serverstart. Im Produktionsbetrieb injiziert Compose die Umgebungsvariablen.
+Für die Anmeldung `NUXT_PUBLIC_APP_URL` auf die lokale Anwendungsadresse setzen, `NUXT_SESSION_PASSWORD` mit mindestens 32 zufälligen Zeichen belegen und die OIDC-Variablen eintragen. Die Callback-URL lautet `/auth/oidc` unter dieser Anwendungsadresse. Das Gruppenmapping steht in `deploy/access.json`. Änderungen am Mapping oder an Bereichen erfordern einen erneuten Migrationslauf und einen Neustart.
 
-## Struktur
+Die [Referenzarchitektur](docs/architecture/reference-architecture.md) beschreibt die Daten- und HTTP-Verträge, das Gruppenmapping sowie Installation, Update und Wiederherstellung. SQLite speichert Beträge als exakte Ganzzahlen in Cent. Alte SQL-Migrationen bleiben Teil der Prüfhistorie.
 
-```text
-app/                Oberfläche
-server/api/         HTTP-Handler
-server/routes/      Health-Endpunkte
-server/modules/     Identität/Zugriffsrechte und Finanzlogik
-server/db/          SQLite-Verbindung, Schema und Lebenszyklus
-shared/schemas/     Zod-Schemata und transportierbare Verträge
-migrations/         SQL-Migrationen und Drizzle-Metadaten
-tools/              Verwaltungsbefehle
-deploy/             Bereichskonfiguration und Proxy-Vorlagen
-tests/              Fach-, SQLite- und Browser-Smoke-Tests
-```
-
-Beleg- und Importmodule entstehen mit ihrer ersten funktionsfähigen Implementierung. Servercode importiert keine Oberfläche; Browsercode erhält keinen Datenbankzugriff. IDs und Zugriffsprüfungen müssen bei der Umsetzung der HTTP-Endpunkte serverseitig entstehen.
-
-## Prüfen und bauen
+## Prüfen
 
 ```sh
 bun run typecheck
@@ -60,30 +31,29 @@ bunx --bun --no-install playwright install chromium
 bun run test:e2e
 ```
 
-Die Browsertests starten den gebauten Produktionsserver und erwarten eine vorbereitete lokale Datenbank, Bereichskonfiguration und `NUXT_SESSION_PASSWORD` in der Umgebung. Sie prüfen die Oberfläche bei Desktop- und Mobilbreite sowie die Health-Endpunkte. Die SQLite-Tests verwenden echte temporäre Dateien und prüfen Migrationen, Fremdschlüssel, Versionsbedingungen und Centpräzision. OIDC-, Import-, Beleg- und Restore-Abnahmen aus der Zielarchitektur sind noch offen.
+Die Browserprüfung startet den gebauten Server mit einem lokalen OIDC-Testprovider und einer temporären SQLite-Datenbank. Sie prüft die tatsächlichen HTTP-Schnittstellen und Bedienabläufe in Chromium bei Mobil- und Desktopbreite. CI baut außerdem das Containerimage und prüft Compose-Start, Persistenz, blockierten Start bei fehlerhafter Migration und Restore in ein separates Volume.
 
-`bun run db:generate` erzeugt neue Migrationen aus `server/db/schema.ts`. SQL prüfen und zusammen mit den Drizzle-Metadaten committen. Im Betrieb ausschließlich Migrationen anwenden, kein Schema-Push.
+TypeScript 6 ist festgesetzt, weil `vue-tsc` für die Prüfung der Vue-Templates die JavaScript-Schnittstelle des Compilers benötigt. Der eigenständige TypeScript-Check lief auch mit 7.0.2. [Vue Language Tools zur Unterstützung von TypeScript 7](https://github.com/vuejs/language-tools/issues/6156)
 
-## Container
+`bun run db:generate` erzeugt Migrationen aus dem Drizzle-Schema. SQL und Metadaten gemeinsam prüfen und einchecken. Im Betrieb laufen ausschließlich eingecheckte Migrationen.
+
+## Containerbetrieb
 
 ```sh
 docker build -t wimm:local .
-```
-
-Für einen veröffentlichten Stand `WIMM_IMAGE` in `.env` auf dessen unveränderliche Image-Referenz setzen. Compose verwendet UID/GID 10001, ein lokales Datenvolume und das schreibgeschützte Gruppenmapping.
-
-```sh
 docker compose config --quiet
-docker compose up -d app
+docker compose up -d --wait app
 docker compose ps -a
-docker compose logs --tail=100 migrate app
 ```
 
-Der Migrationsdienst muss erfolgreich abschließen, bevor die Anwendung startet. Der App-Port bindet an `127.0.0.1:3000`; ein vorhandener HTTPS-Proxy übernimmt die Domain. Siehe `deploy/nginx.example.conf`. Für einen containerisierten Proxy kann `deploy/compose.proxy.yaml` ergänzt werden (Compose >= 2.24.4 für `!reset`); das externe Netzwerk heißt standardmäßig `proxy`, Ziel ist `http://app:3000`.
+Für die lokale Probe kann `WIMM_IMAGE=wimm:local` gesetzt werden. Für den Betrieb verweist `WIMM_IMAGE` auf einen Image-Digest. Bei einem Versions-Tag wie `v0.1.0` veröffentlicht der Workflow nach erfolgreicher Abnahme das Image in GHCR. Die unveränderliche Referenz steht in der Zusammenfassung des Workflows. Der Container verwendet UID/GID 10001, ein lokales Datenvolume und ein schreibgeschützt eingebundenes Gruppenmapping. Der App-Port bindet an Loopback. Der vorhandene HTTPS-Proxy leitet die gesamte Domain weiter. Die Vorlage steht in [`deploy/nginx.example.conf`](deploy/nginx.example.conf). Für containerisierte Proxys gibt es zusätzlich [`deploy/compose.proxy.yaml`](deploy/compose.proxy.yaml).
+
+Bei gestoppter Anwendung erzeugt `backup` ein gemeinsames TAR-Archiv aus SQLite-Snapshot, privaten Belegen, Prüfsummen und dem Bereichsmapping. `restore --stdin` validiert das Archiv und stellt es in einem vorbereiteten, gestoppten Compose-Projekt wieder her. Ein vorhandener Datenstand erfordert `--replace` und wird separat gesichert. Alte Sitzungen sind nach Restore ungültig.
 
 ```sh
-docker compose run --rm --no-deps ops bun tools/manage.mjs verify
-docker compose run --rm --no-deps ops bun tools/manage.mjs revoke-sessions USER_ID
+docker compose stop app
+docker compose run --rm --no-deps -T ops bun tools/manage.mjs backup > wimm-backup.tar
+docker compose start app
 ```
 
-Weitere Befehle: `migrate`, `healthcheck`, `help`. Backup/Restore-Befehle aus dem Architekturdokument sind noch nicht implementiert. Vor produktiver Nutzung sind diese und ihre Wiederherstellungsprobe nachzurüsten. Migrationen und Updates erfolgen nur bei gestoppter Anwendung. Für vorhandene Datenvolumes müssen die Rechte zu UID/GID 10001 passen.
+Starte die Anwendung nach dem Sicherungsversuch wieder und prüfe den Exitcode des Backup-Befehls, bevor du das Archiv verwendest. Vor produktiver Nutzung die Wiederherstellung mit dem vorgesehenen Image und eine Anmeldung mit jeder konfigurierten Rolle prüfen. Die vollständige Reihenfolge für [Update, Sicherung und Restore](docs/architecture/reference-architecture.md#10-backup-wiederherstellung-und-überwachung) steht in der Referenzarchitektur.

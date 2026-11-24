@@ -43,3 +43,12 @@ it('enforces workspace foreign keys, integer money and conditional versions', ()
   expect(sqlite.prepare('UPDATE bookings SET version = version + 1 WHERE id = ? AND version = ?').run('booking', 1).changes).toBe(0)
   expect(() => db.insert(receipts).values({ id: 'receipt', workspaceId: 'b', bookingId: 'booking', storageKey: 'key', originalName: 'x.pdf', mediaType: 'application/pdf', size: 1, status: 'ready' }).run()).toThrow()
 })
+
+it('checks previously applied migration hashes before writing workspace updates', () => {
+  const connection = setup()
+  const path = connection.sqlite.filename
+  connection.sqlite.exec("UPDATE __drizzle_migrations SET hash = 'wrong'")
+  const access = { workspaces: [{ id: 'a', name: 'Mutated', currency: 'EUR' as const }], groupMappings: [] }
+  expect(() => migrateDatabase(path, access)).toThrow('migrations')
+  expect(connection.db.select().from(workspaces).where(eq(workspaces.id, 'a')).get()?.name).toBe('A')
+})

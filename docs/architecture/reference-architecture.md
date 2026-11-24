@@ -1,6 +1,6 @@
 # Referenzarchitektur: WiMM
 
-Stand: 28. Oktober 2026. Status: Zielarchitektur für die erste Umsetzung.
+Stand: 24. November 2026. Status: Zielarchitektur und Betriebsvertrag für die erste Version.
 
 ## 1. Ziel und Entscheidungen
 
@@ -24,24 +24,24 @@ Dieses Dokument legt die Zielarchitektur fest. Die technische Basis mit Nuxt, Da
 | --- | --- | --- |
 | Framework | Nuxt 4, Vue 3, TypeScript | Oberfläche, Routing, Build und Server in einem Projekt |
 | Oberfläche | Nuxt UI und Tailwind CSS | Formulare, Dialoge, Listen, Tabellen und responsive Gestaltung |
-| HTTP-Server | Nitro mit Node.js LTS, Preset `node-server` | JSON-Endpunkte, Authentifizierung, statische Assets und Downloads |
+| HTTP-Server | Nitro unter Bun, HTTP-Einstieg `node-server` | JSON-Endpunkte, Authentifizierung, statische Assets und Downloads |
 | Validierung | Zod | Verbindliche Prüfung von Eingaben und Konfiguration auf dem Server |
-| Datenzugriff | Drizzle ORM mit `better-sqlite3` | Typisierte Abfragen und Transaktionen |
+| Datenzugriff | Drizzle ORM mit `bun:sqlite` | Typisierte Abfragen und Transaktionen |
 | Schemaänderungen | Drizzle Kit, eingecheckte SQL-Migrationen | Nachvollziehbare, versionierte Datenbankentwicklung |
 | Datenbank | SQLite | Fachliche Daten, Importvorschauen und serverseitige Sitzungen |
-| Anmeldung | Nuxt Auth Utils, generisches OIDC | Authorization-Code-Flow, PKCE und verschlüsselte Cookie-Sitzung |
+| Anmeldung | OIDC-Adapter im Identitätsmodul | Authorization-Code-Flow, PKCE und verschlüsselte Cookie-Sitzung |
 | OIDC-Prüfung | `jose` | Explizite Prüfung des ID-Tokens gegen konfigurierte Issuer-/Client-Daten und JWKS |
 | CSV | `csv-parse` | Serverseitiges Lesen und normalisierte Importvorschau |
 | Dateien | Lokales privates Verzeichnis | Belegdateien; Metadaten und Zuordnung liegen in SQLite |
-| Tests | Vitest, Nuxt Test Utils und Playwright | Fachlogik, Serverintegration und Browserabläufe |
-| Paketverwaltung | pnpm | Ein Projekt mit verbindlichem Lockfile |
+| Tests | Bun-Test-Runner und Playwright | Fachlogik, Serverintegration und Browserabläufe |
+| Paketverwaltung | Bun | Ein Projekt mit verbindlichem Lockfile |
 | Auslieferung | Mehrstufiges Docker-Image, Docker Compose | Reproduzierbarer Build und vollständiger Anwendungsbetrieb |
 
 Nuxt UI stellt zugängliche Vue-Bausteine auf Basis von Reka UI und Tailwind bereit. Gestaltung und Tests der fertigen Oberfläche bleiben Aufgabe der Anwendung. [Nuxt UI](https://nuxt.com/modules/ui)
 
-Es gibt zunächst keine separaten Frontend-/Backend-Repositories, kein Turborepo und keine Pflichtdienste für Redis, Warteschlangen, Objektspeicher oder E-Mail. Nuxt wird mit Server gebaut, nicht als rein statischer Export. Auch bei clientseitiger Darstellung bleiben die Nitro-Endpunkte aktiv. [Nuxt Auth Utils: Serveranforderung](https://nuxt.com/modules/auth-utils)
+Es gibt zunächst keine separaten Frontend-/Backend-Repositories, kein Turborepo und keine Pflichtdienste für Redis, Warteschlangen, Objektspeicher oder E-Mail. Nuxt wird mit Server gebaut, nicht als rein statischer Export. Auch bei clientseitiger Darstellung bleiben die Nitro-Endpunkte aktiv.
 
-Bei der Umsetzung werden kompatible stabile Paketversionen im Lockfile und Container-Basisimages mit konkretem Digest festgeschrieben. Node.js 24 LTS ist die konservative Ausgangsbasis; native SQLite-Abhängigkeiten werden für dieselbe Node-Version, Linux-Distribution und Zielarchitektur wie das Laufzeitimage gebaut. Keine ungeprüften `latest`-Tags oder Vorabversionen im Produktionsbuild. [Node.js-Supportlinien](https://nodejs.org/en/about/previous-releases)
+Bei der Umsetzung werden kompatible stabile Paketversionen im Lockfile und Container-Basisimages mit konkretem Digest festgeschrieben. Entwicklung, CI und Container nutzen dieselbe in `.bun-version` festgelegte Bun-Version. `bun:sqlite` gehört zur Laufzeit. Das Lockfile fixiert die Abhängigkeiten.
 
 ### Betrachtete Alternativen
 
@@ -145,17 +145,17 @@ Zusammengesetzte Fremdschlüssel sichern, dass Konto, Kategorie und Beleg zur se
 
 ### OIDC-Ablauf
 
-1. Der Benutzer startet die Anmeldung über `/auth/oidc`. Der Server verwendet den generischen OIDC-Handler von Nuxt Auth Utils mit fest konfigurierter Discovery-URL und öffentlicher Callback-URL.
+1. Der Benutzer startet die Anmeldung über `/auth/oidc`. Der Identitätsadapter verwendet eine fest konfigurierte Discovery-URL und eine öffentliche Callback-URL.
 2. Authorization Code und PKCE werden verwendet. State, Nonce, ID-Token-Signatur, Issuer, Audience, Ablauf und gegebenenfalls `azp` müssen geprüft werden. Das Modul darf nicht lediglich aus einem dekodierten JWT Identität ableiten.
-3. Ergänzend zur Flow-Verarbeitung durch Nuxt Auth Utils prüft der Identitätsadapter das ID-Token mit `jose` und den JWKS des konfigurierten Issuers. Das UserInfo-Subject muss zum geprüften Subject passen. Fehlende oder ungültige Pflichtwerte brechen die Anmeldung ab.
+3. Der Identitätsadapter prüft das ID-Token mit `jose` und den JWKS des konfigurierten Issuers. Das UserInfo-Subject muss zum geprüften Subject passen. Fehlende oder ungültige Pflichtwerte brechen die Anmeldung ab.
 4. Der Provider liefert einen aktuellen Gruppen-Claim als String-Array im UserInfo-Ergebnis. Claim-Name und zusätzliche Scopes sind konfigurierbar. Fehlt der Claim, gibt es keine Bereichsrechte. Das ist Teil des Einrichtungsvertrags mit dem SSO-Dienst.
 5. Erst danach legt der Server die Identität und eine neue zufällige Sitzung in SQLite an. Im verschlüsselten Cookie liegt nur die minimale Zuordnung; keine Zugriffstokens und kein vollständiger Gruppenbestand.
 
-Nuxt Auth Utils unterstützt generisches OIDC und verschlüsselte Cookies, liefert aber keinen automatischen SQLite-Sitzungsspeicher und keine fachliche Bereichsautorisierung. Der Anwendungscode ergänzt beides. Die im generischen Handler sichtbare Token-Verarbeitung ersetzt keine explizite vollständige ID-Token-Prüfung. [Nuxt Auth Utils](https://nuxt.com/modules/auth-utils), [generischer OIDC-Handler](https://github.com/atinux/nuxt-auth-utils/blob/main/src/runtime/server/lib/oauth/oidc.ts), [OIDC-Validierungsregeln](https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation)
+Der Identitätsadapter bindet die Anmeldung an den Browser, validiert Provider-Metadaten und verschlüsselt das Sitzungscookie. Eine zentrale serverseitige Sitzungsprüfung liefert den Zugriffskontext für die Fachmodule. [OIDC-Validierungsregeln](https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation)
 
 ### Sitzungsregeln
 
-- Jede geschützte Serveroperation prüft die SQLite-Sitzung, Ablauf und die wirksamen Bereichsrechte. Die Cookie-Prüfung allein genügt nicht. Auch die Session-Auskunft von Nuxt Auth Utils muss diese Datenbankprüfung durchlaufen.
+- Jede geschützte Serveroperation prüft die SQLite-Sitzung, Ablauf und die wirksamen Bereichsrechte. Auch `GET /api/session` prüft die SQLite-Sitzung.
 - Cookie: `HttpOnly`, `Secure` im HTTPS-Betrieb, `SameSite=Lax`, Pfad `/`, keine übergeordnete Cookie-Domain. OIDC-Tokens werden nach der Anmeldung verworfen; kein Refresh-Token-Speicher ist nötig.
 - Nach spätestens 900 Sekunden ist die Gruppenprüfung abgelaufen. Der Server antwortet mit 401 und Fehlercode `reauth_required`; die Oberfläche startet eine neue OIDC-Runde. Es gibt keine alleinige Verlängerung durch Benutzung der Anwendung.
 - Der Provider muss bei jeder neuen OIDC-Runde aktuelle Gruppen liefern. Seine SSO-Sitzung kann die Runde ohne erneute Passworteingabe ermöglichen. Nach Ablauf der Frist gibt es bei einem Provider-Ausfall keinen weiteren Zugriff auf geschützte Daten.
@@ -232,21 +232,21 @@ Ein Dateihash macht auf einen bereits bestätigten identischen Upload im selben 
 
 Zulässig sind zunächst PDF, JPEG und PNG, maximal 10 MiB pro Datei. Der Server prüft Inhaltstyp anhand der Dateisignatur und speichert einen zufälligen Speicherschlüssel; der Originalname wird niemals als Dateipfad verwendet. Downloads erfolgen nach Bereichsprüfung als Attachment mit `nosniff` und `no-store`. Aktive HTML-/SVG-Inhalte und öffentliche Direktlinks sind nicht vorgesehen.
 
-Dateisystem und SQLite bilden keine gemeinsame Transaktion. Deshalb wird ein Upload zunächst temporär geschrieben, dann mit Status `pending` registriert und nach atomarem Umbenennen in `ready` überführt. Nur `ready`-Belege sind sichtbar. Ein Wiederanlauflauf vor Serverstart schließt eindeutig vollständige Vorgänge ab und bereinigt unvollständige Einträge und verwaiste Dateien. Löschungen verwenden entsprechend einen wiederholbaren `deleting`-Status. Fehlgeschlagene Dateizugriffe werden nicht als Erfolg gemeldet.
+Dateisystem und SQLite bilden keine gemeinsame Transaktion. Deshalb wird ein Upload zunächst temporär geschrieben, dann mit Status `pending` registriert und nach atomarem Umbenennen in `ready` überführt. Nur `ready`-Belege sind sichtbar. Ein Wiederanlauflauf vor Serverstart schließt eindeutig vollständige Vorgänge ab und bereinigt unvollständige Einträge und verwaiste Dateien. Löschungen verwenden einen wiederholbaren `deleting`-Status. Beim Löschen einer Buchung prüft der Server die Version und markiert die Buchung sowie ihre Belege in derselben SQLite-Transaktion. Vorgemerkte Buchungen verschwinden sofort aus der Ansicht und den Summen. Der Wiederanlauf entfernt Dateien und Metadaten und löscht danach die Buchung. Fehlgeschlagene Dateizugriffe werden nicht als Erfolg gemeldet.
 
 ## 9. SQLite und Containerbetrieb
 
 ### Speicher und Transaktionen
 
-Im Volume `/data` liegen `wimm.sqlite`, die zugehörigen WAL-/SHM-Dateien und `receipts/` einschließlich temporärer Uploads. Die Anwendung betreibt genau einen Node-Prozess ohne Cluster und genau eine laufende Instanz. Das Volume liegt auf lokalem Dateisystem; NFS-/SMB-Speicher und geteilte Datenvolumes mehrerer Server sind ausgeschlossen.
+Im Volume `/data` liegen `wimm.sqlite`, die zugehörigen WAL-/SHM-Dateien und `receipts/` einschließlich temporärer Uploads. Die Anwendung betreibt genau einen Bun-Prozess ohne Cluster und genau eine laufende Instanz. Das Volume liegt auf lokalem Dateisystem; NFS-/SMB-Speicher und geteilte Datenvolumes mehrerer Server sind ausgeschlossen.
 
 Jede SQLite-Verbindung aktiviert `foreign_keys=ON` und `busy_timeout=5000`; die Datenbank verwendet `journal_mode=WAL` und `synchronous=FULL`. WAL lässt Leser und einen Schreiber parallel arbeiten, erlaubt aber weiterhin nur einen Schreiber. Nach Ablauf der Wartezeit antwortet die Anwendung mit 503 und einer wiederholbaren Fehlermeldung. Netzwerkaufrufe, CSV-Parsing und Dateiübertragungen laufen niemals innerhalb einer Datenbanktransaktion. [SQLite WAL](https://www.sqlite.org/wal.html)
 
-Drizzle unterstützt `better-sqlite3` direkt. SQL-Migrationen werden in der Entwicklung erzeugt, geprüft und eingecheckt. Im Betrieb wird weder Schema-Push noch automatische Codegenerierung ausgeführt. [Drizzle und SQLite](https://orm.drizzle.team/docs/get-started-sqlite)
+Drizzle nutzt den Bun-SQLite-Adapter mit `safeIntegers: true`. SQL-Migrationen werden in der Entwicklung erzeugt, geprüft und eingecheckt. Im Betrieb wird weder Schema-Push noch automatische Codegenerierung ausgeführt. [Drizzle und SQLite](https://orm.drizzle.team/docs/get-started-sqlite)
 
 ### Image und Compose-Vertrag
 
-Ein mehrstufiger Build installiert mit `pnpm install --frozen-lockfile`, baut Nuxt und die Verwaltungswerkzeuge und kopiert nur Laufzeitartefakte, Migrationen und benötigte native Bibliotheken ins Image. Runtime-Basis ist Debian slim; Benutzer und Datenverzeichnis verwenden UID/GID 10001. Der Startbefehl lautet `node .output/server/index.mjs`. SIGTERM ermöglicht das Beenden laufender Vorgänge und Schließen der Datenbank.
+Ein mehrstufiger Build installiert mit `bun install --frozen-lockfile`, baut Nuxt und die Verwaltungswerkzeuge und kopiert nur Laufzeitartefakte, Migrationen und benötigte Laufzeitabhängigkeiten ins Image. Runtime-Basis ist Debian slim; Benutzer und Datenverzeichnis verwenden UID/GID 10001. Der Startbefehl lautet `bun .output/server/index.mjs`. SIGTERM ermöglicht das Beenden laufender Vorgänge und Schließen der Datenbank.
 
 Folgendes Compose-Beispiel definiert den später zu implementierenden Betriebsvertrag. Das Image muss insbesondere `tools/manage.mjs` und den Healthcheck enthalten; diese Befehle sind keine eingebauten Nuxt-Funktionen.
 
@@ -328,7 +328,7 @@ NUXT_OIDC_GROUPS_CLAIM=groups
 NUXT_GROUPS_MAX_AGE_SECONDS=900
 ```
 
-Die `NUXT_OAUTH_OIDC_*`-Namen stammen aus Nuxt Auth Utils; weitere Variablen sind ausdrücklich Anwendungskonfiguration und werden in Nuxt `runtimeConfig` deklariert und serverseitig validiert. Scopes und Claim-Pfad müssen zum Provider passen; `groups` ist kein providerübergreifend garantierter Standardscope. Der erwartete Issuer muss exakt dessen Discovery-Metadaten entsprechen. Außer der öffentlichen Anwendungs-URL liegt nichts davon in `runtimeConfig.public`. `.env` wird nicht eingecheckt und erhält restriktive Dateirechte.
+Der Identitätsadapter liest und validiert die angegebenen Umgebungsvariablen beim Start. Scopes und Claim-Pfad müssen zum Provider passen; `groups` ist kein providerübergreifend garantierter Standardscope. Der erwartete Issuer muss exakt dessen Discovery-Metadaten entsprechen. Außer der öffentlichen Anwendungs-URL liegt nichts davon in `runtimeConfig.public`. `.env` wird nicht eingecheckt und erhält restriktive Dateirechte.
 
 Das Beispiel bindet Port 3000 nur an Loopback für einen Reverse Proxy auf demselben Host; dessen Ziel ist `http://127.0.0.1:3000`. Bei einem bereits containerisierten Proxy wird stattdessen ein dediziertes externes Docker-Netz verwendet und die Portfreigabe entfernt; dessen Ziel ist `http://app:3000`. Eine Konfigurationsvorlage dafür gehört zur späteren Auslieferung. In beiden Fällen leitet der Proxy die gesamte Domain einschließlich `/auth`, `/api` und statischer Assets unverändert weiter.
 
@@ -377,11 +377,11 @@ Ein Backup muss SQLite und Belege aus demselben Zustand enthalten. Für die klei
 
 ```sh
 docker compose stop app
-docker compose run --rm --no-deps -T ops node tools/manage.mjs backup > wimm-backup.tar
+docker compose run --rm --no-deps -T ops bun tools/manage.mjs backup > wimm-backup.tar
 docker compose start app
 ```
 
-Der Verwaltungsbefehl erzeugt einen konsistenten SQLite-Snapshot mit der Backup-API und archiviert ihn gemeinsam mit allen referenzierten fertigen Belegen, Prüfsummen, Schema-/Imageinformationen und dem nicht geheimen Bereichsmapping. Er prüft fehlende Belege und Datenbankintegrität. Temporäre Dateien und Sitzungen werden nicht zur wiederherstellbaren Nutzlast gezählt. Standardausgabe enthält ausschließlich das Archiv; Meldungen gehen an Standardfehler. Ein Exitcode ungleich null macht das Archiv ungültig. Der letzte Befehl startet nach Prüfung des Ergebnisses den bisherigen Dienst wieder, auch wenn die Sicherung fehlgeschlagen ist. [SQLite Backup-API](https://www.sqlite.org/backup.html)
+Der Verwaltungsbefehl erzeugt einen konsistenten SQLite-Snapshot mit `VACUUM INTO` und archiviert ihn gemeinsam mit allen referenzierten fertigen Belegen, Prüfsummen, Schema-/Imageinformationen und dem nicht geheimen Bereichsmapping. Er prüft fehlende Belege und Datenbankintegrität. Temporäre Dateien und Sitzungen werden nicht zur wiederherstellbaren Nutzlast gezählt. Standardausgabe enthält ausschließlich das Archiv; Meldungen gehen an Standardfehler. Ein Exitcode ungleich null macht das Archiv ungültig. Der letzte Befehl startet nach Prüfung des Ergebnisses den bisherigen Dienst wieder, auch wenn die Sicherung fehlgeschlagen ist. [SQLite VACUUM](https://www.sqlite.org/lang_vacuum.html#vacuum_with_an_into_clause)
 
 Für Automatisierung übernimmt ein Host-Skript mit Fehlerbehandlung und Wiederanlaufgarantie diese Sequenz. Standard ist tägliche Sicherung, 7 tägliche und 4 wöchentliche Stände sowie verschlüsselte Übertragung auf ein anderes System. Das maximale reguläre Datenverlustfenster beträgt damit 24 Stunden. Proxy-, OIDC- und Geheimniskonfiguration werden separat geschützt gesichert; sie gehören nicht ins Datenarchiv. Ein lokales Docker-Volume allein ist kein Backup.
 
@@ -391,8 +391,8 @@ Auf einem frischen oder für Wiederherstellung vorgesehenen Server die Release-D
 
 ```sh
 docker compose stop app
-docker compose run --rm --no-deps -T ops node tools/manage.mjs restore --stdin --replace < wimm-backup.tar
-docker compose run --rm --no-deps -T ops node tools/manage.mjs verify
+docker compose run --rm --no-deps -T ops bun tools/manage.mjs restore --stdin --replace < wimm-backup.tar
+docker compose run --rm --no-deps -T ops bun tools/manage.mjs verify
 docker compose up -d --no-deps app
 ```
 
@@ -408,7 +408,7 @@ Regelmäßige `storage_busy`-Fehler trotz kurzer Transaktionen, spürbare Import
 
 | Ebene | Verbindliche Szenarien |
 | --- | --- |
-| Fachlogik mit Vitest | Exakte Cent-Konvertierung und Summen, Datumsvalidierung, Rollenrangfolge und Bereichszuordnung, Importnormalisierung und Limits |
+| Fachlogik mit Bun | Exakte Cent-Konvertierung und Summen, Datumsvalidierung, Rollenrangfolge und Bereichszuordnung, Importnormalisierung und Limits |
 | Serverintegration mit echter temporärer SQLite-Datei | Migrationen von leerer und vorheriger Version, Fremdschlüssel, Bereichstrennung bei direkten Aufrufen, Versionskonflikte und atomarer Import |
 | OIDC gegen lokalen Testprovider | State-/Nonce-Fehler, ungültiges Token, falscher Issuer/Audience/Subject, fehlende Gruppen, Rollenwechsel, Ablauf nach 900 Sekunden, Provider-Ausfall und lokaler Widerruf |
 | HTTP und Dateien | CSRF-Schutz, verweigerte Fremdzugriffe einschließlich Session-/Import-/Beleg-Endpunkten, Dateityp/-größe, Traversal-Versuche und Downloadheader |

@@ -31,7 +31,7 @@ export const bookings = sqliteTable('bookings', {
   accountId: text('account_id').notNull(), categoryId: text('category_id'), date: text().notNull(),
   amountCents: cents('amount_cents').notNull(), description: text().notNull(),
   version: integer().notNull().default(1), createdBy: text('created_by').notNull().references(() => identities.id),
-  updatedAt: integer('updated_at').notNull(),
+  updatedAt: integer('updated_at').notNull(), deleting: boolean().notNull().default(false),
 }, t => [
   unique().on(t.workspaceId, t.id),
   foreignKey({ columns: [t.workspaceId, t.accountId], foreignColumns: [accounts.workspaceId, accounts.id] }),
@@ -39,6 +39,7 @@ export const bookings = sqliteTable('bookings', {
   index('bookings_workspace_date').on(t.workspaceId, t.date, t.id),
   check('nonzero_amount', sql`typeof(${t.amountCents}) = 'integer' AND ${t.amountCents} <> 0`),
   check('positive_version', sql`${t.version} >= 1`),
+  check('booking_deleting', sql`${t.deleting} IN (0, 1)`),
 ])
 export const imports = sqliteTable('imports', {
   id: text().primaryKey(), workspaceId: text('workspace_id').notNull().references(() => workspaces.id),
@@ -49,6 +50,7 @@ export const imports = sqliteTable('imports', {
 }, t => [
   foreignKey({ columns: [t.workspaceId, t.accountId], foreignColumns: [accounts.workspaceId, accounts.id] }),
   index('imports_workspace_hash').on(t.workspaceId, t.accountId, t.fileHash),
+  index('imports_preview_expiry').on(t.expiresAt).where(sql`${t.status} = 'preview'`),
   check('import_status', sql`${t.status} IN ('preview', 'confirmed')`),
 ])
 export const receipts = sqliteTable('receipts', {
@@ -58,6 +60,7 @@ export const receipts = sqliteTable('receipts', {
   status: text({ enum: ['pending', 'ready', 'deleting'] }).notNull(),
 }, t => [
   foreignKey({ columns: [t.workspaceId, t.bookingId], foreignColumns: [bookings.workspaceId, bookings.id] }),
+  index('receipts_workspace_booking').on(t.workspaceId, t.bookingId),
   check('receipt_status', sql`${t.status} IN ('pending', 'ready', 'deleting')`),
   check('receipt_size', sql`${t.size} > 0 AND ${t.size} <= 10485760`),
   check('receipt_media_type', sql`${t.mediaType} IN ('application/pdf', 'image/jpeg', 'image/png')`),

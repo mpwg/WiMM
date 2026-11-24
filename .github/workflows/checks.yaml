@@ -16,9 +16,64 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run test
-      - run: cp deploy/access.example.json deploy/access.json
-      - run: bun run db:migrate
       - run: bun run build
       - run: bunx --bun --no-install playwright install --with-deps chromium
       - run: bun run test:e2e
       - run: docker build -t wimm:ci .
+      - name: Verify Compose upgrade and restore
+        env:
+          WIMM_IMAGE: wimm:ci
+        run: |
+          set -euo pipefail
+          export COMPOSE_PROJECT_NAME=wimm-ci
+          backup_file=$(mktemp)
+          cleanup() {
+            docker compose -p wimm-ci-restore down --volumes --remove-orphans
+            docker compose down --volumes --remove-orphans
+            rm -f "$backup_file"
+          }
+          trap cleanup EXIT
+          touch .env
+          cp deploy/access.example.json deploy/access.json
+          docker compose config --quiet
+          docker compose up --wait --wait-timeout 90 app
+          curl --fail --silent http://127.0.0.1:3000/health/ready
+          docker compose stop app
+          docker compose run --rm --no-deps -T ops bun run - seed < tests/support/compose-data.ts
+          docker compose up --wait --wait-timeout 90 --force-recreate --no-deps app
+          docker compose exec -T app bun run - persisted < tests/support/compose-data.ts
+          docker compose stop app
+          docker compose run --rm --no-deps -T ops bun tools/manage.mjs backup > "$backup_file"
+          docker compose -p wimm-ci-restore run --rm --no-deps -T ops bun tools/manage.mjs restore --stdin < "$backup_file"
+          docker compose -p wimm-ci-restore run --rm --no-deps -T ops bun tools/manage.mjs verify
+          docker compose -p wimm-ci-restore run --rm --no-deps -T ops bun run - restored < tests/support/compose-data.ts
+          docker compose -p wimm-ci-restore up --wait --wait-timeout 90 --no-deps app
+          curl --fail --silent http://127.0.0.1:3000/health/ready
+          docker compose -p wimm-ci-restore stop app
+          docker compose run --rm --no-deps -T ops bun run - corrupt < tests/support/compose-data.ts
+          if docker compose up --wait --wait-timeout 90 --force-recreate app; then
+            exit 1
+          fi
+          test -z "$(docker compose ps --status running -q app)"
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: application
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Publish the tagged image
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:$GITHUB_REF_NAME"
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker build --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" -t "$image" .
+          docker push "$image"
+          reference=$(docker image inspect --format '{{index .RepoDigests 0}}' "$image")
+          printf 'Container-Image: `%s`\n' "$reference" >> "$GITHUB_STEP_SUMMARY"
