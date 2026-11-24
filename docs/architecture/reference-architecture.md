@@ -8,7 +8,7 @@ WiMM ist eine mobile-first Webanwendung für Einnahmen und Ausgaben. Mehrere Ben
 
 **Die Zielarchitektur ist eine Nuxt-Fullstack-Anwendung mit SQLite, betrieben als einzelner Anwendungscontainer hinter einem vorhandenen HTTPS-Reverse-Proxy.** Docker Compose installiert und startet die Anwendung einschließlich Datenbankmigrationen. Ein vorhandener OpenID-Connect-Dienst übernimmt die Anmeldung und liefert Gruppen für die Zugriffsrechte.
 
-Dieses Dokument legt die Zielarchitektur fest. Die technische Basis mit Nuxt, Datenbankschema, Migrationen, Containerdefinition, Compose und grundlegenden Verwaltungsbefehlen ist angelegt. Der aktuelle Umfang und die noch offenen Fachabläufe sind in der [README](../../README.md) dokumentiert. Die hier beschriebenen vollständigen Endpunkte, OIDC-, Import-, Beleg- und Backup-Abläufe bleiben bis zu ihrer Umsetzung verbindliche Implementierungsverträge.
+Dieses Dokument beschreibt die Architektur und die Betriebsverträge für Endpunkte, OIDC, Import, Belege und Sicherungen. Die [README](../../README.md) dokumentiert den Funktionsumfang und die Befehle für Entwicklung und Betrieb.
 
 ### Annahmen und Grenzen
 
@@ -248,7 +248,7 @@ Drizzle nutzt den Bun-SQLite-Adapter mit `safeIntegers: true`. SQL-Migrationen w
 
 Ein mehrstufiger Build installiert mit `bun install --frozen-lockfile`, baut Nuxt und die Verwaltungswerkzeuge und kopiert nur Laufzeitartefakte, Migrationen und benötigte Laufzeitabhängigkeiten ins Image. Runtime-Basis ist Debian slim; Benutzer und Datenverzeichnis verwenden UID/GID 10001. Der Startbefehl lautet `bun .output/server/index.mjs`. SIGTERM ermöglicht das Beenden laufender Vorgänge und Schließen der Datenbank.
 
-Folgendes Compose-Beispiel definiert den später zu implementierenden Betriebsvertrag. Das Image muss insbesondere `tools/manage.mjs` und den Healthcheck enthalten; diese Befehle sind keine eingebauten Nuxt-Funktionen.
+Das folgende Compose-Beispiel zeigt den Betriebsvertrag. Das Image enthält `tools/manage.mjs` mit dem Verwaltungsbefehl für den Healthcheck.
 
 ```yaml
 name: wimm
@@ -312,7 +312,7 @@ Compose wartet durch `service_completed_successfully` auf den erfolgreichen Migr
 
 ### Konfiguration und Reverse Proxy
 
-Beispiel für die spätere `.env.example`; Werte mit `replace-…` sind vor dem Start zu ersetzen:
+Die Werte mit `replace-…` aus der Vorlage `.env.example` müssen vor dem Start ersetzt werden.
 
 ```dotenv
 WIMM_IMAGE=replace-with-registry/wimm@sha256:replace-with-release-digest
@@ -330,13 +330,13 @@ NUXT_GROUPS_MAX_AGE_SECONDS=900
 
 Der Identitätsadapter liest und validiert die angegebenen Umgebungsvariablen beim Start. Scopes und Claim-Pfad müssen zum Provider passen; `groups` ist kein providerübergreifend garantierter Standardscope. Der erwartete Issuer muss exakt dessen Discovery-Metadaten entsprechen. Außer der öffentlichen Anwendungs-URL liegt nichts davon in `runtimeConfig.public`. `.env` wird nicht eingecheckt und erhält restriktive Dateirechte.
 
-Das Beispiel bindet Port 3000 nur an Loopback für einen Reverse Proxy auf demselben Host; dessen Ziel ist `http://127.0.0.1:3000`. Bei einem bereits containerisierten Proxy wird stattdessen ein dediziertes externes Docker-Netz verwendet und die Portfreigabe entfernt; dessen Ziel ist `http://app:3000`. Eine Konfigurationsvorlage dafür gehört zur späteren Auslieferung. In beiden Fällen leitet der Proxy die gesamte Domain einschließlich `/auth`, `/api` und statischer Assets unverändert weiter.
+Das Beispiel bindet Port 3000 nur an Loopback für einen Reverse Proxy auf demselben Host; dessen Ziel ist `http://127.0.0.1:3000`. Bei einem bereits containerisierten Proxy wird stattdessen ein dediziertes externes Docker-Netz verwendet und die Portfreigabe entfernt; dessen Ziel ist `http://app:3000`. Dafür kann `deploy/compose.proxy.yaml` als Compose-Ergänzung verwendet werden. In beiden Fällen leitet der Proxy die gesamte Domain einschließlich `/auth`, `/api` und statischer Assets unverändert weiter.
 
 Der native Bun-Einstieg begrenzt HTTP-Request-Bodies zusätzlich auf 12 MiB. Der Proxy terminiert HTTPS, setzt Host und Protokollheader selbst und entfernt entsprechende clientseitige Vorgaben. Der App-Port ist ausschließlich über diesen Proxy erreichbar. Öffentliche Callback- und App-URL sind explizit konfiguriert; der Server vertraut nicht beliebigen `X-Forwarded-*`-Werten. API, Session-Auskunft und Downloads werden im Proxy nicht gecacht. Das Uploadlimit beträgt 12 MiB einschließlich Multipart-Overhead; der Server prüft zusätzlich die engeren Datei- und Importgrenzen.
 
 ### Erstinstallation und Update
 
-Voraussetzungen: Docker Engine mit Compose v2, vorhandener HTTPS-Proxy, registrierter OIDC-Client und Gruppen-Claim. Die spätere Release-Auslieferung enthält `compose.yaml`, `.env.example`, `deploy/access.example.json` und das referenzierbare Image.
+Voraussetzungen: Docker Engine mit Compose v2, vorhandener HTTPS-Proxy, registrierter OIDC-Client und Gruppen-Claim. Verwende `compose.yaml`, `.env.example` und `deploy/access.example.json` vom Release-Stand. Den Digest des zugehörigen GHCR-Images gibt der Release-Workflow aus.
 
 ```sh
 cp .env.example .env
@@ -421,4 +421,4 @@ Gleichzeitige Bearbeitung wird mit zwei unabhängigen Clients geprüft: die erst
 
 Der Restore-Test verwendet ein separates leeres Volume, vergleicht Buchungsanzahl und Summen, prüft Beleg-Prüfsummen und verlangt eine neue Anmeldung. Ein erfolgreicher Backup-Exitcode allein genügt nicht als Wiederherstellungsnachweis.
 
-Die spätere CI führt Typprüfung, Fach- und Integrationstests, Browser-Smoke-Tests und den Containerbuild aus. Dieses Dokument selbst wird auf Vollständigkeit, konsistente Pfade/Konfiguration und Markdown geprüft; es behauptet keine bereits ausgeführten Anwendungstests.
+CI führt Typprüfung, Fach- und Integrationstests, Browserabläufe und den Containerbuild aus. Die Compose-Abnahme prüft den Erststart, die Persistenz nach Containerneuanlage, den Restore in ein separates Volume und den blockierten Start bei abweichender Migrationshistorie.
