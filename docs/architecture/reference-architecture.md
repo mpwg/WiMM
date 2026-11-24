@@ -24,7 +24,7 @@ Dieses Dokument legt die Zielarchitektur fest. Die technische Basis mit Nuxt, Da
 | --- | --- | --- |
 | Framework | Nuxt 4, Vue 3, TypeScript | Oberfläche, Routing, Build und Server in einem Projekt |
 | Oberfläche | Nuxt UI und Tailwind CSS | Formulare, Dialoge, Listen, Tabellen und responsive Gestaltung |
-| HTTP-Server | Nitro unter Bun, HTTP-Einstieg `node-server` | JSON-Endpunkte, Authentifizierung, statische Assets und Downloads |
+| HTTP-Server | Nitro 3 mit nativem Bun-Einstieg | JSON-Endpunkte, Authentifizierung, statische Assets und Downloads |
 | Validierung | Zod | Verbindliche Prüfung von Eingaben und Konfiguration auf dem Server |
 | Datenzugriff | Drizzle ORM mit `bun:sqlite` | Typisierte Abfragen und Transaktionen |
 | Schemaänderungen | Drizzle Kit, eingecheckte SQL-Migrationen | Nachvollziehbare, versionierte Datenbankentwicklung |
@@ -41,7 +41,7 @@ Nuxt UI stellt zugängliche Vue-Bausteine auf Basis von Reka UI und Tailwind ber
 
 Es gibt zunächst keine separaten Frontend-/Backend-Repositories, kein Turborepo und keine Pflichtdienste für Redis, Warteschlangen, Objektspeicher oder E-Mail. Nuxt wird mit Server gebaut, nicht als rein statischer Export. Auch bei clientseitiger Darstellung bleiben die Nitro-Endpunkte aktiv.
 
-Bei der Umsetzung werden kompatible stabile Paketversionen im Lockfile und Container-Basisimages mit konkretem Digest festgeschrieben. Entwicklung, CI und Container nutzen dieselbe in `.bun-version` festgelegte Bun-Version. `bun:sqlite` gehört zur Laufzeit. Das Lockfile fixiert die Abhängigkeiten.
+Die Paketdatei erlaubt kompatible Updates über Caret-Bereiche. Das Lockfile und der Digest des Container-Basisimages fixieren den getesteten Stand. Nitro 3 ist derzeit als Release Candidate verfügbar. Entwicklung, CI und Container nutzen dieselbe in `.bun-version` festgelegte Bun-Version. `bun:sqlite` gehört zur Laufzeit.
 
 ### Betrachtete Alternativen
 
@@ -332,7 +332,7 @@ Der Identitätsadapter liest und validiert die angegebenen Umgebungsvariablen be
 
 Das Beispiel bindet Port 3000 nur an Loopback für einen Reverse Proxy auf demselben Host; dessen Ziel ist `http://127.0.0.1:3000`. Bei einem bereits containerisierten Proxy wird stattdessen ein dediziertes externes Docker-Netz verwendet und die Portfreigabe entfernt; dessen Ziel ist `http://app:3000`. Eine Konfigurationsvorlage dafür gehört zur späteren Auslieferung. In beiden Fällen leitet der Proxy die gesamte Domain einschließlich `/auth`, `/api` und statischer Assets unverändert weiter.
 
-Der Proxy terminiert HTTPS, setzt Host und Protokollheader selbst und entfernt entsprechende clientseitige Vorgaben. Der App-Port ist ausschließlich über diesen Proxy erreichbar. Öffentliche Callback- und App-URL sind explizit konfiguriert; der Server vertraut nicht beliebigen `X-Forwarded-*`-Werten. API, Session-Auskunft und Downloads werden im Proxy nicht gecacht. Das Uploadlimit beträgt 12 MiB einschließlich Multipart-Overhead; der Server prüft zusätzlich die engeren Datei- und Importgrenzen.
+Der native Bun-Einstieg begrenzt HTTP-Request-Bodies zusätzlich auf 12 MiB. Der Proxy terminiert HTTPS, setzt Host und Protokollheader selbst und entfernt entsprechende clientseitige Vorgaben. Der App-Port ist ausschließlich über diesen Proxy erreichbar. Öffentliche Callback- und App-URL sind explizit konfiguriert; der Server vertraut nicht beliebigen `X-Forwarded-*`-Werten. API, Session-Auskunft und Downloads werden im Proxy nicht gecacht. Das Uploadlimit beträgt 12 MiB einschließlich Multipart-Overhead; der Server prüft zusätzlich die engeren Datei- und Importgrenzen.
 
 ### Erstinstallation und Update
 

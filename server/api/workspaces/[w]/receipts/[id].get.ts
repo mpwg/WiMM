@@ -1,4 +1,4 @@
-import { getRouterParam, send, setResponseHeaders } from 'h3'
+import { getRouterParam } from 'nitro/h3'
 import { getReceipt } from '../../../../modules/receipts/service'
 import { access, endpoint } from '../../../../utils/api'
 
@@ -9,11 +9,13 @@ export default endpoint(event => {
   const { storage, receiptsPath } = event.context
   const { metadata, data } = getReceipt(storage, receiptsPath, context, getRouterParam(event, 'id') ?? '')
   const filename = encodeURIComponent(metadata.originalName).replace(/['()*]/g, char => `%${char.charCodeAt(0).toString(16)}`)
-  setResponseHeaders(event, {
-    'cache-control': 'no-store',
-    'content-disposition': `attachment; filename="Beleg.${extension[metadata.mediaType]}"; filename*=UTF-8''${filename}`,
-    'content-length': metadata.size,
-    'x-content-type-options': 'nosniff',
+  return new Response(data, {
+    headers: {
+      'cache-control': 'no-store',
+      'content-disposition': `attachment; filename="Beleg.${extension[metadata.mediaType]}"; filename*=UTF-8''${filename}`,
+      'content-length': String(metadata.size),
+      'content-type': metadata.mediaType,
+      'x-content-type-options': 'nosniff',
+    },
   })
-  return send(event, data, metadata.mediaType)
 })

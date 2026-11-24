@@ -1,10 +1,11 @@
+import { definePlugin } from 'nitro'
 import { loadStorageConfig } from '../config'
 import { openDatabase } from '../db/client'
 import { verifyDatabase, verifyWorkspaces } from '../db/lifecycle'
 import { assertRestoreComplete } from '../modules/backup/restore-state'
 import { recoverReceipts } from '../modules/receipts/service'
 
-export default defineNitroPlugin(nitro => {
+export default definePlugin(nitro => {
   const config = loadStorageConfig()
   assertRestoreComplete(config.databasePath)
   const connection = openDatabase(config.databasePath)
@@ -14,9 +15,9 @@ export default defineNitroPlugin(nitro => {
     recoverReceipts(connection, config.receiptsPath)
   } catch (error) { connection.sqlite.close(); throw error }
   nitro.hooks.hook('request', event => {
-    event.context.storage = connection
-    event.context.receiptsPath = config.receiptsPath
-    event.context.accessConfig = config.access
+    Object.assign(event.req.context ??= {}, {
+      storage: connection, receiptsPath: config.receiptsPath, accessConfig: config.access,
+    })
   })
   nitro.hooks.hook('close', () => { connection.sqlite.close() })
 })

@@ -6,10 +6,9 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   ui: { fonts: false },
   nitro: {
-    // Bun runs the streaming HTTP entrypoint so uploads can be limited before buffering.
-    preset: 'node-server',
+    preset: 'bun',
     ignore: ['modules/**'],
-    esbuild: { options: { target: 'es2022' } },
+    serverEntry: './server/entry.ts',
   },
   runtimeConfig: {
     databasePath: './.data/wimm.sqlite',

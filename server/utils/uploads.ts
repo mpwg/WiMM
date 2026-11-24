@@ -1,11 +1,11 @@
-import { getRequestHeader, type H3Event } from 'h3'
+import type { H3Event } from 'nitro/h3'
 import { ApiError } from '../modules/http-error'
 import { readBoundedBody } from './body'
 
 const multipartOverhead = 1024 * 1024
 
 export async function readUpload(event: H3Event, fileLimit: number, fieldNames: string[] = []) {
-  const contentType = getRequestHeader(event, 'content-type')
+  const contentType = event.req.headers.get('content-type')
   if (contentType?.split(';')[0]?.trim().toLowerCase() !== 'multipart/form-data') {
     throw new ApiError(415, 'unsupported_media_type', 'Dieser Aufruf erwartet multipart/form-data.')
   }

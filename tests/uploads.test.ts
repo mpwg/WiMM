@@ -1,15 +1,15 @@
 import { expect, test } from 'bun:test'
-import { createApp, toWebHandler } from 'h3'
+import { H3 } from 'nitro/h3'
 import { endpoint } from '../server/utils/api'
 import { readUpload } from '../server/utils/uploads'
 
 function handler(maximum: number) {
-  const app = createApp()
-  app.use(endpoint(async event => {
+  const app = new H3()
+  app.post('/', endpoint(async event => {
     const { file, fields } = await readUpload(event, maximum, ['mapping'])
     return { filename: file.name, size: file.size, mapping: fields.get('mapping') }
   }))
-  return toWebHandler(app)
+  return (request: Request) => app.fetch(request)
 }
 
 test('multipart reading preserves an upload and its separate mapping field', async () => {

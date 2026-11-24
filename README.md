@@ -1,12 +1,12 @@
 # WiMM
 
-WiMM ist eine mobile Webanwendung für gemeinsame Einnahmen und Ausgaben. Jeder Bereich hat eigene Konten, Kategorien, Buchungen und Belege. Ein OpenID-Connect-Provider liefert Gruppen für die Rollen Leser, Bearbeiter und Besitzer.
+WiMM ist eine mobile Webanwendung für gemeinsame Einnahmen und Ausgaben. Der Server verwendet Nuxt 4.7 und Nitro 3 mit dem nativen Bun-Einstieg. Jeder Bereich hat eigene Konten, Kategorien, Buchungen und Belege. Ein OpenID-Connect-Provider liefert Gruppen für die Rollen Leser, Bearbeiter und Besitzer.
 
 Buchungen lassen sich erfassen, filtern, ändern und löschen. CSV-Dateien werden zuerst als Vorschau geprüft. Belege bleiben im privaten Dateispeicher und sind nur mit Bereichszugriff abrufbar. Über das Web-App-Manifest lässt sich WiMM in unterstützten Browsern zum Startbildschirm hinzufügen. Die Anwendung benötigt eine Serververbindung.
 
 ## Lokal starten
 
-Voraussetzung ist die in [`.bun-version`](.bun-version) festgelegte Bun-Version.
+Voraussetzung ist die in [`.bun-version`](.bun-version) festgelegte Bun-Version. Caret-Bereiche erlauben kompatible Updates. `bun.lock` hält die tatsächlich installierten Versionen fest.
 
 ```sh
 bun install --frozen-lockfile

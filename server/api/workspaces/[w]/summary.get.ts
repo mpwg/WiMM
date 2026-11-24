@@ -1,4 +1,4 @@
-import { getQuery } from 'h3'
+import { getQuery } from 'nitro/h3'
 import { bookingFiltersSchema } from '../../../../shared/schemas/finance'
 import { summarizeBookings } from '../../../modules/finance/service'
 import { access, endpoint, parse } from '../../../utils/api'

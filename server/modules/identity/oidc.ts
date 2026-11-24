@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { getQuery, sendRedirect, type H3Event } from 'h3'
+import { getQuery, redirect, type H3Event } from 'nitro/h3'
 import { createRemoteJWKSet, customFetch, errors as joseErrors, jwtVerify } from 'jose'
 import { z } from 'zod'
 import { trustedHttpUrl, type IdentityConfig } from '../../config'
@@ -164,13 +164,13 @@ async function userIdentity(config: IdentityConfig, provider: Awaited<ReturnType
 
 export async function oidc(event: H3Event) {
   const config = event.context.identityConfig
-  if (!config) return sendRedirect(event, '/?login=unavailable')
+  if (!config) return redirect('/?login=unavailable')
   try {
     const query = getQuery(event)
     const { code, state, iss, error } = query
     if (code === undefined && state === undefined && iss === undefined && error === undefined) {
       const provider = await discover(config)
-      return sendRedirect(event, authorizationUrl(event, config, provider.authorization))
+      return redirect(authorizationUrl(event, config, provider.authorization))
     }
     const flow = readFlow(event, config)
     if (error !== undefined || typeof code !== 'string' || !code || typeof state !== 'string' || !tokenMatches(state, flow.state) ||
@@ -179,9 +179,9 @@ export async function oidc(event: H3Event) {
     const provider = await discover(config)
     if (provider.requireResponseIssuer && iss !== config.issuer) throw new LoginFailure('failed')
     startSession(event, config, await userIdentity(config, provider, code, flow))
-    return sendRedirect(event, '/')
+    return redirect('/')
   } catch (error) {
     if (!(error instanceof LoginFailure)) console.error('OIDC-Anmeldung fehlgeschlagen', error instanceof Error ? error.name : typeof error)
-    return sendRedirect(event, `/?login=${error instanceof LoginFailure ? error.reason : 'unavailable'}`)
+    return redirect(`/?login=${error instanceof LoginFailure ? error.reason : 'unavailable'}`)
   }
 }

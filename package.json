@@ -21,27 +21,27 @@
     "db:verify": "bun tools/manage.ts verify"
   },
   "dependencies": {
-    "@nuxt/ui": "4.13.0",
-    "csv-parse": "7.0.3",
-    "drizzle-orm": "0.45.4",
-    "h3": "1.15.11",
-    "jose": "6.2.18",
-    "nuxt": "4.7.0",
-    "tailwindcss": "4.3.5",
-    "vue": "3.5.46",
-    "vue-router": "5.5.1",
-    "zod": "4.6.7"
+    "@nuxt/ui": "^4.13.0",
+    "csv-parse": "^7.0.3",
+    "drizzle-orm": "^0.45.4",
+    "jose": "^6.2.18",
+    "nitro": "^3 || ^3.0.261103-rc",
+    "nuxt": "^4.7.0",
+    "tailwindcss": "^4.3.5",
+    "vue": "^3.5.46",
+    "vue-router": "^5.5.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "1.2.158",
-    "@playwright/test": "1.65.1",
-    "@types/bun": "1.4.5",
-    "drizzle-kit": "0.31.11",
-    "typescript": "6.0.3",
-    "vue-tsc": "3.3.14"
+    "@iconify-json/lucide": "^1.2.158",
+    "@playwright/test": "^1.65.1",
+    "@types/bun": "^1.4.5",
+    "drizzle-kit": "^0.31.11",
+    "typescript": "^6.0.3",
+    "vue-tsc": "^3.3.14"
   },
   "overrides": {
-    "@esbuild-kit/core-utils>esbuild": "0.28.2",
-    "readdir-glob>minimatch": "11.0.9"
+    "@esbuild-kit/core-utils>esbuild": "^0.28.2",
+    "readdir-glob>minimatch": "^11.0.9"
   }
 }

@@ -1,4 +1,4 @@
-import { getRouterParam, setResponseStatus } from 'h3'
+import { getRouterParam } from 'nitro/h3'
 import { z } from 'zod'
 import { resourceCreateSchema, resourceUpdateSchema } from '../../shared/schemas/finance'
 import { createResource, listResources, updateResource } from '../modules/finance/service'
@@ -11,7 +11,7 @@ export function resourceRoutes(kind: 'accounts' | 'categories') {
       const context = access(event, 'manage')
       const { name } = parse(resourceCreateSchema, await readJson(event))
       const resource = createResource(event.context.storage, context, kind, name)
-      setResponseStatus(event, 201)
+      event.res.status = 201
       return resource
     }),
     update: endpoint(async event => {

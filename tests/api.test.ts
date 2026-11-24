@@ -1,16 +1,14 @@
 import { expect, test } from 'bun:test'
 import { once } from 'node:events'
-import { createServer, request as httpRequest } from 'node:http'
-import { createApp, toNodeListener, toWebHandler } from 'h3'
+import { request as httpRequest } from 'node:http'
+import { H3 } from 'nitro/h3'
 import { z } from 'zod'
 import { endpoint, parse, readJson } from '../server/utils/api'
 
-const app = createApp()
-app.use('/validate', endpoint(async event => parse(z.object({ name: z.string() }), await readJson(event))))
-const request = toWebHandler(app)
+const app = new H3().post('/validate', endpoint(async event => parse(z.object({ name: z.string() }), await readJson(event))))
 
 function post(body: BodyInit, contentType = 'application/json') {
-  return request(new Request('http://localhost/validate', { method: 'POST', body, headers: { 'content-type': contentType } }))
+  return app.request(new Request('http://localhost/validate', { method: 'POST', body, headers: { 'content-type': contentType } }))
 }
 
 test('presents schema failures as structured field errors', async () => {
@@ -38,11 +36,8 @@ test('requires JSON for API bodies', async () => {
 })
 
 test('returns 413 before waiting for the rest of a chunked HTTP request', async () => {
-  const server = createServer(toNodeListener(app)).listen(0, '127.0.0.1')
-  await once(server, 'listening')
-  const address = server.address()
-  if (!address || typeof address === 'string') throw new Error('HTTP-Testserver ohne Port.')
-  const client = httpRequest(`http://127.0.0.1:${address.port}/validate`, {
+  const server = Bun.serve({ hostname: '127.0.0.1', port: 0, fetch: app.fetch })
+  const client = httpRequest(new URL('/validate', server.url), {
     method: 'POST', headers: { 'content-type': 'application/json', 'transfer-encoding': 'chunked', connection: 'keep-alive' },
   })
   try {
@@ -55,6 +50,6 @@ test('returns 413 before waiting for the rest of a chunked HTTP request', async 
     await once(reply, 'end')
   } finally {
     client.destroy()
-    await new Promise<void>(resolve => server.close(() => resolve()))
+    await server.stop(true)
   }
 }, 3000)

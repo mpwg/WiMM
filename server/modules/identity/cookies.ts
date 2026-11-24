@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes, timingSafeEqual } from 'node:crypto'
-import { deleteCookie, getCookie, setCookie, type H3Event } from 'h3'
+import { deleteCookie, getCookie, setCookie, type H3Event } from 'nitro/h3'
 import type { IdentityConfig } from '../../config'
 
 const cookies = {
@@ -44,7 +44,7 @@ export function randomToken() {
   return randomBytes(32).toString('base64url')
 }
 
-export function tokenMatches(actual: string | undefined, expected: string) {
+export function tokenMatches(actual: string | null | undefined, expected: string) {
   if (!actual) return false
   const value = Buffer.from(actual)
   const reference = Buffer.from(expected)

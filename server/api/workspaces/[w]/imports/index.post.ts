@@ -1,4 +1,3 @@
-import { setResponseStatus } from 'h3'
 import { importMappingSchema } from '../../../../../shared/schemas/imports'
 import { MAX_CSV_BYTES } from '../../../../modules/imports/normalize'
 import { previewImport } from '../../../../modules/imports/service'
@@ -15,6 +14,6 @@ export default endpoint(async event => {
     throw new ApiError(422, 'validation_failed', 'Die Anfrage enthält keine gültige Spaltenzuordnung.')
   }
   const result = previewImport(event.context.storage, context, await file.bytes(), parse(importMappingSchema, mapping))
-  setResponseStatus(event, 201)
+  event.res.status = 201
   return result
 })

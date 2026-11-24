@@ -1,4 +1,4 @@
-import { getRouterParam } from 'h3'
+import { getRouterParam } from 'nitro/h3'
 import { z } from 'zod'
 import { bookingUpdateSchema } from '../../../../../shared/schemas/finance'
 import { updateBooking } from '../../../../modules/finance/service'

@@ -28,12 +28,6 @@
         "@types/bun"
       ],
       "groupName": "Bun"
-    },
-    {
-      "matchPackageNames": [
-        "h3"
-      ],
-      "allowedVersions": "<2"
     }
   ]
 }

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, beforeEach, expect, test } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { createApp, createRouter, toWebHandler } from 'h3'
+import { H3 } from 'nitro/h3'
 import logout from '../server/api/logout.post'
 import sessionRoute from '../server/api/session.get'
 import workspacesRoute from '../server/api/workspaces/index.get'
@@ -31,16 +31,27 @@ const accessConfig = accessConfigSchema.parse({
   ],
 })
 
-const router = createRouter()
-router.get('/auth/oidc', login).get('/api/session', sessionRoute).get('/api/workspaces', workspacesRoute).post('/api/logout', logout)
-router.get('/api/workspaces/:w/resource', endpoint(event => access(event, 'read')))
-router.post('/api/workspaces/:w/resource', endpoint(event => access(event, 'write')))
-const request = toWebHandler(createApp().use(security).use(router))
+const router = new H3().use(security)
+  .get('/auth/oidc', login).get('/api/session', sessionRoute).get('/api/workspaces', workspacesRoute).post('/api/logout', logout)
+  .get('/api/workspaces/:w/resource', endpoint(event => access(event, 'read')))
+  .post('/api/workspaces/:w/resource', endpoint(event => access(event, 'write')))
 
 let provider: Awaited<ReturnType<typeof startTestOidcProvider>>
 let directory: string
 let storage: ReturnType<typeof openDatabase>
 let identityConfig: NonNullable<ReturnType<typeof loadIdentityConfig>>
+
+function configureIdentity(appOrigin: string) {
+  return loadIdentityConfig({
+    NUXT_PUBLIC_APP_URL: appOrigin,
+    NUXT_SESSION_PASSWORD: testCookiePassword,
+    NUXT_OAUTH_OIDC_CLIENT_ID: testOidcClientId,
+    NUXT_OAUTH_OIDC_CLIENT_SECRET: testOidcClientSecret,
+    NUXT_OAUTH_OIDC_OPENID_CONFIG: `${provider.issuer}/.well-known/openid-configuration`,
+    NUXT_OAUTH_OIDC_REDIRECT_URL: `${appOrigin}/auth/oidc`,
+    NUXT_OIDC_ISSUER: provider.issuer,
+  })!
+}
 
 beforeAll(async () => {
   provider = await startTestOidcProvider()
@@ -48,15 +59,7 @@ beforeAll(async () => {
   const path = join(directory, 'wimm.sqlite')
   migrateDatabase(path, accessConfig)
   storage = openDatabase(path)
-  identityConfig = loadIdentityConfig({
-    NUXT_PUBLIC_APP_URL: origin,
-    NUXT_SESSION_PASSWORD: testCookiePassword,
-    NUXT_OAUTH_OIDC_CLIENT_ID: testOidcClientId,
-    NUXT_OAUTH_OIDC_CLIENT_SECRET: testOidcClientSecret,
-    NUXT_OAUTH_OIDC_OPENID_CONFIG: `${provider.issuer}/.well-known/openid-configuration`,
-    NUXT_OAUTH_OIDC_REDIRECT_URL: `${origin}/auth/oidc`,
-    NUXT_OIDC_ISSUER: provider.issuer,
-  })!
+  identityConfig = configureIdentity(origin)
 })
 
 beforeEach(() => {
@@ -71,12 +74,13 @@ afterAll(() => {
   if (directory) rmSync(directory, { recursive: true, force: true })
 })
 
-function browser() {
+function browser(config = identityConfig) {
   const cookies = new Map<string, string>()
   async function app(path: string, init?: RequestInit) {
     const headers = new Headers(init?.headers)
     if (!headers.has('cookie')) headers.set('cookie', [...cookies].map(([key, value]) => `${key}=${value}`).join('; '))
-    const response = await request(new Request(new URL(path, origin), { ...init, headers }), { identityConfig, storage, accessConfig, receiptsPath: directory })
+    const response = await router.request(new Request(new URL(path, config.origin), { ...init, headers }), undefined,
+      { identityConfig: config, storage, accessConfig, receiptsPath: directory, requestId: 'oidc-integration-test' })
     for (const cookie of response.headers.getSetCookie()) {
       const [name, value] = cookie.split(';', 1)[0]!.split('=', 2) as [string, string]
       if (value) cookies.set(name, value)
@@ -118,6 +122,20 @@ test('issues a database-backed session once after verifying the provider and gra
   expect((await client.app('/api/_auth/session')).status).toBe(404)
   expect((await client.app(`/api/workspaces/${privateWorkspace}/resource`)).status).toBe(404)
   expect(await (await client.app('/api/workspaces')).json()).toEqual({ items: session.workspaces })
+})
+
+test('preserves the secure session cookie and the expired OIDC cookie on the callback redirect', async () => {
+  const client = browser(configureIdentity('https://wimm.example'))
+  const response = await client.login()
+  expect(response.headers.get('location')).toBe('/')
+  const cookies = response.headers.getSetCookie()
+  expect(cookies).toHaveLength(2)
+  const flow = cookies.find(cookie => cookie.startsWith('wimm_oidc='))
+  const session = cookies.find(cookie => cookie.startsWith('wimm_session='))
+  expect(flow).toContain('Max-Age=0')
+  expect(flow).toContain('Path=/auth/oidc;')
+  expect(session).toMatch(/Path=\/;.*HttpOnly.*Secure.*SameSite=Lax/)
+  expect(session).not.toContain('Domain=')
 })
 
 test('rejects missing and mismatched state without creating a database session', async () => {

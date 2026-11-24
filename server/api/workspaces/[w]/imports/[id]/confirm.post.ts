@@ -1,4 +1,4 @@
-import { getRouterParam } from 'h3'
+import { getRouterParam } from 'nitro/h3'
 import { confirmImport } from '../../../../../modules/imports/service'
 import { access, endpoint } from '../../../../../utils/api'
 

@@ -1,4 +1,4 @@
-import { getRouterParam } from 'h3'
+import { getRouterParam } from 'nitro/h3'
 import { z } from 'zod'
 import { getBooking } from '../../../../modules/finance/service'
 import { listReceipts } from '../../../../modules/receipts/service'

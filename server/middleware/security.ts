@@ -1,12 +1,14 @@
-import { defineEventHandler, getRequestURL, setResponseHeader, setResponseStatus } from 'h3'
+import { defineMiddleware } from 'nitro/h3'
 
-export default defineEventHandler(event => {
-  setResponseHeader(event, 'x-content-type-options', 'nosniff')
-  const path = getRequestURL(event).pathname
-  setResponseHeader(event, 'referrer-policy', path.startsWith('/auth/') ? 'no-referrer' : 'same-origin')
-  if (path.startsWith('/api/') || path.startsWith('/auth/')) setResponseHeader(event, 'cache-control', 'no-store')
+export default defineMiddleware(event => {
+  const headers = event.res.headers
+  headers.set('x-content-type-options', 'nosniff')
+  if (event.context.requestId) headers.set('x-request-id', event.context.requestId)
+  const path = event.url.pathname
+  headers.set('referrer-policy', path.startsWith('/auth/') ? 'no-referrer' : 'same-origin')
+  if (path.startsWith('/api/') || path.startsWith('/auth/')) headers.set('cache-control', 'no-store')
   if (path === '/api/_auth' || path.startsWith('/api/_auth/')) {
-    setResponseStatus(event, 404)
+    event.res.status = 404
     return { error: { code: 'not_found', message: 'Nicht gefunden.', fields: {} } }
   }
 })

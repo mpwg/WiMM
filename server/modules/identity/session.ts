@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { eq, lte } from 'drizzle-orm'
-import { getRequestHeader, type H3Event } from 'h3'
+import type { H3Event } from 'nitro/h3'
 import type { IdentityConfig } from '../../config'
 import type { Connection } from '../../db/client'
 import { identities, sessions } from '../../db/schema'
@@ -39,9 +39,9 @@ export function requireSession(event: H3Event) {
 }
 
 export function requireWriteProtection(event: H3Event, session: { csrfToken: string }) {
-  const origin = getRequestHeader(event, 'origin')
+  const origin = event.req.headers.get('origin')
   if (!origin || origin !== event.context.identityConfig?.origin ||
-    !tokenMatches(getRequestHeader(event, 'x-csrf-token'), session.csrfToken)) {
+    !tokenMatches(event.req.headers.get('x-csrf-token'), session.csrfToken)) {
     throw new ApiError(403, 'csrf_failed', 'Die Anfrage konnte nicht bestätigt werden.')
   }
 }

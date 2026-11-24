@@ -1,6 +1,7 @@
+import { definePlugin } from 'nitro'
 import { loadIdentityConfig } from '../config'
 
-export default defineNitroPlugin(nitro => {
+export default definePlugin(nitro => {
   const identityConfig = loadIdentityConfig()
-  nitro.hooks.hook('request', (event) => { event.context.identityConfig = identityConfig })
+  nitro.hooks.hook('request', (event) => { (event.req.context ??= {}).identityConfig = identityConfig })
 })
